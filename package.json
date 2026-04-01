@@ -6,7 +6,9 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "storybook": "ng run gom-ui:storybook",
+    "build-storybook": "ng run gom-ui:build-storybook"
   },
   "prettier": {
     "overrides": [
@@ -25,14 +27,21 @@
     "@angular/core": "^20.1.0",
     "@angular/forms": "^20.1.0",
     "@angular/platform-browser": "^20.1.0",
+    "@angular/platform-browser-dynamic": "^20.1.0",
     "@angular/router": "^20.1.0",
     "rxjs": "~7.8.0",
+    "zone.js": "~0.15.0",
     "tslib": "^2.3.0"
   },
   "devDependencies": {
+    "@angular-devkit/build-angular": "^20.3.22",
     "@angular/build": "^20.1.5",
     "@angular/cli": "^20.1.5",
     "@angular/compiler-cli": "^20.1.0",
+    "@storybook/addon-a11y": "^9.0.8",
+    "@storybook/addon-docs": "^9.0.8",
+    "@storybook/addon-links": "^9.0.8",
+    "@storybook/angular": "^9.0.8",
     "@types/jasmine": "~5.1.0",
     "jasmine-core": "~5.8.0",
     "karma": "~6.4.0",
@@ -40,6 +49,7 @@
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
+    "storybook": "^9.0.8",
     "typescript": "~5.8.2"
   }
 }

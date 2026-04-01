@@ -1,0 +1,39 @@
+@use "../../../theming/styles/theme" as theme;
+
+:host {
+  display: grid;
+  gap: theme.get-gap(xs);
+}
+
+.gom-checkbox-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: theme.get-gap(xs);
+}
+
+.gom-checkbox {
+  width: 1rem;
+  height: 1rem;
+  accent-color: theme.get-background(primary);
+  cursor: pointer;
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+}
+
+.gom-checkbox__label {
+  @include theme.typography-body;
+  color: theme.get-text(default);
+  cursor: pointer;
+}
+
+.gom-control__message {
+  @include theme.typography-caption;
+  color: theme.get-text(hint);
+  margin: 0;
+}
+
+.gom-control__message--error {
+  color: theme.get-text(danger);
+}

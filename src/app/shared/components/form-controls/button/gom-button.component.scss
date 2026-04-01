@@ -1,0 +1,42 @@
+@use "../../../theming/styles/theme" as theme;
+
+.gom-button {
+  @include theme.typography-label;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: theme.get-gap(xs);
+  min-height: 2.5rem;
+  padding: theme.get-spacing(xs) theme.get-spacing(md);
+  border-radius: theme.get-radius(sm);
+  border: theme.get-border-size(thin) solid theme.get-border(primary);
+  background: theme.get-background(primary);
+  color: theme.get-text(on-primary);
+  transition: filter 0.15s ease, transform 0.15s ease;
+
+  &:hover:enabled {
+    filter: brightness(1.06);
+  }
+
+  &:active:enabled {
+    transform: translateY(1px);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    background: theme.get-background(primary-active-disabled);
+    border-color: theme.get-border(disabled);
+    color: theme.get-text(on-primary-disabled);
+  }
+}
+
+.gom-button--secondary {
+  background: theme.get-background(secondary);
+  color: theme.get-text(primary);
+}
+
+.gom-button--danger {
+  background: theme.get-background(danger);
+  border-color: theme.get-border(danger);
+  color: theme.get-text(on-primary);
+}

@@ -1,0 +1,16 @@
+<label class="gom-control__label" [for]="id" *ngIf="label">{{ label }}</label>
+
+<textarea
+  class="gom-control__field gom-control__field--textarea"
+  [id]="id"
+  [value]="value"
+  [rows]="rows"
+  [placeholder]="placeholder"
+  [disabled]="disabled"
+  [attr.aria-invalid]="!!error"
+  (input)="handleInput($event)"
+  (blur)="handleBlur()"
+></textarea>
+
+<p class="gom-control__message gom-control__message--error" *ngIf="error">{{ error }}</p>
+<p class="gom-control__message" *ngIf="!error && hint">{{ hint }}</p>

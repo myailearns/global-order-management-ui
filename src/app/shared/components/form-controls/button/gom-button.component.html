@@ -1,0 +1,10 @@
+<button
+  class="gom-button"
+  [class.gom-button--secondary]="variant === 'secondary'"
+  [class.gom-button--danger]="variant === 'danger'"
+  [type]="type"
+  [disabled]="disabled"
+  (click)="handleClick($event)"
+>
+  <ng-content></ng-content>
+</button>

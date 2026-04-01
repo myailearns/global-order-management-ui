@@ -1,0 +1,245 @@
+@use "../../theming/styles/theme" as theme;
+
+:host {
+  display: block;
+}
+
+.gom-table-shell {
+  display: grid;
+  gap: theme.get-gap(sm);
+  width: 100%;
+}
+
+.gom-table-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: theme.get-gap(sm);
+}
+
+.gom-table-search {
+  flex: 1;
+  min-width: 12rem;
+  max-width: 22rem;
+  padding: theme.get-spacing(xs) theme.get-spacing(sm);
+  border: theme.get-border-size(thin) solid theme.get-border(standard);
+  border-radius: theme.get-radius(sm);
+}
+
+.gom-table-toolbar__button,
+.gom-table-footer button,
+.gom-sidebar button {
+  @include theme.typography-label;
+  border: theme.get-border-size(thin) solid theme.get-border(primary);
+  background: theme.get-background(primary);
+  color: theme.get-text(on-primary);
+  border-radius: theme.get-radius(sm);
+  padding: theme.get-spacing(xs) theme.get-spacing(sm);
+}
+
+.gom-table-wrap {
+  overflow: auto;
+  border: theme.get-border-size(thin) solid theme.get-border(standard);
+  border-radius: theme.get-radius(sm);
+  background: theme.get-background(standard);
+}
+
+.gom-card-list {
+  display: none;
+}
+
+.gom-card {
+  border: theme.get-border-size(thin) solid theme.get-border(standard);
+  border-radius: theme.get-radius(md);
+  background: theme.get-background(standard);
+  padding: theme.get-spacing(sm);
+  display: grid;
+  gap: theme.get-gap(xs);
+}
+
+.gom-card__row {
+  display: grid;
+  gap: theme.get-gap(xxs);
+}
+
+.gom-card__label {
+  @include theme.typography-label;
+  margin: 0;
+  color: theme.get-text(primary);
+}
+
+.gom-card__value {
+  @include theme.typography-body;
+  margin: 0;
+  color: theme.get-text(default);
+}
+
+.gom-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+th,
+td {
+  @include theme.typography-body;
+  padding: theme.get-spacing(xs) theme.get-spacing(sm);
+  border-bottom: theme.get-border-size(hairline) solid theme.get-border(standard);
+}
+
+th {
+  @include theme.typography-label;
+  background: theme.get-background(secondary);
+  color: theme.get-text(primary);
+  user-select: none;
+}
+
+th.sortable {
+  cursor: pointer;
+}
+
+.sort-indicator {
+  margin-left: theme.get-spacing(xs);
+  display: inline-flex;
+  flex-direction: column;
+  font-size: 0.65rem;
+  line-height: 0.8;
+}
+
+.sort-indicator .active {
+  color: theme.get-text(primary-active);
+}
+
+.align-left {
+  text-align: left;
+}
+
+.align-center {
+  text-align: center;
+}
+
+.align-right {
+  text-align: right;
+}
+
+.text-truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.text-wrap {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.text-expand {
+  white-space: pre-wrap;
+}
+
+.state-cell {
+  text-align: center;
+  color: theme.get-text(hint);
+  padding: theme.get-spacing(md);
+}
+
+.gom-table-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: theme.get-gap(sm);
+}
+
+.gom-table-footer__left select {
+  margin-left: theme.get-spacing(xs);
+  padding: theme.get-spacing(xxs) theme.get-spacing(xs);
+  border-radius: theme.get-radius(sm);
+  border: theme.get-border-size(thin) solid theme.get-border(standard);
+}
+
+.gom-table-footer__right {
+  display: inline-flex;
+  align-items: center;
+  gap: theme.get-gap(xs);
+}
+
+.gom-sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.25);
+  border: 0;
+  padding: 0;
+  z-index: 49;
+}
+
+.gom-sidebar {
+  position: fixed;
+  top: 0;
+  right: -24rem;
+  width: 24rem;
+  max-width: 90vw;
+  height: 100vh;
+  background: theme.get-background(standard);
+  border-left: theme.get-border-size(thin) solid theme.get-border(standard);
+  box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.2);
+  z-index: 50;
+  transition: right 0.2s ease;
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+
+.gom-sidebar.open {
+  right: 0;
+}
+
+.gom-sidebar__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: theme.get-spacing(sm);
+  border-bottom: theme.get-border-size(thin) solid theme.get-border(standard);
+}
+
+.gom-sidebar__section {
+  padding: theme.get-spacing(sm);
+  display: grid;
+  gap: theme.get-gap(xs);
+}
+
+.checkbox-row {
+  display: inline-flex;
+  align-items: center;
+  gap: theme.get-gap(xs);
+}
+
+.filter-row {
+  display: grid;
+  gap: theme.get-gap(xxs);
+}
+
+.filter-row input {
+  padding: theme.get-spacing(xxs) theme.get-spacing(xs);
+  border-radius: theme.get-radius(xs);
+  border: theme.get-border-size(thin) solid theme.get-border(standard);
+}
+
+@media (max-width: 48rem) {
+  .gom-table-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .gom-table-search {
+    max-width: 100%;
+  }
+
+  :host(.gom-table-mobile-card) .gom-table-wrap,
+  :host(.gom-table-mobile-card) .gom-table-footer {
+    display: none;
+  }
+
+  .gom-card-list {
+    display: grid;
+    gap: theme.get-gap(sm);
+  }
+}

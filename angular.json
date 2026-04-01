@@ -84,6 +84,26 @@
               "src/styles.scss"
             ]
           }
+        },
+        "storybook": {
+          "builder": "@storybook/angular:start-storybook",
+          "options": {
+            "configDir": ".storybook",
+            "tsConfig": "tsconfig.storybook.json",
+            "browserTarget": "gom-ui:build:development",
+            "compodoc": false,
+            "port": 6006
+          }
+        },
+        "build-storybook": {
+          "builder": "@storybook/angular:build-storybook",
+          "options": {
+            "configDir": ".storybook",
+            "tsConfig": "tsconfig.storybook.json",
+            "browserTarget": "gom-ui:build:production",
+            "compodoc": false,
+            "outputDir": "storybook-static"
+          }
         }
       }
     }

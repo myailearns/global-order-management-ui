@@ -1,0 +1,42 @@
+@use "../../../theming/styles/theme" as theme;
+
+:host {
+  display: grid;
+  gap: theme.get-gap(xs);
+}
+
+.gom-control__label {
+  @include theme.typography-label;
+  color: theme.get-text(default);
+}
+
+.gom-control__field {
+  @include theme.typography-body;
+  width: 100%;
+  padding: theme.get-spacing(xs) theme.get-spacing(sm);
+  border: theme.get-border-size(thin) solid theme.get-border(standard);
+  border-radius: theme.get-radius(sm);
+  background: theme.get-background(standard);
+  color: theme.get-text(default);
+
+  &:focus {
+    border-color: theme.get-border(primary);
+    box-shadow: 0 0 0 3px rgba(10, 93, 139, 0.14);
+    outline: none;
+  }
+
+  &:disabled {
+    background: theme.get-background(secondary);
+    color: theme.get-text(disabled);
+  }
+}
+
+.gom-control__message {
+  @include theme.typography-caption;
+  color: theme.get-text(hint);
+  margin: 0;
+}
+
+.gom-control__message--error {
+  color: theme.get-text(danger);
+}

@@ -1,0 +1,372 @@
+/**
+ * Global Styles for GOM-UI Application
+ * Imports theming system and applies global resets
+ */
+/**
+ * GOM-UI Theme - Central Export
+ * This is the main theme file imported by all components
+ * Aggregates all theming utilities: colors, breakpoints, sizing, typography
+ */
+/**
+ * Global Order Management Color Palettes
+ * Reference: NAQP Core Components Library
+ * These are base color palettes used for semantic color definitions
+ */
+/* ============================================
+   PRIMARY PALETTE - Brand Color
+   ============================================ */
+/* ============================================
+   SECONDARY PALETTE - Green (Success)
+   ============================================ */
+/* ============================================
+   ACCENT PALETTE - Orange (Warning)
+   ============================================ */
+/* ============================================
+   ALERT PALETTE - Red (Error/Danger)
+   ============================================ */
+/* ============================================
+   INFO PALETTE - Yellow (Caution)
+   ============================================ */
+/* ============================================
+   NEUTRAL PALETTE - Greyscale
+   ============================================ */
+/* ============================================
+   DATA VISUALIZATION PALETTE
+   ============================================ */
+/* ============================================
+   PALETTE ACCESSOR FUNCTIONS
+   ============================================ */
+/**
+ * GOM-UI Theme - Central Export
+ * This is the main theme file imported by all components
+ * Aggregates all theming utilities: colors, breakpoints, sizing, typography
+ */
+/**
+ * Semantic Color System for GOM-UI
+ * Maps abstract color meanings to specific palette shades
+ * Based on NAQP Core Components Library patterns
+ */
+/* ============================================
+   TEXT COLORS - Semantic Usage
+   ============================================ */
+/* ============================================
+   BACKGROUND COLORS - Semantic Usage
+   ============================================ */
+/* ============================================
+   BORDER COLORS - Semantic Usage
+   ============================================ */
+/* ============================================
+   SHADOW/ELEVATION COLORS
+   ============================================ */
+/* ============================================
+   COLOR ACCESSOR FUNCTIONS
+   ============================================ */
+/**
+ * Global Order Management - Responsive Breakpoints
+ * Reference: NAQP Core Components Library
+ * All values in rem units (1rem = 16px by default)
+ */
+/* ============================================
+   BREAKPOINT MAP - REM Units
+   ============================================ */
+/* ============================================
+   SEMANTIC BREAKPOINT ALIASES
+   ============================================ */
+/* ============================================
+   BREAKPOINT ACCESSOR FUNCTIONS
+   ============================================ */
+/* ============================================
+   RESPONSIVE MIXINS
+   ============================================ */
+/**
+ * Global Order Management - Sizing System
+ * Standardized units for spacing, gaps, sizes, and radius
+ * Based on NAQP Core Components Library
+ */
+/* ============================================
+   SPACING SCALE (Padding/Margin)
+   ============================================ */
+/* ============================================
+   GAPS (Flexbox/Grid Space Between)
+   ============================================ */
+/* ============================================
+   BORDER RADIUS
+   ============================================ */
+/* ============================================
+   BORDER SIZES
+   ============================================ */
+/* ============================================
+   SIZING SCALE (Width/Height)
+   ============================================ */
+/* ============================================
+   SIZING ACCESSOR FUNCTIONS
+   ============================================ */
+/**
+ * Typography System for GOM-UI
+ * Font sizes, weights, and line heights for consistent typography
+ */
+/* ============================================
+   FONT FAMILY STACK
+   ============================================ */
+/* ============================================
+   FONT SIZES (in rem, 1rem = 16px)
+   ============================================ */
+/* ============================================
+   FONT WEIGHTS
+   ============================================ */
+/* ============================================
+   LINE HEIGHTS
+   ============================================ */
+/* ============================================
+   FONT ACCESSOR FUNCTIONS
+   ============================================ */
+/* ============================================
+   TYPOGRAPHY MIXINS
+   ============================================ */
+/**
+ * GOM-UI Theme - Central Export
+ * This is the main theme file imported by all components
+ * Aggregates all theming utilities: colors, breakpoints, sizing, typography
+ */
+/* ============================================
+   EXPORTED FUNCTIONS & VARIABLES
+   ============================================ */
+/* ============================================
+   CSS CUSTOM PROPERTIES (CSS Variables)
+   ============================================ */
+:root {
+  --color-primary: #0a5d8b;
+  --color-primary-light: #e6f7ff;
+  --color-primary-dark: #052f46;
+  --color-text-primary: #0a5d8b;
+  --color-text-default: #212121;
+  --color-text-disabled: #767676;
+  --color-bg-standard: #ffffff;
+  --color-bg-secondary: #f6f6f6;
+  --color-border-standard: #d8d8d8;
+  --color-success: #009b0d;
+  --color-warning: #fa5c00;
+  --color-danger: #eb0a1e;
+  --color-info: #fbd03b;
+  --spacing-xs: 0.5rem;
+  --spacing-sm: 1rem;
+  --spacing-md: 1.5rem;
+  --spacing-lg: 2rem;
+  --radius-xs: 0.25rem;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --font-family-body: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol;
+  --font-size-body: 1rem;
+  --font-size-heading: 1.875rem;
+}
+
+/* ============================================
+   GLOBAL RESETS & BASE STYLES
+   ============================================ */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #212121;
+  background-color: #ffffff;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Headings */
+h1, h2, h3, h4, h5, h6 {
+  color: #0a5d8b;
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+h1 {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  font-size: 3.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 0;
+}
+
+h2 {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  font-size: 2.75rem;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 0;
+}
+
+h3 {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  font-size: 2.25rem;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 0;
+}
+
+h4 {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  font-size: 1.875rem;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 0;
+}
+
+h5 {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 0;
+}
+
+h6 {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 0;
+}
+
+/* Links */
+a {
+  color: #0a5d8b;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+a:hover {
+  color: #1785ba;
+}
+a:active {
+  color: #074161;
+}
+
+/* Lists */
+ul, ol {
+  margin-left: 2rem;
+}
+
+li {
+  margin-bottom: 0.5rem;
+}
+
+/* Forms */
+input,
+textarea,
+select,
+button {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  padding: 0;
+}
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+input[type=text],
+input[type=email],
+input[type=password],
+input[type=number],
+textarea,
+select {
+  padding: 0.5rem 1rem;
+  border: 0.125rem solid #d8d8d8;
+  border-radius: 0.5rem;
+  background-color: #ffffff;
+  color: #212121;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+input[type=text]:focus,
+input[type=email]:focus,
+input[type=password]:focus,
+input[type=number]:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: #0a5d8b;
+  box-shadow: 0 0 0 3px rgba(10, 93, 139, 0.1);
+}
+input[type=text]:disabled,
+input[type=email]:disabled,
+input[type=password]:disabled,
+input[type=number]:disabled,
+textarea:disabled,
+select:disabled {
+  background-color: #f6f6f6;
+  color: #767676;
+  cursor: not-allowed;
+}
+
+/* Tables */
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  background-color: #f6f6f6;
+  color: #0a5d8b;
+  padding: 1rem;
+  text-align: left;
+  font-weight: 700;
+}
+
+td {
+  padding: 1rem;
+  border-bottom: 0.0625rem solid #d8d8d8;
+}
+
+/* Code blocks */
+code {
+  background-color: #f6f6f6;
+  color: #eb0a1e;
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.25rem;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 0.875rem;
+}
+
+pre {
+  background-color: #f6f6f6;
+  color: #212121;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  margin: 1.5rem 0;
+}
+pre code {
+  background: none;
+  color: inherit;
+  padding: 0;
+}
+
+/* Utilities */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}

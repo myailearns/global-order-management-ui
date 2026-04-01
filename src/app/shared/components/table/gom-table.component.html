@@ -1,0 +1,129 @@
+<section class="gom-table-shell">
+  <header class="gom-table-toolbar">
+    <input
+      #searchInput
+      class="gom-table-search"
+      type="search"
+      [value]="searchTerm"
+      [placeholder]="searchPlaceholder"
+      (input)="setSearchTerm(searchInput.value)"
+    />
+
+    <button class="gom-table-toolbar__button" type="button" (click)="toggleSidebar()">
+      Columns & Filters
+    </button>
+  </header>
+
+  <div class="gom-table-wrap">
+    <table class="gom-table">
+      <thead>
+        <tr>
+          <th
+            *ngFor="let column of visibleColumns; trackBy: trackByColumn"
+            [style.width]="column.width"
+            [class]="'align-' + getHeaderAlign(column)"
+            [class.sortable]="column.sortable"
+            [attr.tabindex]="column.sortable ? 0 : null"
+            [attr.role]="column.sortable ? 'button' : null"
+            (click)="setSort(column)"
+            (keydown)="handleHeaderKeydown($event, column)"
+          >
+            <span>{{ column.header }}</span>
+            <span class="sort-indicator" *ngIf="column.sortable">
+              <span [class.active]="getSortDirection(column.key) === 'asc'">▲</span>
+              <span [class.active]="getSortDirection(column.key) === 'desc'">▼</span>
+            </span>
+          </th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr *ngIf="loading">
+          <td [attr.colspan]="visibleColumns.length" class="state-cell">Loading...</td>
+        </tr>
+
+        <tr *ngIf="!loading && displayedRows.length === 0">
+          <td [attr.colspan]="visibleColumns.length" class="state-cell">{{ emptyMessage }}</td>
+        </tr>
+
+        <tr *ngFor="let row of displayedRows; trackBy: trackByRow">
+          <td
+            *ngFor="let column of visibleColumns; trackBy: trackByColumn"
+            [class]="'align-' + getCellAlign(column) + ' text-' + getTextMode(column)"
+            [attr.title]="getCellValue(row, column)"
+          >
+            {{ getCellValue(row, column) }}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <footer class="gom-table-footer">
+    <div class="gom-table-footer__left">
+      <label>
+        Page Size
+        <select #pageSizeSelect [value]="pageSize" (change)="changePageSize(+pageSizeSelect.value)">
+          <option *ngFor="let option of pageSizeOptions" [value]="option">{{ option }}</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="gom-table-footer__right">
+      <button type="button" (click)="previousPage()" [disabled]="!canGoPrevious">Prev</button>
+      <span>Page {{ pageIndex + 1 }} / {{ totalPages }}</span>
+      <button type="button" (click)="nextPage()" [disabled]="!canGoNext">Next</button>
+    </div>
+  </footer>
+</section>
+
+<section class="gom-card-list" *ngIf="mobileCardView">
+  <article class="gom-card" *ngFor="let row of displayedRows; trackBy: trackByRow">
+    <div class="gom-card__row" *ngFor="let column of visibleColumns; trackBy: trackByColumn">
+      <h5 class="gom-card__label">{{ column.header }}</h5>
+      <p [class]="'gom-card__value text-' + getTextMode(column)">{{ getCellValue(row, column) }}</p>
+    </div>
+  </article>
+</section>
+
+<button
+  type="button"
+  class="gom-sidebar-backdrop"
+  *ngIf="sidebarOpen"
+  aria-label="Close columns and filters panel"
+  (click)="toggleSidebar()"
+  (keydown)="handleBackdropKeydown($event)"
+></button>
+<aside class="gom-sidebar" [class.open]="sidebarOpen">
+  <header class="gom-sidebar__header">
+    <h3>Columns & Filters</h3>
+    <button type="button" (click)="toggleSidebar()">Close</button>
+  </header>
+
+  <section class="gom-sidebar__section">
+    <h4>Visible Columns</h4>
+    <label class="checkbox-row" *ngFor="let column of columns; trackBy: trackByColumn">
+      <input
+        type="checkbox"
+        [checked]="visibleColumnKeys.has(column.key)"
+        [disabled]="visibleColumnKeys.size === 1 && visibleColumnKeys.has(column.key)"
+        (change)="toggleColumn(column.key)"
+      />
+      <span>{{ column.header }}</span>
+    </label>
+  </section>
+
+  <section class="gom-sidebar__section">
+    <h4>Column Filters</h4>
+    <div *ngFor="let column of columns; trackBy: trackByColumn" class="filter-row" [hidden]="!column.filterable">
+      <label [for]="'filter-' + column.key">{{ column.header }}</label>
+      <input #filterInput
+        [id]="'filter-' + column.key"
+        type="text"
+        [value]="filters[column.key] || ''"
+        (input)="setFilter(column.key, filterInput.value)"
+      />
+      <button type="button" (click)="clearFilter(column.key)">Clear</button>
+    </div>
+  </section>
+</aside>

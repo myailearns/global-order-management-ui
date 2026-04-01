@@ -1,1 +1,171 @@
-/* You can add global styles to this file, and also import other style files */
+/**
+ * Global Styles for GOM-UI Application
+ * Imports theming system and applies global resets
+ */
+
+// Import theme system (palette, colors, breakpoints, typography, sizing)
+@use "app/shared/theming/styles/theme" as *;
+
+/* ============================================
+   GLOBAL RESETS & BASE STYLES
+   ============================================ */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+}
+
+body {
+  @include typography-body;
+  color: get-text(default);
+  background-color: get-background(standard);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Headings */
+h1, h2, h3, h4, h5, h6 {
+  color: get-text(primary);
+  margin-top: get-spacing(md);
+  margin-bottom: get-spacing(sm);
+}
+
+h1 { @include typography-heading(3xl); }
+h2 { @include typography-heading(xxl); }
+h3 { @include typography-heading(xl); }
+h4 { @include typography-heading(lg); }
+h5 { @include typography-heading(md); }
+h6 { @include typography-heading(sm); }
+
+/* Links */
+a {
+  color: get-text(primary);
+  text-decoration: none;
+  transition: color 0.2s ease;
+
+  &:hover {
+    color: get-text(primary-hover);
+  }
+
+  &:active {
+    color: get-text(primary-active);
+  }
+}
+
+/* Lists */
+ul, ol {
+  margin-left: get-spacing(lg);
+}
+
+li {
+  margin-bottom: get-spacing(xs);
+}
+
+/* Forms */
+input,
+textarea,
+select,
+button {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  padding: 0;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+textarea,
+select {
+  padding: get-spacing(xs) get-spacing(sm);
+  border: get-border-size(thin) solid get-border(standard);
+  border-radius: get-radius(sm);
+  background-color: get-background(standard);
+  color: get-text(default);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+  &:focus {
+    outline: none;
+    border-color: get-border(primary);
+    box-shadow: 0 0 0 3px rgba(get-color($palette-primary, 500), 0.1);
+  }
+
+  &:disabled {
+    background-color: get-background(secondary);
+    color: get-text(disabled);
+    cursor: not-allowed;
+  }
+}
+
+/* Tables */
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  background-color: get-background(secondary);
+  color: get-text(primary);
+  padding: get-spacing(sm);
+  text-align: left;
+  font-weight: get-font-weight(bold);
+}
+
+td {
+  padding: get-spacing(sm);
+  border-bottom: get-border-size(hairline) solid get-border(standard);
+}
+
+/* Code blocks */
+code {
+  background-color: get-background(secondary);
+  color: get-text(danger);
+  padding: 0.125rem get-spacing(xs);
+  border-radius: get-radius(xs);
+  font-family: $font-family-mono;
+  font-size: get-font-size(sm);
+}
+
+pre {
+  background-color: get-background(secondary);
+  color: get-text(default);
+  padding: get-spacing(md);
+  border-radius: get-radius(sm);
+  overflow-x: auto;
+  margin: get-spacing(md) 0;
+
+  code {
+    background: none;
+    color: inherit;
+    padding: 0;
+  }
+}
+
+/* Utilities */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}

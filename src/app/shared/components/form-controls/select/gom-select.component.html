@@ -1,0 +1,17 @@
+<label class="gom-control__label" [for]="id" *ngIf="label">{{ label }}</label>
+
+<select
+  class="gom-control__field"
+  [id]="id"
+  [value]="value"
+  [disabled]="disabled"
+  [attr.aria-invalid]="!!error"
+  (change)="handleChange($event)"
+  (blur)="handleBlur()"
+>
+  <option [value]="''" disabled>{{ placeholder }}</option>
+  <option *ngFor="let option of options" [value]="option.value">{{ option.label }}</option>
+</select>
+
+<p class="gom-control__message gom-control__message--error" *ngIf="error">{{ error }}</p>
+<p class="gom-control__message" *ngIf="!error && hint">{{ hint }}</p>

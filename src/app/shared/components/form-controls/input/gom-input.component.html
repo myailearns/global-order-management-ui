@@ -1,0 +1,16 @@
+<label class="gom-control__label" [for]="id" *ngIf="label">{{ label }}</label>
+
+<input
+  class="gom-control__field"
+  [id]="id"
+  [type]="type"
+  [value]="value"
+  [placeholder]="placeholder"
+  [disabled]="disabled"
+  [attr.aria-invalid]="!!error"
+  (input)="handleInput($event)"
+  (blur)="handleBlur()"
+/>
+
+<p class="gom-control__message gom-control__message--error" *ngIf="error">{{ error }}</p>
+<p class="gom-control__message" *ngIf="!error && hint">{{ hint }}</p>
