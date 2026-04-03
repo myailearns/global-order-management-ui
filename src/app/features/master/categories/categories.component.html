@@ -1,0 +1,20 @@
+<div class="categories-container">
+  <div class="error-banner" *ngIf="errorMessage()">
+    <p>{{ errorMessage() }}</p>
+    <button (click)="errorMessage.set(null)">Dismiss</button>
+  </div>
+
+  <gom-categories-list
+    [categories]="categories()"
+    [loading]="loading()"
+    (addNew)="onAddNew()"
+    (action)="onAction($event)"
+  ></gom-categories-list>
+
+  <gom-categories-form
+    [isOpen]="formOpen()"
+    [initialData]="selectedCategory() ? { name: selectedCategory()!.name } : null"
+    (formSubmit)="onFormSubmit($event)"
+    (formCancel)="onFormCancel()"
+  ></gom-categories-form>
+</div>

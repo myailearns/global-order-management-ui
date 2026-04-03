@@ -1,0 +1,177 @@
+@use "../../theming/styles/theme" as theme;
+
+.gom-shell {
+  min-height: 100vh;
+  background: linear-gradient(
+    135deg,
+    theme.get-background(secondary) 0%,
+    theme.get-background(standard) 35%,
+    theme.get-background(secondary) 100%
+  );
+}
+
+.gom-shell__topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: theme.get-gap(md);
+  min-height: 4.5rem;
+  padding: theme.get-spacing(sm) theme.get-spacing(md);
+  border-bottom: theme.get-border-size(hairline) solid theme.get-border(standard);
+  backdrop-filter: blur(6px);
+  background-color: rgba(theme.get-background(standard), 0.92);
+}
+
+.gom-shell__menu-button {
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.24rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: theme.get-radius(sm);
+  border: theme.get-border-size(thin) solid theme.get-border(standard);
+  padding: 0.5rem;
+  background: theme.get-background(standard);
+
+  span {
+    width: 100%;
+    height: 2px;
+    border-radius: 999px;
+    background: theme.get-text(primary);
+  }
+}
+
+.gom-shell__brand {
+  h1 {
+    margin: 0;
+    @include theme.typography-heading(lg);
+  }
+}
+
+.gom-shell__eyebrow {
+  margin: 0;
+  @include theme.typography-caption;
+  color: theme.get-text(hint);
+}
+
+.gom-shell__layout {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+.gom-shell__backdrop {
+  opacity: 0;
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 15;
+  border: 0;
+  background: theme.get-background(overlay);
+
+  &.gom-shell__backdrop--visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+.gom-shell__sidenav {
+  position: fixed;
+  top: 4.5rem;
+  left: 0;
+  bottom: 0;
+  z-index: 16;
+  width: min(82vw, 18rem);
+  transform: translateX(-105%);
+  transition: transform 0.22s ease;
+  overflow-y: auto;
+  padding: theme.get-spacing(md);
+  border-right: theme.get-border-size(hairline) solid theme.get-border(standard);
+  background: theme.get-background(standard);
+
+  &.gom-shell__sidenav--open {
+    transform: translateX(0);
+  }
+}
+
+.gom-shell__section {
+  margin-bottom: theme.get-spacing(lg);
+
+  h2 {
+    margin: 0 0 theme.get-spacing(xs);
+    @include theme.typography-label;
+    color: theme.get-text(hint);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: theme.get-gap(xs);
+  }
+
+  a {
+    display: block;
+    padding: theme.get-spacing(xs) theme.get-spacing(sm);
+    border: theme.get-border-size(hairline) solid transparent;
+    border-radius: theme.get-radius(sm);
+    color: theme.get-text(default);
+
+    &:hover {
+      background: theme.get-background(secondary);
+      border-color: theme.get-border(standard);
+    }
+
+    &.is-active {
+      color: theme.get-text(primary);
+      border-color: theme.get-border(primary);
+      background: theme.get-background(primary-light);
+      font-weight: theme.get-font-weight(semibold);
+    }
+  }
+}
+
+.gom-shell__content {
+  padding: theme.get-spacing(md);
+}
+
+@include theme.breakpoint-up(md) {
+  .gom-shell__menu-button {
+    display: none;
+  }
+
+  .gom-shell__layout {
+    grid-template-columns: 18rem 1fr;
+  }
+
+  .gom-shell__backdrop {
+    display: none;
+  }
+
+  .gom-shell__sidenav {
+    position: sticky;
+    top: 4.5rem;
+    width: 100%;
+    height: calc(100vh - 4.5rem);
+    transform: none;
+  }
+
+  .gom-shell__content {
+    padding: theme.get-spacing(lg);
+  }
+}
+
+@include theme.breakpoint-up(lg) {
+  .gom-shell__layout {
+    grid-template-columns: 20rem 1fr;
+  }
+
+  .gom-shell__content {
+    padding: theme.get-spacing(xl);
+  }
+}

@@ -26,8 +26,7 @@
 - Store in localStorage
 
 ## Table
-- Custom table (no AG Grid)
-- Support filter, sort, grouping (manual)
+- alyws user  table inside shared filders as re-usable one dont crate any new tabe 
 
 ## Status
 NEW, ASSIGNED, DELIVERED, CANCELLED

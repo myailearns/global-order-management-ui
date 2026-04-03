@@ -16,6 +16,7 @@ import { CommonModule } from '@angular/common';
 
 import { FormControlsModule } from './components/form-controls/form-controls.module';
 import { GomTableComponent } from './components/table/gom-table.component';
+import { GomShellComponent } from './components/layout/gom-shell.component';
 import { ThemedModule } from './theming/theming.module';
 
 @NgModule({
@@ -23,12 +24,14 @@ import { ThemedModule } from './theming/theming.module';
     CommonModule,
     FormControlsModule,
     GomTableComponent,
+    GomShellComponent,
     ThemedModule,
   ],
   exports: [
     CommonModule,
     FormControlsModule,
     GomTableComponent,
+    GomShellComponent,
     ThemedModule,
   ],
 })

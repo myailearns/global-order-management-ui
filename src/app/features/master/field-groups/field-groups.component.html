@@ -1,0 +1,18 @@
+<section class="master-page">
+  <header class="master-page__header">
+    <h2>Field Groups</h2>
+    <gom-button type="button" variant="primary" (buttonClick)="onAddFieldGroup()">Add Field Group</gom-button>
+  </header>
+
+  <article class="master-page__table-shell">
+    <gom-table
+      [columns]="columns"
+      [rows]="rows"
+      [pageSize]="10"
+      [pageSizeOptions]="[10, 20, 50]"
+      searchPlaceholder="Search field groups"
+      emptyMessage="No field groups found."
+      [mobileCardView]="true"
+    ></gom-table>
+  </article>
+</section>

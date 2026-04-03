@@ -2,6 +2,7 @@
   class="gom-button"
   [class.gom-button--secondary]="variant === 'secondary'"
   [class.gom-button--danger]="variant === 'danger'"
+  [class.gom-button--icon]="size === 'icon'"
   [type]="type"
   [disabled]="disabled"
   (click)="handleClick($event)"

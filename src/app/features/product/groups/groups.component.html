@@ -1,0 +1,229 @@
+<section class="master-page">
+  <header class="master-page__header">
+    <h2>Group Creation</h2>
+    <gom-button type="button" variant="primary" (buttonClick)="openCreateWizard()">Create Group</gom-button>
+  </header>
+
+  <div class="master-page__error" *ngIf="errorMessage()">{{ errorMessage() }}</div>
+
+  <article class="master-page__table-shell">
+    <gom-table
+      [columns]="columns"
+      [rows]="rows()"
+      [loading]="loading()"
+      [pageSize]="10"
+      [pageSizeOptions]="[10, 20, 50]"
+      searchPlaceholder="Search groups"
+      emptyMessage="No groups found."
+      [mobileCardView]="true"
+      (rowAction)="onRowAction($event)"
+    ></gom-table>
+  </article>
+</section>
+
+<gom-modal
+  [title]="editingGroupId() ? 'Edit Group' : 'Create Group'"
+  [(show)]="wizardOpen"
+  (closed)="closeWizard()"
+  size="large"
+>
+  <gom-tabs
+    [tabs]="wizardTabs()"
+    [activeTab]="currentStep()"
+    (tabChange)="selectStep($event)"
+    class="wizard__tabs"
+  >
+    <gom-tab-content [tabId]="1" [activeTab]="currentStep()">
+      <section class="wizard__body">
+        <div class="form-grid form-grid--two">
+          <gom-input
+            label="Group Name"
+            placeholder="Enter group name"
+            [error]="basicForm.controls.name.touched && basicForm.controls.name.invalid ? 'Group name is required' : ''"
+            [formControl]="basicForm.controls.name"
+          ></gom-input>
+
+          <gom-select
+            label="Category"
+            placeholder="Select category"
+            [options]="categoryOptions()"
+            [formControl]="basicForm.controls.categoryId"
+            [error]="basicForm.controls.categoryId.touched && basicForm.controls.categoryId.invalid ? 'Category is required' : ''"
+          ></gom-select>
+
+          <gom-input
+            label="Quantity"
+            type="number"
+            placeholder="Enter quantity"
+            [formControl]="basicForm.controls.quantity"
+            [error]="basicForm.controls.quantity.touched && basicForm.controls.quantity.invalid ? 'Quantity must be greater than zero' : ''"
+          ></gom-input>
+        </div>
+      </section>
+    </gom-tab-content>
+
+    <gom-tab-content [tabId]="2" [activeTab]="currentStep()">
+      <section class="wizard__body">
+        <div class="form-grid">
+          <gom-select
+            label="Field Group"
+            placeholder="Select field group"
+            [options]="fieldGroupOptions()"
+            [formControl]="selectionForm.controls.fieldGroupId"
+            [error]="selectionForm.controls.fieldGroupId.touched && selectionForm.controls.fieldGroupId.invalid ? 'Field group is required' : ''"
+            (valueChange)="onFieldGroupChange()"
+          ></gom-select>
+        </div>
+
+        <div class="wizard__panel">
+          <h4>Preview Fields</h4>
+          <ul *ngIf="groupFields().length > 0; else noFieldGroupSelected">
+            <li *ngFor="let field of groupFields()">{{ field.name }} ({{ field.key }})</li>
+          </ul>
+          <ng-template #noFieldGroupSelected>
+            <p>Select a field group to preview included fields.</p>
+          </ng-template>
+        </div>
+
+        <div class="wizard__panel">
+          <h4>Optional Extra Fields</h4>
+          <div class="checkbox-grid" *ngIf="availableExtraFields().length > 0; else noExtraFields">
+            <label *ngFor="let field of availableExtraFields()" class="checkbox-grid__item">
+              <input
+                type="checkbox"
+                [checked]="selectedExtraFieldIds().includes(field.fieldId)"
+                (change)="toggleExtraField(field.fieldId, $any($event.target).checked)"
+              />
+              <span>{{ field.name }} ({{ field.key }})</span>
+            </label>
+          </div>
+          <ng-template #noExtraFields>
+            <p>No additional active fields available.</p>
+          </ng-template>
+        </div>
+      </section>
+    </gom-tab-content>
+
+    <gom-tab-content [tabId]="3" [activeTab]="currentStep()">
+      <section class="wizard__body">
+        <div class="form-grid form-grid--two">
+          <ng-container *ngFor="let field of wizardFields()">
+            <gom-input
+              [label]="field.name + ' (' + field.key + ')'"
+              type="number"
+              [placeholder]="'Enter ' + field.name"
+              [formControl]="getValueControl(field.key)"
+              [error]="getValueControl(field.key).touched && getValueControl(field.key).invalid ? 'Value is required' : ''"
+            ></gom-input>
+          </ng-container>
+        </div>
+      </section>
+    </gom-tab-content>
+
+    <gom-tab-content [tabId]="4" [activeTab]="currentStep()">
+      <section class="wizard__body">
+        <div class="wizard__panel">
+          <h4>Formula Builder Tokens</h4>
+          <div class="token-list">
+            <gom-button type="button" variant="secondary" (buttonClick)="insertToken('(')">(</gom-button>
+            <gom-button type="button" variant="secondary" (buttonClick)="insertToken(')')">)</gom-button>
+            <gom-button type="button" variant="secondary" (buttonClick)="insertToken('+')">+</gom-button>
+            <gom-button type="button" variant="secondary" (buttonClick)="insertToken('-')">-</gom-button>
+            <gom-button type="button" variant="secondary" (buttonClick)="insertToken('*')">*</gom-button>
+            <gom-button type="button" variant="secondary" (buttonClick)="insertToken('/')">/</gom-button>
+            <gom-button
+              *ngFor="let field of wizardFields()"
+              type="button"
+              variant="secondary"
+              (buttonClick)="insertToken(field.key)"
+            >
+              {{ field.key }}
+            </gom-button>
+            <gom-button type="button" variant="secondary" (buttonClick)="insertToken('sellingPrice')">sellingPrice</gom-button>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <gom-textarea
+            label="Selling Price Formula"
+            [rows]="3"
+            placeholder="Example: (metalRate * weight) + makingCharge"
+            [formControl]="formulaForm.controls.sellingPrice"
+            [error]="formulaForm.controls.sellingPrice.touched && formulaForm.controls.sellingPrice.invalid ? 'Selling price formula is required' : ''"
+            (focus)="setFormulaTarget('sellingPrice')"
+          ></gom-textarea>
+
+          <gom-textarea
+            label="Anchor Price Formula"
+            [rows]="3"
+            placeholder="Example: sellingPrice * 1.05"
+            [formControl]="formulaForm.controls.anchorPrice"
+            [error]="formulaForm.controls.anchorPrice.touched && formulaForm.controls.anchorPrice.invalid ? 'Anchor price formula is required' : ''"
+            (focus)="setFormulaTarget('anchorPrice')"
+          ></gom-textarea>
+        </div>
+
+        <div class="wizard__panel">
+          <h4>Live Preview</h4>
+          <p class="preview__error" *ngIf="formulaPreview().error">{{ formulaPreview().error }}</p>
+          <div class="preview-grid" *ngIf="!formulaPreview().error">
+            <div>
+              <span class="preview-grid__label">Selling Price</span>
+              <p>{{ formulaPreview().sellingPrice ?? '-' }}</p>
+            </div>
+            <div>
+              <span class="preview-grid__label">Anchor Price</span>
+              <p>{{ formulaPreview().anchorPrice ?? '-' }}</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </gom-tab-content>
+
+    <gom-tab-content [tabId]="5" [activeTab]="currentStep()">
+      <section class="wizard__body">
+        <div class="form-grid">
+          <gom-select
+            label="Base Unit"
+            placeholder="Select base unit"
+            [options]="unitOptions()"
+            [formControl]="unitsForm.controls.baseUnitId"
+            [error]="unitsForm.controls.baseUnitId.touched && unitsForm.controls.baseUnitId.invalid ? 'Base unit is required' : ''"
+            (valueChange)="onBaseUnitChange($event)"
+          ></gom-select>
+        </div>
+
+        <div class="wizard__panel">
+          <h4>Allowed Units</h4>
+          <div class="checkbox-grid" *ngIf="unitOptions().length > 0; else noUnits">
+            <label *ngFor="let option of unitOptions()" class="checkbox-grid__item">
+              <input
+                type="checkbox"
+                [checked]="isAllowedUnitSelected(option.value)"
+                (change)="toggleAllowedUnit(option.value, $any($event.target).checked)"
+              />
+              <span>{{ option.label }}</span>
+            </label>
+          </div>
+          <ng-template #noUnits>
+            <p>No units available.</p>
+          </ng-template>
+        </div>
+      </section>
+    </gom-tab-content>
+  </gom-tabs>
+
+  <footer class="wizard__footer" gom-modal-actions>
+    <gom-button type="button" variant="secondary" (buttonClick)="previousStep()" *ngIf="currentStep() > 1">
+      Previous
+    </gom-button>
+
+    <gom-button type="button" variant="secondary" (buttonClick)="nextStep()" *ngIf="currentStep() < 5">
+      Next
+    </gom-button>
+
+    <gom-button type="button" variant="primary" (buttonClick)="saveGroup()" [disabled]="saving()" *ngIf="currentStep() === 5">
+      {{ saving() ? 'Saving...' : 'Save Group' }}
+    </gom-button>
+  </footer>
+</gom-modal>

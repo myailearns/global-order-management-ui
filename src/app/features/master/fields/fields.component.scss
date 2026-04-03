@@ -1,0 +1,36 @@
+@use "../../../shared/theming/styles/theme" as theme;
+
+.master-page {
+  display: grid;
+  gap: theme.get-gap(md);
+}
+
+.master-page__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: theme.get-gap(sm);
+  flex-wrap: wrap;
+
+  h2 {
+    margin: 0;
+    @include theme.typography-heading(xl);
+  }
+}
+
+.master-page__table-shell {
+  padding: theme.get-spacing(md);
+  border: theme.get-border-size(hairline) solid theme.get-border(standard);
+  border-radius: theme.get-radius(md);
+  background: theme.get-background(standard);
+}
+
+@include theme.breakpoint-down(sm) {
+  .master-page__header {
+    align-items: stretch;
+  }
+
+  gom-button {
+    width: 100%;
+  }
+}

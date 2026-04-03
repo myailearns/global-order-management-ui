@@ -6,6 +6,15 @@ export type GomTableTextMode = 'truncate' | 'wrap' | 'expand';
 
 export type GomSortDirection = 'asc' | 'desc' | '';
 
+export type GomTableActionVariant = 'primary' | 'secondary' | 'danger';
+
+export interface GomTableActionButton<T extends GomTableRow = GomTableRow> {
+  label: string;
+  actionKey: string;
+  variant?: GomTableActionVariant;
+  disabled?: (row: T) => boolean;
+}
+
 export interface GomTableSortState {
   key: string;
   direction: GomSortDirection;
@@ -21,6 +30,7 @@ export interface GomTableColumn<T extends GomTableRow = GomTableRow> {
   cellAlign?: GomTableAlign;
   textMode?: GomTableTextMode;
   format?: (value: unknown, row: T) => string;
+  actionButtons?: GomTableActionButton<T>[];
 }
 
 export interface GomTableQuery {

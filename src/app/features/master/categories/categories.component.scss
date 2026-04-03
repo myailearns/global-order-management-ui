@@ -1,0 +1,35 @@
+@use "../../../shared/theming/styles/theme" as theme;
+
+.categories-container {
+  padding: 16px;
+}
+
+.error-banner {
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  background-color: rgba(239, 68, 68, 0.1);
+  border-left: 4px solid theme.get-text(danger);
+  border-radius: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  p {
+    margin: 0;
+    color: theme.get-text(danger);
+    font-size: 14px;
+  }
+
+  button {
+    background: none;
+    border: none;
+    color: theme.get-text(danger);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 4px 8px;
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+}

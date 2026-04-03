@@ -13,6 +13,7 @@ import { FormsModule } from '@angular/forms';
 
 import {
   GomSortDirection,
+  GomTableActionButton,
   GomTableAlign,
   GomTableColumn,
   GomTablePageChangeEvent,
@@ -21,12 +22,13 @@ import {
   GomTableSortState,
   GomTableTextMode,
 } from './gom-table.models';
+import { GomButtonComponent, GomInputComponent } from '../form-controls';
 import { GomTableService } from './gom-table.service';
 
 @Component({
   selector: 'gom-table',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, GomInputComponent, GomButtonComponent],
   templateUrl: './gom-table.component.html',
   styleUrl: './gom-table.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -52,13 +54,15 @@ export class GomTableComponent<T extends GomTableRow = GomTableRow> implements O
   @Output() sortChange = new EventEmitter<GomTableSortState>();
   @Output() filterChange = new EventEmitter<Record<string, string>>();
   @Output() columnVisibilityChange = new EventEmitter<string[]>();
+  @Output() rowAction = new EventEmitter<{ actionKey: string; row: T }>();
 
   displayedRows: T[] = [];
   searchTerm = '';
   filters: Record<string, string> = {};
   sortState: GomTableSortState = { key: '', direction: '' };
   visibleColumnKeys = new Set<string>();
-  sidebarOpen = false;
+  columnPanelOpen = false;
+  filtersVisible = false;
   filteredTotal = 0;
 
   private readonly tableService = inject(GomTableService);
@@ -83,6 +87,10 @@ export class GomTableComponent<T extends GomTableRow = GomTableRow> implements O
     return this.columns.filter((column) => this.visibleColumnKeys.has(column.key));
   }
 
+  get hasInlineFilters(): boolean {
+    return this.filtersVisible && this.visibleColumns.some((column) => column.filterable);
+  }
+
   get totalPages(): number {
     const total = this.dataMode === 'client' ? this.filteredTotal : this.totalItems;
     return Math.max(1, Math.ceil(total / this.pageSize));
@@ -96,8 +104,12 @@ export class GomTableComponent<T extends GomTableRow = GomTableRow> implements O
     return this.pageIndex + 1 < this.totalPages;
   }
 
-  toggleSidebar(): void {
-    this.sidebarOpen = !this.sidebarOpen;
+  toggleColumnPanel(): void {
+    this.columnPanelOpen = !this.columnPanelOpen;
+  }
+
+  toggleFilters(): void {
+    this.filtersVisible = !this.filtersVisible;
   }
 
   toggleColumn(columnKey: string): void {
@@ -203,6 +215,18 @@ export class GomTableComponent<T extends GomTableRow = GomTableRow> implements O
     return this.stringifyCellValue(rawValue);
   }
 
+  hasActionButtons(column: GomTableColumn<T>): boolean {
+    return !!column.actionButtons?.length;
+  }
+
+  getActionButtons(column: GomTableColumn<T>): GomTableActionButton<T>[] {
+    return column.actionButtons ?? [];
+  }
+
+  triggerRowAction(actionKey: string, row: T): void {
+    this.rowAction.emit({ actionKey, row });
+  }
+
   handleHeaderKeydown(event: KeyboardEvent, column: GomTableColumn<T>): void {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
@@ -210,11 +234,8 @@ export class GomTableComponent<T extends GomTableRow = GomTableRow> implements O
     }
   }
 
-  handleBackdropKeydown(event: KeyboardEvent): void {
-    if (event.key === 'Escape' || event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      this.toggleSidebar();
-    }
+  closeColumnPanel(): void {
+    this.columnPanelOpen = false;
   }
 
   trackByColumn = (_: number, column: GomTableColumn<T>): string => column.key;

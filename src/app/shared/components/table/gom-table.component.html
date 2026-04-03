@@ -1,17 +1,57 @@
 <section class="gom-table-shell">
   <header class="gom-table-toolbar">
-    <input
-      #searchInput
-      class="gom-table-search"
-      type="search"
-      [value]="searchTerm"
-      [placeholder]="searchPlaceholder"
-      (input)="setSearchTerm(searchInput.value)"
-    />
+    <div class="gom-table-toolbar__search">
+      <gom-input
+        class="gom-table-search"
+        type="search"
+        [placeholder]="searchPlaceholder"
+        [ngModel]="searchTerm"
+        (ngModelChange)="setSearchTerm($event)"
+      ></gom-input>
+    </div>
 
-    <button class="gom-table-toolbar__button" type="button" (click)="toggleSidebar()">
-      Columns & Filters
-    </button>
+    <div class="gom-table-toolbar__actions">
+      <gom-button
+        class="gom-table-icon-button"
+        [variant]="filtersVisible ? 'primary' : 'secondary'"
+        size="icon"
+        (buttonClick)="toggleFilters()"
+        aria-label="Toggle column filters"
+        title="Toggle column filters"
+      >
+        <i class="ri-filter-line" aria-hidden="true"></i>
+      </gom-button>
+
+      <gom-button
+        class="gom-table-icon-button"
+        [variant]="columnPanelOpen ? 'primary' : 'secondary'"
+        size="icon"
+        (buttonClick)="toggleColumnPanel()"
+        aria-label="Show or hide columns"
+        title="Show or hide columns"
+      >
+        <i class="ri-list-settings-line" aria-hidden="true"></i>
+      </gom-button>
+
+      <section class="gom-table-panel" *ngIf="columnPanelOpen">
+        <header class="gom-table-panel__header">
+          <h3>Columns</h3>
+          <gom-button class="gom-table-panel__close" variant="secondary" (buttonClick)="closeColumnPanel()">Close</gom-button>
+        </header>
+
+        <div class="gom-table-panel__body">
+          <label class="checkbox-row" *ngFor="let column of columns; trackBy: trackByColumn">
+            <input
+              type="checkbox"
+              [checked]="visibleColumnKeys.has(column.key)"
+              [disabled]="visibleColumnKeys.size === 1 && visibleColumnKeys.has(column.key)"
+              (change)="toggleColumn(column.key)"
+            />
+            <span>{{ column.header }}</span>
+          </label>
+        </div>
+      </section>
+    </div>
   </header>
 
   <div class="gom-table-wrap">
@@ -20,6 +60,7 @@
         <tr>
           <th
             *ngFor="let column of visibleColumns; trackBy: trackByColumn"
+            scope="col"
             [style.width]="column.width"
             [class]="'align-' + getHeaderAlign(column)"
             [class.sortable]="column.sortable"
@@ -29,10 +70,30 @@
             (keydown)="handleHeaderKeydown($event, column)"
           >
             <span>{{ column.header }}</span>
-            <span class="sort-indicator" *ngIf="column.sortable">
-              <span [class.active]="getSortDirection(column.key) === 'asc'">▲</span>
-              <span [class.active]="getSortDirection(column.key) === 'desc'">▼</span>
+            <span class="sort-indicator" *ngIf="column.sortable && getSortDirection(column.key)" aria-hidden="true">
+              <i *ngIf="getSortDirection(column.key) === 'asc'" class="ri-arrow-up-s-line"></i>
+              <i *ngIf="getSortDirection(column.key) === 'desc'" class="ri-arrow-down-s-line"></i>
             </span>
+          </th>
+        </tr>
+
+        <tr *ngIf="hasInlineFilters" class="gom-table-filter-row">
+          <th *ngFor="let column of visibleColumns; trackBy: trackByColumn" scope="col">
+            <ng-container *ngIf="column.filterable; else emptyFilterCell">
+              <gom-input
+                class="gom-table-column-filter"
+                type="search"
+                [placeholder]="'Search ' + column.header"
+                [id]="'filter-' + column.key"
+                [ngModel]="filters[column.key] || ''"
+                (click)="$event.stopPropagation()"
+                (keydown)="$event.stopPropagation()"
+                (ngModelChange)="setFilter(column.key, $event)"
+              ></gom-input>
+            </ng-container>
+            <ng-template #emptyFilterCell>
+              <span class="gom-table-filter-spacer"></span>
+            </ng-template>
           </th>
         </tr>
       </thead>
@@ -52,7 +113,22 @@
             [class]="'align-' + getCellAlign(column) + ' text-' + getTextMode(column)"
             [attr.title]="getCellValue(row, column)"
           >
-            {{ getCellValue(row, column) }}
+            <ng-container *ngIf="hasActionButtons(column); else standardCell">
+              <div class="gom-table-actions">
+                <gom-button
+                  *ngFor="let action of getActionButtons(column)"
+                  class="gom-table-actions__button"
+                  [variant]="action.variant || 'secondary'"
+                  [disabled]="action.disabled ? action.disabled(row) : false"
+                  (buttonClick)="triggerRowAction(action.actionKey, row)"
+                >
+                  {{ action.label }}
+                </gom-button>
+              </div>
+            </ng-container>
+            <ng-template #standardCell>
+              {{ getCellValue(row, column) }}
+            </ng-template>
           </td>
         </tr>
       </tbody>
@@ -70,9 +146,29 @@
     </div>
 
     <div class="gom-table-footer__right">
-      <button type="button" (click)="previousPage()" [disabled]="!canGoPrevious">Prev</button>
+      <gom-button
+        class="gom-table-pager-button"
+        variant="secondary"
+        size="icon"
+        (buttonClick)="previousPage()"
+        [disabled]="!canGoPrevious"
+        aria-label="Previous page"
+        title="Previous page"
+      >
+        <i class="ri-arrow-left-s-line" aria-hidden="true"></i>
+      </gom-button>
       <span>Page {{ pageIndex + 1 }} / {{ totalPages }}</span>
-      <button type="button" (click)="nextPage()" [disabled]="!canGoNext">Next</button>
+      <gom-button
+        class="gom-table-pager-button"
+        variant="secondary"
+        size="icon"
+        (buttonClick)="nextPage()"
+        [disabled]="!canGoNext"
+        aria-label="Next page"
+        title="Next page"
+      >
+        <i class="ri-arrow-right-s-line" aria-hidden="true"></i>
+      </gom-button>
     </div>
   </footer>
 </section>
@@ -85,45 +181,3 @@
     </div>
   </article>
 </section>
-
-<button
-  type="button"
-  class="gom-sidebar-backdrop"
-  *ngIf="sidebarOpen"
-  aria-label="Close columns and filters panel"
-  (click)="toggleSidebar()"
-  (keydown)="handleBackdropKeydown($event)"
-></button>
-<aside class="gom-sidebar" [class.open]="sidebarOpen">
-  <header class="gom-sidebar__header">
-    <h3>Columns & Filters</h3>
-    <button type="button" (click)="toggleSidebar()">Close</button>
-  </header>
-
-  <section class="gom-sidebar__section">
-    <h4>Visible Columns</h4>
-    <label class="checkbox-row" *ngFor="let column of columns; trackBy: trackByColumn">
-      <input
-        type="checkbox"
-        [checked]="visibleColumnKeys.has(column.key)"
-        [disabled]="visibleColumnKeys.size === 1 && visibleColumnKeys.has(column.key)"
-        (change)="toggleColumn(column.key)"
-      />
-      <span>{{ column.header }}</span>
-    </label>
-  </section>
-
-  <section class="gom-sidebar__section">
-    <h4>Column Filters</h4>
-    <div *ngFor="let column of columns; trackBy: trackByColumn" class="filter-row" [hidden]="!column.filterable">
-      <label [for]="'filter-' + column.key">{{ column.header }}</label>
-      <input #filterInput
-        [id]="'filter-' + column.key"
-        type="text"
-        [value]="filters[column.key] || ''"
-        (input)="setFilter(column.key, filterInput.value)"
-      />
-      <button type="button" (click)="clearFilter(column.key)">Clear</button>
-    </div>
-  </section>
-</aside>

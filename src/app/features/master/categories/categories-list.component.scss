@@ -1,0 +1,55 @@
+@use "../../../shared/theming/styles/theme" as theme;
+
+.categories-list {
+  display: grid;
+  gap: theme.get-gap(md);
+}
+
+.categories-list__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: theme.get-gap(sm);
+  flex-wrap: wrap;
+
+  h2 {
+    margin: 0;
+    @include theme.typography-heading(xl);
+  }
+}
+
+.categories-list__table-shell {
+  padding: theme.get-spacing(md);
+  border: theme.get-border-size(hairline) solid theme.get-border(standard);
+  border-radius: theme.get-radius(md);
+  background: theme.get-background(standard);
+}
+
+.btn-add {
+  min-height: 2.5rem;
+  border-radius: theme.get-radius(sm);
+  padding: 0 theme.get-spacing(md);
+  border: theme.get-border-size(thin) solid theme.get-border(primary);
+  background: theme.get-background(primary);
+  color: theme.get-text(on-primary);
+  @include theme.typography-label;
+
+  &:hover:not(:disabled) {
+    opacity: 0.9;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+@include theme.breakpoint-down(sm) {
+  .categories-list__header {
+    align-items: stretch;
+  }
+
+  .btn-add {
+    width: 100%;
+  }
+}

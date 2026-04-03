@@ -11,6 +11,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 export class GomButtonComponent {
   @Input() type: 'button' | 'submit' | 'reset' = 'button';
   @Input() variant: 'primary' | 'secondary' | 'danger' = 'primary';
+  @Input() size: 'default' | 'icon' = 'default';
   @Input() disabled = false;
 
   @Output() buttonClick = new EventEmitter<MouseEvent>();

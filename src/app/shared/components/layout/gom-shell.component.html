@@ -1,0 +1,63 @@
+<div class="gom-shell">
+  <header class="gom-shell__topbar">
+    <button
+      type="button"
+      class="gom-shell__menu-button"
+      (click)="toggleMenu()"
+      [attr.aria-expanded]="menuOpen()"
+      aria-controls="gom-side-nav"
+      aria-label="Toggle navigation"
+    >
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+    <div class="gom-shell__brand">
+      <p class="gom-shell__eyebrow">Global Order Management</p>
+      <h1>Product Creation Module</h1>
+    </div>
+  </header>
+
+  <div class="gom-shell__layout">
+    <button
+      type="button"
+      class="gom-shell__backdrop"
+      [class.gom-shell__backdrop--visible]="menuOpen()"
+      (click)="closeMenu()"
+      aria-label="Close menu"
+    ></button>
+
+    <aside
+      id="gom-side-nav"
+      class="gom-shell__sidenav"
+      [class.gom-shell__sidenav--open]="menuOpen()"
+      aria-label="Main navigation"
+    >
+      @for (section of sections; track section) {
+        <section class="gom-shell__section">
+          <h2>{{ section }}</h2>
+          <nav>
+            <ul>
+              @for (item of navItemsBySection(section); track item.route) {
+                <li>
+                  <a
+                    [routerLink]="item.route"
+                    routerLinkActive="is-active"
+                    (click)="closeMenu()"
+                  >
+                    {{ item.label }}
+                  </a>
+                </li>
+              }
+            </ul>
+          </nav>
+        </section>
+      }
+    </aside>
+
+    <main class="gom-shell__content">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>
