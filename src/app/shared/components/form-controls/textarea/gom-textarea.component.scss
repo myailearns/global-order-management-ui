@@ -45,3 +45,28 @@
 .gom-control__message--error {
   color: theme.get-text(danger);
 }
+
+.gom-control__textarea-wrapper {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+}
+
+.gom-control__textarea-wrapper .gom-control__icon {
+  position: absolute;
+  right: theme.get-spacing(xs);
+  top: theme.get-spacing(xs);
+  display: flex;
+  align-items: center;
+  color: theme.get-text(danger);
+  pointer-events: none;
+
+  i {
+    font-size: 1.125rem;
+  }
+}
+
+.gom-control__message i {
+  margin-right: theme.get-spacing(xxs);
+  vertical-align: middle;
+}

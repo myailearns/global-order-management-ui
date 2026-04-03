@@ -122,6 +122,9 @@
                   [disabled]="action.disabled ? action.disabled(row) : false"
                   (buttonClick)="triggerRowAction(action.actionKey, row)"
                 >
+                  <i *ngIf="action.actionKey === 'edit'" class="ri-pencil-line" aria-hidden="true"></i>
+                  <i *ngIf="action.actionKey === 'delete'" class="ri-delete-bin-line" aria-hidden="true"></i>
+                  <i *ngIf="action.actionKey === 'view'" class="ri-eye-line" aria-hidden="true"></i>
                   {{ action.label }}
                 </gom-button>
               </div>

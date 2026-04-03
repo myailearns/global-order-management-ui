@@ -13,20 +13,40 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
 
-  p {
-    margin: 0;
-    color: theme.get-text(danger);
-    font-size: 14px;
+  .error-banner__content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+
+    i {
+      font-size: 1.25rem;
+      flex-shrink: 0;
+      color: theme.get-text(danger);
+    }
+
+    p {
+      margin: 0;
+      color: theme.get-text(danger);
+      font-size: 14px;
+    }
   }
 
-  button {
+  .error-banner__close {
     background: none;
     border: none;
     color: theme.get-text(danger);
     cursor: pointer;
-    font-size: 14px;
     padding: 4px 8px;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+
+    i {
+      font-size: 1.125rem;
+    }
 
     &:hover {
       opacity: 0.8;

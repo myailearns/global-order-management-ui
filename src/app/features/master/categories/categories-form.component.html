@@ -1,8 +1,10 @@
 <div class="modal-overlay" *ngIf="isOpen" (click)="onCancel()">
   <div class="modal-content" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <h2>{{ initialData ? 'Edit Category' : 'Add Category' }}</h2>
-      <button class="close-btn" (click)="onCancel()" type="button" aria-label="Close">×</button>
+      <h2><i class="ri-edit-box-line" aria-hidden="true"></i> {{ initialData ? 'Edit Category' : 'Add Category' }}</h2>
+      <button class="close-btn" (click)="onCancel()" type="button" aria-label="Close">
+        <i class="ri-close-line" aria-hidden="true"></i>
+      </button>
     </div>
 
     <form [formGroup]="form" (ngSubmit)="onSubmit()" class="modal-body">
@@ -17,9 +19,11 @@
       </div>
 
       <div class="modal-footer">
-        <button type="button" class="btn-secondary" (click)="onCancel()">Cancel</button>
+        <button type="button" class="btn-secondary" (click)="onCancel()">
+          <i class="ri-close-line" aria-hidden="true"></i> Cancel
+        </button>
         <button type="submit" class="btn-primary" [disabled]="form.invalid">
-          {{ initialData ? 'Update' : 'Create' }}
+          <i class="ri-check-line" aria-hidden="true"></i> {{ initialData ? 'Update' : 'Create' }}
         </button>
       </div>
     </form>

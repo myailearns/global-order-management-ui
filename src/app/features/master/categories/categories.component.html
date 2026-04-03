@@ -1,7 +1,12 @@
 <div class="categories-container">
   <div class="error-banner" *ngIf="errorMessage()">
-    <p>{{ errorMessage() }}</p>
-    <button (click)="errorMessage.set(null)">Dismiss</button>
+    <div class="error-banner__content">
+      <i class="ri-alert-circle-fill" aria-hidden="true"></i>
+      <p>{{ errorMessage() }}</p>
+    </div>
+    <button class="error-banner__close" (click)="errorMessage.set(null)" aria-label="Close error banner">
+      <i class="ri-close-line" aria-hidden="true"></i>
+    </button>
   </div>
 
   <gom-categories-list
