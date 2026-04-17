@@ -1,0 +1,26 @@
+@if (toastService.currentToast(); as toast) {
+  <div class="gom-alert-toast" [class]="'gom-alert-toast gom-alert-toast--' + toast.variant" role="status" aria-live="polite">
+    <div class="gom-alert-toast__icon" aria-hidden="true">
+      @if (toast.variant === 'success') {
+        <i class="ri-checkbox-circle-fill"></i>
+      } @else if (toast.variant === 'error') {
+        <i class="ri-close-circle-fill"></i>
+      } @else if (toast.variant === 'warning') {
+        <i class="ri-alert-fill"></i>
+      } @else {
+        <i class="ri-information-fill"></i>
+      }
+    </div>
+
+    <div class="gom-alert-toast__content">
+      @if (toast.title) {
+        <p class="gom-alert-toast__title">{{ toast.title }}</p>
+      }
+      <p class="gom-alert-toast__message">{{ toast.message }}</p>
+    </div>
+
+    <button type="button" class="gom-alert-toast__close" (click)="dismiss()" aria-label="Dismiss notification">
+      <i class="ri-close-line" aria-hidden="true"></i>
+    </button>
+  </div>
+}

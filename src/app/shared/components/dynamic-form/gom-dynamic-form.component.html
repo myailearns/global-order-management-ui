@@ -1,0 +1,39 @@
+@if (form && hasFields()) {
+  <div class="gom-dynamic-form" [formGroup]="form">
+    @for (field of fields; track field.key) {
+      <div class="gom-dynamic-form__group">
+        <label [for]="field.key">{{ field.labelKey | translate }}</label>
+
+        @if (isFieldType(field, 'input')) {
+          <gom-lib-input
+            [id]="field.key"
+            [type]="field.inputType ?? 'text'"
+            [formControlName]="field.key"
+            [placeholder]="field.placeholderKey ? (field.placeholderKey | translate) : ''"
+            [error]="getErrorText(field)"
+          ></gom-lib-input>
+        }
+
+        @if (isFieldType(field, 'textarea')) {
+          <gom-lib-textarea
+            [id]="field.key"
+            [formControlName]="field.key"
+            [rows]="field.rows ?? 3"
+            [placeholder]="field.placeholderKey ? (field.placeholderKey | translate) : ''"
+            [error]="getErrorText(field)"
+          ></gom-lib-textarea>
+        }
+
+        @if (isFieldType(field, 'select')) {
+          <gom-lib-select
+            [id]="field.key"
+            [formControlName]="field.key"
+            [placeholder]="field.placeholderKey ? (field.placeholderKey | translate) : ''"
+            [options]="getSelectOptions(field)"
+            [error]="getErrorText(field)"
+          ></gom-lib-select>
+        }
+      </div>
+    }
+  </div>
+}

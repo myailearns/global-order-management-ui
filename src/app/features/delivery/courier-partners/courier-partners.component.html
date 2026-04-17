@@ -1,0 +1,115 @@
+<section class="master-page">
+  <header class="master-page__header">
+    <h2><i class="ri-truck-line" aria-hidden="true"></i> Courier Partners</h2>
+    @if (canWrite()) {
+    <gom-lib-button type="button" variant="primary" (buttonClick)="openCreate()">
+      <i class="ri-add-line" aria-hidden="true"></i> Add Courier Partner
+    </gom-lib-button>
+    }
+  </header>
+
+  @if (errorMessage()) {
+    <div class="master-page__error">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  <section class="summary-grid">
+    <button
+      type="button"
+      class="summary-card"
+      [class.summary-card--active]="isStatusFilterActive('ALL')"
+      (click)="applyStatusFilter('ALL')"
+    >
+      <p class="summary-card__label">Total Partners</p>
+      <h3>{{ stats().total }}</h3>
+    </button>
+    <button
+      type="button"
+      class="summary-card"
+      [class.summary-card--active]="isStatusFilterActive('ACTIVE')"
+      (click)="applyStatusFilter('ACTIVE')"
+    >
+      <p class="summary-card__label">Active</p>
+      <h3>{{ stats().active }}</h3>
+    </button>
+    <button
+      type="button"
+      class="summary-card"
+      [class.summary-card--active]="isStatusFilterActive('INACTIVE')"
+      (click)="applyStatusFilter('INACTIVE')"
+    >
+      <p class="summary-card__label">Inactive</p>
+      <h3>{{ stats().inactive }}</h3>
+    </button>
+  </section>
+
+  <article class="master-page__table-shell">
+    <gom-lib-table
+      [columns]="columns"
+      [rows]="rows()"
+      [loading]="loading()"
+      [pageSize]="10"
+      [pageSizeOptions]="[10, 20, 50]"
+      searchPlaceholder="Search courier partners"
+      emptyMessage="No courier partners found."
+      [mobileCardView]="true"
+      (rowAction)="onRowAction($event)"
+    ></gom-lib-table>
+  </article>
+</section>
+
+<gom-lib-modal
+  [title]="editingId() ? 'Edit Courier Partner' : 'Create Courier Partner'"
+  [(show)]="formOpen"
+  (closed)="closeForm()"
+  size="medium"
+>
+  <section class="form-grid" [formGroup]="partnerForm">
+    <gom-lib-input
+      label="Name"
+      [required]="true"
+      type="text"
+      placeholder="Enter partner name"
+      [formControl]="partnerForm.controls.name"
+      [error]="partnerForm.controls.name.touched && partnerForm.controls.name.invalid ? 'Name is required' : ''"
+    ></gom-lib-input>
+    <gom-lib-select
+      label="Status"
+      [required]="true"
+      [options]="[
+        { value: 'ACTIVE', label: 'ACTIVE' },
+        { value: 'INACTIVE', label: 'INACTIVE' }
+      ]"
+      [formControl]="partnerForm.controls.status"
+      [error]="partnerForm.controls.status.touched && partnerForm.controls.status.invalid ? 'Status is required' : ''"
+    ></gom-lib-select>
+    <gom-lib-input label="Contact Person (Optional)" type="text" placeholder="Optional" [formControl]="partnerForm.controls.contactPerson"></gom-lib-input>
+    <gom-lib-input label="Contact Phone (Optional)" type="text" placeholder="Optional" [formControl]="partnerForm.controls.contactPhone"></gom-lib-input>
+    <gom-lib-input label="Support Phone (Optional)" type="text" placeholder="Optional" [formControl]="partnerForm.controls.supportPhone"></gom-lib-input>
+    <gom-lib-input label="Service Areas (Optional)" type="text" placeholder="Comma separated" [formControl]="partnerForm.controls.serviceAreas"></gom-lib-input>
+    <gom-lib-textarea label="Notes (Optional)" [rows]="3" placeholder="Optional" [formControl]="partnerForm.controls.notes"></gom-lib-textarea>
+  </section>
+
+  <footer class="gom-modal__action-layout form-actions" gom-modal-actions>
+    <div class="gom-modal__action-layout-start"></div>
+    <div class="gom-modal__action-layout-end">
+      <gom-lib-button type="button" variant="secondary" (buttonClick)="closeForm()">Cancel</gom-lib-button>
+      <gom-lib-button type="button" variant="primary" (buttonClick)="savePartner()" [disabled]="isSaveDisabled()">
+        {{ saving() ? 'Saving...' : (editingId() ? 'Update Partner' : 'Create Partner') }}
+      </gom-lib-button>
+    </div>
+  </footer>
+</gom-lib-modal>
+
+<gom-lib-confirmation-modal
+  [(show)]="statusConfirmOpen"
+  [title]="getStatusConfirmTitle()"
+  [message]="getStatusConfirmMessage()"
+  [confirmText]="getStatusConfirmButtonLabel()"
+  [cancelText]="'Cancel'"
+  [confirmVariant]="getStatusConfirmVariant()"
+  [busy]="statusSaving()"
+  (confirmed)="confirmStatusChange()"
+  (cancelled)="closeStatusConfirm()"
+></gom-lib-confirmation-modal>

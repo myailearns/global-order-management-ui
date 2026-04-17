@@ -1,0 +1,102 @@
+@use "../../../shared/theming/styles/theme" as theme;
+
+.settings-page {
+  display: grid;
+  gap: theme.get-gap(md);
+}
+
+.settings-page__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: theme.get-gap(sm);
+  flex-wrap: wrap;
+
+  h2 {
+    margin: 0;
+    @include theme.typography-heading(xl);
+  }
+}
+
+.settings-section {
+  padding: theme.get-spacing(md);
+  border: theme.get-border-size(hairline) solid theme.get-border(standard);
+  border-radius: theme.get-radius(md);
+  background: theme.get-background(standard);
+  display: grid;
+  gap: theme.get-gap(sm);
+}
+
+.settings-section__title {
+  margin: 0;
+  @include theme.typography-heading(md);
+}
+
+.settings-section__desc {
+  margin: 0;
+  @include theme.typography-label;
+  color: theme.get-text(default-light);
+}
+
+.settings-form {
+  display: grid;
+  gap: theme.get-gap(sm);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  @media (max-width: 720px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.settings-form--full {
+  grid-column: 1 / -1;
+}
+
+.preview-box {
+  grid-column: 1 / -1;
+  padding: theme.get-spacing(sm) theme.get-spacing(md);
+  border-radius: theme.get-radius(sm);
+  background: theme.get-background(secondary);
+  border: theme.get-border-size(hairline) solid theme.get-border(standard);
+  display: flex;
+  align-items: center;
+  gap: theme.get-gap(sm);
+}
+
+.preview-box__label {
+  margin: 0;
+  @include theme.typography-label;
+  color: theme.get-text(default-light);
+  flex-shrink: 0;
+}
+
+.preview-box__code {
+  font-family: monospace;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: theme.get-text(primary);
+  letter-spacing: 0.05em;
+}
+
+.preview-box__hint {
+  margin-left: auto;
+  @include theme.typography-label;
+  color: theme.get-text(default-light);
+  font-style: italic;
+}
+
+.settings-actions {
+  display: flex;
+  gap: theme.get-gap(sm);
+  justify-content: flex-end;
+  padding-top: theme.get-spacing(xs);
+  border-top: theme.get-border-size(hairline) solid theme.get-border(standard);
+}
+
+.settings-page__error {
+  padding: theme.get-spacing(xs) theme.get-spacing(sm);
+  border-radius: theme.get-radius(sm);
+  border: theme.get-border-size(hairline) solid theme.get-border(standard);
+  background: rgba(239, 68, 68, 0.08);
+  color: theme.get-text(danger);
+}

@@ -1,0 +1,77 @@
+<section class="entitlements-page">
+  <header class="entitlements-page__header">
+    <h1>{{ 'saas.platform.entitlements.title' | translate }}</h1>
+    <p>{{ 'saas.platform.entitlements.subtitle' | translate }}</p>
+  </header>
+
+  <form class="entitlements-page__lookup" [formGroup]="lookupForm">
+    <div class="entitlements-page__lookup-fields">
+      <gom-lib-select
+        [label]="'saas.platform.entitlements.lbl_tenant' | translate"
+        [placeholder]="'saas.platform.entitlements.ph_tenant' | translate"
+        [searchable]="true"
+        [searchPlaceholder]="'saas.platform.entitlements.ph_tenant_search' | translate"
+        [options]="tenantOptions()"
+        [ngModel]="lookupForm.controls.tenantId.value"
+        (valueChange)="onTenantSelect($event)"
+      ></gom-lib-select>
+    </div>
+    <gom-lib-button type="button" (buttonClick)="lookup()" [disabled]="loading()">{{ 'saas.platform.entitlements.btn_load' | translate }}</gom-lib-button>
+  </form>
+
+  @if (entitlement(); as item) {
+    <article class="entitlements-page__summary">
+      <h3>{{ 'saas.platform.entitlements.section_current' | translate }}</h3>
+      <p><strong>{{ 'saas.platform.entitlements.lbl_package' | translate }}</strong> {{ item.packagePlanId }}</p>
+      <p><strong>{{ 'saas.platform.entitlements.lbl_addons' | translate }}</strong> {{ item.addOnFeatureKeys.join(', ') || '-' }}</p>
+      <p><strong>{{ 'saas.platform.entitlements.lbl_suspended' | translate }}</strong> {{ item.suspendedFeatureKeys.join(', ') || '-' }}</p>
+      <p><strong>{{ 'saas.platform.entitlements.lbl_cache_version' | translate }}</strong> {{ item.cacheVersion }}</p>
+    </article>
+
+    <form class="entitlements-page__form" [formGroup]="editForm">
+      <gom-lib-select
+        formControlName="packagePlanId"
+        [label]="'saas.platform.entitlements.lbl_package_plan' | translate"
+        [placeholder]="'saas.platform.entitlements.ph_package_plan' | translate"
+        [options]="packageOptions()"
+        [searchable]="true"
+        [required]="true"
+      ></gom-lib-select>
+      <gom-lib-select
+        formControlName="addOnFeatureKeys"
+        [label]="'saas.platform.entitlements.lbl_addon_features' | translate"
+        [placeholder]="'saas.platform.entitlements.ph_addon_features' | translate"
+        [options]="addOnFeatureOptions()"
+        [multiple]="true"
+        [searchable]="true"
+      ></gom-lib-select>
+      <gom-lib-select
+        formControlName="suspendedFeatureKeys"
+        [label]="'saas.platform.entitlements.lbl_suspended_features' | translate"
+        [placeholder]="'saas.platform.entitlements.ph_suspended_features' | translate"
+        [options]="featureOptions()"
+        [multiple]="true"
+        [searchable]="true"
+      ></gom-lib-select>
+      <gom-lib-textarea formControlName="reason" [label]="'saas.platform.entitlements.lbl_change_reason' | translate" [rows]="2"></gom-lib-textarea>
+
+      <div class="entitlements-page__actions">
+        <gom-lib-button type="button" (buttonClick)="save()" [disabled]="loading()">{{ 'saas.platform.entitlements.btn_save' | translate }}</gom-lib-button>
+      </div>
+    </form>
+
+    @if (effective(); as eff) {
+      <article class="entitlements-page__effective">
+        <h3>{{ 'saas.platform.entitlements.section_effective' | translate }}</h3>
+        <p><strong>{{ 'saas.platform.entitlements.lbl_source' | translate }}</strong> {{ eff.source }}</p>
+        <p><strong>{{ 'saas.platform.entitlements.lbl_account_status' | translate }}</strong> {{ eff.accountStatus }}</p>
+        <p><strong>{{ 'saas.platform.entitlements.lbl_reason_code' | translate }}</strong> {{ eff.reasonCode || '-' }}</p>
+        <div class="entitlements-page__chips">
+          @for (feature of eff.effectiveFeatures; track feature) {
+            <span class="entitlements-page__chip">{{ feature }}</span>
+          }
+        </div>
+      </article>
+    }
+  }
+</section>

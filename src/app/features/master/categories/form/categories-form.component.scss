@@ -1,0 +1,14 @@
+@use "../../../../shared/theming/styles/theme" as theme;
+
+.category-form {
+  display: grid;
+  gap: theme.get-gap(sm);
+}
+
+.category-form__actions {
+  width: 100%;
+}
+
+.category-form__action {
+  justify-content: center;
+}

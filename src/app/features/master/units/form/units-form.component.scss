@@ -1,0 +1,25 @@
+@use "../../../../shared/theming/styles/theme" as theme;
+
+.units-form {
+  display: grid;
+  gap: theme.get-gap(sm);
+}
+
+.units-form__grid {
+  display: grid;
+  gap: theme.get-gap(sm);
+}
+
+.units-form__actions {
+  width: 100%;
+}
+
+.units-form__action {
+  justify-content: center;
+}
+
+.units-form__conversion-preview {
+  margin: -0.25rem 0 0;
+  font-size: 0.85rem;
+  color: #4b5563;
+}

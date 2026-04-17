@@ -1,5 +1,6 @@
 import { Component, ChangeDetectionStrategy, input, output, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TranslateModule } from '@ngx-translate/core';
 
 export interface TabItem {
   id: string | number;
@@ -8,9 +9,9 @@ export interface TabItem {
 }
 
 @Component({
-  selector: 'gom-tabs',
+  selector: 'gom-lib-tabs',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslateModule],
   templateUrl: './gom-tabs.component.html',
   styleUrl: './gom-tabs.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

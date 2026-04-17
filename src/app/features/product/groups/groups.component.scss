@@ -33,6 +33,24 @@
   background: theme.get-background(standard);
 }
 
+:host ::ng-deep td.group-stock--normal {
+  background: rgba(22, 163, 74, 0.08);
+  color: #0f172a;
+  font-weight: 600;
+}
+
+:host ::ng-deep td.group-stock--low {
+  background: rgba(245, 158, 11, 0.2);
+  color: #0f172a;
+  font-weight: 700;
+}
+
+:host ::ng-deep td.group-stock--critical {
+  background: rgba(239, 68, 68, 0.2);
+  color: #111827;
+  font-weight: 700;
+}
+
 .wizard-overlay {
   position: fixed;
   inset: 0;
@@ -209,9 +227,15 @@
 }
 
 .wizard__footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: theme.get-gap(xs);
+  width: 100%;
+}
+
+.groups-wizard__actions {
+  width: 100%;
+}
+
+.groups-wizard__action {
+  justify-content: center;
 }
 
 @include theme.breakpoint-down(md) {
@@ -238,12 +262,4 @@
     padding: theme.get-spacing(sm);
   }
 
-  .wizard__footer {
-    display: grid;
-    grid-template-columns: 1fr;
-  }
-
-  gom-button {
-    width: 100%;
-  }
 }

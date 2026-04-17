@@ -1,0 +1,135 @@
+@use "../../../shared/theming/styles/theme" as theme;
+
+.master-page {
+  display: grid;
+  gap: theme.get-gap(md);
+}
+
+.master-page__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: theme.get-gap(sm);
+  flex-wrap: wrap;
+
+  h2 {
+    margin: 0;
+    @include theme.typography-heading(xl);
+  }
+}
+
+.master-page__header-actions {
+  display: inline-flex;
+  gap: theme.get-gap(xs);
+  flex-wrap: wrap;
+}
+
+.master-page__error {
+  padding: theme.get-spacing(xs) theme.get-spacing(sm);
+  border-radius: theme.get-radius(sm);
+  border: theme.get-border-size(hairline) solid theme.get-border(standard);
+  background: rgba(239, 68, 68, 0.08);
+  color: theme.get-text(danger);
+}
+
+.stock-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: theme.get-gap(sm);
+  padding: theme.get-spacing(md);
+  border: theme.get-border-size(hairline) solid theme.get-border(standard);
+  border-radius: theme.get-radius(md);
+  background: theme.get-background(standard);
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: theme.get-gap(sm);
+}
+
+.summary-card {
+  padding: theme.get-spacing(sm);
+  border: theme.get-border-size(hairline) solid theme.get-border(standard);
+  border-radius: theme.get-radius(md);
+  background: theme.get-background(standard);
+
+  h3 {
+    margin: theme.get-spacing(xxs) 0 0;
+    @include theme.typography-heading(lg);
+    color: theme.get-text(primary);
+  }
+}
+
+.summary-card__label {
+  margin: 0;
+  @include theme.typography-label;
+  color: theme.get-text(default-light);
+}
+
+.stock-alert {
+  display: inline-flex;
+  align-items: center;
+  gap: theme.get-gap(xs);
+  padding: theme.get-spacing(xs) theme.get-spacing(sm);
+  border-radius: theme.get-radius(sm);
+  border: theme.get-border-size(hairline) solid #f59e0b;
+  background: rgba(245, 158, 11, 0.12);
+  color: #92400e;
+
+  i {
+    font-size: 1.1rem;
+  }
+}
+
+.master-page__table-shell {
+  padding: theme.get-spacing(md);
+  border: theme.get-border-size(hairline) solid theme.get-border(standard);
+  border-radius: theme.get-radius(md);
+  background: theme.get-background(standard);
+}
+
+.table-header {
+  margin-bottom: theme.get-spacing(sm);
+
+  h3 {
+    margin: 0;
+    @include theme.typography-heading(md);
+  }
+
+  p {
+    margin: theme.get-spacing(xxs) 0 0;
+    color: theme.get-text(default-light);
+  }
+}
+
+.form-grid {
+  display: grid;
+  gap: theme.get-gap(sm);
+}
+
+.stock-form__actions {
+  width: 100%;
+}
+
+.stock-form__action {
+  justify-content: center;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: theme.get-gap(xs);
+}
+
+@include theme.breakpoint-down(md) {
+  .summary-grid,
+  .stock-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+}

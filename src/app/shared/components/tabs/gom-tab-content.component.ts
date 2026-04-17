@@ -2,7 +2,7 @@ import { Component, ChangeDetectionStrategy, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
-  selector: 'gom-tab-content',
+  selector: 'gom-lib-tab-content',
   standalone: true,
   imports: [CommonModule],
   template: `

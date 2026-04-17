@@ -1,18 +1,22 @@
 <section class="master-page">
   <header class="master-page__header">
     <h2><i class="ri-folder-line" aria-hidden="true"></i> Group Creation</h2>
-    <gom-button type="button" variant="primary" (buttonClick)="openCreateWizard()"><i class="ri-add-line" aria-hidden="true"></i> Create Group</gom-button>
+    @if (canWrite()) {
+    <gom-lib-button type="button" variant="primary" (buttonClick)="openCreateWizard()"><i class="ri-add-line" aria-hidden="true"></i> Create Group</gom-lib-button>
+    }
   </header>
 
-  <div class="master-page__error" *ngIf="errorMessage()">
-    <div style="display: flex; gap: 0.75rem; align-items: center;">
-      <i class="ri-alert-fill" style="font-size: 1.25rem; flex-shrink: 0;" aria-hidden="true"></i>
-      <span>{{ errorMessage() }}</span>
+  @if (errorMessage()) {
+    <div class="master-page__error">
+      <div style="display: flex; gap: 0.75rem; align-items: center;">
+        <i class="ri-alert-fill" style="font-size: 1.25rem; flex-shrink: 0;" aria-hidden="true"></i>
+        <span>{{ errorMessage() }}</span>
+      </div>
     </div>
-  </div>
+  }
 
   <article class="master-page__table-shell">
-    <gom-table
+    <gom-lib-table
       [columns]="columns"
       [rows]="rows()"
       [loading]="loading()"
@@ -22,213 +26,265 @@
       emptyMessage="No groups found."
       [mobileCardView]="true"
       (rowAction)="onRowAction($event)"
-    ></gom-table>
+    ></gom-lib-table>
   </article>
 </section>
 
-<gom-modal
+<gom-lib-modal
   [title]="editingGroupId() ? 'Edit Group' : 'Create Group'"
   [(show)]="wizardOpen"
   (closed)="closeWizard()"
   size="large"
 >
-  <gom-tabs
+  <gom-lib-tabs
     [tabs]="wizardTabs()"
     [activeTab]="currentStep()"
     (tabChange)="selectStep($event)"
     class="wizard__tabs"
   >
-    <gom-tab-content [tabId]="1" [activeTab]="currentStep()">
+    <gom-lib-tab-content [tabId]="1" [activeTab]="currentStep()">
       <section class="wizard__body">
         <div class="form-grid form-grid--two">
-          <gom-input
+          <gom-lib-input
             label="Group Name"
             placeholder="Enter group name"
             [error]="basicForm.controls.name.touched && basicForm.controls.name.invalid ? 'Group name is required' : ''"
             [formControl]="basicForm.controls.name"
-          ></gom-input>
+          ></gom-lib-input>
 
-          <gom-select
+          <gom-lib-select
             label="Category"
             placeholder="Select category"
             [options]="categoryOptions()"
             [formControl]="basicForm.controls.categoryId"
             [error]="basicForm.controls.categoryId.touched && basicForm.controls.categoryId.invalid ? 'Category is required' : ''"
-          ></gom-select>
+            (valueChange)="onCategoryChange($event)"
+          ></gom-lib-select>
 
-          <gom-input
-            label="Quantity"
-            type="number"
-            placeholder="Enter quantity"
-            [formControl]="basicForm.controls.quantity"
-            [error]="basicForm.controls.quantity.touched && basicForm.controls.quantity.invalid ? 'Quantity must be greater than zero' : ''"
-          ></gom-input>
+          <gom-lib-select
+            label="Tax Profile (Optional)"
+            placeholder="Select tax profile"
+            [options]="taxProfileOptions()"
+            [formControl]="basicForm.controls.taxProfileId"
+          ></gom-lib-select>
         </div>
       </section>
-    </gom-tab-content>
+    </gom-lib-tab-content>
 
-    <gom-tab-content [tabId]="2" [activeTab]="currentStep()">
+    <gom-lib-tab-content [tabId]="2" [activeTab]="currentStep()">
       <section class="wizard__body">
         <div class="form-grid">
-          <gom-select
+          <gom-lib-select
             label="Field Group"
             placeholder="Select field group"
+            [multiple]="true"
             [options]="fieldGroupOptions()"
-            [formControl]="selectionForm.controls.fieldGroupId"
+            [selectedValues]="selectedFieldGroupIds()"
             [error]="selectionForm.controls.fieldGroupId.touched && selectionForm.controls.fieldGroupId.invalid ? 'Field group is required' : ''"
-            (valueChange)="onFieldGroupChange()"
-          ></gom-select>
+            (selectedValuesChange)="onFieldGroupSelectionChange($event)"
+          ></gom-lib-select>
         </div>
 
         <div class="wizard__panel">
           <h4>Preview Fields</h4>
-          <ul *ngIf="groupFields().length > 0; else noFieldGroupSelected">
-            <li *ngFor="let field of groupFields()">{{ field.name }} ({{ field.key }})</li>
-          </ul>
-          <ng-template #noFieldGroupSelected>
+          @if (groupFields().length > 0) {
+            <ul>
+              @for (field of groupFields(); track field.fieldId) {
+                <li>{{ field.name }} ({{ field.key }})</li>
+              }
+            </ul>
+          } @else {
             <p>Select a field group to preview included fields.</p>
-          </ng-template>
+          }
         </div>
 
         <div class="wizard__panel">
           <h4>Optional Extra Fields</h4>
-          <div class="checkbox-grid" *ngIf="availableExtraFields().length > 0; else noExtraFields">
-            <label *ngFor="let field of availableExtraFields()" class="checkbox-grid__item">
-              <input
-                type="checkbox"
-                [checked]="selectedExtraFieldIds().includes(field.fieldId)"
-                (change)="toggleExtraField(field.fieldId, $any($event.target).checked)"
-              />
-              <span>{{ field.name }} ({{ field.key }})</span>
-            </label>
-          </div>
-          <ng-template #noExtraFields>
+          @if (availableExtraFields().length > 0) {
+            <div class="checkbox-grid">
+              @for (field of availableExtraFields(); track field.fieldId) {
+                <label class="checkbox-grid__item">
+                  <input
+                    type="checkbox"
+                    [checked]="selectedExtraFieldIds().includes(field.fieldId)"
+                    (change)="toggleExtraField(field.fieldId, $any($event.target).checked)"
+                  />
+                  <span>{{ field.name }} ({{ field.key }})</span>
+                </label>
+              }
+            </div>
+          } @else {
             <p>No additional active fields available.</p>
-          </ng-template>
+          }
         </div>
       </section>
-    </gom-tab-content>
+    </gom-lib-tab-content>
 
-    <gom-tab-content [tabId]="3" [activeTab]="currentStep()">
+    <gom-lib-tab-content [tabId]="3" [activeTab]="currentStep()">
       <section class="wizard__body">
         <div class="form-grid form-grid--two">
-          <ng-container *ngFor="let field of wizardFields()">
-            <gom-input
+          @for (field of wizardFields(); track field.key) {
+            <gom-lib-input
               [label]="field.name + ' (' + field.key + ')'"
               type="number"
               [placeholder]="'Enter ' + field.name"
               [formControl]="getValueControl(field.key)"
+              [hint]="getFieldHint(field)"
               [error]="getValueControl(field.key).touched && getValueControl(field.key).invalid ? 'Value is required' : ''"
-            ></gom-input>
-          </ng-container>
+            ></gom-lib-input>
+          }
         </div>
       </section>
-    </gom-tab-content>
+    </gom-lib-tab-content>
 
-    <gom-tab-content [tabId]="4" [activeTab]="currentStep()">
+    <gom-lib-tab-content [tabId]="4" [activeTab]="currentStep()">
       <section class="wizard__body">
         <div class="wizard__panel">
           <h4>Formula Builder Tokens</h4>
           <div class="token-list">
-            <gom-button type="button" variant="secondary" (buttonClick)="insertToken('(')">(</gom-button>
-            <gom-button type="button" variant="secondary" (buttonClick)="insertToken(')')">)</gom-button>
-            <gom-button type="button" variant="secondary" (buttonClick)="insertToken('+')">+</gom-button>
-            <gom-button type="button" variant="secondary" (buttonClick)="insertToken('-')">-</gom-button>
-            <gom-button type="button" variant="secondary" (buttonClick)="insertToken('*')">*</gom-button>
-            <gom-button type="button" variant="secondary" (buttonClick)="insertToken('/')">/</gom-button>
-            <gom-button
-              *ngFor="let field of wizardFields()"
-              type="button"
-              variant="secondary"
-              (buttonClick)="insertToken(field.key)"
-            >
-              {{ field.key }}
-            </gom-button>
-            <gom-button type="button" variant="secondary" (buttonClick)="insertToken('sellingPrice')">sellingPrice</gom-button>
+            <gom-lib-button type="button" variant="secondary" (buttonClick)="insertToken('(')">(</gom-lib-button>
+            <gom-lib-button type="button" variant="secondary" (buttonClick)="insertToken(')')">)</gom-lib-button>
+            <gom-lib-button type="button" variant="secondary" (buttonClick)="insertToken('+')">+</gom-lib-button>
+            <gom-lib-button type="button" variant="secondary" (buttonClick)="insertToken('-')">-</gom-lib-button>
+            <gom-lib-button type="button" variant="secondary" (buttonClick)="insertToken('*')">*</gom-lib-button>
+            <gom-lib-button type="button" variant="secondary" (buttonClick)="insertToken('/')">/</gom-lib-button>
+            <gom-lib-button type="button" variant="secondary" (buttonClick)="insertToken('%')">%</gom-lib-button>
+            <gom-lib-button type="button" variant="secondary" (buttonClick)="insertToken('10%')">10%</gom-lib-button>
+            @for (field of wizardFields(); track field.key) {
+              <gom-lib-button
+                type="button"
+                variant="secondary"
+                (buttonClick)="insertToken(field.key)"
+              >
+                {{ field.key }}
+              </gom-lib-button>
+            }
+            <gom-lib-button type="button" variant="secondary" (buttonClick)="insertToken('sellingPrice')">sellingPrice</gom-lib-button>
           </div>
         </div>
 
         <div class="form-grid">
-          <gom-textarea
+          <gom-lib-textarea
             label="Selling Price Formula"
             [rows]="3"
             placeholder="Example: (metalRate * weight) + makingCharge"
             [formControl]="formulaForm.controls.sellingPrice"
+            [hint]="getSellingFormulaHint()"
             [error]="formulaForm.controls.sellingPrice.touched && formulaForm.controls.sellingPrice.invalid ? 'Selling price formula is required' : ''"
             (focus)="setFormulaTarget('sellingPrice')"
-          ></gom-textarea>
+          ></gom-lib-textarea>
 
-          <gom-textarea
+          <gom-lib-textarea
             label="Anchor Price Formula"
             [rows]="3"
             placeholder="Example: sellingPrice * 1.05"
             [formControl]="formulaForm.controls.anchorPrice"
+            [hint]="getAnchorFormulaHint()"
             [error]="formulaForm.controls.anchorPrice.touched && formulaForm.controls.anchorPrice.invalid ? 'Anchor price formula is required' : ''"
             (focus)="setFormulaTarget('anchorPrice')"
-          ></gom-textarea>
-        </div>
-
-        <div class="wizard__panel">
-          <h4>Live Preview</h4>
-          <p class="preview__error" *ngIf="formulaPreview().error">{{ formulaPreview().error }}</p>
-          <div class="preview-grid" *ngIf="!formulaPreview().error">
-            <div>
-              <span class="preview-grid__label">Selling Price</span>
-              <p>{{ formulaPreview().sellingPrice ?? '-' }}</p>
-            </div>
-            <div>
-              <span class="preview-grid__label">Anchor Price</span>
-              <p>{{ formulaPreview().anchorPrice ?? '-' }}</p>
-            </div>
-          </div>
+          ></gom-lib-textarea>
         </div>
       </section>
-    </gom-tab-content>
+    </gom-lib-tab-content>
 
-    <gom-tab-content [tabId]="5" [activeTab]="currentStep()">
+    <gom-lib-tab-content [tabId]="5" [activeTab]="currentStep()">
       <section class="wizard__body">
         <div class="form-grid">
-          <gom-select
+          <gom-lib-select
             label="Base Unit"
             placeholder="Select base unit"
             [options]="unitOptions()"
             [formControl]="unitsForm.controls.baseUnitId"
             [error]="unitsForm.controls.baseUnitId.touched && unitsForm.controls.baseUnitId.invalid ? 'Base unit is required' : ''"
             (valueChange)="onBaseUnitChange($event)"
-          ></gom-select>
+          ></gom-lib-select>
         </div>
 
         <div class="wizard__panel">
           <h4>Allowed Units</h4>
-          <div class="checkbox-grid" *ngIf="unitOptions().length > 0; else noUnits">
-            <label *ngFor="let option of unitOptions()" class="checkbox-grid__item">
-              <input
-                type="checkbox"
-                [checked]="isAllowedUnitSelected(option.value)"
-                (change)="toggleAllowedUnit(option.value, $any($event.target).checked)"
-              />
-              <span>{{ option.label }}</span>
-            </label>
-          </div>
-          <ng-template #noUnits>
+          @if (unitOptions().length > 0) {
+            <div class="checkbox-grid">
+              @for (option of unitOptions(); track option.value) {
+                <label class="checkbox-grid__item">
+                  <input
+                    type="checkbox"
+                    [checked]="isAllowedUnitSelected(option.value)"
+                    (change)="toggleAllowedUnit(option.value, $any($event.target).checked)"
+                  />
+                  <span>{{ option.label }}</span>
+                </label>
+              }
+            </div>
+          } @else {
             <p>No units available.</p>
-          </ng-template>
+          }
         </div>
       </section>
-    </gom-tab-content>
-  </gom-tabs>
+    </gom-lib-tab-content>
 
-  <footer class="wizard__footer" gom-modal-actions>
-    <gom-button type="button" variant="secondary" (buttonClick)="previousStep()" *ngIf="currentStep() > 1">
-      <i class="ri-arrow-left-line" aria-hidden="true"></i> Previous
-    </gom-button>
+  </gom-lib-tabs>
 
-    <gom-button type="button" variant="secondary" (buttonClick)="nextStep()" *ngIf="currentStep() < 5">
-      Next <i class="ri-arrow-right-line" aria-hidden="true"></i>
-    </gom-button>
+  <footer class="wizard__footer gom-modal__action-layout groups-wizard__actions" gom-modal-actions>
+    <div class="gom-modal__action-layout-start"></div>
+    <div class="gom-modal__action-layout-end">
+      @if (currentStep() > 1) {
+        <gom-lib-button
+          class="groups-wizard__action"
+          type="button"
+          variant="secondary"
+          [size]="cancelMode === 'icon-only' ? 'icon' : 'default'"
+          aria-label="Previous"
+          title="Previous"
+          (buttonClick)="previousStep()"
+        >
+          @if (shouldShowIcon(cancelMode)) {
+            <i class="ri-arrow-left-line" aria-hidden="true"></i>
+          }
+          @if (shouldShowText(cancelMode)) {
+            Previous
+          }
+        </gom-lib-button>
+      }
 
-    <gom-button type="button" variant="primary" (buttonClick)="saveGroup()" [disabled]="saving()" *ngIf="currentStep() === 5">
-      <i class="ri-check-double-line" aria-hidden="true"></i> {{ saving() ? 'Saving...' : 'Save Group' }}
-    </gom-button>
+      @if (currentStep() < 5) {
+        <gom-lib-button
+          class="groups-wizard__action"
+          type="button"
+          variant="secondary"
+          [size]="secondaryMode === 'icon-only' ? 'icon' : 'default'"
+          aria-label="Next"
+          title="Next"
+          (buttonClick)="nextStep()"
+          [disabled]="!canProceedToNextStep()"
+        >
+          @if (shouldShowIcon(secondaryMode)) {
+            <i class="ri-arrow-right-line" aria-hidden="true"></i>
+          }
+          @if (shouldShowText(secondaryMode)) {
+            Next
+          }
+        </gom-lib-button>
+      }
+
+      @if (currentStep() === 5) {
+        <gom-lib-button
+          class="groups-wizard__action"
+          type="button"
+          variant="primary"
+          [size]="submitMode === 'icon-only' ? 'icon' : 'default'"
+          aria-label="Save Group"
+          title="Save Group"
+          (buttonClick)="saveGroup()"
+          [disabled]="saving() || !canSaveGroup()"
+        >
+          @if (shouldShowIcon(submitMode)) {
+            <i class="ri-check-double-line" aria-hidden="true"></i>
+          }
+          @if (shouldShowText(submitMode)) {
+            {{ saving() ? 'Saving...' : 'Save Group' }}
+          }
+        </gom-lib-button>
+      }
+    </div>
   </footer>
-</gom-modal>
+</gom-lib-modal>

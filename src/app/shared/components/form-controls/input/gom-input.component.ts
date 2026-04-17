@@ -3,7 +3,7 @@ import { Component, EventEmitter, Input, Output, forwardRef } from '@angular/cor
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 @Component({
-  selector: 'gom-input',
+  selector: 'gom-lib-input',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './gom-input.component.html',
@@ -18,7 +18,8 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 })
 export class GomInputComponent implements ControlValueAccessor {
   @Input() label = '';
-  @Input() type: 'text' | 'email' | 'password' | 'number' | 'search' = 'text';
+  @Input() required = false;
+  @Input() type: 'text' | 'email' | 'password' | 'number' | 'search' | 'date' | 'datetime-local' = 'text';
   @Input() placeholder = '';
   @Input() hint = '';
   @Input() error = '';

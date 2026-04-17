@@ -7,6 +7,7 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
+import { Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
 import {
@@ -14,9 +15,16 @@ import {
   GomButtonComponent,
   GomSelectOption,
 } from '../../../shared/components/form-controls';
+import {
+  GomButtonContentMode,
+  getButtonContentMode,
+  showButtonIcon,
+  showButtonText,
+} from '../../../shared/components/config';
 import { GomTableColumn, GomTableComponent, GomTableRow } from '../../../shared/components/table';
 import { GomTabsComponent, GomTabContentComponent, TabItem } from '../../../shared/components/tabs';
 import { GomModalComponent } from '../../../shared/components/modal';
+import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import {
   Category,
   Field,
@@ -25,6 +33,7 @@ import {
   GroupPayload,
   GroupsService,
   Unit,
+  TaxProfile,
 } from './groups.service';
 
 interface GroupRow extends GomTableRow {
@@ -32,6 +41,9 @@ interface GroupRow extends GomTableRow {
   name: string;
   categoryName: string;
   fieldGroupName: string;
+  taxProfileName: string;
+  stock: string;
+  stockSeverity: 'normal' | 'low' | 'critical';
   status: string;
   updatedAt: string;
   actions: string;
@@ -67,8 +79,11 @@ type FormulaTarget = 'sellingPrice' | 'anchorPrice';
 export class GroupsComponent implements OnInit {
   private readonly groupsService = inject(GroupsService);
   private readonly fb = inject(FormBuilder);
+  private readonly router = inject(Router);
+  private readonly authSession = inject(AuthSessionService);
 
   readonly loading = signal(false);
+  readonly canWrite = computed(() => this.authSession.canWrite('product'));
   readonly saving = signal(false);
   readonly errorMessage = signal<string | null>(null);
 
@@ -77,17 +92,23 @@ export class GroupsComponent implements OnInit {
   readonly fields = signal<Field[]>([]);
   readonly fieldGroups = signal<FieldGroup[]>([]);
   readonly units = signal<Unit[]>([]);
+  readonly taxProfiles = signal<TaxProfile[]>([]);
 
   readonly wizardOpen = signal(false);
   readonly currentStep = signal(1);
   readonly editingGroupId = signal<string | null>(null);
+  readonly editingQuantity = signal(1);
+  readonly selectedFieldGroupIds = signal<string[]>([]);
   readonly selectedExtraFieldIds = signal<string[]>([]);
   readonly formulaTarget = signal<FormulaTarget>('sellingPrice');
+  readonly submitMode: GomButtonContentMode = getButtonContentMode('primary-action');
+  readonly cancelMode: GomButtonContentMode = getButtonContentMode('dismiss');
+  readonly secondaryMode: GomButtonContentMode = getButtonContentMode('secondary-action');
 
   readonly basicForm = this.fb.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
     categoryId: ['', [Validators.required]],
-    quantity: [1, [Validators.required, Validators.min(0.0001)]],
+    taxProfileId: [''],
   });
 
   readonly selectionForm = this.fb.group({
@@ -111,13 +132,33 @@ export class GroupsComponent implements OnInit {
     { key: 'name', header: 'Group Name', sortable: true, filterable: true, width: '16rem' },
     { key: 'categoryName', header: 'Category', sortable: true, filterable: true, width: '12rem' },
     { key: 'fieldGroupName', header: 'Field Group', sortable: true, filterable: true, width: '14rem' },
+    { key: 'taxProfileName', header: 'Tax Profile', sortable: true, filterable: true, width: '14rem' },
+    {
+      key: 'stock',
+      header: 'Stock',
+      sortable: true,
+      width: '10rem',
+      cellClass: (_value, row) => {
+        if (row.stockSeverity === 'critical') {
+          return 'group-stock--critical';
+        }
+        if (row.stockSeverity === 'low') {
+          return 'group-stock--low';
+        }
+        return 'group-stock--normal';
+      },
+    },
     { key: 'status', header: 'Status', sortable: true, filterable: true, width: '10rem' },
     { key: 'updatedAt', header: 'Updated', sortable: true, width: '12rem' },
     {
       key: 'actions',
       header: 'Actions',
-      width: '10rem',
-      actionButtons: [{ label: 'Edit', actionKey: 'edit', variant: 'secondary' }],
+      width: '20rem',
+      actionButtons: [
+        { label: 'Edit', actionKey: 'edit', variant: 'secondary' },
+        { label: 'Add Stock', actionKey: 'add-stock', variant: 'secondary' },
+        { label: 'Add Variant', actionKey: 'add-variant', variant: 'secondary' },
+      ],
     },
   ];
 
@@ -128,41 +169,79 @@ export class GroupsComponent implements OnInit {
   );
 
   readonly fieldGroupOptions = computed<GomSelectOption[]>(() =>
-    this.fieldGroups()
+    this.getFieldGroupsForCategory(this.basicForm.controls.categoryId.value || '')
       .filter((item) => item.status === 'ACTIVE')
       .map((item) => ({ label: `${item.name} (v${item.version})`, value: item._id }))
   );
 
   readonly unitOptions = computed<GomSelectOption[]>(() =>
-    this.units()
+    this.getUnitsForCategory(this.basicForm.controls.categoryId.value || '')
       .filter((item) => item.status === 'ACTIVE')
       .map((item) => ({ label: `${item.name} (${item.symbol})`, value: item._id }))
   );
 
-  readonly selectedFieldGroup = computed(() =>
-    this.fieldGroups().find((item) => item._id === this.selectionForm.controls.fieldGroupId.value) || null
+  readonly taxProfileOptions = computed<GomSelectOption[]>(() =>
+    this.taxProfiles()
+      .filter((item) => item.status === 'ACTIVE')
+      .map((item) => ({
+        label: `${item.name} (${item.taxMode === 'GST' ? `${item.rate}% GST` : 'No Tax'})`,
+        value: item._id,
+      }))
   );
 
+  readonly selectedFieldGroups = computed<FieldGroup[]>(() => {
+    const selectedIds = this.selectedFieldGroupIds();
+    if (!selectedIds.length) {
+      return [];
+    }
+
+    const byId = new Map(this.fieldGroups().map((item) => [item._id, item]));
+    return selectedIds
+      .map((id) => byId.get(id) || null)
+      .filter((item): item is FieldGroup => !!item);
+  });
+
   readonly groupFields = computed<GroupWizardField[]>(() => {
-    const selected = this.selectedFieldGroup();
-    if (!selected) {
+    const selectedGroups = this.selectedFieldGroups();
+    if (!selectedGroups.length) {
       return [];
     }
 
     const byId = new Map(this.fields().map((item) => [item._id, item]));
+    const merged = new Map<string, GroupWizardField>();
 
-    return [...selected.fields]
-      .sort((a, b) => a.order - b.order)
-      .map((item) => byId.get(item.fieldId))
-      .filter((item): item is Field => !!item)
-      .map((item) => ({
-        fieldId: item._id,
-        key: item.key,
-        name: item.name,
-        type: item.type,
-        isRequired: item.isRequired,
-        defaultValue: item.defaultValue,
-      }));
+    for (const selected of selectedGroups) {
+      for (const item of [...selected.fields].sort((a, b) => a.order - b.order)) {
+        const field = byId.get(item.fieldId);
+        if (!field || !this.isPricingField(field)) {
+          continue;
+        }
+
+        if (merged.has(field._id)) {
+          continue;
+        }
+
+        let resolvedDefaultValue = 0;
+        if (typeof field.defaultValue === 'number') {
+          resolvedDefaultValue = field.defaultValue;
+        }
+
+        if (typeof item.defaultValue === 'number') {
+          resolvedDefaultValue = item.defaultValue;
+        }
+
+        merged.set(field._id, {
+          fieldId: field._id,
+          key: field.key,
+          name: field.name,
+          type: field.type,
+          isRequired: typeof item.requiredOverride === 'boolean' ? item.requiredOverride : field.isRequired,
+          defaultValue: resolvedDefaultValue,
+        });
+      }
+    }
+
+    return [...merged.values()];
   });
 
   readonly availableExtraFields = computed<GroupWizardField[]>(() => {
@@ -170,13 +249,14 @@ export class GroupsComponent implements OnInit {
 
     return this.fields()
       .filter((item) => item.status === 'ACTIVE' && !baseFieldIds.has(item._id))
+      .filter((item) => this.isPricingField(item))
       .map((item) => ({
         fieldId: item._id,
         key: item.key,
         name: item.name,
         type: item.type,
         isRequired: item.isRequired,
-        defaultValue: item.defaultValue,
+        defaultValue: typeof item.defaultValue === 'number' ? item.defaultValue : 0,
       }));
   });
 
@@ -189,19 +269,37 @@ export class GroupsComponent implements OnInit {
   readonly rows = computed<GroupRow[]>(() => {
     const categoriesById = new Map(this.categories().map((item) => [item._id, item.name]));
     const fieldGroupsById = new Map(this.fieldGroups().map((item) => [item._id, item.name]));
+    const taxProfilesById = new Map(this.taxProfiles().map((item) => [item._id, item.name]));
 
-    return this.groups().map((item) => ({
-      _id: item._id,
-      name: item.name,
-      categoryName: categoriesById.get(item.categoryId) || '-',
-      fieldGroupName: fieldGroupsById.get(item.fieldGroupId) || '-',
-      status: item.status,
-      updatedAt: new Date(item.updatedAt).toLocaleDateString(),
-      actions: 'Edit',
-    }));
+    return this.groups().map((item) => {
+      const availableStock = Number(item.stock?.available ?? 0);
+      const reorderLevel = Number(item.stock?.reorderLevel ?? 0);
+      let stockSeverity: GroupRow['stockSeverity'] = 'normal';
+
+      if (availableStock === 0) {
+        stockSeverity = 'critical';
+      } else if (availableStock <= reorderLevel) {
+        stockSeverity = 'low';
+      }
+
+      return {
+        _id: item._id,
+        name: item.name,
+        categoryName: categoriesById.get(item.categoryId) || '-',
+        fieldGroupName: fieldGroupsById.get(item.fieldGroupId) || '-',
+        taxProfileName: item.taxProfileId ? (taxProfilesById.get(item.taxProfileId) || 'Unknown') : 'Not mapped',
+        stock: availableStock.toLocaleString(),
+        stockSeverity,
+        status: item.status,
+        updatedAt: new Date(item.updatedAt).toLocaleDateString(),
+        actions: 'Edit',
+      };
+    });
   });
 
-  readonly formulaPreview = computed(() => this.calculateFormulaPreview());
+  formulaPreview(): { sellingPrice: number | null; anchorPrice: number | null; error: string | null } {
+    return this.calculateFormulaPreview();
+  }
 
   readonly wizardTabs = computed<TabItem[]>(() => [
     { id: 1, label: '1. Basic Info' },
@@ -225,6 +323,7 @@ export class GroupsComponent implements OnInit {
       fields: this.groupsService.listFields(),
       fieldGroups: this.groupsService.listFieldGroups(),
       units: this.groupsService.listUnits(),
+      taxProfiles: this.groupsService.listTaxProfiles(),
     }).subscribe({
       next: (result) => {
         this.groups.set(result.groups.data ?? []);
@@ -232,6 +331,7 @@ export class GroupsComponent implements OnInit {
         this.fields.set(result.fields.data ?? []);
         this.fieldGroups.set(result.fieldGroups.data ?? []);
         this.units.set(result.units.data ?? []);
+        this.taxProfiles.set(result.taxProfiles.data ?? []);
         this.loading.set(false);
       },
       error: (error) => {
@@ -252,13 +352,35 @@ export class GroupsComponent implements OnInit {
   }
 
   onRowAction(event: { actionKey: string; row: GomTableRow }): void {
-    if (event.actionKey !== 'edit') {
+    if (!this.canWrite()) {
       return;
     }
-
     const groupId = typeof event.row['_id'] === 'string' ? event.row['_id'] : '';
     const existing = this.groups().find((item) => item._id === groupId);
     if (!existing) {
+      return;
+    }
+
+    if (event.actionKey === 'add-stock') {
+      void this.router.navigate(['/product/stock'], {
+        queryParams: {
+          groupId: existing._id,
+          openAdd: '1',
+        },
+      });
+      return;
+    }
+
+    if (event.actionKey === 'add-variant') {
+      void this.router.navigate(['/product/variants'], {
+        queryParams: {
+          groupId: existing._id,
+        },
+      });
+      return;
+    }
+
+    if (event.actionKey !== 'edit') {
       return;
     }
 
@@ -268,9 +390,11 @@ export class GroupsComponent implements OnInit {
     this.basicForm.patchValue({
       name: existing.name,
       categoryId: existing.categoryId,
-      quantity: existing.quantity,
+      taxProfileId: existing.taxProfileId || '',
     });
+    this.editingQuantity.set(existing.quantity || 1);
 
+    this.selectedFieldGroupIds.set([existing.fieldGroupId]);
     this.selectionForm.patchValue({ fieldGroupId: existing.fieldGroupId });
 
     const selectedGroup = this.fieldGroups().find((item) => item._id === existing.fieldGroupId);
@@ -294,9 +418,54 @@ export class GroupsComponent implements OnInit {
     this.wizardOpen.set(true);
   }
 
-  onFieldGroupChange(): void {
+  onFieldGroupSelectionChange(ids: string[]): void {
+    const cleaned = [...new Set(ids.map((id) => String(id || '').trim()).filter((id) => !!id))];
+    this.selectedFieldGroupIds.set(cleaned);
+    this.selectionForm.patchValue({ fieldGroupId: cleaned[0] || '' });
+
     this.selectedExtraFieldIds.set([]);
     this.syncDynamicFields();
+  }
+
+  onCategoryChange(categoryId: string): void {
+    const selectedFieldGroupId = this.selectionForm.controls.fieldGroupId.value || '';
+    const allowedFieldGroups = this.getFieldGroupsForCategory(categoryId)
+      .filter((item) => item.status === 'ACTIVE');
+    const allowedFieldGroupIds = new Set(allowedFieldGroups.map((item) => item._id));
+
+    const filteredSelectedIds = this.selectedFieldGroupIds().filter((id) => allowedFieldGroupIds.has(id));
+    if (filteredSelectedIds.length !== this.selectedFieldGroupIds().length) {
+      this.selectedFieldGroupIds.set(filteredSelectedIds);
+      this.selectionForm.patchValue({ fieldGroupId: filteredSelectedIds[0] || '' });
+      this.selectedExtraFieldIds.set([]);
+      this.syncDynamicFields();
+    }
+
+    if (selectedFieldGroupId && !allowedFieldGroups.some((item) => item._id === selectedFieldGroupId)) {
+      this.selectionForm.patchValue({ fieldGroupId: '' });
+      this.selectedFieldGroupIds.set([]);
+      this.selectedExtraFieldIds.set([]);
+      this.syncDynamicFields();
+    }
+
+    if (!this.selectionForm.controls.fieldGroupId.value && allowedFieldGroups.length === 1) {
+      this.onFieldGroupSelectionChange([allowedFieldGroups[0]._id]);
+    }
+
+    const allowedUnits = this.getUnitsForCategory(categoryId)
+      .filter((item) => item.status === 'ACTIVE')
+      .map((item) => item._id);
+    const allowedUnitSet = new Set(allowedUnits);
+
+    const currentBaseUnit = this.unitsForm.controls.baseUnitId.value || '';
+    if (currentBaseUnit && !allowedUnitSet.has(currentBaseUnit)) {
+      this.unitsForm.patchValue({ baseUnitId: '' });
+    }
+
+    const filteredAllowedUnits = this.allowedUnitIds().filter((id) => allowedUnitSet.has(id));
+    if (filteredAllowedUnits.length !== this.allowedUnitIds().length) {
+      this.allowedUnitIds.set(filteredAllowedUnits);
+    }
   }
 
   toggleExtraField(fieldId: string, checked: boolean): void {
@@ -336,6 +505,51 @@ export class GroupsComponent implements OnInit {
     return this.valuesForm.get(key) as FormControl<number | null>;
   }
 
+  getFieldHint(field: GroupWizardField): string {
+    if (field.type !== 'PERCENTAGE') {
+      return '';
+    }
+
+    const percentage = Number(this.getValueControl(field.key).value);
+    if (!Number.isFinite(percentage)) {
+      return '';
+    }
+
+    const numberFields = this.wizardFields().filter((item) => item.type === 'NUMBER' && item.key !== field.key);
+    if (!numberFields.length) {
+      return '';
+    }
+
+    const preferredBase = numberFields.find((item) => ['buyPrice', 'buy_price', 'basePrice', 'costPrice'].includes(item.key));
+    const baseField = preferredBase || numberFields[0];
+    const baseValue = Number(this.getValueControl(baseField.key).value);
+
+    if (!Number.isFinite(baseValue)) {
+      return '';
+    }
+
+    const calculated = (baseValue * percentage) / 100;
+    return `= ${calculated.toFixed(2)}`;
+  }
+
+  getSellingFormulaHint(): string {
+    const preview = this.formulaPreview();
+    if (preview.error || preview.sellingPrice === null) {
+      return '';
+    }
+
+    return `Calculated selling price: ${preview.sellingPrice}`;
+  }
+
+  getAnchorFormulaHint(): string {
+    const preview = this.formulaPreview();
+    if (preview.error || preview.anchorPrice === null) {
+      return '';
+    }
+
+    return `Calculated anchor price: ${preview.anchorPrice}`;
+  }
+
   setFormulaTarget(target: FormulaTarget): void {
     this.formulaTarget.set(target);
   }
@@ -370,7 +584,7 @@ export class GroupsComponent implements OnInit {
   }
 
   selectStep(stepId: string | number): void {
-    const step = typeof stepId === 'number' ? stepId : parseInt(stepId as string, 10);
+    const step = typeof stepId === 'number' ? stepId : Number.parseInt(stepId, 10);
     const currentStep = this.currentStep();
 
     // Allow jumping backwards without validation
@@ -424,6 +638,22 @@ export class GroupsComponent implements OnInit {
         this.saving.set(false);
       },
     });
+  }
+
+  canProceedToNextStep(): boolean {
+    return this.isStepValid(this.currentStep());
+  }
+
+  canSaveGroup(): boolean {
+    return [1, 2, 3, 4, 5].every((step) => this.isStepValid(step));
+  }
+
+  shouldShowIcon(mode: GomButtonContentMode): boolean {
+    return showButtonIcon(mode);
+  }
+
+  shouldShowText(mode: GomButtonContentMode): boolean {
+    return showButtonText(mode);
   }
 
   private isStepValid(step: number): boolean {
@@ -510,11 +740,13 @@ export class GroupsComponent implements OnInit {
   private resetWizard(): void {
     this.currentStep.set(1);
     this.editingGroupId.set(null);
+    this.editingQuantity.set(1);
+    this.selectedFieldGroupIds.set([]);
     this.selectedExtraFieldIds.set([]);
     this.allowedUnitIds.set([]);
     this.formulaTarget.set('sellingPrice');
 
-    this.basicForm.reset({ name: '', categoryId: '', quantity: 1 });
+    this.basicForm.reset({ name: '', categoryId: '', taxProfileId: '' });
     this.selectionForm.reset({ fieldGroupId: '' });
     this.formulaForm.reset({ sellingPrice: '', anchorPrice: '' });
     this.unitsForm.reset({ baseUnitId: '' });
@@ -528,18 +760,15 @@ export class GroupsComponent implements OnInit {
       value: Number(values[field.key]),
     }));
 
-    const quantity = Number(this.basicForm.controls.quantity.value);
-
-    if (!Number.isFinite(quantity) || quantity <= 0) {
-      this.errorMessage.set('Quantity must be greater than zero.');
-      return null;
-    }
+    const quantity = this.editingGroupId() ? this.editingQuantity() : 1;
 
     const baseUnitId = String(this.unitsForm.controls.baseUnitId.value || '');
     const allowedUnitIds = new Set(this.allowedUnitIds());
     if (baseUnitId) {
       allowedUnitIds.add(baseUnitId);
     }
+
+    const taxProfileId = String(this.basicForm.controls.taxProfileId.value || '').trim();
 
     return {
       name: String(this.basicForm.controls.name.value || '').trim(),
@@ -553,6 +782,7 @@ export class GroupsComponent implements OnInit {
       },
       baseUnitId,
       allowedUnitIds: [...allowedUnitIds],
+      taxProfileId,
       status: 'ACTIVE',
     };
   }
@@ -572,20 +802,36 @@ export class GroupsComponent implements OnInit {
     const sellingFormula = String(this.formulaForm.controls.sellingPrice.value || '').trim();
     const anchorFormula = String(this.formulaForm.controls.anchorPrice.value || '').trim();
 
-    if (!sellingFormula || !anchorFormula) {
+    if (!sellingFormula && !anchorFormula) {
       return { sellingPrice: null, anchorPrice: null, error: null };
     }
 
     try {
-      const selling = this.evaluateExpression(sellingFormula, context);
-      const anchor = this.evaluateExpression(anchorFormula, {
-        ...context,
-        sellingPrice: selling,
-      });
+      let selling: number | null = null;
+      let anchor: number | null = null;
+
+      if (sellingFormula) {
+        selling = this.evaluateExpression(sellingFormula, context);
+      }
+
+      if (anchorFormula) {
+        if (!Number.isFinite(selling)) {
+          return {
+            sellingPrice: null,
+            anchorPrice: null,
+            error: 'Selling price formula is required before anchor price formula.',
+          };
+        }
+
+        anchor = this.evaluateExpression(anchorFormula, {
+          ...context,
+          sellingPrice: Number(selling),
+        });
+      }
 
       return {
-        sellingPrice: Number(selling.toFixed(2)),
-        anchorPrice: Number(anchor.toFixed(2)),
+        sellingPrice: Number.isFinite(selling) ? Number(Number(selling).toFixed(2)) : null,
+        anchorPrice: Number.isFinite(anchor) ? Number(Number(anchor).toFixed(2)) : null,
         error: null,
       };
     } catch (error) {
@@ -597,13 +843,49 @@ export class GroupsComponent implements OnInit {
     }
   }
 
+  private getFieldGroupsForCategory(categoryId: string): FieldGroup[] {
+    const normalizedCategoryId = String(categoryId || '').trim();
+    const activeFieldGroups = this.fieldGroups().filter((item) => item.status === 'ACTIVE');
+
+    if (!normalizedCategoryId) {
+      return activeFieldGroups;
+    }
+
+    return activeFieldGroups.filter((fieldGroup) => {
+      const mappedCategoryIds = fieldGroup.categoryIds || [];
+      if (!mappedCategoryIds.length) {
+        return true;
+      }
+
+      return mappedCategoryIds.includes(normalizedCategoryId);
+    });
+  }
+
+  private getUnitsForCategory(categoryId: string): Unit[] {
+    const normalizedCategoryId = String(categoryId || '').trim();
+    const allUnits = this.units();
+
+    if (!normalizedCategoryId) {
+      return allUnits;
+    }
+
+    return allUnits.filter((unit) => {
+      const mappedCategoryIds = unit.categoryIds || [];
+      if (!mappedCategoryIds.length) {
+        return true;
+      }
+
+      return mappedCategoryIds.includes(normalizedCategoryId);
+    });
+  }
+
   private evaluateExpression(expression: string, context: Record<string, number>): number {
-    if (!/^[\d\s()+\-*/._A-Za-z]+$/.test(expression)) {
+    if (!/^[\d\s()+\-*/%._A-Za-z]+$/.test(expression)) {
       throw new Error('Formula contains unsupported characters.');
     }
 
     const keys = Object.keys(context).sort((a, b) => b.length - a.length);
-    let replaced = expression;
+    let replaced = expression.replace(/(\d+(?:\.\d+)?)\s*%/g, '($1/100)');
 
     for (const key of keys) {
       const value = context[key];
@@ -623,5 +905,12 @@ export class GroupsComponent implements OnInit {
     }
 
     return numeric;
+  }
+
+  private isPricingField(field: Field): field is Field & { type: 'NUMBER' | 'PERCENTAGE' } {
+    return (
+      field.fieldKind !== 'METADATA'
+      && (field.type === 'NUMBER' || field.type === 'PERCENTAGE')
+    );
   }
 }

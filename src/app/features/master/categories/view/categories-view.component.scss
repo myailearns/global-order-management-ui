@@ -1,0 +1,51 @@
+@use "../../../../shared/theming/styles/theme" as theme;
+
+.category-view {
+  display: grid;
+  gap: theme.get-gap(sm);
+}
+
+.category-view__row {
+  display: grid;
+  gap: theme.get-gap(xxs);
+  padding: theme.get-spacing(xs) 0;
+  border-bottom: theme.get-border-size(hairline) solid theme.get-border(standard);
+
+  &:last-child {
+    border-bottom: 0;
+  }
+
+  h4 {
+    margin: 0;
+    @include theme.typography-label;
+    color: theme.get-text(primary);
+  }
+
+  p {
+    margin: 0;
+    @include theme.typography-body;
+    color: theme.get-text(default);
+  }
+}
+
+.category-view__status {
+  display: inline-flex;
+  width: fit-content;
+  padding: theme.get-spacing(xxs) theme.get-spacing(xs);
+  border-radius: theme.get-radius(full);
+  background: rgba(16, 185, 129, 0.12);
+  color: theme.get-text(primary);
+}
+
+.category-view__status--inactive {
+  background: rgba(239, 68, 68, 0.12);
+  color: theme.get-text(danger);
+}
+
+.category-view__actions {
+  width: 100%;
+}
+
+.category-view__action {
+  justify-content: center;
+}

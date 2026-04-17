@@ -1,0 +1,205 @@
+.gom-users-list {
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--gom-color-primary) 6%, white) 0%, white 65%);
+  border-radius: 0.75rem;
+}
+
+.gom-users-list__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+
+  h1 {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: var(--gom-color-text-primary);
+  }
+}
+
+.gom-users-list__title-wrap {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.gom-users-list__subtitle {
+  margin: 0;
+  color: var(--gom-color-text-secondary);
+  font-size: 0.95rem;
+}
+
+.gom-users-list__filters {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  background: white;
+  border: 1px solid var(--gom-color-border);
+  border-radius: 0.75rem;
+  padding: 1rem;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+
+    input,
+    select {
+      width: 100%;
+    }
+  }
+}
+
+.gom-users-list__meta {
+  font-size: 0.875rem;
+  color: var(--gom-color-text-secondary);
+}
+
+.gom-users-list__status-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 150px;
+}
+
+.gom-users-list__filter-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--gom-color-text-secondary);
+}
+
+.gom-users-list__status-select {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--gom-color-border);
+  border-radius: 0.375rem;
+  background-color: white;
+  font-size: 0.875rem;
+  cursor: pointer;
+
+  &:focus {
+    outline: 2px solid var(--gom-color-primary);
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    background-color: var(--gom-color-background-disabled);
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+.gom-users-list__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  background-color: var(--gom-color-background-secondary);
+  border-radius: 0.5rem;
+
+  p {
+    margin: 0;
+    color: var(--gom-color-text-secondary);
+    font-size: 0.875rem;
+  }
+}
+
+.gom-users-list__loading {
+  padding: 1rem;
+  background: var(--gom-color-background-secondary);
+  border-radius: 0.5rem;
+  color: var(--gom-color-text-secondary);
+}
+
+.gom-users-list__table-wrap {
+  background: white;
+  border: 1px solid var(--gom-color-border);
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+.gom-alert {
+  padding: 1rem;
+  border-radius: 0.375rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  &--error {
+    background-color: var(--gom-color-danger-light, #fee);
+    color: var(--gom-color-danger, #d32f2f);
+    border-left: 4px solid var(--gom-color-danger);
+  }
+}
+
+.gom-users-list__pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--gom-color-border);
+}
+
+.gom-users-list__pagination-btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--gom-color-border);
+  background-color: white;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s;
+
+  &:hover:not(:disabled) {
+    background-color: var(--gom-color-primary);
+    color: white;
+    border-color: var(--gom-color-primary);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &:focus {
+    outline: 2px solid var(--gom-color-primary);
+    outline-offset: 2px;
+  }
+}
+
+.gom-users-list__pagination-info {
+  min-width: 150px;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--gom-color-text-secondary);
+}
+
+.gom-users-list__assign-modal {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.gom-users-list__assign-user {
+  margin: 0;
+  color: var(--gom-color-text-secondary);
+}
+
+.gom-users-list__role-list {
+  display: grid;
+  gap: 0.5rem;
+  max-height: 280px;
+  overflow: auto;
+  border: 1px solid var(--gom-color-border);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+}
+
+.gom-users-list__role-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}

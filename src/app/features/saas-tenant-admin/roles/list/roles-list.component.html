@@ -1,0 +1,46 @@
+<section class="roles-list">
+  <header class="roles-list__header">
+    <div>
+      <h1>{{ 'saas.admin.roles.title' | translate }}</h1>
+      @if (!platformMode()) {
+        <p class="roles-list__subtitle">{{ 'saas.admin.roles.msg_use_platform_flow' | translate }}</p>
+      }
+      @if (platformMode()) {
+        <p class="roles-list__subtitle">{{ 'saas.admin.roles.msg_platform_select_tenant' | translate }}</p>
+      }
+    </div>
+    <div class="roles-list__header-actions">
+      @if (!platformMode()) {
+        <gom-lib-button variant="secondary" (buttonClick)="openPlatformTenantRoles()">
+          {{ 'saas.admin.roles.btn_open_platform_roles' | translate }}
+        </gom-lib-button>
+      }
+      @if (canWrite()) {
+      <gom-lib-button (buttonClick)="createRole()" [disabled]="platformMode() && !selectedTenantId()">
+        {{ 'saas.admin.roles.btn_create' | translate }}
+      </gom-lib-button>
+      }
+    </div>
+  </header>
+
+  @if (platformMode()) {
+    <div class="roles-list__tenant-picker">
+      <gom-lib-select
+        [label]="'saas.admin.roles.lbl_tenant' | translate"
+        [placeholder]="'saas.admin.roles.ph_select_tenant' | translate"
+        [options]="tenantOptions()"
+        [searchable]="true"
+        [ngModel]="selectedTenantId()"
+        (ngModelChange)="onTenantSelect($event)"
+      ></gom-lib-select>
+    </div>
+  }
+
+  <gom-lib-table
+    [columns]="columns()"
+    [rows]="rows()"
+    [loading]="loading()"
+    [totalItems]="rows().length"
+    (rowAction)="onTableAction($event)">
+  </gom-lib-table>
+</section>

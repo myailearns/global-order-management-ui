@@ -1,0 +1,711 @@
+{
+  "app": {
+    "name": "Global Order Management",
+    "module": "Product Creation Module",
+    "navigation": {
+      "toggle": "Toggle navigation",
+      "close": "Close menu",
+      "workspace": "Workspace",
+      "menu": "Navigation",
+      "expand": "Expand {{section}}",
+      "collapse": "Collapse {{section}}",
+      "expandSidebar": "Expand sidebar",
+      "collapseSidebar": "Collapse sidebar",
+      "masterSetup": "Master Setup",
+      "productSetup": "Product Setup",
+      "categories": "Categories",
+      "fields": "Fields",
+      "fieldGroups": "Field Groups",
+      "units": "Units",
+      "taxProfiles": "Tax Profiles",
+      "groupCreation": "Group Creation",
+      "stock": "Stock",
+      "variants": "Variants",
+      "packs": "Packs",
+      "orders": "Orders",
+      "orderManagement": "Order Management",
+      "riders": "Riders",
+      "courierPartners": "Courier Partners",
+      "settings": "Settings",
+      "employeeCode": "Employee Code",
+      "serviceablePincodes": "Serviceable Pincodes",
+      "tenantAdmin": "Tenant Admin",
+      "tenantDashboard": "Tenant Dashboard",
+      "tenantUsers": "Tenant Users",
+      "tenantEmployees": "Tenant Employees",
+      "tenantRoles": "Tenant Roles",
+      "customers": "Customers",
+      "customerGroups": "Customer Groups",
+      "saasAccounts": "SaaS Accounts",
+      "saasPackages": "SaaS Packages",
+      "saasFeatures": "SaaS Features",
+      "platformTenantRoles": "Platform Tenant Roles",
+      "tenantEntitlements": "Tenant Entitlements"
+    },
+    "actions": {
+      "notifications": "Notifications",
+      "profile": "User profile",
+      "logout": "Logout"
+    },
+    "language": {
+      "label": "Language",
+      "english": "English",
+      "telugu": "Telugu",
+      "hindi": "Hindi"
+    }
+  },
+  "common": {
+    "btn_cancel": "Cancel",
+    "btn_confirm": "Confirm",
+    "email": "Email",
+    "phone": "Phone",
+    "msg_no_results": "No results found.",
+    "status": {
+      "active": "ACTIVE",
+      "inactive": "INACTIVE"
+    },
+    "actions": {
+      "view": "View",
+      "edit": "Edit",
+      "delete": "Delete",
+      "create": "Create",
+      "update": "Update",
+      "cancel": "Cancel",
+      "close": "Close"
+    },
+    "labels": {
+      "actions": "Actions",
+      "description": "Description",
+      "status": "Status"
+    },
+    "messages": {
+      "closeErrorBanner": "Close error banner"
+    }
+  },
+  "categories": {
+    "title": "Categories",
+    "add": "Add Category",
+    "search": "Search categories",
+    "empty": "No categories found.",
+    "labels": {
+      "name": "Category Name",
+      "nameRequired": "Category Name *",
+      "description": "Description",
+      "status": "Status"
+    },
+    "placeholders": {
+      "name": "Enter category name",
+      "description": "Enter category description",
+      "status": "Select category status"
+    },
+    "details": {
+      "titleFallback": "Category Details",
+      "closeAria": "Close details view",
+      "editAria": "Edit category",
+      "deleteAria": "Delete category"
+    },
+    "form": {
+      "titleCreate": "Add Category",
+      "titleEdit": "Edit Category",
+      "cancelAria": "Cancel category form",
+      "createAria": "Create category",
+      "updateAria": "Update category"
+    },
+    "validation": {
+      "nameRequired": "Category name is required",
+      "nameMin": "Minimum 2 characters required",
+      "descriptionMax": "Maximum 500 characters allowed"
+    },
+    "toast": {
+      "successCreate": "Category created successfully.",
+      "successUpdate": "Category updated successfully.",
+      "successDelete": "Category deleted successfully.",
+      "errorLoad": "Failed to load categories. Please try again.",
+      "errorSave": "Failed to save category. Please try again.",
+      "errorDelete": "Failed to delete category. Please try again.",
+      "errorDeleteMissingId": "Unable to delete category: missing id."
+    },
+    "deleteConfirm": {
+      "title": "Delete Category",
+      "message": "Are you sure you want to delete category: {{name}}?"
+    }
+  },
+  "fields": {
+    "title": "Fields",
+    "add": "Add Field",
+    "search": "Search fields",
+    "empty": "No fields found.",
+    "labels": {
+      "name": "Field Name",
+      "nameRequired": "Field Name *",
+      "key": "Field Key",
+      "keyRequired": "Field Key *",
+      "type": "Type",
+      "defaultValue": "Default Value",
+      "isRequired": "Required",
+      "assignToFieldGroups": "Assign To Field Groups",
+      "selectFieldGroups": "Select field groups",
+      "noFieldGroupsAvailable": "No field groups available.",
+      "usedInFieldGroups": "Used In Field Groups",
+      "notUsedInFieldGroups": "Not used in any field group",
+      "status": "Status"
+    },
+    "placeholders": {
+      "name": "Enter field name",
+      "key": "Enter field key",
+      "type": "Select field type",
+      "defaultValue": "Enter default value",
+      "isRequired": "Select required setting",
+      "status": "Select field status"
+    },
+    "types": {
+      "number": "Number",
+      "percentage": "Percentage",
+      "text": "Text",
+      "longText": "Long Text"
+    },
+    "required": {
+      "required": "Required",
+      "optional": "Optional"
+    },
+    "details": {
+      "titleFallback": "Field Details",
+      "closeAria": "Close field details",
+      "editAria": "Edit field",
+      "deleteAria": "Delete field"
+    },
+    "form": {
+      "titleCreate": "Add Field",
+      "titleEdit": "Edit Field",
+      "cancelAria": "Cancel field form",
+      "createAria": "Create field",
+      "updateAria": "Update field"
+    },
+    "validation": {
+      "nameRequired": "Field name is required",
+      "nameMin": "Minimum 2 characters required",
+      "keyRequired": "Field key is required",
+      "keyMin": "Minimum 2 characters required",
+      "defaultValueRequired": "Default value is required"
+    },
+    "toast": {
+      "successCreate": "Field created successfully.",
+      "successUpdate": "Field updated successfully.",
+      "successDelete": "Field deleted successfully.",
+      "errorLoad": "Failed to load fields. Please try again.",
+      "errorSave": "Failed to save field. Please try again.",
+      "errorDelete": "Failed to delete field. Please try again.",
+      "errorDeleteMissingId": "Unable to delete field: missing id.",
+      "errorSaveMissingId": "Unable to update field: missing id."
+    },
+    "deleteConfirm": {
+      "title": "Delete Field",
+      "message": "Are you sure you want to delete field: {{name}}?"
+    }
+  },
+  "fieldGroups": {
+    "title": "Field Groups",
+    "add": "Add Field Group",
+    "search": "Search field groups",
+    "empty": "No field groups found.",
+    "labels": {
+      "name": "Field Group Name",
+      "nameRequired": "Field Group Name *",
+      "fields": "Fields",
+      "mappedCategories": "Mapped Categories",
+      "version": "Version",
+      "status": "Status",
+      "addField": "Add Field",
+      "requiredInGroup": "Required In This Group",
+      "defaultValue": "Template Default Value",
+      "masterDefault": "Master default",
+      "usedInGroups": "Used in groups",
+      "notUsed": "Not used in any group"
+    },
+    "required": {
+      "inherit": "Inherit from field",
+      "required": "Required",
+      "optional": "Optional"
+    },
+    "placeholders": {
+      "name": "Enter field group name",
+      "status": "Select field group status",
+      "mappedCategories": "Select mapped categories",
+      "addField": "Select a field to include",
+      "defaultValue": "Leave blank to use field master default"
+    },
+    "actions": {
+      "addField": "Add Field"
+    },
+    "help": {
+      "fieldsPanel": "Build the reusable ordered field set for this template.",
+      "defaultValueHint": "Optional. Leave blank to inherit the field master default value."
+    },
+    "form": {
+      "titleCreate": "Add Field Group",
+      "titleEdit": "Edit Field Group"
+    },
+    "validation": {
+      "nameRequired": "Field group name is required",
+      "nameDuplicate": "Field group name already exists. Please use a different name.",
+      "fieldsRequired": "Add at least one pricing field to this field group.",
+      "defaultValueInvalid": "Template default values must be valid numbers."
+    },
+    "toast": {
+      "successCreate": "Field group created successfully.",
+      "successUpdate": "Field group updated successfully.",
+      "successDelete": "Field group deleted successfully.",
+      "errorLoad": "Failed to load field groups. Please try again.",
+      "errorSave": "Failed to save field group. Please try again.",
+      "errorDelete": "Failed to delete field group. Please try again."
+    },
+    "deleteConfirm": {
+      "title": "Delete Field Group",
+      "message": "Are you sure you want to delete field group: {{name}}?"
+    }
+  },
+  "units": {
+    "title": "Units",
+    "add": "Add Unit",
+    "search": "Search units",
+    "empty": "No units found.",
+    "labels": {
+      "name": "Unit Name",
+      "nameRequired": "Unit Name *",
+      "symbol": "Symbol",
+      "symbolRequired": "Symbol *",
+      "baseUnit": "Base Unit",
+      "baseUnitOptional": "Base Unit (Optional)",
+      "conversionFactor": "Conversion Factor",
+      "status": "Status",
+      "noBaseUnit": "No base unit",
+      "mappedCategories": "Mapped Categories"
+    },
+    "placeholders": {
+      "name": "Enter unit name",
+      "symbol": "Enter unit symbol",
+      "baseUnit": "Select base unit",
+      "conversionFactor": "Enter conversion factor",
+      "status": "Select unit status",
+      "mappedCategories": "Select mapped categories"
+    },
+    "help": {
+      "baseUnitRequiredForFactor": "Select a base unit to edit the conversion factor."
+    },
+    "details": {
+      "titleFallback": "Unit Details",
+      "closeAria": "Close unit details",
+      "editAria": "Edit unit",
+      "deleteAria": "Delete unit"
+    },
+    "form": {
+      "titleCreate": "Add Unit",
+      "titleEdit": "Edit Unit",
+      "cancelAria": "Cancel unit form",
+      "createAria": "Create unit",
+      "updateAria": "Update unit"
+    },
+    "validation": {
+      "nameRequired": "Unit name is required",
+      "symbolRequired": "Unit symbol is required",
+      "conversionFactorRequired": "Conversion factor is required"
+    },
+    "toast": {
+      "successCreate": "Unit created successfully.",
+      "successUpdate": "Unit updated successfully.",
+      "successDelete": "Unit deleted successfully.",
+      "errorLoad": "Failed to load units. Please try again.",
+      "errorSave": "Failed to save unit. Please try again.",
+      "errorDelete": "Failed to delete unit. Please try again.",
+      "errorDeleteMissingId": "Unable to delete unit: missing id."
+    },
+    "deleteConfirm": {
+      "title": "Delete Unit",
+      "message": "Are you sure you want to delete unit: {{name}}?"
+    }
+  },
+  "orderEntry": {
+    "title": "Multi-Channel Order Entry",
+    "subtitle": "Offline and online assisted order flow with delivery-aware validation.",
+    "tabs": {
+      "customer": "1. Customer",
+      "items": "2. Items",
+      "pricing": "3. Pricing",
+      "deliveryPlace": "4. Delivery & Place"
+    },
+    "steps": {
+      "customer": "Step 1: Customer",
+      "items": "Step 2: Items",
+      "pricing": "Step 3: Pricing Preview",
+      "deliveryPlace": "Step 4: Delivery + Place"
+    },
+    "labels": {
+      "customerPhone": "Customer Phone",
+      "customerName": "Customer Name",
+      "variant": "Variant",
+      "qty": "Qty",
+      "unitPrice": "Unit Price",
+      "tax": "Tax",
+      "lineTotal": "Line Total",
+      "action": "Action",
+      "subTotal": "Sub Total",
+      "taxTotal": "Tax Total",
+      "deliveryCharge": "Delivery Charge",
+      "grandTotal": "Grand Total",
+      "orderIntakeChannel": "Order Intake Channel",
+      "deliveryType": "Delivery Type",
+      "deliveryAddress": "Delivery Address",
+      "deliveryPincode": "Delivery Pincode",
+      "deliveryContactName": "Delivery Contact Name",
+      "deliveryContactPhone": "Delivery Contact Phone",
+      "preferredDeliveryTime": "Preferred Delivery Time",
+      "googleLocation": "Google Location / Place",
+      "mapLatitude": "Map Latitude",
+      "mapLongitude": "Map Longitude",
+      "provisionalRiderName": "Provisional Rider Name",
+      "provisionalRiderPhone": "Provisional Rider Phone",
+      "deliveryCharges": "Delivery Charges",
+      "orderNotes": "Order Notes",
+      "currencySymbol": "Rs"
+    },
+    "placeholders": {
+      "customerPhone": "Enter 10-digit mobile",
+      "customerName": "Enter customer name",
+      "selectVariant": "Select variant",
+      "qty": "Qty",
+      "orderIntakeChannel": "Select intake channel",
+      "deliveryType": "Select delivery type",
+      "deliveryAddress": "Select customer address",
+      "deliveryPincode": "Enter 6-digit pincode",
+      "deliveryContactName": "Receiver name",
+      "deliveryContactPhone": "Receiver phone",
+      "preferredDeliveryTime": "e.g. Today 7:00 PM",
+      "googleLocation": "Paste maps link or place text",
+      "mapLatitude": "e.g. 17.385",
+      "mapLongitude": "e.g. 78.4867",
+      "provisionalRiderName": "Until rider module is ready",
+      "provisionalRiderPhone": "Rider contact",
+      "deliveryCharges": "0",
+      "orderNotes": "Optional"
+    },
+    "validation": {
+      "phoneRequired": "Phone is required",
+      "customerNameRequired": "Customer name is required",
+      "addressRequiredForDelivery": "Address is required for delivery",
+      "deliveryPincodeInvalid": "Enter a valid 6-digit pincode",
+      "fieldRequired": "This field is required"
+    },
+    "actions": {
+      "exitOrderEntry": "Exit Order Entry",
+      "resolveCustomer": "Resolve Customer",
+      "addItem": "Add Item",
+      "previous": "Previous",
+      "next": "Next",
+      "placeOrder": "Place Order",
+      "placing": "Placing..."
+    },
+    "messages": {
+      "customerResolved": "Resolved",
+      "customerNotResolved": "Customer not resolved yet",
+      "loadFailed": "Failed to load order setup data.",
+      "lookupLoading": "Searching customer by mobile...",
+      "lookupFailed": "Lookup failed. You can still enter name and use Resolve Customer.",
+      "lookupSelectPrompt": "Mobile exists. Select customer to autofill details.",
+      "lookupNoMatch": "No customer found for this mobile. Enter name and use Resolve Customer to create new.",
+      "stockChecking": "Checking stock...",
+      "stockAvailable": "Stock available",
+      "stockNotAvailableRow": "Insufficient stock"
+    },
+    "toast": {
+      "enterCustomerFirst": "Enter valid phone and customer name first.",
+      "customerCreated": "Customer created.",
+      "customerResolved": "Customer resolved.",
+      "resolveFailed": "Failed to resolve customer.",
+      "completeStepBeforeNext": "Please complete required fields before moving ahead.",
+      "completeCurrentStep": "Please complete required fields in this step.",
+      "completeAllSteps": "Please complete all required steps before placing order.",
+      "resolveCustomerBeforePlace": "Please resolve customer before placing order.",
+      "completeOrderDetails": "Please complete all required order details.",
+      "addOneItem": "Please add at least one valid item.",
+      "stockNotAvailable": "Insufficient stock for",
+      "orderPlaced": "Order placed",
+      "draftCreatedPlaceFailed": "Draft created but failed to place order.",
+      "createDraftFailed": "Failed to create order draft.",
+      "customerAutoFilled": "Customer selected and auto-filled."
+    }
+  },
+  "saas": {
+    "admin": {
+      "roles": {
+        "title": "Roles",
+        "title_create": "Create Role",
+        "title_edit": "Edit Role",
+        "subtitle": "Assign features to define what this role can do.",
+        "btn_create": "Create Role",
+        "btn_update": "Update Role",
+        "btn_grant_all": "Grant All",
+        "btn_clear_all": "Clear All",
+        "btn_open_platform_roles": "Open Platform Tenant Roles",
+        "lbl_role_key": "Role Key",
+        "lbl_role_name": "Role Name",
+        "lbl_tenant": "Tenant",
+        "lbl_allowed_features": "Allowed Features",
+        "ph_select_tenant": "Select tenant",
+        "ph_select_features": "Select one or more features",
+        "msg_selected_count": "{{count}} feature(s) selected",
+        "msg_tenant_only_features": "Only tenant/company features from your package are shown here. Platform/internal features are excluded.",
+        "msg_no_features": "No tenant features available for this package.",
+        "msg_platform_select_tenant": "Select a tenant first to load that tenant's package features and roles.",
+        "msg_select_tenant_first": "Select a tenant first to load package features for this role.",
+        "msg_use_platform_flow": "For platform admin tenant selection, use Platform Tenant Roles."
+      },
+      "employees": {
+        "title": "Employees",
+        "title_create": "Create Employee",
+        "title_edit": "Edit Employee",
+        "btn_create": "Create Employee",
+        "btn_update": "Update Employee",
+        "btn_link_user": "Link/Unlink User",
+        "lbl_employee_code": "Employee Code",
+        "lbl_full_name": "Full Name",
+        "lbl_department": "Department",
+        "lbl_designation": "Designation",
+        "lbl_status": "Employment Status",
+        "lbl_linked_user": "Linked User",
+        "ph_search": "Search employees by code, name, or department",
+        "tbl_code": "Employee Code",
+        "tbl_name": "Employee Name",
+        "tbl_dept": "Department",
+        "val_linked": "Linked",
+        "status_on_leave": "ON_LEAVE",
+        "opt_not_linked": "Not Linked",
+        "msg_required_fields": "Please complete required fields.",
+        "msg_create_success": "Employee created successfully.",
+        "msg_update_success": "Employee updated successfully.",
+        "msg_create_failed": "Failed to create employee.",
+        "msg_update_failed": "Failed to update employee.",
+        "msg_load_failed": "Failed to load employee.",
+        "msg_load_users_failed": "Failed to load users for linking.",
+        "err_code_exists": "Employee code already exists."
+      },
+      "users": {
+        "title": "Users",
+        "subtitle": "Manage tenant users, lock access, and assign roles.",
+        "btn_invite": "Invite User",
+        "btn_assign_roles": "Assign Roles",
+        "lbl_roles": "Roles",
+        "ph_search": "Search users by email or phone",
+        "tbl_email": "Email",
+        "tbl_phone": "Phone",
+        "tbl_status": "Status",
+        "tbl_roles": "Roles",
+        "tbl_last_login": "Last Login",
+        "opt_all_statuses": "All Statuses",
+        "opt_invited": "Invited",
+        "opt_active": "Active",
+        "opt_locked": "Locked",
+        "opt_disabled": "Disabled",
+        "msg_showing": "Showing {{count}} users on this page (Total: {{total}})",
+        "msg_loading": "Loading users...",
+        "btn_prev": "Previous",
+        "btn_next": "Next",
+        "lbl_page": "Page {{page}} of {{total}}",
+        "title_assign_roles": "Assign Roles",
+        "msg_loading_assignments": "Loading assignments...",
+        "btn_save_roles": "Save Roles"
+      },
+      "dashboard": {
+        "title": "Tenant Dashboard",
+        "subtitle": "Operational snapshot of tenant access administration.",
+        "lbl_purchased_package": "Purchased Package",
+        "msg_no_package": "No package is assigned yet.",
+        "lbl_entitled_features": "Entitled Features",
+        "msg_no_features": "No entitled features available.",
+        "lbl_tier": "Tier",
+        "lbl_status": "Status",
+        "card_users": "Users",
+        "card_employees": "Employees",
+        "card_roles": "Roles",
+        "btn_open": "Open",
+        "msg_loading": "Loading dashboard..."
+      }
+    },
+    "platform": {
+      "accounts": {
+        "title": "SaaS Accounts",
+        "subtitle": "Create and manage tenant accounts, lifecycle status, and trial periods.",
+        "btn_create": "Create Account",
+        "ph_search": "Search account, tenant code, or contact email",
+        "lbl_status": "Status",
+        "msg_loading": "Loading SaaS accounts...",
+        "title_create": "Create SaaS Account",
+        "title_edit": "Edit SaaS Account",
+        "lbl_validation_header": "Please fix the following:",
+        "section_account_details": "Account Details",
+        "lbl_account_name": "Account Name",
+        "lbl_legal_business_name": "Legal Business Name",
+        "lbl_tenant_code": "Tenant Code",
+        "lbl_tenant_code_mode": "Tenant code mode:",
+        "val_tenant_code_auto": "Auto-generated",
+        "val_tenant_code_manual": "Manual entry",
+        "btn_switch_manual": "Switch to Manual Entry",
+        "btn_switch_auto": "Switch to Auto Generate",
+        "section_contact": "Contact & Region Defaults",
+        "lbl_primary_contact_name": "Primary Contact Name",
+        "lbl_primary_contact_phone": "Primary Contact Phone",
+        "lbl_primary_contact_email": "Primary Contact Email",
+        "section_first_admin": "First Tenant Admin",
+        "lbl_first_admin_name": "First Tenant Admin Name",
+        "lbl_first_admin_email": "First Tenant Admin Email",
+        "lbl_country_code": "Country Code",
+        "lbl_currency": "Currency",
+        "lbl_search_timezone": "Search Timezone",
+        "ph_search_timezone": "Type to filter timezone list",
+        "lbl_timezone": "Timezone",
+        "section_subscription": "Subscription Setup",
+        "lbl_plan": "Plan",
+        "msg_no_plans": "No package plans are available yet. Create a package first, then come back to create the SaaS account.",
+        "lbl_trial_mode": "Trial Mode",
+        "lbl_trial_duration": "Trial Duration (Days)",
+        "section_optional": "Optional",
+        "lbl_billing_email": "Billing Email",
+        "lbl_support_phone": "Support Phone",
+        "lbl_notes": "Notes",
+        "btn_save_draft": "Save Draft",
+        "btn_save": "Save",
+        "title_change_status": "Change Account Status",
+        "lbl_current_status": "Current status:",
+        "lbl_next_status": "Next Status",
+        "lbl_reason": "Reason (Optional)",
+        "btn_update_status": "Update Status",
+        "title_extend_trial": "Extend Trial",
+        "lbl_account": "Account:",
+        "lbl_extension_days": "Extension Days",
+        "btn_extend_trial": "Extend Trial",
+        "title_audit_log": "Account Audit Log",
+        "msg_no_audit": "No audit entries found.",
+        "lbl_audit_by": "By:",
+        "lbl_audit_at": "At:",
+        "lbl_audit_reason": "Reason:"
+      },
+      "features": {
+        "title": "Feature Catalog",
+        "btn_add": "Add Feature",
+        "title_create": "Create Feature",
+        "title_edit": "Edit Feature",
+        "msg_pick_template": "Pick from template or enter custom key:",
+        "lbl_template": "Feature Templates",
+        "ph_select_template": "Select a template...",
+        "lbl_feature_key": "Feature Key",
+        "lbl_display_name": "Display Name",
+        "lbl_module": "Module",
+        "lbl_dependencies": "Dependencies",
+        "ph_dependencies": "Select dependency features",
+        "hint_dependencies": "Select dependency features from the JSON template list.",
+        "lbl_ui_visibility": "UI Visibility",
+        "opt_always": "Always Show",
+        "opt_entitled_only": "Show Only If Entitled",
+        "opt_hidden": "Hide From UI",
+        "lbl_status": "Status",
+        "lbl_beta": "Beta Feature",
+        "btn_save": "Save"
+      },
+      "packages": {
+        "title": "Packages",
+        "btn_create": "Create Package",
+        "title_create": "Create Package",
+        "title_edit": "Edit Package",
+        "lbl_plan_id": "Plan Id",
+        "lbl_plan_name": "Plan Name",
+        "lbl_description": "Description",
+        "lbl_tier": "Tier",
+        "lbl_status": "Status",
+        "lbl_features": "Features",
+        "ph_features": "Select features from Feature Catalog",
+        "hint_features": "Only features created in the Feature Catalog are shown here.",
+        "btn_save": "Save"
+      },
+      "entitlements": {
+        "title": "Tenant Entitlements",
+        "subtitle": "Lookup tenant by tenant code and update package/add-ons/suspensions.",
+        "lbl_tenant": "Tenant",
+        "ph_tenant": "Search and select tenant",
+        "ph_tenant_search": "Search by account name or tenant code",
+        "btn_load": "Load",
+        "section_current": "Current Entitlement",
+        "lbl_package": "Package:",
+        "lbl_addons": "Add-ons:",
+        "lbl_suspended": "Suspended:",
+        "lbl_cache_version": "Cache Version:",
+        "lbl_package_plan": "Package Plan",
+        "ph_package_plan": "Select package plan",
+        "lbl_addon_features": "Add-on Features",
+        "ph_addon_features": "Select add-on features",
+        "lbl_suspended_features": "Suspended Features",
+        "ph_suspended_features": "Select suspended features",
+        "lbl_change_reason": "Change Reason",
+        "btn_save": "Save Entitlement",
+        "section_effective": "Effective Features",
+        "lbl_source": "Source:",
+        "lbl_account_status": "Account Status:",
+        "lbl_reason_code": "Reason Code:"
+      }
+    }
+  },
+  "auth": {
+    "entry": {
+      "eyebrow": "Access Validation",
+      "title": "Choose your admin login",
+      "subtitle": "Use separate entry points for platform administration and tenant administration during Epic 3.5 validation.",
+      "platform_title": "Platform Admin",
+      "platform_subtitle": "Manage SaaS accounts, packages, features, and tenant entitlements.",
+      "tenant_title": "Tenant Admin",
+      "tenant_subtitle": "Sign in as a tenant administrator and verify package-based feature visibility.",
+      "btn_platform": "Platform Login",
+      "btn_tenant": "Tenant Login"
+    },
+    "common": {
+      "dev_mode": "Development Session",
+      "back_to_entry": "Back to login selection",
+      "error_title": "Login Failed"
+    },
+    "platform": {
+      "title": "Platform admin login",
+      "subtitle": "Authenticate as a company-side administrator for SaaS platform operations.",
+      "demo_title": "Demo credentials",
+      "demo_email": "Email: platform.admin@gom.dev",
+      "demo_password": "Password: Platform@123",
+      "lbl_email": "Email",
+      "lbl_password": "Password",
+      "btn_submit": "Login as Platform Admin"
+    },
+    "tenant": {
+      "title": "Tenant admin login",
+      "subtitle": "Authenticate inside a tenant context to validate entitlement-aware navigation and access rules.",
+      "demo_title": "Demo tenant accounts",
+      "demo_starter": "Starter: STARTER01 / starter.admin@gom.dev",
+      "demo_growth": "Growth: GROWTH01 / growth.admin@gom.dev",
+      "demo_scale": "Scale: SCALE01 / scale.admin@gom.dev",
+      "demo_password": "Password: Tenant@123",
+      "lbl_tenant_code": "Tenant Code",
+      "lbl_email": "Email",
+      "lbl_password": "Password",
+      "btn_submit": "Login as Tenant Admin"
+    },
+    "landing": {
+      "loading": "Loading your access profile..."
+    },
+    "denied": {
+      "title": "Access denied",
+      "reason_actor_mismatch": "This session does not match the required admin type for the requested screen.",
+      "reason_feature_disabled": "This screen is not available for the current package or access profile.",
+      "reason_generic": "The requested screen is not available in the current session.",
+      "btn_logout": "Logout",
+      "btn_home": "Go to landing"
+    },
+    "errors": {
+      "invalid_platform_credentials": "Invalid platform admin credentials.",
+      "invalid_tenant_credentials": "Invalid tenant admin credentials or tenant code."
+    }
+  }
+}

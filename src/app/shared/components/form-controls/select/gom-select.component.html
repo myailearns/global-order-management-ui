@@ -1,25 +1,71 @@
-<label class="gom-control__label" [for]="id" *ngIf="label">{{ label }}</label>
+@if (label) {
+  <label class="gom-control__label" [for]="id">
+    {{ label }}
+    @if (required) {
+      <span class="gom-control__required" aria-hidden="true">*</span>
+    }
+  </label>
+}
 
-<div class="gom-control__select-wrapper">
-  <select
-    class="gom-control__field"
+<div class="gom-control__select-wrapper" [class.gom-control__select-wrapper--open]="menuOpen">
+  <button
+    type="button"
+    class="gom-control__field gom-control__field--trigger"
     [id]="id"
-    [value]="value"
-    [disabled]="disabled"
+    [disabled]="disabled || isDisabled"
+    [class.gom-control__field--open]="menuOpen"
     [attr.aria-invalid]="!!error"
-    (change)="handleChange($event)"
-    (blur)="handleBlur()"
+    (click)="toggleMenu()"
   >
-    <option [value]="''" disabled>{{ placeholder }}</option>
-    <option *ngFor="let option of options" [value]="option.value">{{ option.label }}</option>
-  </select>
-  <div class="gom-control__select-icon">
-    <i class="ri-arrow-down-s-line" aria-hidden="true"></i>
-  </div>
-  <div class="gom-control__icon" *ngIf="error">
-    <i class="ri-alert-circle-line" aria-hidden="true"></i>
-  </div>
+    <span class="gom-control__trigger-text">{{ displayLabel }}</span>
+    <span class="gom-control__select-icon">
+      <i class="ri-arrow-down-s-line" aria-hidden="true"></i>
+    </span>
+  </button>
+
+  @if (menuOpen) {
+    <div class="gom-control__menu" [class.gom-control__menu--upward]="menuOpenUpward" [ngStyle]="menuStyles">
+      @if (searchable) {
+        <div class="gom-control__menu-search" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+          <input
+            type="search"
+            class="gom-control__menu-search-input"
+            [placeholder]="searchPlaceholder"
+            [value]="searchTerm"
+            (input)="onSearchInput($event)"
+          />
+        </div>
+      }
+
+      @if (!filteredOptions.length) {
+        <div class="gom-control__menu-empty">No options found</div>
+      }
+
+      @for (option of filteredOptions; track option.value) {
+        <button
+          type="button"
+          class="gom-control__menu-item"
+          [class.gom-control__menu-item--selected]="isSelected(option.value)"
+          (click)="selectOption(option.value)"
+        >
+          @if (multiple) {
+            <input type="checkbox" [checked]="isSelected(option.value)" tabindex="-1" />
+          }
+          <span>{{ option.label }}</span>
+        </button>
+      }
+    </div>
+  }
+
+  @if (error) {
+    <div class="gom-control__icon">
+      <i class="ri-alert-circle-line" aria-hidden="true"></i>
+    </div>
+  }
 </div>
 
-<p class="gom-control__message gom-control__message--error" *ngIf="error"><i class="ri-error-warning-line"></i> {{ error }}</p>
-<p class="gom-control__message" *ngIf="!error && hint"><i class="ri-information-line"></i> {{ hint }}</p>
+@if (error) {
+  <p class="gom-control__message gom-control__message--error"><i class="ri-error-warning-line"></i> {{ error }}</p>
+} @else if (hint) {
+  <p class="gom-control__message"><i class="ri-information-line"></i> {{ hint }}</p>
+}

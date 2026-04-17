@@ -1,0 +1,12 @@
+<section class="gom-access-denied">
+  <div class="gom-access-denied__card">
+    <div class="gom-access-denied__icon"><i class="ri-shield-forbid-line" aria-hidden="true"></i></div>
+    <h1>{{ 'auth.denied.title' | translate }}</h1>
+    <p>{{ reasonKey() | translate }}</p>
+
+    <div class="gom-access-denied__actions">
+      <gom-lib-button type="button" variant="secondary" (buttonClick)="logout()">{{ 'auth.denied.btn_logout' | translate }}</gom-lib-button>
+      <gom-lib-button type="button" (buttonClick)="navigateHome()">{{ 'auth.denied.btn_home' | translate }}</gom-lib-button>
+    </div>
+  </div>
+</section>

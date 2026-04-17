@@ -1,0 +1,77 @@
+@use "../../theming/styles/theme" as theme;
+
+.gom-chip {
+  @include theme.typography-label;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.75rem;
+  padding: 0.15rem 0.625rem;
+  border-radius: theme.get-radius(full);
+  border: theme.get-border-size(thin) solid transparent;
+  font-size: 0.72rem;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.gom-chip--neutral {
+  background: theme.get-background(tertiary);
+  color: theme.get-text(default);
+  border-color: theme.get-border(standard);
+}
+
+.gom-chip--info {
+  background: #e7f3ff;
+  color: #0b5fa6;
+  border-color: #b8d9f5;
+}
+
+.gom-chip--warning {
+  background: #fff3dd;
+  color: #8a5b00;
+  border-color: #f1d39d;
+}
+
+.gom-chip--success {
+  background: #e6f7ea;
+  color: #1b7d3c;
+  border-color: #b7e2c4;
+}
+
+.gom-chip--danger {
+  background: #ffe8e8;
+  color: #a52020;
+  border-color: #f0b7b7;
+}
+
+.gom-chip--pending {
+  background: #f2ecff;
+  color: #5b21b6;
+  border-color: #d7c8ff;
+}
+
+.gom-chip--progress {
+  background: #e8f4ff;
+  color: #0b5fa6;
+  border-color: #bfdcf5;
+}
+
+.gom-chip--shipped {
+  background: #e6fbff;
+  color: #0f766e;
+  border-color: #b5e8e2;
+}
+
+.gom-chip--delivered {
+  background: #e8f9ed;
+  color: #166534;
+  border-color: #b8e3c7;
+}
+
+.gom-chip--cancelled {
+  background: #fff0f0;
+  color: #991b1b;
+  border-color: #f2c1c1;
+}

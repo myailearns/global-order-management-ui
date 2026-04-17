@@ -1,0 +1,192 @@
+<section class="saas-accounts">
+  <header class="saas-accounts__header">
+    <div>
+      <h1>{{ 'saas.platform.accounts.title' | translate }}</h1>
+      <p>{{ 'saas.platform.accounts.subtitle' | translate }}</p>
+    </div>
+    @if (canWrite()) {
+    <gom-lib-button (buttonClick)="openCreate()">{{ 'saas.platform.accounts.btn_create' | translate }}</gom-lib-button>
+    }
+  </header>
+
+  <div class="saas-accounts__filters">
+    <gom-lib-input
+      type="search"
+      [placeholder]="'saas.platform.accounts.ph_search' | translate"
+      (valueChange)="onSearchChange($event)"
+    ></gom-lib-input>
+
+    <gom-lib-select
+      [label]="'saas.platform.accounts.lbl_status' | translate"
+      [options]="statusOptions"
+      [ngModel]="statusFilter()"
+      (valueChange)="onStatusFilterChange($event)"
+    ></gom-lib-select>
+  </div>
+
+  <gom-lib-table
+    [columns]="columns"
+    [rows]="rows()"
+    [loading]="loading()"
+    [totalItems]="total()"
+    (rowAction)="onTableAction($event)"
+  ></gom-lib-table>
+
+  @if (loading()) {
+    <div class="saas-accounts__loading" aria-live="polite">{{ 'saas.platform.accounts.msg_loading' | translate }}</div>
+  }
+
+  @if (lastBootstrapMessage()) {
+    <div class="saas-accounts__loading" aria-live="polite">{{ lastBootstrapMessage() }}</div>
+  }
+</section>
+
+<gom-lib-modal [title]="editingAccountId() ? ('saas.platform.accounts.title_edit' | translate) : ('saas.platform.accounts.title_create' | translate)" [(show)]="formModalOpen" size="large">
+  <form class="saas-accounts__form" [formGroup]="accountForm">
+    @if (validationErrors().length) {
+      <div class="saas-accounts__validation-summary" role="alert">
+        <h4>{{ 'saas.platform.accounts.lbl_validation_header' | translate }}</h4>
+        <ul>
+          @for (item of validationErrors(); track item) {
+            <li>{{ item }}</li>
+          }
+        </ul>
+      </div>
+    }
+
+    <h3>{{ 'saas.platform.accounts.section_account_details' | translate }}</h3>
+    <gom-lib-input formControlName="accountName" [label]="'saas.platform.accounts.lbl_account_name' | translate" [required]="true"></gom-lib-input>
+    <gom-lib-input formControlName="legalBusinessName" [label]="'saas.platform.accounts.lbl_legal_business_name' | translate" [required]="true"></gom-lib-input>
+    <gom-lib-input formControlName="tenantCode" [label]="'saas.platform.accounts.lbl_tenant_code' | translate" [required]="true"></gom-lib-input>
+    @if (!editingAccountId()) {
+      <div class="saas-accounts__tenant-code-mode">
+        <p>
+          {{ 'saas.platform.accounts.lbl_tenant_code_mode' | translate }}
+          <strong>{{ tenantCodeAutoMode() ? ('saas.platform.accounts.val_tenant_code_auto' | translate) : ('saas.platform.accounts.val_tenant_code_manual' | translate) }}</strong>
+        </p>
+        <gom-lib-button type="button" variant="secondary" (buttonClick)="toggleTenantCodeInputMode()">
+          {{ tenantCodeAutoMode() ? ('saas.platform.accounts.btn_switch_manual' | translate) : ('saas.platform.accounts.btn_switch_auto' | translate) }}
+        </gom-lib-button>
+      </div>
+    }
+
+    <h3>{{ 'saas.platform.accounts.section_contact' | translate }}</h3>
+    <gom-lib-input formControlName="primaryContactName" [label]="'saas.platform.accounts.lbl_primary_contact_name' | translate" [required]="true"></gom-lib-input>
+    <gom-lib-input formControlName="primaryContactPhone" [label]="'saas.platform.accounts.lbl_primary_contact_phone' | translate" [required]="true"></gom-lib-input>
+    <gom-lib-input formControlName="primaryContactEmail" [label]="'saas.platform.accounts.lbl_primary_contact_email' | translate" [required]="true"></gom-lib-input>
+
+    <h3>{{ 'saas.platform.accounts.section_first_admin' | translate }}</h3>
+    <gom-lib-input
+      formControlName="firstTenantAdminName"
+      [label]="'saas.platform.accounts.lbl_first_admin_name' | translate"
+      [required]="!editingAccountId()"
+    ></gom-lib-input>
+    <gom-lib-input
+      formControlName="firstTenantAdminEmail"
+      [label]="'saas.platform.accounts.lbl_first_admin_email' | translate"
+      type="email"
+      [required]="!editingAccountId()"
+    ></gom-lib-input>
+    @if (!editingAccountId()) {
+      <gom-lib-input
+        formControlName="firstTenantAdminPassword"
+        label="First Tenant Admin Password"
+        type="password"
+        [required]="true"
+      ></gom-lib-input>
+    }
+
+    <gom-lib-input formControlName="countryCode" [label]="'saas.platform.accounts.lbl_country_code' | translate" [required]="true"></gom-lib-input>
+    <gom-lib-input formControlName="currency" [label]="'saas.platform.accounts.lbl_currency' | translate" [required]="true"></gom-lib-input>
+    <gom-lib-input
+      [label]="'saas.platform.accounts.lbl_search_timezone' | translate"
+      [placeholder]="'saas.platform.accounts.ph_search_timezone' | translate"
+      (valueChange)="onTimezoneSearchChange($event)"
+    ></gom-lib-input>
+    <gom-lib-select formControlName="timezone" [label]="'saas.platform.accounts.lbl_timezone' | translate" [required]="true" [options]="filteredTimezoneOptions()"></gom-lib-select>
+
+    <h3>{{ 'saas.platform.accounts.section_subscription' | translate }}</h3>
+    <gom-lib-select formControlName="planId" [label]="'saas.platform.accounts.lbl_plan' | translate" [required]="true" [options]="planOptions()"></gom-lib-select>
+    @if (!hasPlanOptions()) {
+      <p class="saas-accounts__plan-help">
+        {{ 'saas.platform.accounts.msg_no_plans' | translate }}
+      </p>
+    }
+    <gom-lib-select formControlName="trialMode" [label]="'saas.platform.accounts.lbl_trial_mode' | translate" [options]="trialModeOptions"></gom-lib-select>
+    <gom-lib-input formControlName="trialDurationDays" type="number" [label]="'saas.platform.accounts.lbl_trial_duration' | translate" [required]="true"></gom-lib-input>
+
+    <h3>{{ 'saas.platform.accounts.section_optional' | translate }}</h3>
+    <gom-lib-input formControlName="billingEmail" [label]="'saas.platform.accounts.lbl_billing_email' | translate" type="email"></gom-lib-input>
+    <gom-lib-input formControlName="supportPhone" [label]="'saas.platform.accounts.lbl_support_phone' | translate"></gom-lib-input>
+    <gom-lib-textarea formControlName="notes" [label]="'saas.platform.accounts.lbl_notes' | translate" [rows]="3"></gom-lib-textarea>
+  </form>
+
+  <footer class="gom-modal__action-layout" gom-modal-actions>
+    <div class="gom-modal__action-layout-start"></div>
+    <div class="gom-modal__action-layout-end">
+      @if (!editingAccountId()) {
+        <gom-lib-button type="button" variant="secondary" (buttonClick)="saveDraft()">{{ 'saas.platform.accounts.btn_save_draft' | translate }}</gom-lib-button>
+      }
+      <gom-lib-button type="button" variant="secondary" (buttonClick)="formModalOpen.set(false)">{{ 'common.btn_cancel' | translate }}</gom-lib-button>
+      <gom-lib-button type="button" (buttonClick)="saveAccount()" [disabled]="loading() || !hasPlanOptions()">{{ 'saas.platform.accounts.btn_save' | translate }}</gom-lib-button>
+    </div>
+  </footer>
+</gom-lib-modal>
+
+<gom-lib-modal [title]="'saas.platform.accounts.title_change_status' | translate" [(show)]="statusModalOpen" size="medium">
+  <form [formGroup]="statusForm" class="saas-accounts__dialog-form">
+    <p>{{ 'saas.platform.accounts.lbl_current_status' | translate }} <strong>{{ selectedAccount()?.accountStatus }}</strong></p>
+    <gom-lib-select [label]="'saas.platform.accounts.lbl_next_status' | translate" [required]="true" formControlName="status" [options]="nextStatusOptions()"></gom-lib-select>
+    <gom-lib-textarea [label]="'saas.platform.accounts.lbl_reason' | translate" formControlName="reason" [rows]="3"></gom-lib-textarea>
+  </form>
+
+  <footer class="gom-modal__action-layout" gom-modal-actions>
+    <div class="gom-modal__action-layout-start"></div>
+    <div class="gom-modal__action-layout-end">
+      <gom-lib-button type="button" variant="secondary" (buttonClick)="statusModalOpen.set(false)">{{ 'common.btn_cancel' | translate }}</gom-lib-button>
+      <gom-lib-button type="button" (buttonClick)="saveStatusTransition()" [disabled]="loading() || statusForm.invalid">{{ 'saas.platform.accounts.btn_update_status' | translate }}</gom-lib-button>
+    </div>
+  </footer>
+</gom-lib-modal>
+
+<gom-lib-modal [title]="'saas.platform.accounts.title_extend_trial' | translate" [(show)]="trialModalOpen" size="medium">
+  <form [formGroup]="trialForm" class="saas-accounts__dialog-form">
+    <p>{{ 'saas.platform.accounts.lbl_account' | translate }} <strong>{{ selectedAccount()?.accountName }}</strong></p>
+    <gom-lib-input formControlName="extensionDays" type="number" [label]="'saas.platform.accounts.lbl_extension_days' | translate" [required]="true"></gom-lib-input>
+    <gom-lib-textarea [label]="'saas.platform.accounts.lbl_reason' | translate" formControlName="reason" [rows]="3"></gom-lib-textarea>
+  </form>
+
+  <footer class="gom-modal__action-layout" gom-modal-actions>
+    <div class="gom-modal__action-layout-start"></div>
+    <div class="gom-modal__action-layout-end">
+      <gom-lib-button type="button" variant="secondary" (buttonClick)="trialModalOpen.set(false)">{{ 'common.btn_cancel' | translate }}</gom-lib-button>
+      <gom-lib-button type="button" (buttonClick)="saveTrialExtension()" [disabled]="loading() || trialForm.invalid">{{ 'saas.platform.accounts.btn_extend_trial' | translate }}</gom-lib-button>
+    </div>
+  </footer>
+</gom-lib-modal>
+
+<gom-lib-modal [title]="'saas.platform.accounts.title_audit_log' | translate" [(show)]="auditModalOpen" size="large">
+  <section class="saas-accounts__audit-list">
+    @if (auditLogs().length === 0) {
+      <p>{{ 'saas.platform.accounts.msg_no_audit' | translate }}</p>
+    }
+
+    @for (item of auditLogs(); track item._id) {
+      <article class="saas-accounts__audit-item">
+        <h4>{{ item.action }}</h4>
+        <p>{{ 'saas.platform.accounts.lbl_audit_by' | translate }} {{ item.actor }}</p>
+        <p>{{ 'saas.platform.accounts.lbl_audit_at' | translate }} {{ item.createdAt | date:'medium' }}</p>
+        @if (item.reason) {
+          <p>{{ 'saas.platform.accounts.lbl_audit_reason' | translate }} {{ item.reason }}</p>
+        }
+      </article>
+    }
+  </section>
+
+  <footer class="gom-modal__action-layout" gom-modal-actions>
+    <div class="gom-modal__action-layout-start"></div>
+    <div class="gom-modal__action-layout-end">
+      <gom-lib-button type="button" variant="secondary" (buttonClick)="auditModalOpen.set(false)">{{ 'common.actions.close' | translate }}</gom-lib-button>
+    </div>
+  </footer>
+</gom-lib-modal>

@@ -1,0 +1,64 @@
+<section class="epic2-page">
+  <header class="epic2-page__header">
+    <h1>{{ 'saas.platform.features.title' | translate }}</h1>
+    @if (canWrite()) {
+    <gom-lib-button (buttonClick)="openCreate()">{{ 'saas.platform.features.btn_add' | translate }}</gom-lib-button>
+    }
+  </header>
+
+  <gom-lib-table
+    [columns]="columns"
+    [rows]="rows()"
+    [loading]="loading()"
+    [totalItems]="rows().length"
+    (rowAction)="onRowAction($event)"
+  ></gom-lib-table>
+</section>
+
+<gom-lib-modal [title]="selectedId() ? ('saas.platform.features.title_edit' | translate) : ('saas.platform.features.title_create' | translate)" [(show)]="modalOpen" size="large">
+  <form class="epic2-page__form" [formGroup]="form">
+    @if (!selectedId()) {
+      <div class="epic2-page__template-section">
+        <p>{{ 'saas.platform.features.msg_pick_template' | translate }}</p>
+        <gom-lib-select
+          [label]="'saas.platform.features.lbl_template' | translate"
+          [placeholder]="'saas.platform.features.ph_select_template' | translate"
+          [options]="featureKeyOptions()"
+          (valueChange)="onFeatureTemplateSelect($event)"
+        ></gom-lib-select>
+      </div>
+    }
+    <gom-lib-input formControlName="featureKey" [label]="'saas.platform.features.lbl_feature_key' | translate" [required]="true"></gom-lib-input>
+    <gom-lib-input formControlName="displayName" [label]="'saas.platform.features.lbl_display_name' | translate" [required]="true"></gom-lib-input>
+    <gom-lib-input formControlName="module" [label]="'saas.platform.features.lbl_module' | translate" [required]="true"></gom-lib-input>
+    <gom-lib-select
+      formControlName="dependencyKeys"
+      [label]="'saas.platform.features.lbl_dependencies' | translate"
+      [placeholder]="'saas.platform.features.ph_dependencies' | translate"
+      [options]="dependencyOptions()"
+      [multiple]="true"
+      [hint]="'saas.platform.features.hint_dependencies' | translate"
+    ></gom-lib-select>
+    <gom-lib-select formControlName="uiVisibilityPolicy" [label]="'saas.platform.features.lbl_ui_visibility' | translate" [options]="[
+      { value: 'always', label: 'saas.platform.features.opt_always' | translate },
+      { value: 'entitled-only', label: 'saas.platform.features.opt_entitled_only' | translate },
+      { value: 'hidden', label: 'saas.platform.features.opt_hidden' | translate }
+    ]"></gom-lib-select>
+    <gom-lib-select formControlName="status" [label]="'saas.platform.features.lbl_status' | translate" [options]="[
+      { value: 'ACTIVE', label: 'ACTIVE' },
+      { value: 'INACTIVE', label: 'INACTIVE' }
+    ]"></gom-lib-select>
+    <div class="gom-switch__container">
+      <label>{{ 'saas.platform.features.lbl_beta' | translate }}</label>
+      <gom-lib-switch [checked]="!!form.controls.isBeta.value" (checkedChange)="form.controls.isBeta.setValue($event)"></gom-lib-switch>
+    </div>
+  </form>
+
+  <footer class="gom-modal__action-layout" gom-modal-actions>
+    <div class="gom-modal__action-layout-start"></div>
+    <div class="gom-modal__action-layout-end">
+      <gom-lib-button type="button" variant="secondary" (buttonClick)="modalOpen.set(false)">{{ 'common.btn_cancel' | translate }}</gom-lib-button>
+      <gom-lib-button type="button" (buttonClick)="save()" [disabled]="loading()">{{ 'saas.platform.features.btn_save' | translate }}</gom-lib-button>
+    </div>
+  </footer>
+</gom-lib-modal>

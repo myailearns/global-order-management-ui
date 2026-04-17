@@ -1,0 +1,55 @@
+@use "../../theming/styles/theme" as theme;
+
+:host {
+  display: contents;
+}
+
+:host ::ng-deep .gom-confirmation-modal .gom-modal__dialog {
+  max-width: 34rem;
+  gap: theme.get-gap(sm);
+  padding: theme.get-spacing(md);
+}
+
+:host ::ng-deep .gom-confirmation-modal .gom-modal__content {
+  min-height: auto;
+  overflow: visible;
+  padding: theme.get-spacing(xxs) 0;
+}
+
+:host ::ng-deep .gom-confirmation-modal .gom-modal__footer {
+  padding-top: theme.get-spacing(sm);
+}
+
+:host ::ng-deep .gom-confirmation-modal .gom-modal__footer gom-button {
+  order: initial;
+}
+
+.gom-confirmation-modal__message {
+  @include theme.typography-body;
+  color: theme.get-text(default);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.gom-confirmation-modal__actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: 100%;
+  gap: theme.get-gap(xs);
+}
+
+@media (max-width: 37.5rem) {
+  :host ::ng-deep .gom-confirmation-modal .gom-modal__dialog {
+    max-width: calc(100vw - 2rem);
+  }
+
+  .gom-confirmation-modal__actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+
+    ::ng-deep gom-button {
+      width: 100%;
+    }
+  }
+}

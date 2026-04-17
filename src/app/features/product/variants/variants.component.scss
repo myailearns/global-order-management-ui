@@ -1,0 +1,340 @@
+@use "../../../shared/theming/styles/theme" as theme;
+
+.master-page {
+  display: grid;
+  gap: theme.get-gap(md);
+}
+
+.master-page__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: theme.get-gap(sm);
+  flex-wrap: wrap;
+
+  h2 {
+    margin: 0;
+    @include theme.typography-heading(xl);
+  }
+}
+
+.master-page__error {
+  padding: theme.get-spacing(xs) theme.get-spacing(sm);
+  border-radius: theme.get-radius(sm);
+  border: theme.get-border-size(hairline) solid theme.get-border(standard);
+  background: rgba(239, 68, 68, 0.08);
+  color: theme.get-text(danger);
+}
+
+.master-page__filters {
+  display: grid;
+  grid-template-columns: minmax(15rem, 24rem);
+  gap: theme.get-gap(sm);
+  padding: theme.get-spacing(md);
+  border: theme.get-border-size(hairline) solid theme.get-border(standard);
+  border-radius: theme.get-radius(md);
+  background: theme.get-background(standard);
+}
+
+.master-page__table-shell {
+  padding: theme.get-spacing(md);
+  border: theme.get-border-size(hairline) solid theme.get-border(standard);
+  border-radius: theme.get-radius(md);
+  background: theme.get-background(standard);
+}
+
+.form-grid {
+  display: grid;
+  gap: theme.get-gap(md);
+}
+
+.variants-form__actions {
+  width: 100%;
+}
+
+.variants-form__action {
+  justify-content: center;
+}
+
+// ── Form sections ──────────────────────────────────────────────────
+.form-section {
+  border: theme.get-border-size(hairline) solid theme.get-border(standard);
+  border-radius: theme.get-radius(md);
+  overflow: visible;
+}
+
+.form-section__header {
+  display: flex;
+  align-items: center;
+  gap: theme.get-gap(xs);
+  padding: theme.get-spacing(xs) theme.get-spacing(sm);
+  background: theme.get-background(secondary);
+  border-bottom: theme.get-border-size(hairline) solid theme.get-border(standard);
+  @include theme.typography-body;
+  font-weight: 600;
+  color: theme.get-text(primary);
+
+  i {
+    color: theme.get-text(hint);
+    font-size: 1rem;
+  }
+}
+
+.form-section__badge {
+  display: inline-block;
+  margin-left: theme.get-gap(xs);
+  padding: 0 theme.get-spacing(xs);
+  border-radius: theme.get-radius(sm);
+  background: theme.get-background(standard);
+  border: theme.get-border-size(hairline) solid theme.get-border(standard);
+  @include theme.typography-body;
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: theme.get-text(hint);
+  vertical-align: middle;
+}
+
+.form-section__body {
+  display: grid;
+  gap: theme.get-gap(sm);
+  padding: theme.get-spacing(sm);
+}
+
+// ── Weight + Unit side by side ────────────────────────────────────
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: theme.get-gap(sm);
+  align-items: start;
+}
+
+.total-weight-line {
+  display: flex;
+  align-items: center;
+  gap: theme.get-gap(xs);
+  padding: theme.get-spacing(xs) theme.get-spacing(sm);
+  border: theme.get-border-size(hairline) solid theme.get-border(primary);
+  border-radius: theme.get-radius(sm);
+  background: theme.get-background(secondary);
+  @include theme.typography-body;
+  color: theme.get-text(primary);
+  font-size: 0.82rem;
+
+  i {
+    font-size: 0.95rem;
+  }
+}
+
+// ── Pricing mode context hint ─────────────────────────────────────
+.pricing-mode-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: theme.get-gap(xs);
+  padding: theme.get-spacing(xs) theme.get-spacing(sm);
+  border-radius: theme.get-radius(sm);
+  background: theme.get-background(secondary);
+  border: theme.get-border-size(hairline) solid theme.get-border(standard);
+  @include theme.typography-body;
+  font-size: 0.8rem;
+  color: theme.get-text(hint);
+
+  i {
+    flex-shrink: 0;
+    font-size: 0.9rem;
+    margin-top: 0.1em;
+  }
+}
+
+// ── Override sub-section ──────────────────────────────────────────
+.override-section {
+  display: grid;
+  gap: theme.get-gap(sm);
+  padding: theme.get-spacing(sm);
+  border-radius: theme.get-radius(sm);
+  border: theme.get-border-size(hairline) solid theme.get-border(standard);
+  background: theme.get-background(secondary);
+}
+
+.override-section__header {
+  @include theme.typography-body;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: theme.get-text(hint);
+}
+
+// ── Price summary banner ──────────────────────────────────────────
+.price-summary-banner {
+  display: grid;
+  gap: theme.get-gap(xs);
+  padding: theme.get-spacing(sm);
+  border-radius: theme.get-radius(md);
+  border: theme.get-border-size(thin) solid theme.get-border(primary);
+  background: theme.get-background(secondary);
+}
+
+.price-summary-banner__breakdown {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: theme.get-gap(sm);
+}
+
+.price-summary-banner__breakdown-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.price-summary-banner__breakdown-label {
+  @include theme.typography-body;
+  font-size: 0.7rem;
+  color: theme.get-text(hint);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.price-summary-banner__breakdown-value {
+  @include theme.typography-body;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: theme.get-text(primary);
+}
+
+.price-summary-banner__breakdown-sep {
+  @include theme.typography-body;
+  font-size: 1rem;
+  font-weight: 700;
+  color: theme.get-text(hint);
+  padding: 0 theme.get-spacing(xs);
+  align-self: flex-end;
+  margin-bottom: 0.1em;
+}
+
+.price-summary-banner__final {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: theme.get-gap(sm);
+  padding: theme.get-spacing(xs) theme.get-spacing(sm);
+  border-radius: theme.get-radius(sm);
+  background: theme.get-background(standard);
+  border: theme.get-border-size(thin) solid theme.get-border(primary);
+}
+
+.price-summary-banner__final-label {
+  @include theme.typography-body;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: theme.get-text(primary);
+}
+
+.price-summary-banner__final-value {
+  @include theme.typography-body;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: theme.get-text(primary);
+}
+
+.price-summary-banner__anchor {
+  display: flex;
+  align-items: center;
+  gap: theme.get-gap(xs);
+  @include theme.typography-body;
+  font-size: 0.78rem;
+  color: theme.get-text(hint);
+
+  i {
+    font-size: 0.85rem;
+  }
+}
+
+.impact-panel {
+  display: grid;
+  gap: theme.get-gap(xs);
+  padding: theme.get-spacing(sm);
+  border-radius: theme.get-radius(md);
+  border: theme.get-border-size(hairline) solid theme.get-border(standard);
+  background: theme.get-background(standard);
+}
+
+.impact-panel--positive {
+  border-color: theme.get-border(success);
+}
+
+.impact-panel--negative {
+  border-color: theme.get-border(danger);
+}
+
+.impact-panel__header {
+  display: flex;
+  align-items: center;
+  gap: theme.get-gap(xs);
+  @include theme.typography-body;
+  font-weight: 700;
+  color: theme.get-text(primary);
+}
+
+.impact-panel__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: theme.get-gap(sm);
+}
+
+.impact-panel__item {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.impact-panel__item--wide {
+  grid-column: 1 / -1;
+}
+
+.impact-panel__label {
+  @include theme.typography-body;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: theme.get-text(hint);
+}
+
+.impact-panel__value {
+  @include theme.typography-body;
+  font-size: 1rem;
+  font-weight: 700;
+  color: theme.get-text(primary);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: theme.get-gap(xs);
+}
+
+@include theme.breakpoint-down(md) {
+  .master-page__filters {
+    grid-template-columns: 1fr;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .price-summary-banner__breakdown {
+    gap: theme.get-gap(xs);
+  }
+
+  .price-summary-banner__final-value {
+    font-size: 1.15rem;
+  }
+
+  .impact-panel__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+}

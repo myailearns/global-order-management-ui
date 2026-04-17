@@ -1,0 +1,47 @@
+@use "../../../shared/theming/styles/theme" as theme;
+
+.gom-access-denied {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: theme.get-spacing(xl);
+}
+
+.gom-access-denied__card {
+  width: min(100%, 30rem);
+  display: grid;
+  gap: theme.get-gap(md);
+  justify-items: start;
+  padding: theme.get-spacing(xl);
+  border: theme.get-border-size(thin) solid theme.get-border(standard);
+  border-radius: theme.get-radius(lg);
+  background: rgba(theme.get-background(standard), 0.96);
+  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.08);
+
+  h1,
+  p {
+    margin: 0;
+  }
+}
+
+.gom-access-denied__icon {
+  width: 3rem;
+  height: 3rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: theme.get-radius(md);
+  background: theme.get-background(secondary);
+  color: theme.get-text(primary);
+
+  i {
+    font-size: 1.5rem;
+  }
+}
+
+.gom-access-denied__actions {
+  display: inline-flex;
+  gap: theme.get-gap(sm);
+  justify-content: flex-end;
+  width: 100%;
+}

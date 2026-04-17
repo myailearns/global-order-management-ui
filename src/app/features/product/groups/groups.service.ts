@@ -31,8 +31,9 @@ export interface Field {
   _id: string;
   name: string;
   key: string;
-  type: 'NUMBER' | 'PERCENTAGE';
-  defaultValue: number;
+  type: 'NUMBER' | 'PERCENTAGE' | 'TEXT' | 'LONG_TEXT';
+  fieldKind?: 'PRICING' | 'METADATA';
+  defaultValue: number | string;
   isRequired: boolean;
   status: 'ACTIVE' | 'INACTIVE';
 }
@@ -40,6 +41,8 @@ export interface Field {
 export interface FieldGroupItem {
   fieldId: string;
   order: number;
+  defaultValue?: number | null;
+  requiredOverride?: boolean | null;
 }
 
 export interface FieldGroup {
@@ -47,6 +50,7 @@ export interface FieldGroup {
   name: string;
   version: number;
   fields: FieldGroupItem[];
+  categoryIds?: string[];
   status: 'ACTIVE' | 'INACTIVE';
 }
 
@@ -57,6 +61,20 @@ export interface Unit {
   baseUnitId: string | null;
   conversionFactor: number;
   status: 'ACTIVE' | 'INACTIVE';
+  categoryIds?: string[];
+}
+
+export interface TaxProfile {
+  _id: string;
+  name: string;
+  countryCode: string;
+  taxMode: 'GST' | 'NO_TAX';
+  rate: number;
+  inclusive: boolean;
+  hsnCode: string;
+  status: 'ACTIVE' | 'INACTIVE';
+  effectiveFrom: string;
+  effectiveTo?: string | null;
 }
 
 export interface GroupResolvedField {
@@ -80,6 +98,13 @@ export interface Group {
   };
   baseUnitId: string;
   allowedUnitIds: string[];
+  taxProfileId?: string | null;
+  stock?: {
+    onHand: number;
+    reserved: number;
+    available: number;
+    reorderLevel: number;
+  };
   status: 'ACTIVE' | 'INACTIVE';
   updatedAt: string;
 }
@@ -96,6 +121,7 @@ export interface GroupPayload {
   };
   baseUnitId: string;
   allowedUnitIds: string[];
+  taxProfileId?: string | null;
   status: 'ACTIVE' | 'INACTIVE';
 }
 
@@ -110,6 +136,7 @@ export class GroupsService {
   private readonly fieldsUrl = `${environment.apiBaseUrl}/fields`;
   private readonly fieldGroupsUrl = `${environment.apiBaseUrl}/field-groups`;
   private readonly unitsUrl = `${environment.apiBaseUrl}/units`;
+  private readonly taxProfilesUrl = `${environment.apiBaseUrl}/tax-profiles`;
 
   listGroups(): Observable<ApiPaginated<Group>> {
     return this.http.get<ApiPaginated<Group>>(this.groupsUrl);
@@ -124,7 +151,7 @@ export class GroupsService {
   }
 
   listCategories(): Observable<ApiPaginated<Category>> {
-    return this.http.get<ApiPaginated<Category>>(this.categoriesUrl);
+    return this.http.get<ApiPaginated<Category>>(`${this.categoriesUrl}?status=ACTIVE`);
   }
 
   listFields(): Observable<ApiPaginated<Field>> {
@@ -137,5 +164,9 @@ export class GroupsService {
 
   listUnits(): Observable<ApiPaginated<Unit>> {
     return this.http.get<ApiPaginated<Unit>>(this.unitsUrl);
+  }
+
+  listTaxProfiles(): Observable<ApiPaginated<TaxProfile>> {
+    return this.http.get<ApiPaginated<TaxProfile>>(`${this.taxProfilesUrl}?status=ACTIVE`);
   }
 }

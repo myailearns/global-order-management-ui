@@ -1,0 +1,31 @@
+@use "../../../../shared/theming/styles/theme" as theme;
+
+.fields-form {
+  display: grid;
+  gap: theme.get-gap(sm);
+}
+
+.fields-form__group-assignment {
+  padding: theme.get-spacing(sm);
+  border: theme.get-border-size(hairline) solid theme.get-border(standard);
+  border-radius: theme.get-radius(sm);
+  background: theme.get-background(secondary);
+
+  h4 {
+    margin: 0 0 theme.get-gap(sm) 0;
+    @include theme.typography-heading(sm);
+  }
+}
+
+.fields-form__group-empty {
+  margin: 0;
+  color: theme.get-text(hint);
+}
+
+.fields-form__actions {
+  width: 100%;
+}
+
+.fields-form__action {
+  justify-content: center;
+}

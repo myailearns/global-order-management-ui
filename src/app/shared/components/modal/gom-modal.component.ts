@@ -14,7 +14,7 @@ import { CommonModule } from '@angular/common';
 import { GomButtonComponent } from '../form-controls/button/gom-button.component';
 
 @Component({
-  selector: 'gom-modal',
+  selector: 'gom-lib-modal',
   standalone: true,
   imports: [CommonModule, GomButtonComponent],
   templateUrl: './gom-modal.component.html',

@@ -1,0 +1,41 @@
+@use "../../../../shared/theming/styles/theme" as theme;
+
+.fields-view {
+  display: grid;
+  gap: theme.get-gap(sm);
+}
+
+.fields-view__row {
+  display: grid;
+  gap: theme.get-gap(xxs);
+
+  h4 {
+    margin: 0;
+    @include theme.typography-label;
+    color: theme.get-text(default-light);
+  }
+
+  p {
+    margin: 0;
+    @include theme.typography-body;
+    color: theme.get-text(primary);
+    word-break: break-word;
+  }
+}
+
+.fields-view__status {
+  font-weight: 600;
+  color: theme.get-text(success);
+}
+
+.fields-view__status--inactive {
+  color: theme.get-text(danger);
+}
+
+.fields-view__actions {
+  width: 100%;
+}
+
+.fields-view__action {
+  justify-content: center;
+}

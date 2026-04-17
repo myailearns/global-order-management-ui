@@ -1,0 +1,74 @@
+<gom-lib-modal
+  [show]="isOpen"
+  (showChange)="isOpen = $event"
+  [title]="(initialData ? text.formTitleEdit : text.formTitleCreate) | translate"
+  [closeOnBackdropClick]="true"
+  size="small"
+  (closed)="onCancel()"
+>
+  @if (form) {
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="fields-form">
+      <gom-lib-dynamic-form
+        [form]="form"
+        [fields]="fields"
+        [selectOptionsBySource]="selectOptionsBySource"
+      ></gom-lib-dynamic-form>
+
+      <section class="fields-form__group-assignment">
+        @if (fieldGroupOptions.length > 0) {
+          <gom-lib-select
+            [label]="('fields.labels.assignToFieldGroups' | translate)"
+            [placeholder]="('fields.labels.selectFieldGroups' | translate)"
+            [multiple]="true"
+            [options]="fieldGroupSelectOptions"
+            [selectedValues]="selectedFieldGroupIds"
+            (selectedValuesChange)="onFieldGroupSelectionChange($event)"
+          ></gom-lib-select>
+        } @else {
+          <h4>{{ 'fields.labels.assignToFieldGroups' | translate }}</h4>
+          <p class="fields-form__group-empty">{{ 'fields.labels.noFieldGroupsAvailable' | translate }}</p>
+        }
+      </section>
+
+      <div gom-modal-actions class="fields-form__actions gom-modal__action-layout">
+        <div class="gom-modal__action-layout-start">
+          <gom-lib-button
+            class="fields-form__action"
+            type="button"
+            variant="secondary"
+            [size]="cancelMode === 'icon-only' ? 'icon' : 'default'"
+            [attr.aria-label]="text.formCancelAria | translate"
+            [attr.title]="text.formCancelAria | translate"
+            (buttonClick)="onCancel()"
+          >
+            @if (shouldShowIcon(cancelMode)) {
+              <i class="ri-close-line" aria-hidden="true"></i>
+            }
+            @if (shouldShowText(cancelMode)) {
+              {{ text.close | translate }}
+            }
+          </gom-lib-button>
+        </div>
+
+        <div class="gom-modal__action-layout-end">
+          <gom-lib-button
+            class="fields-form__action"
+            type="submit"
+            variant="primary"
+            [size]="submitMode === 'icon-only' ? 'icon' : 'default'"
+            [attr.aria-label]="(initialData ? text.formUpdateAria : text.formCreateAria) | translate"
+            [attr.title]="(initialData ? text.formUpdateAria : text.formCreateAria) | translate"
+            [disabled]="form.invalid"
+          >
+            @if (shouldShowIcon(submitMode)) {
+              <i class="ri-check-line" aria-hidden="true"></i>
+            }
+            @if (shouldShowText(submitMode)) {
+              {{ (initialData ? text.formSubmitUpdate : text.formSubmitCreate) | translate }}
+            }
+          </gom-lib-button>
+        </div>
+      </div>
+    </form>
+  }
+</gom-lib-modal>

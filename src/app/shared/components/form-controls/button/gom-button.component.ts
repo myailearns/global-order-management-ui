@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 @Component({
-  selector: 'gom-button',
+  selector: 'gom-lib-button',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './gom-button.component.html',

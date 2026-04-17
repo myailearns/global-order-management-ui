@@ -1,0 +1,29 @@
+<div class="gom-switch" [class.gom-switch--disabled]="disabled">
+  <span class="gom-switch__side" [class.gom-switch__side--active]="!checked">
+    @if (leftIcon) {
+      <i [class]="leftIcon" aria-hidden="true"></i>
+    }
+    <span>{{ leftText }}</span>
+  </span>
+
+  <button
+    type="button"
+    class="gom-switch__button"
+    role="switch"
+    [attr.aria-label]="ariaLabel"
+    [attr.aria-checked]="checked"
+    [disabled]="disabled"
+    (click)="toggle()"
+  >
+    <span class="gom-switch__track" [class.gom-switch__track--checked]="checked">
+      <span class="gom-switch__thumb"></span>
+    </span>
+  </button>
+
+  <span class="gom-switch__side" [class.gom-switch__side--active]="checked">
+    @if (rightIcon) {
+      <i [class]="rightIcon" aria-hidden="true"></i>
+    }
+    <span>{{ rightText }}</span>
+  </span>
+</div>

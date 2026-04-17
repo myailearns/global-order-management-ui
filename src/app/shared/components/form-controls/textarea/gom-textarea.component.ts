@@ -3,7 +3,7 @@ import { Component, EventEmitter, Input, Output, forwardRef } from '@angular/cor
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 @Component({
-  selector: 'gom-textarea',
+  selector: 'gom-lib-textarea',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './gom-textarea.component.html',
@@ -18,6 +18,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 })
 export class GomTextareaComponent implements ControlValueAccessor {
   @Input() label = '';
+  @Input() required = false;
   @Input() placeholder = '';
   @Input() rows = 4;
   @Input() hint = '';
@@ -25,6 +26,7 @@ export class GomTextareaComponent implements ControlValueAccessor {
   @Input() id = `gom-textarea-${Math.random().toString(36).slice(2, 9)}`;
 
   @Output() valueChange = new EventEmitter<string>();
+  @Output() focus = new EventEmitter<void>();
 
   value = '';
   disabled = false;
@@ -57,5 +59,9 @@ export class GomTextareaComponent implements ControlValueAccessor {
 
   handleBlur(): void {
     this.onTouched();
+  }
+
+  handleFocus(): void {
+    this.focus.emit();
   }
 }

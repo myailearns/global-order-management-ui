@@ -1,0 +1,473 @@
+<section class="billing-page">
+  <header class="billing-page__header">
+    <div>
+      <h2><i class="ri-shopping-basket-2-line" aria-hidden="true"></i> {{ 'orderEntry.title' | translate }}</h2>
+      <p>{{ 'orderEntry.subtitle' | translate }}</p>
+    </div>
+    <gom-lib-button type="button" variant="secondary" (buttonClick)="backToList()">
+      <i class="ri-arrow-left-line" aria-hidden="true"></i> {{ 'orderEntry.actions.exitOrderEntry' | translate }}
+    </gom-lib-button>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="billing-page__error">{{ errorMessage() }}</div>
+  }
+
+  <section class="billing-card" [formGroup]="form">
+    <gom-lib-tabs
+      [tabs]="wizardTabs()"
+      [activeTab]="currentStep()"
+      (tabChange)="selectStep($event)"
+      class="wizard__tabs"
+    >
+      <gom-lib-tab-content [tabId]="1" [activeTab]="currentStep()">
+        <h3>{{ 'orderEntry.steps.customer' | translate }}</h3>
+        <div class="form-grid">
+          <gom-lib-input
+            [label]="'orderEntry.labels.customerPhone' | translate"
+            type="text"
+            [placeholder]="'orderEntry.placeholders.customerPhone' | translate"
+            [formControl]="form.controls.phone"
+            [error]="form.controls.phone.touched && form.controls.phone.invalid ? ('orderEntry.validation.phoneRequired' | translate) : ''"
+          ></gom-lib-input>
+
+          <gom-lib-input
+            [label]="'orderEntry.labels.customerName' | translate"
+            type="text"
+            [placeholder]="'orderEntry.placeholders.customerName' | translate"
+            [formControl]="form.controls.customerName"
+            [error]="form.controls.customerName.touched && form.controls.customerName.invalid ? ('orderEntry.validation.customerNameRequired' | translate) : ''"
+          ></gom-lib-input>
+        </div>
+
+        @if (canShowCustomerMatches()) {
+          <div class="customer-lookup-panel">
+            @if (customerLookupLoading()) {
+              <p class="customer-lookup-panel__hint">{{ 'orderEntry.messages.lookupLoading' | translate }}</p>
+            }
+
+            @if (customerLookupError()) {
+              <p class="customer-lookup-panel__hint customer-lookup-panel__hint--error">{{ 'orderEntry.messages.lookupFailed' | translate }}</p>
+            }
+
+            @if (customerMatches().length > 0) {
+              <p class="customer-lookup-panel__hint">{{ 'orderEntry.messages.lookupSelectPrompt' | translate }}</p>
+              <div class="customer-match-list">
+                @for (customer of customerMatches(); track customer._id) {
+                  <button type="button" class="customer-match-item" (click)="selectCustomerMatch(customer)">
+                    <strong>{{ customer.name }}</strong>
+                    <span>{{ customer.phone }}</span>
+                  </button>
+                }
+              </div>
+            }
+
+            @if (shouldShowNoMatchHint()) {
+              <p class="customer-lookup-panel__hint">{{ 'orderEntry.messages.lookupNoMatch' | translate }}</p>
+            }
+          </div>
+        }
+
+        <div class="resolve-row">
+          <gom-lib-button type="button" variant="secondary" (buttonClick)="resolveCustomer()" [disabled]="isResolveDisabled()">
+            {{ 'orderEntry.actions.resolveCustomer' | translate }}
+          </gom-lib-button>
+          <span class="resolve-state">
+            {{ resolvedCustomer() ? (('orderEntry.messages.customerResolved' | translate) + ': ' + resolvedCustomer()?.name + ' (' + resolvedCustomer()?.phone + ')') : ('orderEntry.messages.customerNotResolved' | translate) }}
+          </span>
+        </div>
+      </gom-lib-tab-content>
+
+      <gom-lib-tab-content [tabId]="2" [activeTab]="currentStep()">
+        <h3>{{ 'orderEntry.steps.items' | translate }}</h3>
+
+        <div class="quick-add-bar">
+          <gom-lib-select
+            label="Quick Add Variants"
+            placeholder="Select one or more variants..."
+            [options]="quickAddVariantOptions()"
+            [multiple]="true"
+            [selectedValues]="quickAddVariantIds()"
+            (selectedValuesChange)="quickAddVariantIds.set($event)"
+          ></gom-lib-select>
+          <gom-lib-button
+            type="button"
+            variant="primary"
+            [disabled]="!quickAddVariantIds().length"
+            (buttonClick)="addSelectedVariants()"
+          >
+            <i class="ri-add-line" aria-hidden="true"></i> Add to Order
+          </gom-lib-button>
+        </div>
+
+        <div class="billing-lines" formArrayName="items">
+          <div class="billing-lines__head">
+            <span>{{ 'orderEntry.labels.variant' | translate }}</span>
+            <span>{{ 'orderEntry.labels.qty' | translate }}</span>
+            <span>{{ 'orderEntry.labels.unitPrice' | translate }}</span>
+            <span>{{ 'orderEntry.labels.tax' | translate }}</span>
+            <span>{{ 'orderEntry.labels.lineTotal' | translate }}</span>
+            <span>{{ 'orderEntry.labels.action' | translate }}</span>
+          </div>
+
+          @for (lineForm of items.controls; track lineForm; let i = $index) {
+            <div class="billing-lines__row" [formGroupName]="i">
+              <gom-lib-select
+                label=""
+                [placeholder]="'orderEntry.placeholders.selectVariant' | translate"
+                [options]="variantOptions()"
+                formControlName="variantId"
+              ></gom-lib-select>
+
+              <gom-lib-input
+                label=""
+                type="number"
+                [placeholder]="'orderEntry.placeholders.qty' | translate"
+                formControlName="quantity"
+              ></gom-lib-input>
+
+              <div class="amount-cell">{{ 'orderEntry.labels.currencySymbol' | translate }} {{ billingLines()[i].unitPrice.toLocaleString() }}</div>
+              <div class="amount-cell">{{ 'orderEntry.labels.currencySymbol' | translate }} {{ billingLines()[i].taxAmount.toLocaleString() }} <small>({{ billingLines()[i].taxLabel }})</small></div>
+              <div class="amount-cell amount-cell--strong">{{ 'orderEntry.labels.currencySymbol' | translate }} {{ billingLines()[i].lineTotal.toLocaleString() }}</div>
+              <div>
+                <gom-lib-button type="button" variant="secondary" (buttonClick)="removeItemRow(i)">
+                  <i class="ri-delete-bin-line" aria-hidden="true"></i>
+                </gom-lib-button>
+              </div>
+
+              @if (getStockInfoAt(i); as stockInfo) {
+                <div class="stock-hint" [class.stock-hint--error]="!stockInfo.isAvailable">
+                  @if (stockInfo.isAvailable) {
+                    {{ 'orderEntry.messages.stockAvailable' | translate }}: {{ stockInfo.availableQtyInBase }}
+                  } @else {
+                    {{ 'orderEntry.messages.stockNotAvailableRow' | translate }}: {{ stockInfo.availableQtyInBase }} / {{ stockInfo.convertedQtyInBase }}
+                  }
+                </div>
+              }
+            </div>
+          }
+
+          @if (stockCheckLoading()) {
+            <p class="stock-check-loading">{{ 'orderEntry.messages.stockChecking' | translate }}</p>
+          }
+
+          <div class="items-actions">
+            <gom-lib-button type="button" variant="secondary" (buttonClick)="addItemRow()">
+              <i class="ri-add-line" aria-hidden="true"></i> {{ 'orderEntry.actions.addItem' | translate }}
+            </gom-lib-button>
+          </div>
+        </div>
+      </gom-lib-tab-content>
+
+      <gom-lib-tab-content [tabId]="3" [activeTab]="currentStep()">
+        <h3>{{ 'orderEntry.steps.deliveryPlace' | translate }}</h3>
+        <div class="delivery-sections">
+          <section class="delivery-section">
+            <h4 class="delivery-section__title">Order Setup</h4>
+            <div class="form-grid">
+              <gom-lib-select
+                label="Order Type"
+                [required]="true"
+                placeholder="Select order type"
+                [options]="orderTypeOptions"
+                [formControl]="form.controls.orderType"
+                [error]="getRequiredError(form.controls.orderType)"
+                (valueChange)="onOrderTypeChange($event)"
+              ></gom-lib-select>
+
+              <gom-lib-select
+                [label]="'orderEntry.labels.orderIntakeChannel' | translate"
+                [required]="true"
+                [placeholder]="'orderEntry.placeholders.orderIntakeChannel' | translate"
+                [options]="intakeChannelOptions"
+                [formControl]="form.controls.intakeChannel"
+                [error]="getRequiredError(form.controls.intakeChannel)"
+              ></gom-lib-select>
+
+              <gom-lib-select
+                [label]="'orderEntry.labels.deliveryType' | translate"
+                [required]="true"
+                [placeholder]="'orderEntry.placeholders.deliveryType' | translate"
+                [options]="deliveryTypeOptions"
+                [formControl]="form.controls.deliveryType"
+                [error]="getRequiredError(form.controls.deliveryType)"
+                (valueChange)="onDeliveryTypeChange($event)"
+              ></gom-lib-select>
+            </div>
+          </section>
+
+          <section class="delivery-section">
+            <h4 class="delivery-section__title">Payment</h4>
+            <div class="form-grid">
+              <gom-lib-select
+                label="Payment Collection"
+                [required]="true"
+                placeholder="Select collection timing"
+                [options]="paymentCollectionStageOptions"
+                [formControl]="form.controls.paymentCollectionStage"
+                [error]="getRequiredError(form.controls.paymentCollectionStage)"
+                (valueChange)="onPaymentCollectionStageChange($event)"
+              ></gom-lib-select>
+
+              <gom-lib-select
+                label="Payment Mode"
+                [required]="canSelectPaymentMode"
+                placeholder="Select payment mode"
+                [options]="paymentModeOptions"
+                [isDisabled]="!canSelectPaymentMode"
+                [formControl]="form.controls.paymentMode"
+                [error]="getRequiredError(form.controls.paymentMode)"
+              ></gom-lib-select>
+
+              @if (isDeliveryOrder) {
+                <gom-lib-input
+                  [label]="'orderEntry.labels.deliveryCharges' | translate"
+                  [required]="true"
+                  type="number"
+                  [placeholder]="'orderEntry.placeholders.deliveryCharges' | translate"
+                  [formControl]="form.controls.deliveryCharge"
+                  [error]="getRequiredError(form.controls.deliveryCharge)"
+                ></gom-lib-input>
+              }
+            </div>
+          </section>
+
+          @if (isDeliveryOrder) {
+            <section class="delivery-section">
+              <h4 class="delivery-section__title">Delivery Address & Contact</h4>
+              <div class="form-grid">
+                <gom-lib-textarea
+                  [label]="'orderEntry.labels.deliveryAddress' | translate"
+                  [required]="true"
+                  [placeholder]="'orderEntry.placeholders.deliveryAddress' | translate"
+                  [rows]="3"
+                  [formControl]="form.controls.deliveryAddressText"
+                  [error]="form.controls.deliveryAddressText.touched && form.controls.deliveryAddressText.invalid ? ('orderEntry.validation.addressRequiredForDelivery' | translate) : ''"
+                ></gom-lib-textarea>
+
+                <gom-lib-input
+                  [label]="'orderEntry.labels.deliveryPincode' | translate"
+                  [required]="true"
+                  type="text"
+                  [placeholder]="'orderEntry.placeholders.deliveryPincode' | translate"
+                  [formControl]="form.controls.deliveryPostalCode"
+                  [error]="getDeliveryPincodeError()"
+                ></gom-lib-input>
+
+                @if (isNonServiceableDeliveryPincode) {
+                  <output class="pincode-alert" aria-live="polite">
+                    <p class="pincode-alert__text">{{ nonServiceablePincodeMessage }}</p>
+                    <div class="pincode-alert__actions">
+                      <gom-lib-button type="button" variant="secondary" (buttonClick)="applyPincodeFallback('CALL_COURIER')">
+                        Switch to Call Courier
+                      </gom-lib-button>
+                      <gom-lib-button type="button" variant="secondary" (buttonClick)="applyPincodeFallback('CALL_PICKUP')">
+                        Switch to Call Pickup
+                      </gom-lib-button>
+                    </div>
+                  </output>
+                }
+
+                <gom-lib-input
+                  [label]="'orderEntry.labels.deliveryContactName' | translate"
+                  [required]="true"
+                  type="text"
+                  [placeholder]="'orderEntry.placeholders.deliveryContactName' | translate"
+                  [formControl]="form.controls.deliveryContactName"
+                  [error]="getRequiredError(form.controls.deliveryContactName)"
+                ></gom-lib-input>
+
+                <gom-lib-input
+                  [label]="'orderEntry.labels.deliveryContactPhone' | translate"
+                  [required]="true"
+                  type="text"
+                  [placeholder]="'orderEntry.placeholders.deliveryContactPhone' | translate"
+                  [formControl]="form.controls.deliveryContactPhone"
+                  [error]="getRequiredError(form.controls.deliveryContactPhone)"
+                ></gom-lib-input>
+
+                <gom-lib-input
+                  [label]="'orderEntry.labels.preferredDeliveryTime' | translate"
+                  type="datetime-local"
+                  [formControl]="form.controls.preferredDeliveryTime"
+                ></gom-lib-input>
+
+                <gom-lib-input
+                  [label]="'orderEntry.labels.googleLocation' | translate"
+                  type="text"
+                  [placeholder]="'orderEntry.placeholders.googleLocation' | translate"
+                  [formControl]="form.controls.deliveryLocationText"
+                ></gom-lib-input>
+
+                <gom-lib-input
+                  [label]="'orderEntry.labels.mapLatitude' | translate"
+                  type="number"
+                  [placeholder]="'orderEntry.placeholders.mapLatitude' | translate"
+                  [formControl]="form.controls.deliveryGeoLat"
+                ></gom-lib-input>
+
+                <gom-lib-input
+                  [label]="'orderEntry.labels.mapLongitude' | translate"
+                  type="number"
+                  [placeholder]="'orderEntry.placeholders.mapLongitude' | translate"
+                  [formControl]="form.controls.deliveryGeoLng"
+                ></gom-lib-input>
+              </div>
+            </section>
+
+            <section class="delivery-section">
+              <h4 class="delivery-section__title">Rider & Charges</h4>
+              <div class="form-grid">
+                <gom-lib-input
+                  [label]="'orderEntry.labels.provisionalRiderName' | translate"
+                  type="text"
+                  [placeholder]="'orderEntry.placeholders.provisionalRiderName' | translate"
+                  [formControl]="form.controls.riderName"
+                ></gom-lib-input>
+
+                <gom-lib-input
+                  [label]="'orderEntry.labels.provisionalRiderPhone' | translate"
+                  type="text"
+                  [placeholder]="'orderEntry.placeholders.provisionalRiderPhone' | translate"
+                  [formControl]="form.controls.riderPhone"
+                ></gom-lib-input>
+              </div>
+            </section>
+          }
+
+          <section class="delivery-section delivery-section--full">
+            <h4 class="delivery-section__title">Notes</h4>
+            <div class="form-grid">
+              <gom-lib-input
+                [label]="'orderEntry.labels.orderNotes' | translate"
+                type="text"
+                [placeholder]="'orderEntry.placeholders.orderNotes' | translate"
+                [formControl]="form.controls.notes"
+              ></gom-lib-input>
+            </div>
+          </section>
+        </div>
+      </gom-lib-tab-content>
+
+      <gom-lib-tab-content [tabId]="4" [activeTab]="currentStep()">
+        <div class="pricing-preview">
+          <div class="pricing-preview__header">
+            <h3 class="pricing-preview__title">{{ 'orderEntry.steps.pricing' | translate }}</h3>
+            <div class="pricing-preview__actions">
+              <gom-lib-button variant="secondary" size="icon" (buttonClick)="printPricingPreview()" title="Print" aria-label="Print">
+                <i class="ri-printer-line" aria-hidden="true"></i>
+              </gom-lib-button>
+              <gom-lib-button variant="secondary" size="icon" (buttonClick)="shareViaWhatsApp()" title="Share via WhatsApp" aria-label="Share via WhatsApp">
+                <i class="ri-whatsapp-line" aria-hidden="true"></i>
+              </gom-lib-button>
+              <gom-lib-button variant="secondary" size="icon" (buttonClick)="shareViaMail()" title="Share via Email" aria-label="Share via Email">
+                <i class="ri-mail-send-line" aria-hidden="true"></i>
+              </gom-lib-button>
+            </div>
+          </div>
+
+          <!-- Items breakdown table -->
+          <div class="pricing-items">
+            <div class="pricing-items__head">
+              <span>Item</span>
+              <span class="text-right">MRP</span>
+              <span class="text-right">Selling</span>
+              <span class="text-right">Qty</span>
+              <span class="text-right">Discount</span>
+              <span class="text-right">Tax</span>
+              <span class="text-right">Total</span>
+            </div>
+            @for (line of billingLines(); track line.index) {
+              @if (line.quantity > 0 && line.variantName !== '-') {
+                <div class="pricing-items__row">
+                  <span class="pricing-item__name">{{ line.variantName }}</span>
+                  <span class="text-right">
+                    @if (line.anchorPrice > line.unitPrice) {
+                      Rs {{ line.anchorPrice }}
+                    } @else {
+                      <span class="text-muted">—</span>
+                    }
+                  </span>
+                  <span class="text-right">Rs {{ line.unitPrice }}</span>
+                  <span class="text-right">× {{ line.quantity }}</span>
+                  <span class="text-right">
+                    @if (line.discountPerLine > 0) {
+                      <span class="pricing-discount">−Rs {{ line.discountPerLine }}</span>
+                    } @else {
+                      <span class="text-muted">—</span>
+                    }
+                  </span>
+                  <span class="text-right">
+                    @if (line.taxAmount > 0) {
+                      <span class="pricing-tax">Rs {{ line.taxAmount }}<br><small>{{ line.taxLabel }}</small></span>
+                    } @else {
+                      <span class="text-muted">—</span>
+                    }
+                  </span>
+                  <span class="text-right pricing-item__total">Rs {{ line.lineTotal }}</span>
+                </div>
+              }
+            }
+          </div>
+
+          <!-- Summary -->
+          <div class="pricing-summary">
+            <div class="pricing-summary__row">
+              <span>Sub Total</span>
+              <strong>Rs {{ subTotal() }}</strong>
+            </div>
+            @if (taxTotal() > 0) {
+              <div class="pricing-summary__row">
+                <span>Tax Total</span>
+                <strong>Rs {{ taxTotal() }}</strong>
+              </div>
+            }
+            @if (deliveryChargeValue > 0) {
+              <div class="pricing-summary__row">
+                <span>Delivery Charge</span>
+                <strong>Rs {{ deliveryChargeValue }}</strong>
+              </div>
+            }
+            @if (totalSavings() > 0) {
+              <div class="pricing-summary__row pricing-summary__row--savings">
+                <span>Total Savings</span>
+                <strong>−Rs {{ totalSavings() }}</strong>
+              </div>
+            }
+            <div class="pricing-summary__row pricing-summary__row--grand">
+              <span>Grand Total</span>
+              <strong>Rs {{ grandTotal() }}</strong>
+            </div>
+          </div>
+        </div>
+      </gom-lib-tab-content>
+    </gom-lib-tabs>
+  </section>
+
+  <footer class="billing-page__actions">
+    <gom-lib-button type="button" variant="secondary" (buttonClick)="prevStep()" [disabled]="currentStep() === 1">
+      {{ 'orderEntry.actions.previous' | translate }}
+    </gom-lib-button>
+
+    <gom-lib-button type="button" variant="secondary" (buttonClick)="nextStep()" [disabled]="currentStep() === totalSteps">
+      {{ 'orderEntry.actions.next' | translate }}
+    </gom-lib-button>
+
+    <gom-lib-button
+      type="button"
+      variant="primary"
+      [size]="submitMode === 'icon-only' ? 'icon' : 'default'"
+      (buttonClick)="placeOrder()"
+      [disabled]="isPlaceDisabled() || currentStep() !== totalSteps"
+      [attr.aria-label]="'orderEntry.actions.placeOrder' | translate"
+      [attr.title]="'orderEntry.actions.placeOrder' | translate"
+    >
+      @if (shouldShowIcon(submitMode)) {
+        <i class="ri-check-line" aria-hidden="true"></i>
+      }
+      @if (shouldShowText(submitMode)) {
+        {{ saving() ? ('orderEntry.actions.placing' | translate) : ('orderEntry.actions.placeOrder' | translate) }}
+      }
+    </gom-lib-button>
+  </footer>
+</section>

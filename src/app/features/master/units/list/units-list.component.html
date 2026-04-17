@@ -1,0 +1,27 @@
+<div class="units-list">
+  <header class="units-list__header">
+    <h2><i class="ri-scales-3-line" aria-hidden="true"></i> {{ text.pageTitle | translate }}</h2>
+      @if (canCreate) {
+        <gom-lib-button class="btn-add" (buttonClick)="onAddNew()" [disabled]="loading">
+          <i class="ri-add-line" aria-hidden="true"></i> {{ text.addUnit | translate }}
+        </gom-lib-button>
+      }
+  </header>
+
+  <section class="units-list__table-shell">
+    <gom-lib-table
+      [columns]="columns"
+      [rows]="rows"
+      [loading]="loading"
+      [pageSize]="10"
+      [pageSizeOptions]="[10, 20, 50]"
+      [searchPlaceholder]="text.searchPlaceholder | translate"
+      [emptyMessage]="text.emptyMessage | translate"
+      [mobileCardView]="true"
+      [mobileCardFields]="mobileCardFields"
+      [mobileCardClickable]="true"
+      (rowAction)="onRowAction($event)"
+      (rowClick)="onRowClick($event)"
+    ></gom-lib-table>
+  </section>
+</div>

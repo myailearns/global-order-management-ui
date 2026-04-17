@@ -1,0 +1,114 @@
+<section class="master-page">
+  <header class="master-page__header">
+    <h2><i class="ri-user-3-line" aria-hidden="true"></i> Customers</h2>
+    <div class="master-page__header-actions">
+      <gom-lib-input
+        label="Search"
+        type="search"
+        placeholder="Search customer, phone, pincode"
+        (valueChange)="onSearchChange($event)"
+      ></gom-lib-input>
+      <gom-lib-button type="button" variant="secondary" (buttonClick)="loadCustomers()">
+        Refresh
+      </gom-lib-button>
+    </div>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="master-page__error">{{ errorMessage() }}</div>
+  }
+
+  <article class="master-page__table-shell">
+    <gom-lib-table
+      [columns]="columns"
+      [rows]="rows()"
+      [loading]="loading()"
+      [pageSize]="10"
+      [pageSizeOptions]="[10, 20, 50]"
+      searchPlaceholder="Search customers"
+      emptyMessage="No customers found."
+      [mobileCardView]="true"
+      (rowAction)="onRowAction($event)"
+    ></gom-lib-table>
+  </article>
+</section>
+
+<gom-lib-modal
+  [(show)]="detailOpen"
+  [title]="'Customer Details — ' + (selectedCustomer()?.customer?.name || '')"
+  size="large"
+  [closeOnBackdropClick]="true"
+  (closed)="closeCustomerDetail()"
+>
+  @if (detailLoading()) {
+    <p class="customer-empty">Loading customer details...</p>
+  }
+
+  @if (!detailLoading() && selectedCustomer(); as summary) {
+    <section class="customer-summary-grid">
+      <div><strong>Name:</strong> {{ summary.customer.name }}</div>
+      <div><strong>Phone:</strong> {{ summary.customer.phone }}</div>
+      <div><strong>Total Orders:</strong> {{ summary.metrics.totalOrders }}</div>
+      <div><strong>Delivered:</strong> {{ summary.metrics.deliveredOrders }}</div>
+      <div><strong>Cancelled:</strong> {{ summary.metrics.cancelledOrders }}</div>
+      <div><strong>Total Spend:</strong> Rs {{ summary.metrics.totalSpend.toLocaleString('en-IN') }}</div>
+      <div><strong>AOV:</strong> Rs {{ summary.metrics.averageOrderValue.toLocaleString('en-IN') }}</div>
+      <div><strong>Last Order:</strong> {{ summary.metrics.lastOrderAt ? (summary.metrics.lastOrderAt | date: 'medium') : '-' }}</div>
+    </section>
+
+    <h4 class="customer-section-title">Top Items</h4>
+    @if (summary.topItems && summary.topItems.length > 0) {
+      <div class="customer-top-list">
+        @for (item of summary.topItems; track item.variantId) {
+          <div class="customer-top-list__item">
+            <strong>{{ item.itemName }}</strong>
+            <span>Qty: {{ item.quantity }}</span>
+            <span>Amount: Rs {{ item.amount.toLocaleString('en-IN') }}</span>
+            <span>Orders: {{ item.orderCount }}</span>
+          </div>
+        }
+      </div>
+    } @else {
+      <p class="customer-empty">No item history found.</p>
+    }
+
+    <h4 class="customer-section-title">Order History</h4>
+    @if (selectedCustomerOrders().length > 0) {
+      <div class="customer-orders-wrap">
+        <table class="customer-orders-table">
+          <thead>
+            <tr>
+              <th>Order No</th>
+              <th>Status</th>
+              <th>Type</th>
+              <th>Source</th>
+              <th>Total</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (order of selectedCustomerOrders(); track order._id) {
+              <tr>
+                <td>{{ order.orderNo }}</td>
+                <td>{{ order.status }}</td>
+                <td>{{ order.orderType }}</td>
+                <td>{{ order.orderSource }}</td>
+                <td>Rs {{ (order.pricingSnapshot.grandTotal || 0).toLocaleString('en-IN') }}</td>
+                <td>{{ order.createdAt | date: 'medium' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else {
+      <p class="customer-empty">No orders found for this customer.</p>
+    }
+  }
+
+  <footer class="gom-modal__action-layout" gom-modal-actions>
+    <div class="gom-modal__action-layout-start"></div>
+    <div class="gom-modal__action-layout-end">
+      <gom-lib-button type="button" variant="primary" (buttonClick)="closeCustomerDetail()">Close</gom-lib-button>
+    </div>
+  </footer>
+</gom-lib-modal>

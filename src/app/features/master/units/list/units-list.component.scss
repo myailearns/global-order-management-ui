@@ -1,0 +1,44 @@
+@use "../../../../shared/theming/styles/theme" as theme;
+
+.units-list {
+  display: grid;
+  gap: theme.get-gap(md);
+}
+
+.units-list__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: theme.get-gap(sm);
+  flex-wrap: wrap;
+
+  h2 {
+    margin: 0;
+    @include theme.typography-heading(xl);
+  }
+}
+
+.units-list__table-shell {
+  padding: theme.get-spacing(md);
+  border: theme.get-border-size(hairline) solid theme.get-border(standard);
+  border-radius: theme.get-radius(md);
+  background: theme.get-background(standard);
+}
+
+.btn-add {
+  display: inline-flex;
+}
+
+@include theme.breakpoint-down(sm) {
+  .units-list__header {
+    align-items: stretch;
+  }
+
+  .btn-add {
+    width: 100%;
+
+    ::ng-deep .gom-button {
+      width: 100%;
+    }
+  }
+}

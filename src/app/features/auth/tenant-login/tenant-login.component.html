@@ -1,0 +1,33 @@
+<section class="gom-login-page">
+  <div class="gom-login-page__panel gom-login-page__panel--accent">
+    <p class="gom-login-page__eyebrow">{{ 'auth.common.dev_mode' | translate }}</p>
+    <h1>{{ 'auth.tenant.title' | translate }}</h1>
+    <p class="gom-login-page__subtitle">{{ 'auth.tenant.subtitle' | translate }}</p>
+
+    <div class="gom-login-page__demo-card">
+      <h2>{{ 'auth.tenant.demo_title' | translate }}</h2>
+      <p>{{ 'auth.tenant.demo_starter' | translate }}</p>
+      <p>{{ 'auth.tenant.demo_growth' | translate }}</p>
+      <p>{{ 'auth.tenant.demo_scale' | translate }}</p>
+      <p>{{ 'auth.tenant.demo_password' | translate }}</p>
+    </div>
+  </div>
+
+  <div class="gom-login-page__panel">
+    <a routerLink="/auth" class="gom-login-page__back">{{ 'auth.common.back_to_entry' | translate }}</a>
+
+    <form class="gom-login-page__form" [formGroup]="form" (ngSubmit)="submit()">
+      <gom-lib-input formControlName="tenantCode" [label]="'auth.tenant.lbl_tenant_code' | translate" [required]="true"></gom-lib-input>
+      <gom-lib-input formControlName="email" type="email" [label]="'auth.tenant.lbl_email' | translate" [required]="true"></gom-lib-input>
+      <gom-lib-input formControlName="password" type="password" [label]="'auth.tenant.lbl_password' | translate" [required]="true"></gom-lib-input>
+
+      @if (errorMessage()) {
+        <p class="gom-login-page__error" role="alert">{{ errorMessage() }}</p>
+      }
+
+      <gom-lib-button type="submit" [disabled]="form.invalid || submitting()">
+        {{ 'auth.tenant.btn_submit' | translate }}
+      </gom-lib-button>
+    </form>
+  </div>
+</section>

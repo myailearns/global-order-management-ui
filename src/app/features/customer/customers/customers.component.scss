@@ -1,0 +1,80 @@
+.master-page {
+  display: grid;
+  gap: 1rem;
+}
+
+.master-page__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 1rem;
+}
+
+.master-page__header-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: end;
+}
+
+.master-page__error {
+  border: 1px solid #d9a7a7;
+  background: #fff3f3;
+  color: #842029;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+}
+
+.customer-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.75rem 1rem;
+}
+
+.customer-section-title {
+  margin: 1rem 0 0.75rem;
+}
+
+.customer-top-list {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.customer-top-list__item {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 0.75rem;
+  border: 1px solid #d8dee5;
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.customer-orders-wrap {
+  border: 1px solid #d8dee5;
+  border-radius: 0.5rem;
+  max-height: 18rem;
+  overflow: auto;
+}
+
+.customer-orders-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.customer-orders-table th,
+.customer-orders-table td {
+  padding: 0.625rem 0.75rem;
+  border-bottom: 1px solid #e9edf2;
+  text-align: left;
+  vertical-align: top;
+}
+
+.customer-orders-table thead th {
+  position: sticky;
+  top: 0;
+  background: #f8fafc;
+}
+
+.customer-empty {
+  margin: 0;
+  color: #5b6673;
+}

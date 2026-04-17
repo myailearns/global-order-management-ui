@@ -3,9 +3,9 @@
 .gom-shell {
   min-height: 100vh;
   background: linear-gradient(
-    135deg,
+    145deg,
     theme.get-background(secondary) 0%,
-    theme.get-background(standard) 35%,
+    theme.get-background(standard) 42%,
     theme.get-background(secondary) 100%
   );
 }
@@ -16,38 +16,70 @@
   z-index: 20;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: theme.get-gap(md);
-  min-height: 4.5rem;
+  min-height: 4.75rem;
   padding: theme.get-spacing(sm) theme.get-spacing(md);
   border-bottom: theme.get-border-size(hairline) solid theme.get-border(standard);
-  backdrop-filter: blur(6px);
+  backdrop-filter: blur(10px);
   background-color: rgba(theme.get-background(standard), 0.92);
+}
+
+.gom-shell__topbar-start {
+  display: inline-flex;
+  align-items: center;
+  gap: theme.get-gap(sm);
+  min-width: 0;
 }
 
 .gom-shell__menu-button {
   display: inline-flex;
-  flex-direction: column;
+  align-items: center;
   justify-content: center;
-  gap: 0.24rem;
   width: 2.5rem;
   height: 2.5rem;
   border-radius: theme.get-radius(sm);
   border: theme.get-border-size(thin) solid theme.get-border(standard);
-  padding: 0.5rem;
+  padding: 0;
   background: theme.get-background(standard);
+  color: theme.get-text(primary);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
 
-  span {
-    width: 100%;
-    height: 2px;
-    border-radius: 999px;
-    background: theme.get-text(primary);
+  i {
+    font-size: 1.25rem;
+  }
+
+  &:hover {
+    background: theme.get-background(secondary);
+    border-color: theme.get-border(primary-hover);
+  }
+}
+
+.gom-shell__brand-mark {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: theme.get-radius(sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(160deg, theme.get-background(primary-light), theme.get-background(secondary));
+  color: theme.get-text(primary);
+
+  i {
+    font-size: 1.2rem;
   }
 }
 
 .gom-shell__brand {
+  min-width: 0;
+
   h1 {
     margin: 0;
     @include theme.typography-heading(lg);
+    color: theme.get-text(primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 
@@ -57,9 +89,63 @@
   color: theme.get-text(hint);
 }
 
+.gom-shell__topbar-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: theme.get-gap(xs);
+}
+
+.gom-shell__lang-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: theme.get-gap(xxs);
+
+  span {
+    @include theme.typography-caption;
+    color: theme.get-text(hint);
+  }
+
+  gom-lib-select {
+    min-width: 5.5rem;
+  }
+}
+
+.gom-shell__action-button,
+.gom-shell__profile-chip {
+  border: theme.get-border-size(thin) solid theme.get-border(standard);
+  background: theme.get-background(standard);
+  color: theme.get-text(primary);
+  border-radius: theme.get-radius(sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+.gom-shell__action-button {
+  i {
+    font-size: 1.2rem;
+  }
+
+  &:hover {
+    background: theme.get-background(secondary);
+    border-color: theme.get-border(primary-hover);
+  }
+}
+
+.gom-shell__profile-chip {
+  width: 2.75rem;
+  font-weight: theme.get-font-weight(semibold);
+}
+
 .gom-shell__layout {
   display: grid;
   grid-template-columns: 1fr;
+}
+
+.gom-shell__content--auth {
+  min-height: 100vh;
 }
 
 .gom-shell__backdrop {
@@ -85,26 +171,101 @@
   z-index: 16;
   width: min(82vw, 18rem);
   transform: translateX(-105%);
-  transition: transform 0.22s ease;
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
   overflow-y: auto;
-  padding: theme.get-spacing(md);
+  padding: theme.get-spacing(sm);
   border-right: theme.get-border-size(hairline) solid theme.get-border(standard);
-  background: theme.get-background(standard);
+  background: rgba(theme.get-background(standard), 0.96);
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.1);
 
   &.gom-shell__sidenav--open {
     transform: translateX(0);
   }
 }
 
-.gom-shell__section {
-  margin-bottom: theme.get-spacing(lg);
+.gom-shell__sidenav-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: theme.get-gap(xs);
+  padding: theme.get-spacing(sm);
+  margin-bottom: theme.get-spacing(sm);
+  border-bottom: theme.get-border-size(hairline) solid theme.get-border(standard);
 
-  h2 {
-    margin: 0 0 theme.get-spacing(xs);
-    @include theme.typography-label;
+  .gom-shell__sidenav-headcopy {
+    min-width: 0;
+  }
+
+  p {
+    margin: 0;
+    @include theme.typography-caption;
     color: theme.get-text(hint);
     text-transform: uppercase;
     letter-spacing: 0.04em;
+  }
+
+  h3 {
+    margin: theme.get-spacing(xxs) 0 0;
+    @include theme.typography-heading(sm);
+    color: theme.get-text(primary);
+  }
+}
+
+.gom-shell__sidenav-toggle {
+  display: none;
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+  border: theme.get-border-size(thin) solid theme.get-border(standard);
+  background: theme.get-background(standard);
+  color: theme.get-text(primary);
+  border-radius: theme.get-radius(sm);
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+
+  i {
+    font-size: 1rem;
+  }
+
+  &:hover {
+    background: theme.get-background(secondary);
+    border-color: theme.get-border(primary-hover);
+  }
+}
+
+.gom-shell__section {
+  margin-bottom: theme.get-spacing(md);
+
+  .gom-shell__section-toggle {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: theme.get-gap(xs);
+    margin: 0 0 theme.get-spacing(xs);
+    padding: theme.get-spacing(xxs) theme.get-spacing(xs);
+    border: 0;
+    border-radius: theme.get-radius(sm);
+    background: transparent;
+    color: theme.get-text(hint);
+    @include theme.typography-label;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+
+    i {
+      font-size: 1rem;
+      color: theme.get-text(default-light);
+    }
+
+    &:hover {
+      background: theme.get-background(secondary);
+      color: theme.get-text(primary);
+    }
+  }
+
+  .gom-shell__section-toggle-label {
+    text-align: left;
   }
 
   ul {
@@ -112,15 +273,19 @@
     margin: 0;
     padding: 0;
     display: grid;
-    gap: theme.get-gap(xs);
+    gap: theme.get-gap(xxs);
   }
 
   a {
-    display: block;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: theme.get-gap(xs);
     padding: theme.get-spacing(xs) theme.get-spacing(sm);
     border: theme.get-border-size(hairline) solid transparent;
     border-radius: theme.get-radius(sm);
     color: theme.get-text(default);
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 
     &:hover {
       background: theme.get-background(secondary);
@@ -136,6 +301,30 @@
   }
 }
 
+.gom-shell__nav-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  i {
+    font-size: 1rem;
+  }
+}
+
+.gom-shell__nav-label {
+  min-width: 0;
+}
+
+.gom-shell__nav-trail {
+  color: theme.get-text(hint);
+
+  i {
+    font-size: 0.95rem;
+  }
+}
+
 .gom-shell__content {
   padding: theme.get-spacing(md);
 }
@@ -143,6 +332,15 @@
 @include theme.breakpoint-up(md) {
   .gom-shell__menu-button {
     display: none;
+  }
+
+  .gom-shell__sidenav-toggle {
+    display: inline-flex;
+  }
+
+  .gom-shell__brand-mark {
+    width: 2.5rem;
+    height: 2.5rem;
   }
 
   .gom-shell__layout {
@@ -159,10 +357,64 @@
     width: 100%;
     height: calc(100vh - 4.5rem);
     transform: none;
+    box-shadow: none;
   }
 
   .gom-shell__content {
     padding: theme.get-spacing(lg);
+  }
+
+  .gom-shell--desktop-collapsed {
+    .gom-shell__layout {
+      grid-template-columns: 5rem 1fr;
+    }
+
+    .gom-shell__sidenav-headcopy,
+    .gom-shell__section-toggle-label,
+    .gom-shell__nav-label,
+    .gom-shell__nav-trail {
+      display: none;
+    }
+
+    .gom-shell__sidenav-head {
+      justify-content: center;
+      border-bottom: 0;
+      margin-bottom: theme.get-spacing(xs);
+      padding: theme.get-spacing(xs);
+    }
+
+    .gom-shell__sidenav {
+      padding: theme.get-spacing(xs);
+    }
+
+    .gom-shell__section {
+      margin-bottom: theme.get-spacing(sm);
+
+      .gom-shell__section-toggle {
+        justify-content: center;
+        margin-bottom: theme.get-spacing(xxs);
+        padding: theme.get-spacing(xxs);
+
+        i {
+          font-size: 0.95rem;
+        }
+      }
+
+      a {
+        grid-template-columns: 1fr;
+        justify-items: center;
+        padding: theme.get-spacing(xs);
+      }
+    }
+
+    .gom-shell__nav-icon {
+      width: 2rem;
+      height: 2rem;
+
+      i {
+        font-size: 1.125rem;
+      }
+    }
   }
 }
 
@@ -173,5 +425,37 @@
 
   .gom-shell__content {
     padding: theme.get-spacing(xl);
+  }
+}
+
+@include theme.breakpoint-down(sm) {
+  .gom-shell__brand {
+    h1 {
+      font-size: 1rem;
+    }
+  }
+
+  .gom-shell__eyebrow {
+    display: none;
+  }
+
+  .gom-shell__topbar-actions {
+    gap: theme.get-gap(xxs);
+  }
+
+  .gom-shell__lang-picker {
+    span {
+      display: none;
+    }
+
+    gom-lib-select {
+      min-width: 4.75rem;
+    }
+  }
+
+  .gom-shell__action-button,
+  .gom-shell__profile-chip {
+    width: 2.25rem;
+    height: 2.25rem;
   }
 }

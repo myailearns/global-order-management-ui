@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
+import { AuthSessionService } from './core/auth/auth-session.service';
 import { GomShellComponent } from './shared/components/layout/gom-shell.component';
 
 @Component({
@@ -7,4 +8,10 @@ import { GomShellComponent } from './shared/components/layout/gom-shell.componen
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
-export class App {}
+export class App implements OnInit {
+  private readonly authSession = inject(AuthSessionService);
+
+  ngOnInit(): void {
+    this.authSession.refreshStoredSession().subscribe();
+  }
+}

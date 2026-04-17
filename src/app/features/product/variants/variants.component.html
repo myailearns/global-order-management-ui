@@ -1,0 +1,320 @@
+<section class="master-page">
+  <header class="master-page__header">
+    <h2><i class="ri-price-tag-3-line" aria-hidden="true"></i> Variants</h2>
+    @if (canWrite()) {
+    <gom-lib-button type="button" variant="primary" (buttonClick)="openCreateVariant()">
+      <i class="ri-add-line" aria-hidden="true"></i> Add Variant
+    </gom-lib-button>
+    }
+  </header>
+
+  @if (errorMessage()) {
+    <div class="master-page__error">
+      <div style="display: flex; gap: 0.75rem; align-items: center;">
+        <i class="ri-alert-fill" style="font-size: 1.25rem; flex-shrink: 0;" aria-hidden="true"></i>
+        <span>{{ errorMessage() }}</span>
+      </div>
+    </div>
+  }
+
+  <section class="master-page__filters">
+    <gom-lib-select
+      label="Group"
+      placeholder="Select group"
+      [options]="groupOptions()"
+      [formControl]="filtersForm.controls.groupId"
+      (valueChange)="onGroupChange($event)"
+    ></gom-lib-select>
+  </section>
+
+  <article class="master-page__table-shell">
+    <gom-lib-table
+      [columns]="columns"
+      [rows]="rows()"
+      [loading]="loading()"
+      [pageSize]="10"
+      [pageSizeOptions]="[10, 20, 50]"
+      searchPlaceholder="Search variants"
+      emptyMessage="No variants found."
+      [mobileCardView]="true"
+      (rowAction)="onRowAction($event)"
+    ></gom-lib-table>
+  </article>
+</section>
+
+<gom-lib-modal
+  [title]="editingVariantId() ? 'Edit Variant' : 'Add Variant'"
+  [(show)]="formOpen"
+  (closed)="closeForm()"
+  size="medium"
+>
+  <section class="form-grid">
+
+    <!-- ── Variant Details ─────────────────────────────────────── -->
+    <div class="form-section">
+      <div class="form-section__header">
+        <i class="ri-box-3-line" aria-hidden="true"></i>
+        <span>Variant Details</span>
+      </div>
+      <div class="form-section__body">
+        <gom-lib-checkbox
+          label="Create as Pack"
+          hint="Enable this when the variant should represent multiple packs."
+          [formControl]="variantForm.controls.createAsPack"
+        ></gom-lib-checkbox>
+
+        @if (showPackFields()) {
+          <div class="form-row">
+            <gom-lib-input
+              label="Weight per Pack"
+              type="number"
+              placeholder="e.g. 500"
+              [formControl]="variantForm.controls.quantity"
+              [error]="variantForm.controls.quantity.touched && variantForm.controls.quantity.invalid ? 'Weight per pack is required' : ''"
+            ></gom-lib-input>
+
+            <gom-lib-input
+              label="Number of Packs"
+              type="number"
+              placeholder="e.g. 2"
+              [formControl]="variantForm.controls.packCount"
+              [error]="variantForm.controls.packCount.touched && variantForm.controls.packCount.invalid ? 'Number of packs must be at least 1' : ''"
+            ></gom-lib-input>
+          </div>
+
+          <gom-lib-select
+            label="Unit"
+            placeholder="Select unit"
+            [options]="availableUnitOptions()"
+            [formControl]="variantForm.controls.unitId"
+            [error]="variantForm.controls.unitId.touched && variantForm.controls.unitId.invalid ? 'Unit is required' : ''"
+          ></gom-lib-select>
+
+          <div class="total-weight-line">
+            <i class="ri-scales-3-line" aria-hidden="true"></i>
+            <span>{{ totalWeightSummary() }}</span>
+          </div>
+        } @else {
+          <div class="form-row">
+            <gom-lib-input
+              label="Weight"
+              type="number"
+              placeholder="e.g. 500"
+              [formControl]="variantForm.controls.quantity"
+              [error]="variantForm.controls.quantity.touched && variantForm.controls.quantity.invalid ? 'Weight is required' : ''"
+            ></gom-lib-input>
+
+            <gom-lib-select
+              label="Unit"
+              placeholder="Select unit"
+              [options]="availableUnitOptions()"
+              [formControl]="variantForm.controls.unitId"
+              [error]="variantForm.controls.unitId.touched && variantForm.controls.unitId.invalid ? 'Unit is required' : ''"
+            ></gom-lib-select>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- ── Pricing ─────────────────────────────────────────────── -->
+    <div class="form-section">
+      <div class="form-section__header">
+        <i class="ri-exchange-dollar-line" aria-hidden="true"></i>
+        <span>Pricing Mode</span>
+      </div>
+      <div class="form-section__body">
+        <gom-lib-select
+          label="Pricing Mode"
+          placeholder="Select pricing mode"
+          [options]="[{ value: 'FORMULA', label: 'Use Group Formula' }, { value: 'OVERRIDE', label: 'Variant Discount Override' }]"
+          [formControl]="variantForm.controls.pricingMode"
+        ></gom-lib-select>
+
+        <div class="pricing-mode-hint" role="note">
+          <i class="ri-information-line" aria-hidden="true"></i>
+          <span>{{ pricingModeDescription() }}</span>
+        </div>
+
+        @if (isOverrideMode()) {
+          <div class="override-section">
+            <div class="override-section__header">Discount Override Settings</div>
+
+            <div class="form-row">
+              <gom-lib-select
+                label="Selling Discount Type"
+                placeholder="Select type"
+                [options]="[{ value: 'PERCENT', label: 'Percent (%)' }, { value: 'AMOUNT', label: 'Fixed Amount' }]"
+                [formControl]="variantForm.controls.discountType"
+              ></gom-lib-select>
+
+              <gom-lib-input
+                label="Selling Discount Value"
+                type="number"
+                placeholder="0"
+                [formControl]="variantForm.controls.discountValue"
+              ></gom-lib-input>
+            </div>
+
+            <div class="form-row">
+              <gom-lib-select
+                label="Anchor Discount Type"
+                placeholder="Select type"
+                [options]="[{ value: 'PERCENT', label: 'Percent (%)' }, { value: 'AMOUNT', label: 'Fixed Amount' }]"
+                [formControl]="variantForm.controls.anchorDiscountType"
+              ></gom-lib-select>
+
+              <gom-lib-input
+                label="Anchor (MRP) Discount Value"
+                type="number"
+                placeholder="0"
+                hint="Applied to the listed MRP / anchor price"
+                [formControl]="variantForm.controls.anchorDiscountValue"
+              ></gom-lib-input>
+            </div>
+
+            <gom-lib-textarea
+              label="Discount Override Reason (Optional)"
+              [rows]="2"
+              placeholder="Why is this variant priced differently from the group?"
+              [formControl]="variantForm.controls.reason"
+            ></gom-lib-textarea>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- ── Additional Charge ───────────────────────────────────── -->
+    <div class="form-section">
+      <div class="form-section__header">
+        <i class="ri-add-circle-line" aria-hidden="true"></i>
+        <span>Additional Charge <span class="form-section__badge">Optional</span></span>
+      </div>
+      <div class="form-section__body">
+        <gom-lib-input
+          label="Extra Amount ({{ currencySymbol }})"
+          type="number"
+          placeholder="0"
+          [formControl]="variantForm.controls.additionalPrice"
+          hint="Added on top of computed price — e.g. packaging, handling fee"
+          [error]="variantForm.controls.additionalPrice.touched && variantForm.controls.additionalPrice.invalid ? 'Must be 0 or greater' : ''"
+        ></gom-lib-input>
+
+        <gom-lib-textarea
+          label="Reason for Extra Charge (Optional)"
+          [rows]="2"
+          placeholder="e.g. Packaging cost, special handling"
+          [formControl]="variantForm.controls.additionalPriceReason"
+        ></gom-lib-textarea>
+      </div>
+    </div>
+
+    <!-- ── Price Summary ───────────────────────────────────────── -->
+    @if (hasPricePreview()) {
+      <div class="price-summary-banner" aria-label="Price summary">
+        <div class="price-summary-banner__breakdown">
+          <span class="price-summary-banner__breakdown-item">
+            <span class="price-summary-banner__breakdown-label">Base</span>
+            <span class="price-summary-banner__breakdown-value">{{ currencySymbol }} {{ previewBasePrice() }}</span>
+          </span>
+          @if (hasAdditionalCharge()) {
+            <span class="price-summary-banner__breakdown-sep" aria-hidden="true">+</span>
+            <span class="price-summary-banner__breakdown-item">
+              <span class="price-summary-banner__breakdown-label">Extra</span>
+              <span class="price-summary-banner__breakdown-value">{{ currencySymbol }} {{ previewAdditionalPrice() }}</span>
+            </span>
+          }
+          <span class="price-summary-banner__breakdown-sep" aria-hidden="true">=</span>
+        </div>
+
+        <div class="price-summary-banner__final">
+          <span class="price-summary-banner__final-label">Final Sale Price</span>
+          <span class="price-summary-banner__final-value">{{ currencySymbol }} {{ previewFinalPrice() }}</span>
+        </div>
+
+        <div class="price-summary-banner__anchor">
+          <i class="ri-price-tag-2-line" aria-hidden="true"></i>
+          MRP / Anchor Price: {{ currencySymbol }} {{ previewFinalAnchorPrice() }}
+        </div>
+      </div>
+
+      @if (priceImpact().available) {
+        <div class="impact-panel" [class.impact-panel--positive]="priceImpact().tone === 'positive'" [class.impact-panel--negative]="priceImpact().tone === 'negative'">
+          <div class="impact-panel__header">
+            <i class="ri-line-chart-line" aria-hidden="true"></i>
+            <span>Variant Price Impact</span>
+          </div>
+
+          <div class="impact-panel__grid">
+            <div class="impact-panel__item">
+              <span class="impact-panel__label">Delta (Total)</span>
+              <span class="impact-panel__value">{{ currencySymbol }} {{ priceImpact().deltaTotalText }}</span>
+            </div>
+
+            <div class="impact-panel__item">
+              <span class="impact-panel__label">Delta (%)</span>
+              <span class="impact-panel__value">{{ priceImpact().deltaPercentText }}</span>
+            </div>
+
+            @if (priceImpact().hasPackBreakdown) {
+              <div class="impact-panel__item impact-panel__item--wide">
+                <span class="impact-panel__label">Per Pack Impact</span>
+                <span class="impact-panel__value">{{ currencySymbol }} {{ priceImpact().perPackText }} / pack</span>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    }
+
+  </section>
+
+  <footer class="gom-modal__action-layout variants-form__actions" gom-modal-actions>
+    <div class="gom-modal__action-layout-start"></div>
+    <div class="gom-modal__action-layout-end">
+      <gom-lib-button
+        class="variants-form__action"
+        type="button"
+        variant="secondary"
+        [size]="cancelMode === 'icon-only' ? 'icon' : 'default'"
+        aria-label="Close"
+        title="Close"
+        (buttonClick)="closeForm()"
+      >
+        @if (shouldShowIcon(cancelMode)) {
+          <i class="ri-close-line" aria-hidden="true"></i>
+        }
+        @if (shouldShowText(cancelMode)) {
+          Cancel
+        }
+      </gom-lib-button>
+      <gom-lib-button
+        class="variants-form__action"
+        type="button"
+        variant="primary"
+        [size]="submitMode === 'icon-only' ? 'icon' : 'default'"
+        [attr.aria-label]="editingVariantId() ? 'Update Variant' : 'Save Variant'"
+        [attr.title]="editingVariantId() ? 'Update Variant' : 'Save Variant'"
+        (buttonClick)="saveVariant()"
+        [disabled]="isSaveDisabled()"
+      >
+        @if (shouldShowIcon(submitMode)) {
+          <i class="ri-check-line" aria-hidden="true"></i>
+        }
+        @if (shouldShowText(submitMode)) {
+          {{ saving() ? 'Saving...' : (editingVariantId() ? 'Update Variant' : 'Save Variant') }}
+        }
+      </gom-lib-button>
+    </div>
+  </footer>
+</gom-lib-modal>
+
+<gom-lib-confirmation-modal
+  [(show)]="deleteConfirmOpen"
+  title="Delete Variant"
+  [message]="getDeleteMessage()"
+  confirmText="Delete"
+  [busy]="saving()"
+  confirmVariant="danger"
+  (confirmed)="confirmDelete()"
+  (cancelled)="cancelDelete()"
+></gom-lib-confirmation-modal>

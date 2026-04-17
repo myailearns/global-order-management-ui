@@ -1,14 +1,15 @@
 <nav class="gom-tabs__nav">
-  <button
-    *ngFor="let tab of tabs()"
-    type="button"
-    class="gom-tabs__button"
-    [class.active]="tab.id === activeTab()"
-    [disabled]="tab.disabled"
-    (click)="selectTab(tab.id)"
-  >
-    {{ tab.label }}
-  </button>
+  @for (tab of tabs(); track tab.id) {
+    <button
+      type="button"
+      class="gom-tabs__button"
+      [class.active]="tab.id === activeTab()"
+      [disabled]="tab.disabled"
+      (click)="selectTab(tab.id)"
+    >
+      {{ tab.label | translate }}
+    </button>
+  }
 </nav>
 
 <div class="gom-tabs__content">

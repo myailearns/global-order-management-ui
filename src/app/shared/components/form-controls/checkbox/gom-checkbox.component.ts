@@ -3,7 +3,7 @@ import { Component, EventEmitter, Input, Output, forwardRef } from '@angular/cor
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 @Component({
-  selector: 'gom-checkbox',
+  selector: 'gom-lib-checkbox',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './gom-checkbox.component.html',

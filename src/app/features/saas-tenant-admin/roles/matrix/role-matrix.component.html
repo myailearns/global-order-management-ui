@@ -1,0 +1,98 @@
+<section class="role-matrix">
+  <div class="role-matrix__page-header">
+    <div>
+      <h1>{{ roleId ? ('saas.admin.roles.title_edit' | translate) : ('saas.admin.roles.title_create' | translate) }}</h1>
+      <p class="role-matrix__subtitle">{{ 'saas.admin.roles.subtitle' | translate }}</p>
+      @if (!platformMode()) {
+        <p class="role-matrix__switch-hint">{{ 'saas.admin.roles.msg_use_platform_flow' | translate }}</p>
+      }
+    </div>
+    <div class="role-matrix__page-actions">
+      @if (!platformMode()) {
+        <gom-lib-button type="button" variant="secondary" (buttonClick)="openPlatformTenantRoles()">
+          {{ 'saas.admin.roles.btn_open_platform_roles' | translate }}
+        </gom-lib-button>
+      }
+      <gom-lib-button type="button" variant="secondary" (buttonClick)="onCancel()">{{ 'common.btn_cancel' | translate }}</gom-lib-button>
+      <gom-lib-button type="button" [disabled]="loading() || form.invalid" (buttonClick)="onSubmit()">
+        {{ roleId ? ('saas.admin.roles.btn_update' | translate) : ('saas.admin.roles.btn_create' | translate) }}
+      </gom-lib-button>
+    </div>
+  </div>
+
+  <form [formGroup]="form" class="role-matrix__form">
+    <div class="role-matrix__fields-row">
+      @if (platformMode()) {
+        <gom-lib-select
+          [label]="'saas.admin.roles.lbl_tenant' | translate"
+          [placeholder]="'saas.admin.roles.ph_select_tenant' | translate"
+          [options]="tenantOptions()"
+          [searchable]="true"
+          [ngModel]="selectedTenantId()"
+          [ngModelOptions]="{ standalone: true }"
+          (ngModelChange)="onTenantSelect($event)"
+        ></gom-lib-select>
+      }
+      <gom-lib-input formControlName="roleKey" [label]="'saas.admin.roles.lbl_role_key' | translate" [required]="true"></gom-lib-input>
+      <gom-lib-input formControlName="name" [label]="'saas.admin.roles.lbl_role_name' | translate" [required]="true"></gom-lib-input>
+      <gom-lib-input formControlName="description" [label]="'common.labels.description' | translate"></gom-lib-input>
+    </div>
+
+    @if (roleId) {
+      <p class="role-matrix__impact">
+        This role is assigned to <strong>{{ assignedUsersCount() }}</strong> user(s).
+      </p>
+    }
+  </form>
+
+  <div class="role-matrix__picker">
+    <div class="role-matrix__picker-header">
+      <div class="role-matrix__picker-summary">
+        {{ 'saas.admin.roles.msg_selected_count' | translate:{ count: selectedCount() } }}
+      </div>
+      <div class="role-matrix__bulk-actions">
+        <gom-lib-button type="button" variant="secondary" (buttonClick)="grantAll()">{{ 'saas.admin.roles.btn_grant_all' | translate }}</gom-lib-button>
+        <gom-lib-button type="button" variant="secondary" (buttonClick)="clearAll()">{{ 'saas.admin.roles.btn_clear_all' | translate }}</gom-lib-button>
+      </div>
+    </div>
+
+    @if (!canLoadTenantContext()) {
+      <div class="role-matrix__empty">
+        <p>{{ 'saas.admin.roles.msg_select_tenant_first' | translate }}</p>
+      </div>
+    } @else {
+      <div class="role-matrix__picker-body">
+        <p class="role-matrix__hint">
+          {{ 'saas.admin.roles.msg_tenant_only_features' | translate }}
+        </p>
+
+        <gom-lib-select
+          [label]="'saas.admin.roles.lbl_allowed_features' | translate"
+          [placeholder]="'saas.admin.roles.ph_select_features' | translate"
+          [options]="featureOptions()"
+          [multiple]="true"
+          [searchable]="true"
+          [selectedValues]="selectedFeatureValues()"
+          (selectedValuesChange)="onSelectedFeaturesChange($event)"
+        ></gom-lib-select>
+
+        @if (selectedFeatureChips().length > 0) {
+          <div class="role-matrix__selected-list">
+            @for (item of selectedFeatureChips(); track item.value) {
+              <button type="button" class="role-matrix__selected-chip" (click)="removeFeature(item.value)">
+                <span>{{ item.label }}</span>
+                <span class="role-matrix__chip-remove" aria-hidden="true">x</span>
+              </button>
+            }
+          </div>
+        }
+      </div>
+
+      @if (featureOptions().length === 0) {
+        <div class="role-matrix__empty">
+          <p>{{ 'saas.admin.roles.msg_no_features' | translate }}</p>
+        </div>
+      }
+    }
+  </div>
+</section>

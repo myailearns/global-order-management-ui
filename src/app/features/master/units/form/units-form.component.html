@@ -1,0 +1,104 @@
+<gom-lib-modal
+  [show]="isOpen"
+  (showChange)="isOpen = $event"
+  [title]="(initialData ? text.formTitleEdit : text.formTitleCreate) | translate"
+  [closeOnBackdropClick]="true"
+  size="small"
+  (closed)="onCancel()"
+>
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="units-form">
+    <div class="units-form__grid">
+      <gom-lib-input
+        [label]="('units.labels.nameRequired' | translate)"
+        [placeholder]="('units.placeholders.name' | translate)"
+        [formControl]="form.controls.name"
+        [error]="form.controls.name.touched && form.controls.name.invalid ? ('units.validation.nameRequired' | translate) : ''"
+      ></gom-lib-input>
+
+      <gom-lib-input
+        [label]="('units.labels.symbolRequired' | translate)"
+        [placeholder]="('units.placeholders.symbol' | translate)"
+        [formControl]="form.controls.symbol"
+        [error]="form.controls.symbol.touched && form.controls.symbol.invalid ? ('units.validation.symbolRequired' | translate) : ''"
+      ></gom-lib-input>
+
+      <gom-lib-select
+        [label]="('units.labels.baseUnitOptional' | translate)"
+        [placeholder]="('units.placeholders.baseUnit' | translate)"
+        [options]="baseUnitSelectOptions"
+        [formControl]="form.controls.baseUnitId"
+      ></gom-lib-select>
+
+      <gom-lib-input
+        [label]="('units.labels.conversionFactor' | translate)"
+        [placeholder]="('units.placeholders.conversionFactor' | translate)"
+        type="number"
+        [formControl]="form.controls.conversionFactor"
+        (valueChange)="onConversionFactorInput($event)"
+        [error]="form.controls.conversionFactor.touched && form.controls.conversionFactor.invalid ? ('units.validation.conversionFactorRequired' | translate) : ''"
+        [hint]="!form.controls.baseUnitId.value ? ('units.help.baseUnitRequiredForFactor' | translate) : ''"
+      ></gom-lib-input>
+
+      @if (conversionPreview) {
+        <p class="units-form__conversion-preview">{{ conversionPreview }}</p>
+      }
+
+      <gom-lib-select
+        [label]="('units.labels.status' | translate)"
+        [placeholder]="('units.placeholders.status' | translate)"
+        [options]="statusOptions"
+        [formControl]="form.controls.status"
+      ></gom-lib-select>
+
+      <gom-lib-select
+        [label]="('units.labels.mappedCategories' | translate)"
+        [placeholder]="('units.placeholders.mappedCategories' | translate)"
+        [multiple]="true"
+        [options]="categoryOptions"
+        [selectedValues]="selectedCategoryIds"
+        [closeMenuTrigger]="categorySelectCloseToken"
+        (selectedValuesChange)="onMappedCategorySelectionChange($event)"
+      ></gom-lib-select>
+    </div>
+
+    <div gom-modal-actions class="units-form__actions gom-modal__action-layout">
+      <div class="gom-modal__action-layout-start">
+        <gom-lib-button
+          class="units-form__action"
+          type="button"
+          variant="secondary"
+          [size]="cancelMode === 'icon-only' ? 'icon' : 'default'"
+          [attr.aria-label]="text.formCancelAria | translate"
+          [attr.title]="text.formCancelAria | translate"
+          (buttonClick)="onCancel()"
+        >
+          @if (shouldShowIcon(cancelMode)) {
+            <i class="ri-close-line" aria-hidden="true"></i>
+          }
+          @if (shouldShowText(cancelMode)) {
+            {{ text.close | translate }}
+          }
+        </gom-lib-button>
+      </div>
+
+      <div class="gom-modal__action-layout-end">
+        <gom-lib-button
+          class="units-form__action"
+          type="submit"
+          variant="primary"
+          [size]="submitMode === 'icon-only' ? 'icon' : 'default'"
+          [attr.aria-label]="(initialData ? text.formUpdateAria : text.formCreateAria) | translate"
+          [attr.title]="(initialData ? text.formUpdateAria : text.formCreateAria) | translate"
+          [disabled]="form.invalid"
+        >
+          @if (shouldShowIcon(submitMode)) {
+            <i class="ri-check-line" aria-hidden="true"></i>
+          }
+          @if (shouldShowText(submitMode)) {
+            {{ (initialData ? text.formSubmitUpdate : text.formSubmitCreate) | translate }}
+          }
+        </gom-lib-button>
+      </div>
+    </div>
+  </form>
+</gom-lib-modal>

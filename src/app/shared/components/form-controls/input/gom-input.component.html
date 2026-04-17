@@ -1,4 +1,11 @@
-<label class="gom-control__label" [for]="id" *ngIf="label">{{ label }}</label>
+@if (label) {
+  <label class="gom-control__label" [for]="id">
+    {{ label }}
+    @if (required) {
+      <span class="gom-control__required" aria-hidden="true">*</span>
+    }
+  </label>
+}
 
 <div class="gom-control__input-wrapper">
   <input
@@ -12,10 +19,15 @@
     (input)="handleInput($event)"
     (blur)="handleBlur()"
   />
-  <div class="gom-control__icon" *ngIf="error">
-    <i class="ri-alert-circle-line" aria-hidden="true"></i>
-  </div>
+  @if (error) {
+    <div class="gom-control__icon">
+      <i class="ri-alert-circle-line" aria-hidden="true"></i>
+    </div>
+  }
 </div>
 
-<p class="gom-control__message gom-control__message--error" *ngIf="error"><i class="ri-error-warning-line"></i> {{ error }}</p>
-<p class="gom-control__message" *ngIf="!error && hint"><i class="ri-information-line"></i> {{ hint }}</p>
+@if (error) {
+  <p class="gom-control__message gom-control__message--error"><i class="ri-error-warning-line"></i> {{ error }}</p>
+} @else if (hint) {
+  <p class="gom-control__message"><i class="ri-information-line"></i> {{ hint }}</p>
+}

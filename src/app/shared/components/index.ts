@@ -3,3 +3,8 @@ export * from './table';
 export * from './layout';
 export * from './tabs';
 export * from './modal';
+export * from './alert';
+export * from './card';
+export * from './config';
+export * from './dynamic-form';
+export * from './chip';

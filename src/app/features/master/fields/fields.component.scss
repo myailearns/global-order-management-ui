@@ -1,36 +1,55 @@
 @use "../../../shared/theming/styles/theme" as theme;
 
-.master-page {
-  display: grid;
-  gap: theme.get-gap(md);
+.fields-container {
+  padding: 16px;
 }
 
-.master-page__header {
+.error-banner {
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  background-color: rgba(239, 68, 68, 0.1);
+  border-left: 4px solid theme.get-text(danger);
+  border-radius: 4px;
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  gap: theme.get-gap(sm);
-  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
 
-  h2 {
-    margin: 0;
-    @include theme.typography-heading(xl);
+  .error-banner__content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+
+    i {
+      font-size: 1.25rem;
+      flex-shrink: 0;
+      color: theme.get-text(danger);
+    }
+
+    p {
+      margin: 0;
+      color: theme.get-text(danger);
+      font-size: 14px;
+    }
   }
-}
 
-.master-page__table-shell {
-  padding: theme.get-spacing(md);
-  border: theme.get-border-size(hairline) solid theme.get-border(standard);
-  border-radius: theme.get-radius(md);
-  background: theme.get-background(standard);
-}
+  .error-banner__close {
+    background: none;
+    border: none;
+    color: theme.get-text(danger);
+    cursor: pointer;
+    padding: 4px 8px;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
 
-@include theme.breakpoint-down(sm) {
-  .master-page__header {
-    align-items: stretch;
-  }
+    i {
+      font-size: 1.125rem;
+    }
 
-  gom-button {
-    width: 100%;
+    &:hover {
+      opacity: 0.8;
+    }
   }
 }

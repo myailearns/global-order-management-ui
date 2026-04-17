@@ -1,0 +1,50 @@
+<section class="epic2-page">
+  <header class="epic2-page__header">
+    <h1>{{ 'saas.platform.packages.title' | translate }}</h1>
+    @if (canWrite()) {
+    <gom-lib-button (buttonClick)="openCreate()">{{ 'saas.platform.packages.btn_create' | translate }}</gom-lib-button>
+    }
+  </header>
+
+  <gom-lib-table
+    [columns]="columns"
+    [rows]="rows()"
+    [loading]="loading()"
+    [totalItems]="rows().length"
+    (rowAction)="onRowAction($event)"
+  ></gom-lib-table>
+</section>
+
+<gom-lib-modal [title]="selectedId() ? ('saas.platform.packages.title_edit' | translate) : ('saas.platform.packages.title_create' | translate)" [(show)]="modalOpen" size="large">
+  <form class="epic2-page__form" [formGroup]="form">
+    <gom-lib-input formControlName="planId" [label]="'saas.platform.packages.lbl_plan_id' | translate" [required]="true"></gom-lib-input>
+    <gom-lib-input formControlName="name" [label]="'saas.platform.packages.lbl_plan_name' | translate" [required]="true"></gom-lib-input>
+    <gom-lib-textarea formControlName="description" [label]="'saas.platform.packages.lbl_description' | translate" [rows]="3"></gom-lib-textarea>
+    <gom-lib-select formControlName="tier" [label]="'saas.platform.packages.lbl_tier' | translate" [options]="[
+      { value: 'STARTER', label: 'STARTER' },
+      { value: 'GROWTH', label: 'GROWTH' },
+      { value: 'SCALE', label: 'SCALE' },
+      { value: 'CUSTOM', label: 'CUSTOM' }
+    ]"></gom-lib-select>
+    <gom-lib-select formControlName="status" [label]="'saas.platform.packages.lbl_status' | translate" [options]="[
+      { value: 'ACTIVE', label: 'ACTIVE' },
+      { value: 'INACTIVE', label: 'INACTIVE' }
+    ]"></gom-lib-select>
+    <gom-lib-select
+      formControlName="featureKeys"
+      [label]="'saas.platform.packages.lbl_features' | translate"
+      [placeholder]="'saas.platform.packages.ph_features' | translate"
+      [options]="featureOptions()"
+      [multiple]="true"
+      [hint]="'saas.platform.packages.hint_features' | translate"
+    ></gom-lib-select>
+  </form>
+
+  <footer class="gom-modal__action-layout" gom-modal-actions>
+    <div class="gom-modal__action-layout-start"></div>
+    <div class="gom-modal__action-layout-end">
+      <gom-lib-button type="button" variant="secondary" (buttonClick)="modalOpen.set(false)">{{ 'common.btn_cancel' | translate }}</gom-lib-button>
+      <gom-lib-button type="button" (buttonClick)="save()" [disabled]="loading()">{{ 'saas.platform.packages.btn_save' | translate }}</gom-lib-button>
+    </div>
+  </footer>
+</gom-lib-modal>

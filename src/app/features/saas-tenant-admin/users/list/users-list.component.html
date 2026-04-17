@@ -1,0 +1,128 @@
+<div class="gom-users-list">
+  <div class="gom-users-list__header">
+    <div class="gom-users-list__title-wrap">
+      <h1>{{ translationKeys.TITLE_USERS | translate }}</h1>
+      <p class="gom-users-list__subtitle">{{ 'saas.admin.users.subtitle' | translate }}</p>
+    </div>
+    @if (canWrite()) {
+    <gom-lib-button
+      variant="primary"
+      (buttonClick)="onInviteUser()"
+      aria-label="Invite new user">
+      {{ translationKeys.BTN_INVITE_USER | translate }}
+    </gom-lib-button>
+    }
+  </div>
+
+  <!-- Search and Filters -->
+  <div class="gom-users-list__filters">
+    <div class="gom-users-list__status-filter">
+      <span class="gom-users-list__filter-label">{{ 'common.labels.status' | translate }}</span>
+      <select
+        [ngModel]="selectedStatusFilter()"
+        (ngModelChange)="onStatusFilterChange($event)"
+        class="gom-users-list__status-select"
+        aria-label="Filter by status">
+        <option [ngValue]="null">{{ 'saas.admin.users.opt_all_statuses' | translate }}</option>
+        <option [ngValue]="'INVITED'">{{ 'saas.admin.users.opt_invited' | translate }}</option>
+        <option [ngValue]="'ACTIVE'">{{ 'saas.admin.users.opt_active' | translate }}</option>
+        <option [ngValue]="'LOCKED'">{{ 'saas.admin.users.opt_locked' | translate }}</option>
+        <option [ngValue]="'DISABLED'">{{ 'saas.admin.users.opt_disabled' | translate }}</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="gom-users-list__meta">
+    {{ 'saas.admin.users.msg_showing' | translate:{ count: filteredUsers().length, total: total() } }}
+  </div>
+
+  <!-- Error State -->
+  @if (errorMessage(); as error) {
+    <div class="gom-alert gom-alert--error" role="alert">
+      {{ error }}
+    </div>
+  }
+
+  <!-- Loading State -->
+  @if (loading()) {
+    <div class="gom-users-list__loading" aria-live="polite">{{ 'saas.admin.users.msg_loading' | translate }}</div>
+  }
+
+  <!-- Users Table -->
+  <div class="gom-users-list__table-wrap">
+    <gom-lib-table
+      [columns]="columns()"
+      [rows]="filteredUsers()"
+      [totalItems]="total()"
+      [loading]="loading()"
+      [emptyMessage]="'common.msg_no_results' | translate"
+      (rowAction)="onTableAction($event)"
+      aria-label="Tenant users list">
+    </gom-lib-table>
+  </div>
+
+  <!-- Pagination -->
+  @if (!loading() && total() > 0) {
+    <div class="gom-users-list__pagination">
+      <button
+        [disabled]="page() === 1"
+        (click)="page.set(page() - 1); loadUsers()"
+        class="gom-users-list__pagination-btn"
+        aria-label="Previous page">
+        {{ 'saas.admin.users.btn_prev' | translate }}
+      </button>
+      <span class="gom-users-list__pagination-info">
+        {{ 'saas.admin.users.lbl_page' | translate:{ page: page(), total: totalPages } }}
+      </span>
+      <button
+        [disabled]="page() >= totalPages"
+        (click)="page.set(page() + 1); loadUsers()"
+        class="gom-users-list__pagination-btn"
+        aria-label="Next page">
+        {{ 'saas.admin.users.btn_next' | translate }}
+      </button>
+    </div>
+  }
+</div>
+
+<gom-lib-modal
+  [title]="'saas.admin.users.title_assign_roles' | translate"
+  [(show)]="assignRolesOpen"
+  (closed)="closeAssignRoles()"
+  size="medium"
+>
+  @if (selectedUser(); as user) {
+    <section class="gom-users-list__assign-modal">
+      <p class="gom-users-list__assign-user">
+        <strong>{{ user.fullName }}</strong> ({{ user.email }})
+      </p>
+
+      @if (assignRolesLoading()) {
+        <p>{{ 'saas.admin.users.msg_loading_assignments' | translate }}</p>
+      } @else {
+        <div class="gom-users-list__role-list">
+          @for (role of availableRoles; track role._id) {
+            <label class="gom-users-list__role-option">
+              <input
+                type="checkbox"
+                [checked]="isRoleSelected(role._id)"
+                (change)="toggleSelectedRole(role._id)"
+              />
+              <span>{{ role.name }} ({{ role.roleKey }})</span>
+            </label>
+          }
+        </div>
+      }
+    </section>
+  }
+
+  <footer class="gom-modal__action-layout" gom-modal-actions>
+    <div class="gom-modal__action-layout-start"></div>
+    <div class="gom-modal__action-layout-end">
+      <gom-lib-button type="button" variant="secondary" (buttonClick)="closeAssignRoles()">{{ 'common.btn_cancel' | translate }}</gom-lib-button>
+      <gom-lib-button type="button" [disabled]="!canSubmitRoleAssignments" (buttonClick)="saveRoleAssignments()">
+        {{ 'saas.admin.users.btn_save_roles' | translate }}
+      </gom-lib-button>
+    </div>
+  </footer>
+</gom-lib-modal>

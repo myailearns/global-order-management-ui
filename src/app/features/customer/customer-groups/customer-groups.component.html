@@ -1,0 +1,168 @@
+<section class="master-page">
+  <header class="master-page__header">
+    <h2><i class="ri-team-line" aria-hidden="true"></i> Customer Groups</h2>
+    @if (canWrite()) {
+    <gom-lib-button type="button" variant="primary" (buttonClick)="openCreate()">
+      <i class="ri-add-line" aria-hidden="true"></i> Create Group
+    </gom-lib-button>
+    }
+  </header>
+
+  @if (errorMessage()) {
+    <div class="master-page__error">{{ errorMessage() }}</div>
+  }
+
+  <article class="master-page__table-shell">
+    <gom-lib-table
+      [columns]="columns"
+      [rows]="rows()"
+      [loading]="loading()"
+      [pageSize]="10"
+      [pageSizeOptions]="[10, 20, 50]"
+      searchPlaceholder="Search customer groups"
+      emptyMessage="No customer groups found."
+      [mobileCardView]="true"
+      (rowAction)="onRowAction($event)"
+    ></gom-lib-table>
+  </article>
+</section>
+
+<gom-lib-modal
+  [title]="editingGroupId() ? 'Edit Customer Group' : 'Create Customer Group'"
+  [(show)]="formOpen"
+  (closed)="closeForm()"
+  size="medium"
+>
+  <section class="form-grid" [formGroup]="groupForm">
+    <gom-lib-input
+      label="Group Name"
+      [required]="true"
+      type="text"
+      placeholder="Enter group name"
+      [formControl]="groupForm.controls.name"
+      [error]="groupForm.controls.name.touched && groupForm.controls.name.invalid ? 'Group name is required' : ''"
+    ></gom-lib-input>
+    <gom-lib-input
+      label="Code"
+      type="text"
+      placeholder="Optional code"
+      [formControl]="groupForm.controls.code"
+    ></gom-lib-input>
+    <gom-lib-input
+      label="Description"
+      type="text"
+      placeholder="Optional description"
+      [formControl]="groupForm.controls.description"
+    ></gom-lib-input>
+    <gom-lib-input
+      label="Tags"
+      type="text"
+      placeholder="Comma separated"
+      [formControl]="groupForm.controls.tags"
+    ></gom-lib-input>
+  </section>
+
+  <footer class="gom-modal__action-layout form-actions" gom-modal-actions>
+    <div class="gom-modal__action-layout-start"></div>
+    <div class="gom-modal__action-layout-end">
+      <gom-lib-button type="button" variant="secondary" (buttonClick)="closeForm()">Cancel</gom-lib-button>
+      <gom-lib-button type="button" variant="primary" [disabled]="saving()" (buttonClick)="saveGroup()">
+        {{ saving() ? 'Saving...' : (editingGroupId() ? 'Update Group' : 'Create Group') }}
+      </gom-lib-button>
+    </div>
+  </footer>
+</gom-lib-modal>
+
+<gom-lib-modal
+  [(show)]="membersOpen"
+  [title]="'Group Members — ' + (membersTarget()?.name || '')"
+  size="large"
+  [closeOnBackdropClick]="true"
+  (closed)="closeMembers()"
+>
+  <div class="member-add-row" [formGroup]="addMemberForm">
+    <gom-lib-input
+      label="Search Customer"
+      type="text"
+      placeholder="Type name or mobile"
+      [formControl]="addMemberForm.controls.phone"
+      (valueChange)="onMemberPhoneChange($event)"
+    ></gom-lib-input>
+    <gom-lib-button type="button" variant="primary" [disabled]="memberLoading()" (buttonClick)="addMemberByPhone()">
+      Add Member
+    </gom-lib-button>
+  </div>
+
+  @if (memberSearchLoading()) {
+    <p class="member-empty">Searching customers...</p>
+  }
+
+  @if (!memberSearchLoading() && customerMatches().length > 0) {
+    <h4 class="member-section-title">Search Results</h4>
+    <div class="member-search-results">
+      @for (customer of customerMatches(); track customer._id) {
+        <div class="member-search-result">
+          <div>
+            <strong>{{ customer.name }}</strong>
+            <div>{{ customer.phone }}</div>
+          </div>
+          <gom-lib-button
+            type="button"
+            variant="secondary"
+            size="default"
+            [disabled]="memberLoading() || isExistingMember(customer._id)"
+            (buttonClick)="assignMatchedCustomer(customer)"
+          >
+            {{ isExistingMember(customer._id) ? 'Already Added' : 'Add To Group' }}
+          </gom-lib-button>
+        </div>
+      }
+    </div>
+  }
+
+  <div class="member-section-actions">
+    <gom-lib-button type="button" variant="secondary" [disabled]="memberLoading()" (buttonClick)="toggleExistingMembers()">
+      {{ showExistingMembers() ? 'Hide Existing Members' : 'Show Existing Members' }} ({{ members().length }})
+    </gom-lib-button>
+  </div>
+
+  @if (memberLoading() && showExistingMembers()) {
+    <p class="member-empty">Loading members...</p>
+  }
+
+  @if (showExistingMembers() && !memberLoading() && members().length > 0) {
+    <h4 class="member-section-title">Existing Members</h4>
+    <div class="member-list">
+      @for (member of members(); track member._id) {
+        <div class="member-item">
+          <div>
+            <strong>{{ member.customerName }}</strong>
+            <div>{{ member.customerPhone }}</div>
+          </div>
+          <gom-lib-button type="button" variant="danger" size="default" (buttonClick)="removeMember(member)">Remove</gom-lib-button>
+        </div>
+      }
+    </div>
+  } @else if (showExistingMembers() && !memberLoading()) {
+    <p class="member-empty">No active members in this group.</p>
+  }
+
+  <footer class="gom-modal__action-layout" gom-modal-actions>
+    <div class="gom-modal__action-layout-start"></div>
+    <div class="gom-modal__action-layout-end">
+      <gom-lib-button type="button" variant="primary" (buttonClick)="closeMembers()">Done</gom-lib-button>
+    </div>
+  </footer>
+</gom-lib-modal>
+
+<gom-lib-confirmation-modal
+  [(show)]="deactivateConfirmOpen"
+  [title]="deactivateTitle"
+  [message]="deactivateMessage"
+  [confirmText]="deactivateConfirmText"
+  [cancelText]="'Cancel'"
+  [confirmVariant]="deactivateConfirmVariant"
+  [busy]="saving()"
+  (confirmed)="confirmDeactivate()"
+  (cancelled)="closeDeactivateConfirm()"
+></gom-lib-confirmation-modal>

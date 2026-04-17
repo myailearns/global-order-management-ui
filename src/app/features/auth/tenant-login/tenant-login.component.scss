@@ -1,0 +1,8 @@
+@use "../../../shared/theming/styles/theme" as theme;
+@use "../shared-login" as login;
+
+@include login.login-page-theme;
+
+.gom-login-page__panel--accent {
+  background: linear-gradient(155deg, theme.get-background(secondary) 0%, theme.get-background(primary-light) 100%);
+}

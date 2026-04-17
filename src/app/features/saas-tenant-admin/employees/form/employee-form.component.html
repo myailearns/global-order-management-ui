@@ -1,0 +1,19 @@
+<section class="employee-form">
+  @if (!modalMode) {
+    <h1>{{ (employeeId ? 'saas.admin.employees.title_edit' : 'saas.admin.employees.title_create') | translate }}</h1>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="employee-form__grid">
+    <gom-lib-input formControlName="employeeCode" [label]="'saas.admin.employees.lbl_employee_code' | translate" [required]="true"></gom-lib-input>
+    <gom-lib-input formControlName="fullName" [label]="'saas.admin.employees.lbl_full_name' | translate" [required]="true"></gom-lib-input>
+    <gom-lib-input formControlName="department" [label]="'saas.admin.employees.lbl_department' | translate"></gom-lib-input>
+    <gom-lib-input formControlName="designation" [label]="'saas.admin.employees.lbl_designation' | translate"></gom-lib-input>
+    <gom-lib-select formControlName="status" [label]="'saas.admin.employees.lbl_status' | translate" [options]="statusOptions"></gom-lib-select>
+    <gom-lib-select formControlName="userId" [label]="'saas.admin.employees.lbl_linked_user' | translate" [options]="userOptions"></gom-lib-select>
+
+    <div class="employee-form__actions">
+      <gom-lib-button type="button" variant="secondary" (buttonClick)="onCancel()">{{ 'common.btn_cancel' | translate }}</gom-lib-button>
+      <gom-lib-button type="submit" [disabled]="submitting">{{ (employeeId ? 'saas.admin.employees.btn_update' : 'saas.admin.employees.btn_create') | translate }}</gom-lib-button>
+    </div>
+  </form>
+</section>

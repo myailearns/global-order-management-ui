@@ -1,0 +1,711 @@
+{
+  "app": {
+    "name": "ग्लोबल ऑर्डर मैनेजमेंट",
+    "module": "प्रोडक्ट क्रिएशन मॉड्यूल",
+    "navigation": {
+      "toggle": "नेविगेशन बदलें",
+      "close": "मेनू बंद करें",
+      "workspace": "वर्कस्पेस",
+      "menu": "नेविगेशन",
+      "expand": "{{section}} खोलें",
+      "collapse": "{{section}} बंद करें",
+      "expandSidebar": "साइडबार खोलें",
+      "collapseSidebar": "साइडबार बंद करें",
+      "masterSetup": "मास्टर सेटअप",
+      "productSetup": "प्रोडक्ट सेटअप",
+      "categories": "कैटेगरी",
+      "fields": "फील्ड्स",
+      "fieldGroups": "फील्ड ग्रुप्स",
+      "units": "यूनिट्स",
+      "taxProfiles": "टैक्स प्रोफाइल्स",
+      "groupCreation": "ग्रुप क्रिएशन",
+      "stock": "स्टॉक",
+      "variants": "वैरिएंट्स",
+      "packs": "पैक्स",
+      "orders": "ऑर्डर्स",
+      "orderManagement": "ऑर्डर प्रबंधन",
+      "riders": "राइडर्स",
+      "courierPartners": "कूरियर पार्टनर्स",
+      "settings": "सेटिंग्स",
+      "employeeCode": "कर्मचारी कोड",
+      "serviceablePincodes": "सेवे योग्य पिनकोड",
+      "tenantAdmin": "टेनेंट एडमिन",
+      "tenantDashboard": "टेनेंट डैशबोर्ड",
+      "tenantUsers": "टेनेंट यूज़र्स",
+      "tenantEmployees": "टेनेंट कर्मचारी",
+      "saasAccounts": "सास अकाउंट्स",
+      "saasPackages": "सास पैकेजेस",
+      "saasFeatures": "सास फीचर्स",
+      "platformTenantRoles": "प्लेटफॉर्म टेनेंट रोल्स",
+      "tenantEntitlements": "टेनेंट एंटाइटलमेंट्स",
+      "tenantRoles": "टेनेंट रोल्स",
+      "customers": "ग्राहक",
+      "customerGroups": "ग्राहक समूह"
+    },
+    "actions": {
+      "notifications": "सूचनाएं",
+      "profile": "यूज़र प्रोफाइल",
+      "logout": "लॉगआउट"
+    },
+    "language": {
+      "label": "भाषा",
+      "english": "अंग्रेज़ी",
+      "telugu": "तेलुगु",
+      "hindi": "हिंदी"
+    }
+  },
+  "common": {
+    "btn_cancel": "रद्द करें",
+    "btn_confirm": "पुष्टि करें",
+    "email": "ईमेल",
+    "phone": "फोन",
+    "msg_no_results": "कोई परिणाम नहीं मिला।",
+    "status": {
+      "active": "सक्रिय",
+      "inactive": "निष्क्रिय"
+    },
+    "actions": {
+      "view": "देखें",
+      "edit": "संपादित करें",
+      "delete": "हटाएं",
+      "create": "बनाएं",
+      "update": "अपडेट करें",
+      "cancel": "रद्द करें",
+      "close": "बंद करें"
+    },
+    "labels": {
+      "actions": "कार्रवाइयां",
+      "description": "विवरण",
+      "status": "स्थिति"
+    },
+    "messages": {
+      "closeErrorBanner": "त्रुटि बैनर बंद करें"
+    }
+  },
+  "categories": {
+    "title": "कैटेगरी",
+    "add": "कैटेगरी जोड़ें",
+    "search": "कैटेगरी खोजें",
+    "empty": "कोई कैटेगरी नहीं मिली।",
+    "labels": {
+      "name": "कैटेगरी नाम",
+      "nameRequired": "कैटेगरी नाम *",
+      "description": "विवरण",
+      "status": "स्थिति"
+    },
+    "placeholders": {
+      "name": "कैटेगरी नाम दर्ज करें",
+      "description": "कैटेगरी विवरण दर्ज करें",
+      "status": "कैटेगरी स्थिति चुनें"
+    },
+    "details": {
+      "titleFallback": "कैटेगरी विवरण",
+      "closeAria": "विवरण दृश्य बंद करें",
+      "editAria": "कैटेगरी संपादित करें",
+      "deleteAria": "कैटेगरी हटाएं"
+    },
+    "form": {
+      "titleCreate": "कैटेगरी जोड़ें",
+      "titleEdit": "कैटेगरी संपादित करें",
+      "cancelAria": "कैटेगरी फ़ॉर्म रद्द करें",
+      "createAria": "कैटेगरी बनाएं",
+      "updateAria": "कैटेगरी अपडेट करें"
+    },
+    "validation": {
+      "nameRequired": "कैटेगरी नाम आवश्यक है",
+      "nameMin": "कम से कम 2 अक्षर आवश्यक हैं",
+      "descriptionMax": "अधिकतम 500 अक्षर अनुमत हैं"
+    },
+    "toast": {
+      "successCreate": "कैटेगरी सफलतापूर्वक बनाई गई।",
+      "successUpdate": "कैटेगरी सफलतापूर्वक अपडेट की गई।",
+      "successDelete": "कैटेगरी सफलतापूर्वक हटाई गई।",
+      "errorLoad": "कैटेगरी लोड करने में विफल। कृपया फिर से प्रयास करें।",
+      "errorSave": "कैटेगरी सेव करने में विफल। कृपया फिर से प्रयास करें।",
+      "errorDelete": "कैटेगरी हटाने में विफल। कृपया फिर से प्रयास करें।",
+      "errorDeleteMissingId": "कैटेगरी हटाई नहीं जा सकती: आईडी नहीं मिली।"
+    },
+    "deleteConfirm": {
+      "title": "कैटेगरी हटाएं",
+      "message": "क्या आप इस कैटेगरी को हटाना चाहते हैं: {{name}}?"
+    }
+  },
+  "fields": {
+    "title": "फील्ड्स",
+    "add": "फील्ड जोड़ें",
+    "search": "फील्ड्स खोजें",
+    "empty": "कोई फील्ड नहीं मिला।",
+    "labels": {
+      "name": "फील्ड नाम",
+      "nameRequired": "फील्ड नाम *",
+      "key": "फील्ड की",
+      "keyRequired": "फील्ड की *",
+      "type": "प्रकार",
+      "defaultValue": "डिफॉल्ट मान",
+      "isRequired": "आवश्यक",
+      "assignToFieldGroups": "फील्ड ग्रुप्स में जोड़ें",
+      "selectFieldGroups": "फील्ड ग्रुप्स चुनें",
+      "noFieldGroupsAvailable": "कोई फील्ड ग्रुप उपलब्ध नहीं है।",
+      "usedInFieldGroups": "इन फील्ड ग्रुप्स में उपयोग",
+      "notUsedInFieldGroups": "किसी भी फील्ड ग्रुप में उपयोग नहीं",
+      "status": "स्थिति"
+    },
+    "placeholders": {
+      "name": "फील्ड नाम दर्ज करें",
+      "key": "फील्ड की दर्ज करें",
+      "type": "फील्ड प्रकार चुनें",
+      "defaultValue": "डिफॉल्ट मान दर्ज करें",
+      "isRequired": "आवश्यक सेटिंग चुनें",
+      "status": "फील्ड स्थिति चुनें"
+    },
+    "types": {
+      "number": "संख्या",
+      "percentage": "प्रतिशत",
+      "text": "टेक्स्ट",
+      "longText": "लंबा टेक्स्ट"
+    },
+    "required": {
+      "required": "आवश्यक",
+      "optional": "वैकल्पिक"
+    },
+    "details": {
+      "titleFallback": "फील्ड विवरण",
+      "closeAria": "फील्ड विवरण बंद करें",
+      "editAria": "फील्ड संपादित करें",
+      "deleteAria": "फील्ड हटाएं"
+    },
+    "form": {
+      "titleCreate": "फील्ड जोड़ें",
+      "titleEdit": "फील्ड संपादित करें",
+      "cancelAria": "फील्ड फॉर्म रद्द करें",
+      "createAria": "फील्ड बनाएं",
+      "updateAria": "फील्ड अपडेट करें"
+    },
+    "validation": {
+      "nameRequired": "फील्ड नाम आवश्यक है",
+      "nameMin": "कम से कम 2 अक्षर आवश्यक हैं",
+      "keyRequired": "फील्ड की आवश्यक है",
+      "keyMin": "कम से कम 2 अक्षर आवश्यक हैं",
+      "defaultValueRequired": "डिफॉल्ट मान आवश्यक है"
+    },
+    "toast": {
+      "successCreate": "फील्ड सफलतापूर्वक बनाया गया।",
+      "successUpdate": "फील्ड सफलतापूर्वक अपडेट किया गया।",
+      "successDelete": "फील्ड सफलतापूर्वक हटाया गया।",
+      "errorLoad": "फील्ड्स लोड करने में विफल। कृपया फिर से प्रयास करें।",
+      "errorSave": "फील्ड सेव करने में विफल। कृपया फिर से प्रयास करें।",
+      "errorDelete": "फील्ड हटाने में विफल। कृपया फिर से प्रयास करें।",
+      "errorDeleteMissingId": "फील्ड हटाया नहीं जा सकता: आईडी नहीं मिली।",
+      "errorSaveMissingId": "फील्ड अपडेट नहीं किया जा सकता: आईडी नहीं मिली।"
+    },
+    "deleteConfirm": {
+      "title": "फील्ड हटाएं",
+      "message": "क्या आप इस फील्ड को हटाना चाहते हैं: {{name}}?"
+    }
+  },
+  "fieldGroups": {
+    "title": "फील्ड ग्रुप्स",
+    "add": "फील्ड ग्रुप जोड़ें",
+    "search": "फील्ड ग्रुप्स खोजें",
+    "empty": "कोई फील्ड ग्रुप नहीं मिला।",
+    "labels": {
+      "name": "फील्ड ग्रुप नाम",
+      "nameRequired": "फील्ड ग्रुप नाम *",
+      "fields": "फील्ड्स",
+      "mappedCategories": "मैप की गई कैटेगरी",
+      "version": "वर्ज़न",
+      "status": "स्थिति",
+      "addField": "फील्ड जोड़ें",
+      "requiredInGroup": "इस ग्रुप में आवश्यक",
+      "defaultValue": "टेम्पलेट डिफॉल्ट मान",
+      "masterDefault": "मास्टर डिफॉल्ट",
+      "usedInGroups": "इन ग्रुप्स में उपयोग",
+      "notUsed": "किसी भी ग्रुप में उपयोग नहीं"
+    },
+    "required": {
+      "inherit": "फील्ड से विरासत",
+      "required": "आवश्यक",
+      "optional": "वैकल्पिक"
+    },
+    "placeholders": {
+      "name": "फील्ड ग्रुप नाम दर्ज करें",
+      "status": "फील्ड ग्रुप स्थिति चुनें",
+      "mappedCategories": "मैप करने के लिए कैटेगरी चुनें",
+      "addField": "शामिल करने के लिए फील्ड चुनें",
+      "defaultValue": "फील्ड मास्टर डिफॉल्ट उपयोग करने के लिए खाली छोड़ें"
+    },
+    "actions": {
+      "addField": "फील्ड जोड़ें"
+    },
+    "help": {
+      "fieldsPanel": "इस टेम्पलेट के लिए पुन: उपयोग योग्य क्रमबद्ध फील्ड सेट बनाएं।",
+      "defaultValueHint": "वैकल्पिक। फील्ड मास्टर डिफॉल्ट मान लेने के लिए खाली छोड़ें।"
+    },
+    "form": {
+      "titleCreate": "फील्ड ग्रुप जोड़ें",
+      "titleEdit": "फील्ड ग्रुप संपादित करें"
+    },
+    "validation": {
+      "nameRequired": "फील्ड ग्रुप नाम आवश्यक है",
+      "nameDuplicate": "फील्ड ग्रुप नाम पहले से मौजूद है। कृपया अलग नाम दें।",
+      "fieldsRequired": "इस फील्ड ग्रुप में कम से कम एक प्राइसिंग फील्ड जोड़ें।",
+      "defaultValueInvalid": "टेम्पलेट डिफॉल्ट मान वैध संख्याएं होनी चाहिए।"
+    },
+    "toast": {
+      "successCreate": "फील्ड ग्रुप सफलतापूर्वक बनाया गया।",
+      "successUpdate": "फील्ड ग्रुप सफलतापूर्वक अपडेट किया गया।",
+      "successDelete": "फील्ड ग्रुप सफलतापूर्वक हटाया गया।",
+      "errorLoad": "फील्ड ग्रुप्स लोड करने में विफल। कृपया फिर से प्रयास करें।",
+      "errorSave": "फील्ड ग्रुप सेव करने में विफल। कृपया फिर से प्रयास करें।",
+      "errorDelete": "फील्ड ग्रुप हटाने में विफल। कृपया फिर से प्रयास करें।"
+    },
+    "deleteConfirm": {
+      "title": "फील्ड ग्रुप हटाएं",
+      "message": "क्या आप इस फील्ड ग्रुप को हटाना चाहते हैं: {{name}}?"
+    }
+  },
+  "units": {
+    "title": "यूनिट्स",
+    "add": "यूनिट जोड़ें",
+    "search": "यूनिट्स खोजें",
+    "empty": "कोई यूनिट नहीं मिला।",
+    "labels": {
+      "name": "यूनिट नाम",
+      "nameRequired": "यूनिट नाम *",
+      "symbol": "प्रतीक",
+      "symbolRequired": "प्रतीक *",
+      "baseUnit": "बेस यूनिट",
+      "baseUnitOptional": "बेस यूनिट (वैकल्पिक)",
+      "conversionFactor": "कन्वर्ज़न फ़ैक्टर",
+      "status": "स्थिति",
+      "noBaseUnit": "कोई बेस यूनिट नहीं",
+      "mappedCategories": "मैप की गई श्रेणियाँ"
+    },
+    "placeholders": {
+      "name": "यूनिट नाम दर्ज करें",
+      "symbol": "यूनिट प्रतीक दर्ज करें",
+      "baseUnit": "बेस यूनिट चुनें",
+      "conversionFactor": "कन्वर्ज़न फ़ैक्टर दर्ज करें",
+      "status": "यूनिट स्थिति चुनें",
+      "mappedCategories": "मैप की गई श्रेणियाँ चुनें"
+    },
+    "help": {
+      "baseUnitRequiredForFactor": "कन्वर्ज़न फ़ैक्टर संपादित करने के लिए बेस यूनिट चुनें।"
+    },
+    "details": {
+      "titleFallback": "यूनिट विवरण",
+      "closeAria": "यूनिट विवरण बंद करें",
+      "editAria": "यूनिट संपादित करें",
+      "deleteAria": "यूनिट हटाएं"
+    },
+    "form": {
+      "titleCreate": "यूनिट जोड़ें",
+      "titleEdit": "यूनिट संपादित करें",
+      "cancelAria": "यूनिट फ़ॉर्म रद्द करें",
+      "createAria": "यूनिट बनाएं",
+      "updateAria": "यूनिट अपडेट करें"
+    },
+    "validation": {
+      "nameRequired": "यूनिट नाम आवश्यक है",
+      "symbolRequired": "यूनिट प्रतीक आवश्यक है",
+      "conversionFactorRequired": "कन्वर्ज़न फ़ैक्टर आवश्यक है"
+    },
+    "toast": {
+      "successCreate": "यूनिट सफलतापूर्वक बनाया गया।",
+      "successUpdate": "यूनिट सफलतापूर्वक अपडेट किया गया।",
+      "successDelete": "यूनिट सफलतापूर्वक हटाया गया।",
+      "errorLoad": "यूनिट्स लोड करने में विफल। कृपया फिर से प्रयास करें।",
+      "errorSave": "यूनिट सेव करने में विफल। कृपया फिर से प्रयास करें।",
+      "errorDelete": "यूनिट हटाने में विफल। कृपया फिर से प्रयास करें।",
+      "errorDeleteMissingId": "यूनिट हटाया नहीं जा सकता: आईडी नहीं मिली।"
+    },
+    "deleteConfirm": {
+      "title": "यूनिट हटाएं",
+      "message": "क्या आप इस यूनिट को हटाना चाहते हैं: {{name}}?"
+    }
+  },
+  "orderEntry": {
+    "title": "मल्टी-चैनल ऑर्डर एंट्री",
+    "subtitle": "ऑफलाइन और ऑनलाइन असिस्टेड ऑर्डर फ्लो डिलीवरी-आधारित वैलिडेशन के साथ।",
+    "tabs": {
+      "customer": "1. ग्राहक",
+      "items": "2. आइटम्स",
+      "pricing": "3. प्राइसिंग",
+      "deliveryPlace": "4. डिलीवरी और प्लेस"
+    },
+    "steps": {
+      "customer": "स्टेप 1: ग्राहक",
+      "items": "स्टेप 2: आइटम्स",
+      "pricing": "स्टेप 3: प्राइसिंग प्रीव्यू",
+      "deliveryPlace": "स्टेप 4: डिलीवरी + प्लेस"
+    },
+    "labels": {
+      "customerPhone": "ग्राहक मोबाइल",
+      "customerName": "ग्राहक नाम",
+      "variant": "वैरिएंट",
+      "qty": "मात्रा",
+      "unitPrice": "यूनिट प्राइस",
+      "tax": "टैक्स",
+      "lineTotal": "लाइन टोटल",
+      "action": "एक्शन",
+      "subTotal": "सब टोटल",
+      "taxTotal": "कुल टैक्स",
+      "deliveryCharge": "डिलीवरी चार्ज",
+      "grandTotal": "ग्रैंड टोटल",
+      "orderIntakeChannel": "ऑर्डर इंटेक चैनल",
+      "deliveryType": "डिलीवरी प्रकार",
+      "deliveryAddress": "डिलीवरी पता",
+      "deliveryPincode": "डिलीवरी पिनकोड",
+      "deliveryContactName": "डिलीवरी संपर्क नाम",
+      "deliveryContactPhone": "डिलीवरी संपर्क मोबाइल",
+      "preferredDeliveryTime": "पसंदीदा डिलीवरी समय",
+      "googleLocation": "गूगल लोकेशन / प्लेस",
+      "mapLatitude": "मैप अक्षांश",
+      "mapLongitude": "मैप देशांतर",
+      "provisionalRiderName": "अस्थायी राइडर नाम",
+      "provisionalRiderPhone": "अस्थायी राइडर मोबाइल",
+      "deliveryCharges": "डिलीवरी चार्जेस",
+      "orderNotes": "ऑर्डर नोट्स",
+      "currencySymbol": "रु"
+    },
+    "placeholders": {
+      "customerPhone": "10-अंकीय मोबाइल दर्ज करें",
+      "customerName": "ग्राहक नाम दर्ज करें",
+      "selectVariant": "वैरिएंट चुनें",
+      "qty": "मात्रा",
+      "orderIntakeChannel": "इंटेक चैनल चुनें",
+      "deliveryType": "डिलीवरी प्रकार चुनें",
+      "deliveryAddress": "ग्राहक पता चुनें",
+      "deliveryPincode": "6-अंकीय पिनकोड दर्ज करें",
+      "deliveryContactName": "रिसीवर नाम",
+      "deliveryContactPhone": "रिसीवर मोबाइल",
+      "preferredDeliveryTime": "उदा. आज शाम 7:00 बजे",
+      "googleLocation": "मैप लिंक या स्थान टेक्स्ट पेस्ट करें",
+      "mapLatitude": "उदा. 17.385",
+      "mapLongitude": "उदा. 78.4867",
+      "provisionalRiderName": "राइडर मॉड्यूल आने तक",
+      "provisionalRiderPhone": "राइडर संपर्क",
+      "deliveryCharges": "0",
+      "orderNotes": "वैकल्पिक"
+    },
+    "validation": {
+      "phoneRequired": "मोबाइल आवश्यक है",
+      "customerNameRequired": "ग्राहक नाम आवश्यक है",
+      "addressRequiredForDelivery": "डिलीवरी के लिए पता आवश्यक है",
+      "deliveryPincodeInvalid": "मान्य 6-अंकीय पिनकोड दर्ज करें",
+      "fieldRequired": "यह फ़ील्ड आवश्यक है"
+    },
+    "actions": {
+      "exitOrderEntry": "ऑर्डर एंट्री से बाहर निकलें",
+      "resolveCustomer": "ग्राहक रिजॉल्व करें",
+      "addItem": "आइटम जोड़ें",
+      "previous": "पिछला",
+      "next": "अगला",
+      "placeOrder": "ऑर्डर प्लेस करें",
+      "placing": "प्लेस किया जा रहा है..."
+    },
+    "messages": {
+      "customerResolved": "रिजॉल्व्ड",
+      "customerNotResolved": "ग्राहक अभी रिजॉल्व नहीं हुआ",
+      "loadFailed": "ऑर्डर सेटअप डेटा लोड करने में विफल।",
+      "lookupLoading": "मोबाइल से ग्राहक खोजा जा रहा है...",
+      "lookupFailed": "लुकअप विफल हुआ। आप नाम दर्ज करके Resolve Customer उपयोग कर सकते हैं।",
+      "lookupSelectPrompt": "मोबाइल पहले से मौजूद है। ग्राहक चुनें, विवरण अपने आप भर जाएगा।",
+      "lookupNoMatch": "इस मोबाइल पर ग्राहक नहीं मिला। नाम दर्ज करें और नया बनाने के लिए Resolve Customer उपयोग करें।",
+      "stockChecking": "स्टॉक जाँचा जा रहा है...",
+      "stockAvailable": "स्टॉक उपलब्ध",
+      "stockNotAvailableRow": "स्टॉक अपर्याप्त"
+    },
+    "toast": {
+      "enterCustomerFirst": "पहले सही मोबाइल और ग्राहक नाम दर्ज करें।",
+      "customerCreated": "ग्राहक बनाया गया।",
+      "customerResolved": "ग्राहक रिजॉल्व हुआ।",
+      "resolveFailed": "ग्राहक रिजॉल्व नहीं हो पाया।",
+      "completeStepBeforeNext": "आगे बढ़ने से पहले आवश्यक फ़ील्ड भरें।",
+      "completeCurrentStep": "इस स्टेप की आवश्यक जानकारी भरें।",
+      "completeAllSteps": "ऑर्डर प्लेस करने से पहले सभी आवश्यक स्टेप पूरे करें।",
+      "resolveCustomerBeforePlace": "ऑर्डर प्लेस करने से पहले ग्राहक रिजॉल्व करें।",
+      "completeOrderDetails": "सभी आवश्यक ऑर्डर विवरण भरें।",
+      "addOneItem": "कम से कम एक वैध आइटम जोड़ें।",
+      "stockNotAvailable": "इनके लिए स्टॉक अपर्याप्त",
+      "orderPlaced": "ऑर्डर प्लेस हुआ",
+      "draftCreatedPlaceFailed": "ड्राफ्ट बना लेकिन ऑर्डर प्लेस नहीं हो पाया।",
+      "createDraftFailed": "ऑर्डर ड्राफ्ट बनाने में विफल।",
+      "customerAutoFilled": "ग्राहक चुना गया और विवरण अपने आप भर गया।"
+    }
+  },
+  "saas": {
+    "admin": {
+      "roles": {
+        "title": "रोल्स",
+        "title_create": "रोल बनाएं",
+        "title_edit": "रोल संपादित करें",
+        "subtitle": "इस रोल की क्षमताएं तय करने के लिए फीचर्स असाइन करें।",
+        "btn_create": "रोल बनाएं",
+        "btn_update": "रोल अपडेट करें",
+        "btn_grant_all": "सभी दें",
+        "btn_clear_all": "सभी हटाएं",
+        "btn_open_platform_roles": "प्लेटफॉर्म टेनेंट रोल्स खोलें",
+        "lbl_role_key": "रोल कुंजी",
+        "lbl_role_name": "रोल नाम",
+        "lbl_tenant": "टेनेंट",
+        "lbl_allowed_features": "अनुमत फीचर्स",
+        "ph_select_tenant": "टेनेंट चुनें",
+        "ph_select_features": "एक या अधिक फीचर्स चुनें",
+        "msg_selected_count": "{{count}} फीचर चुने गए",
+        "msg_tenant_only_features": "यहां केवल आपके पैकेज के tenant/company फीचर्स दिखाए जाते हैं। Platform/internal फीचर्स शामिल नहीं हैं।",
+        "msg_no_features": "इस पैकेज के लिए कोई tenant फीचर उपलब्ध नहीं है।",
+        "msg_platform_select_tenant": "पहले टेनेंट चुनें, फिर उसी टेनेंट के पैकेज फीचर्स और रोल्स लोड होंगे।",
+        "msg_select_tenant_first": "इस रोल के लिए पैकेज फीचर्स लोड करने से पहले टेनेंट चुनें।",
+        "msg_use_platform_flow": "प्लेटफॉर्म एडमिन में टेनेंट चुनने के लिए Platform Tenant Roles का उपयोग करें।"
+      },
+      "employees": {
+        "title": "कर्मचारी",
+        "title_create": "कर्मचारी बनाएं",
+        "title_edit": "कर्मचारी संपादित करें",
+        "btn_create": "कर्मचारी बनाएं",
+        "btn_update": "कर्मचारी अपडेट करें",
+        "btn_link_user": "यूज़र लिंक/अनलिंक करें",
+        "lbl_employee_code": "कर्मचारी कोड",
+        "lbl_full_name": "पूरा नाम",
+        "lbl_department": "विभाग",
+        "lbl_designation": "पद",
+        "lbl_status": "रोज़गार स्थिति",
+        "lbl_linked_user": "लिंक्ड यूज़र",
+        "ph_search": "कोड, नाम या विभाग से कर्मचारी खोजें",
+        "tbl_code": "कर्मचारी कोड",
+        "tbl_name": "कर्मचारी नाम",
+        "tbl_dept": "विभाग",
+        "val_linked": "लिंक्ड",
+        "status_on_leave": "अवकाश पर",
+        "opt_not_linked": "लिंक्ड नहीं",
+        "msg_required_fields": "कृपया आवश्यक फ़ील्ड भरें।",
+        "msg_create_success": "कर्मचारी सफलतापूर्वक बनाया गया।",
+        "msg_update_success": "कर्मचारी सफलतापूर्वक अपडेट किया गया।",
+        "msg_create_failed": "कर्मचारी बनाने में विफल।",
+        "msg_update_failed": "कर्मचारी अपडेट करने में विफल।",
+        "msg_load_failed": "कर्मचारी लोड करने में विफल।",
+        "msg_load_users_failed": "लिंकिंग के लिए यूज़र्स लोड करने में विफल।",
+        "err_code_exists": "कर्मचारी कोड पहले से मौजूद है।"
+      },
+      "users": {
+        "title": "यूज़र्स",
+        "subtitle": "टेनेंट यूज़र्स प्रबंधित करें, एक्सेस लॉक करें और रोल असाइन करें।",
+        "btn_invite": "यूज़र आमंत्रित करें",
+        "btn_assign_roles": "रोल असाइन करें",
+        "lbl_roles": "रोल्स",
+        "ph_search": "ईमेल या फोन से यूज़र्स खोजें",
+        "tbl_email": "ईमेल",
+        "tbl_phone": "फोन",
+        "tbl_status": "स्थिति",
+        "tbl_roles": "रोल्स",
+        "tbl_last_login": "अंतिम लॉगिन",
+        "opt_all_statuses": "सभी स्थितियाँ",
+        "opt_invited": "आमंत्रित",
+        "opt_active": "सक्रिय",
+        "opt_locked": "लॉक्ड",
+        "opt_disabled": "अक्षम",
+        "msg_showing": "इस पृष्ठ पर {{count}} यूज़र्स दिख रहे हैं (कुल: {{total}})",
+        "msg_loading": "यूज़र्स लोड हो रहे हैं...",
+        "btn_prev": "पिछला",
+        "btn_next": "अगला",
+        "lbl_page": "पृष्ठ {{page}} / {{total}}",
+        "title_assign_roles": "रोल असाइन करें",
+        "msg_loading_assignments": "असाइनमेंट लोड हो रहे हैं...",
+        "btn_save_roles": "रोल्स सेव करें"
+      },
+      "dashboard": {
+        "title": "टेनेंट डैशबोर्ड",
+        "subtitle": "टेनेंट एक्सेस प्रशासन का परिचालन स्नैपशॉट।",
+        "lbl_purchased_package": "खरीदा गया पैकेज",
+        "msg_no_package": "अभी कोई पैकेज असाइन नहीं किया गया।",
+        "lbl_entitled_features": "मिलने वाली फीचर्स",
+        "msg_no_features": "कोई मिलने वाली फीचर्स उपलब्ध नहीं।",
+        "lbl_tier": "टियर",
+        "lbl_status": "स्थिति",
+        "card_users": "यूज़र्स",
+        "card_employees": "कर्मचारी",
+        "card_roles": "रोल्स",
+        "btn_open": "खोलें",
+        "msg_loading": "डैशबोर्ड लोड हो रहा है..."
+      }
+    },
+    "platform": {
+      "accounts": {
+        "title": "SaaS अकाउंट्स",
+        "subtitle": "टेनेंट अकाउंट्स, जीवनचक्र स्थिति और ट्रायल अवधि बनाएं और प्रबंधित करें।",
+        "btn_create": "अकाउंट बनाएं",
+        "ph_search": "अकाउंट, टेनेंट कोड, या संपर्क ईमेल खोजें",
+        "lbl_status": "स्थिति",
+        "msg_loading": "SaaS अकाउंट्स लोड हो रहे हैं...",
+        "title_create": "SaaS अकाउंट बनाएं",
+        "title_edit": "SaaS अकाउंट संपादित करें",
+        "lbl_validation_header": "कृपया निम्नलिखित सुधारें:",
+        "section_account_details": "अकाउंट विवरण",
+        "lbl_account_name": "अकाउंट नाम",
+        "lbl_legal_business_name": "कानूनी व्यापार नाम",
+        "lbl_tenant_code": "टेनेंट कोड",
+        "lbl_tenant_code_mode": "टेनेंट कोड मोड:",
+        "val_tenant_code_auto": "स्वतः-जनित",
+        "val_tenant_code_manual": "मैनुअल एंट्री",
+        "btn_switch_manual": "मैनुअल एंट्री पर स्विच करें",
+        "btn_switch_auto": "स्वतः-जनित पर स्विच करें",
+        "section_contact": "संपर्क और क्षेत्र डिफ़ॉल्ट",
+        "lbl_primary_contact_name": "प्राथमिक संपर्क नाम",
+        "lbl_primary_contact_phone": "प्राथमिक संपर्क फोन",
+        "lbl_primary_contact_email": "प्राथमिक संपर्क ईमेल",
+        "section_first_admin": "पहला टेनेंट एडमिन",
+        "lbl_first_admin_name": "पहले टेनेंट एडमिन का नाम",
+        "lbl_first_admin_email": "पहले टेनेंट एडमिन का ईमेल",
+        "lbl_country_code": "देश कोड",
+        "lbl_currency": "मुद्रा",
+        "lbl_search_timezone": "टाइमज़ोन खोजें",
+        "ph_search_timezone": "टाइमज़ोन सूची फ़िल्टर करने के लिए टाइप करें",
+        "lbl_timezone": "टाइमज़ोन",
+        "section_subscription": "सब्स्क्रिप्शन सेटअप",
+        "lbl_plan": "योजना",
+        "msg_no_plans": "अभी कोई पैकेज प्लान उपलब्ध नहीं है। पहले एक पैकेज बनाएं, फिर SaaS अकाउंट बनाएं।",
+        "lbl_trial_mode": "ट्रायल मोड",
+        "lbl_trial_duration": "ट्रायल अवधि (दिन)",
+        "section_optional": "वैकल्पिक",
+        "lbl_billing_email": "बिलिंग ईमेल",
+        "lbl_support_phone": "सपोर्ट फोन",
+        "lbl_notes": "नोट्स",
+        "btn_save_draft": "ड्राफ्ट सेव करें",
+        "btn_save": "सेव करें",
+        "title_change_status": "अकाउंट स्थिति बदलें",
+        "lbl_current_status": "वर्तमान स्थिति:",
+        "lbl_next_status": "अगली स्थिति",
+        "lbl_reason": "कारण (वैकल्पिक)",
+        "btn_update_status": "स्थिति अपडेट करें",
+        "title_extend_trial": "ट्रायल बढ़ाएं",
+        "lbl_account": "अकाउंट:",
+        "lbl_extension_days": "विस्तार दिन",
+        "btn_extend_trial": "ट्रायल बढ़ाएं",
+        "title_audit_log": "अकाउंट ऑडिट लॉग",
+        "msg_no_audit": "कोई ऑडिट एंट्री नहीं मिली।",
+        "lbl_audit_by": "द्वारा:",
+        "lbl_audit_at": "तारीख:",
+        "lbl_audit_reason": "कारण:"
+      },
+      "features": {
+        "title": "फीचर कैटलॉग",
+        "btn_add": "फीचर जोड़ें",
+        "title_create": "फीचर बनाएं",
+        "title_edit": "फीचर संपादित करें",
+        "msg_pick_template": "टेम्पलेट से चुनें या कस्टम की दर्ज करें:",
+        "lbl_template": "फीचर टेम्पलेट्स",
+        "ph_select_template": "एक टेम्पलेट चुनें...",
+        "lbl_feature_key": "फीचर की",
+        "lbl_display_name": "प्रदर्शन नाम",
+        "lbl_module": "मॉड्यूल",
+        "lbl_dependencies": "डिपेंडेंसी",
+        "ph_dependencies": "डिपेंडेंसी फीचर्स चुनें",
+        "hint_dependencies": "JSON टेम्पलेट सूची से डिपेंडेंसी फीचर्स चुनें।",
+        "lbl_ui_visibility": "UI विज़िबिलिटी",
+        "opt_always": "हमेशा दिखाएं",
+        "opt_entitled_only": "केवल अगर एंटाइटल्ड हो",
+        "opt_hidden": "UI से छुपाएं",
+        "lbl_status": "स्थिति",
+        "lbl_beta": "बीटा फीचर",
+        "btn_save": "सेव करें"
+      },
+      "packages": {
+        "title": "पैकेजेस",
+        "btn_create": "पैकेज बनाएं",
+        "title_create": "पैकेज बनाएं",
+        "title_edit": "पैकेज संपादित करें",
+        "lbl_plan_id": "प्लान आईडी",
+        "lbl_plan_name": "प्लान नाम",
+        "lbl_description": "विवरण",
+        "lbl_tier": "टियर",
+        "lbl_status": "स्थिति",
+        "lbl_features": "फीचर्स",
+        "ph_features": "फीचर कैटलॉग से फीचर्स चुनें",
+        "hint_features": "केवल फीचर कैटलॉग में बनाई गई फीचर्स यहाँ दिखती हैं।",
+        "btn_save": "सेव करें"
+      },
+      "entitlements": {
+        "title": "टेनेंट एंटाइटलमेंट्स",
+        "subtitle": "टेनेंट कोड से खोजें और पैकेज/ऐड-ऑन/सस्पेंशन अपडेट करें।",
+        "lbl_tenant": "टेनेंट",
+        "ph_tenant": "टेनेंट खोजें और चुनें",
+        "ph_tenant_search": "अकाउंट नाम या टेनेंट कोड से खोजें",
+        "btn_load": "लोड करें",
+        "section_current": "वर्तमान एंटाइटलमेंट",
+        "lbl_package": "पैकेज:",
+        "lbl_addons": "ऐड-ऑन:",
+        "lbl_suspended": "सस्पेंडेड:",
+        "lbl_cache_version": "कैश वर्शन:",
+        "lbl_package_plan": "पैकेज प्लान",
+        "ph_package_plan": "पैकेज प्लान चुनें",
+        "lbl_addon_features": "ऐड-ऑन फीचर्स",
+        "ph_addon_features": "ऐड-ऑन फीचर्स चुनें",
+        "lbl_suspended_features": "सस्पेंडेड फीचर्स",
+        "ph_suspended_features": "सस्पेंडेड फीचर्स चुनें",
+        "lbl_change_reason": "बदलाव का कारण",
+        "btn_save": "एंटाइटलमेंट सेव करें",
+        "section_effective": "प्रभावी फीचर्स",
+        "lbl_source": "स्रोत:",
+        "lbl_account_status": "अकाउंट स्थिति:",
+        "lbl_reason_code": "कारण कोड:"
+      }
+    }
+  },
+  "auth": {
+    "entry": {
+      "eyebrow": "एक्सेस वैलिडेशन",
+      "title": "अपना एडमिन लॉगिन चुनें",
+      "subtitle": "Epic 3.5 वैलिडेशन के दौरान प्लेटफॉर्म एडमिन और टेनेंट एडमिन के लिए अलग लॉगिन एंट्री पॉइंट्स का उपयोग करें।",
+      "platform_title": "प्लेटफॉर्म एडमिन",
+      "platform_subtitle": "SaaS अकाउंट्स, पैकेजेस, फीचर्स और टेनेंट एंटाइटलमेंट्स प्रबंधित करें।",
+      "tenant_title": "टेनेंट एडमिन",
+      "tenant_subtitle": "टेनेंट एडमिनिस्ट्रेटर के रूप में साइन इन करें और पैकेज-आधारित फीचर विजिबिलिटी को सत्यापित करें।",
+      "btn_platform": "प्लेटफॉर्म लॉगिन",
+      "btn_tenant": "टेनेंट लॉगिन"
+    },
+    "common": {
+      "dev_mode": "डेवलपमेंट सेशन",
+      "back_to_entry": "लॉगिन चयन पर वापस जाएं",
+      "error_title": "लॉगिन विफल"
+    },
+    "platform": {
+      "title": "प्लेटफॉर्म एडमिन लॉगिन",
+      "subtitle": "SaaS प्लेटफॉर्म संचालन के लिए कंपनी-साइड एडमिनिस्ट्रेटर के रूप में प्रमाणित हों।",
+      "demo_title": "डेमो क्रेडेंशियल्स",
+      "demo_email": "ईमेल: platform.admin@gom.dev",
+      "demo_password": "पासवर्ड: Platform@123",
+      "lbl_email": "ईमेल",
+      "lbl_password": "पासवर्ड",
+      "btn_submit": "प्लेटफॉर्म एडमिन के रूप में लॉगिन करें"
+    },
+    "tenant": {
+      "title": "टेनेंट एडमिन लॉगिन",
+      "subtitle": "एंटाइटलमेंट-आधारित नेविगेशन और एक्सेस नियमों को सत्यापित करने के लिए टेनेंट कॉन्टेक्स्ट में प्रमाणित हों।",
+      "demo_title": "डेमो टेनेंट अकाउंट्स",
+      "demo_starter": "Starter: STARTER01 / starter.admin@gom.dev",
+      "demo_growth": "Growth: GROWTH01 / growth.admin@gom.dev",
+      "demo_scale": "Scale: SCALE01 / scale.admin@gom.dev",
+      "demo_password": "पासवर्ड: Tenant@123",
+      "lbl_tenant_code": "टेनेंट कोड",
+      "lbl_email": "ईमेल",
+      "lbl_password": "पासवर्ड",
+      "btn_submit": "टेनेंट एडमिन के रूप में लॉगिन करें"
+    },
+    "landing": {
+      "loading": "आपकी एक्सेस प्रोफाइल लोड हो रही है..."
+    },
+    "denied": {
+      "title": "एक्सेस अस्वीकृत",
+      "reason_actor_mismatch": "यह सेशन इस स्क्रीन के लिए आवश्यक एडमिन प्रकार से मेल नहीं खाता।",
+      "reason_feature_disabled": "यह स्क्रीन वर्तमान पैकेज या एक्सेस प्रोफाइल में उपलब्ध नहीं है।",
+      "reason_generic": "अनुरोधित स्क्रीन वर्तमान सेशन में उपलब्ध नहीं है।",
+      "btn_logout": "लॉगआउट",
+      "btn_home": "लैंडिंग पर जाएं"
+    },
+    "errors": {
+      "invalid_platform_credentials": "अमान्य प्लेटफॉर्म एडमिन क्रेडेंशियल्स।",
+      "invalid_tenant_credentials": "अमान्य टेनेंट एडमिन क्रेडेंशियल्स या टेनेंट कोड।"
+    }
+  }
+}

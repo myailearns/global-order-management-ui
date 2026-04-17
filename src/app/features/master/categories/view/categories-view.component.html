@@ -1,0 +1,89 @@
+<gom-lib-modal
+  [show]="isOpen"
+  (showChange)="isOpen = $event"
+  [title]="category?.name || (text.detailFallbackTitle | translate)"
+  [closeOnBackdropClick]="true"
+  size="small"
+  (closed)="onClose()"
+>
+  @if (category) {
+    <section class="category-view">
+      <div class="category-view__row">
+        <h4>{{ text.nameLabel | translate }}</h4>
+        <p>{{ category.name }}</p>
+      </div>
+
+      <div class="category-view__row">
+        <h4>{{ text.descriptionLabel | translate }}</h4>
+        <p>{{ category.description || text.emptyValue }}</p>
+      </div>
+
+      <div class="category-view__row">
+        <h4>{{ text.statusLabel | translate }}</h4>
+        <p class="category-view__status" [class.category-view__status--inactive]="category.status === 'INACTIVE'">
+          {{ category.status === 'INACTIVE' ? ('common.status.inactive' | translate) : ('common.status.active' | translate) }}
+        </p>
+      </div>
+    </section>
+  }
+
+  <div gom-modal-actions class="category-view__actions gom-modal__action-layout">
+    <div class="gom-modal__action-layout-start">
+      <gom-lib-button
+        class="category-view__action category-view__action--close"
+        variant="secondary"
+        [size]="closeMode === 'icon-only' ? 'icon' : 'default'"
+        [attr.aria-label]="text.detailCloseAria | translate"
+        [attr.title]="text.detailCloseAria | translate"
+        (buttonClick)="onClose()"
+        [disabled]="busy"
+      >
+        @if (shouldShowIcon(closeMode)) {
+          <i class="ri-close-line" aria-hidden="true"></i>
+        }
+        @if (shouldShowText(closeMode)) {
+          {{ text.close | translate }}
+        }
+      </gom-lib-button>
+    </div>
+
+    <div class="gom-modal__action-layout-end">
+      @if (canEdit) {
+        <gom-lib-button
+          class="category-view__action category-view__action--edit"
+          variant="primary"
+          [size]="editMode === 'icon-only' ? 'icon' : 'default'"
+          [attr.aria-label]="text.detailEditAria | translate"
+          [attr.title]="text.detailEditAria | translate"
+          (buttonClick)="onEdit()"
+          [disabled]="busy || !category"
+        >
+          @if (shouldShowIcon(editMode)) {
+            <i class="ri-pencil-line" aria-hidden="true"></i>
+          }
+          @if (shouldShowText(editMode)) {
+            {{ text.formSubmitUpdate | translate }}
+          }
+        </gom-lib-button>
+      }
+      @if (canDelete) {
+        <gom-lib-button
+          class="category-view__action category-view__action--delete"
+          variant="danger"
+          [size]="deleteMode === 'icon-only' ? 'icon' : 'default'"
+          [attr.aria-label]="text.detailDeleteAria | translate"
+          [attr.title]="text.detailDeleteAria | translate"
+          (buttonClick)="onDelete()"
+          [disabled]="busy || !category"
+        >
+          @if (shouldShowIcon(deleteMode)) {
+            <i class="ri-delete-bin-line" aria-hidden="true"></i>
+          }
+          @if (shouldShowText(deleteMode)) {
+            {{ text.confirmDelete | translate }}
+          }
+        </gom-lib-button>
+      }
+    </div>
+  </div>
+</gom-lib-modal>

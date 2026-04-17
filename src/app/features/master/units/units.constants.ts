@@ -1,0 +1,50 @@
+import { GomSelectOption } from '../../../shared/components/form-controls';
+
+export const UNIT_DEFAULT_STATUS = 'ACTIVE' as const;
+
+export const UNIT_STATUS_OPTIONS: GomSelectOption[] = [
+  { label: 'common.status.active', value: 'ACTIVE' },
+  { label: 'common.status.inactive', value: 'INACTIVE' },
+];
+
+export const UNIT_UI_TEXT = {
+  pageTitle: 'units.title',
+  addUnit: 'units.add',
+  actionsLabel: 'common.labels.actions',
+  viewAction: 'common.actions.view',
+  editAction: 'common.actions.edit',
+  deleteAction: 'common.actions.delete',
+  searchPlaceholder: 'units.search',
+  emptyMessage: 'units.empty',
+  deleteTitle: 'units.deleteConfirm.title',
+  deleteMessage: 'units.deleteConfirm.message',
+  confirmDelete: 'common.actions.delete',
+  cancel: 'common.actions.cancel',
+  close: 'common.actions.close',
+  closeErrorBanner: 'common.messages.closeErrorBanner',
+  detailFallbackTitle: 'units.details.titleFallback',
+  detailCloseAria: 'units.details.closeAria',
+  detailEditAria: 'units.details.editAria',
+  detailDeleteAria: 'units.details.deleteAria',
+  formTitleCreate: 'units.form.titleCreate',
+  formTitleEdit: 'units.form.titleEdit',
+  formSubmitCreate: 'common.actions.create',
+  formSubmitUpdate: 'common.actions.update',
+  formCancelAria: 'units.form.cancelAria',
+  formCreateAria: 'units.form.createAria',
+  formUpdateAria: 'units.form.updateAria',
+  nameLabel: 'units.labels.name',
+  symbolLabel: 'units.labels.symbol',
+  baseUnitLabel: 'units.labels.baseUnit',
+  conversionFactorLabel: 'units.labels.conversionFactor',
+  statusLabel: 'units.labels.status',
+  noBaseUnit: 'units.labels.noBaseUnit',
+  emptyValue: '-',
+  errorLoad: 'units.toast.errorLoad',
+  errorSave: 'units.toast.errorSave',
+  errorDelete: 'units.toast.errorDelete',
+  errorDeleteMissingId: 'units.toast.errorDeleteMissingId',
+  successCreate: 'units.toast.successCreate',
+  successUpdate: 'units.toast.successUpdate',
+  successDelete: 'units.toast.successDelete',
+} as const;

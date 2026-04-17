@@ -1,0 +1,709 @@
+{
+  "app": {
+    "name": "గ్లోబల్ ఆర్డర్ మేనేజ్‌మెంట్",
+    "module": "ప్రోడక్ట్ క్రియేషన్ మాడ్యూల్",
+    "navigation": {
+      "toggle": "నావిగేషన్ మార్చు",
+      "close": "మెను మూసివేయి",
+      "workspace": "వర్క్‌స్పేస్",
+      "menu": "నావిగేషన్",
+      "expand": "{{section}} విస్తరించు",
+      "collapse": "{{section}} కుదించు",
+      "expandSidebar": "సైడ్‌బార్ విస్తరించు",
+      "collapseSidebar": "సైడ్‌బార్ కుదించు",
+      "masterSetup": "మాస్టర్ సెటప్",
+      "productSetup": "ప్రొడక్ట్ సెటప్",
+      "categories": "కేటగిరీలు",
+      "fields": "ఫీల్డ్స్",
+      "fieldGroups": "ఫీల్డ్ గ్రూప్స్",
+      "units": "యూనిట్స్",
+      "taxProfiles": "ట్యాక్స్ ప్రొఫైల్స్",
+      "groupCreation": "గ్రూప్ క్రియేషన్",
+      "stock": "స్టాక్",
+      "variants": "వేరియంట్లు",
+      "packs": "ప్యాక్స్",
+      "orders": "ఆర్డర్లు",
+      "orderManagement": "ఆర్డర్ మేనేజ్‌మెంట్",
+      "riders": "రైడర్స్",
+      "courierPartners": "కూరియర్ పార్ట్నర్స్",
+      "settings": "సెట్టింగ్లు",
+      "employeeCode": "ఎంప్లాయీ కోడ్",
+      "serviceablePincodes": "సర్వీస్ చేయగల పిన్‌కోడ్‌లు",
+      "tenantAdmin": "టెనెంట్ అడ్మిన్",
+      "tenantDashboard": "టెనెంట్ డ్యాష్‌బోర్డ్",
+      "tenantUsers": "టెనెంట్ యూజర్లు",
+      "tenantEmployees": "టెనెంట్ ఉద్యోగులు",
+      "saasAccounts": "సాస్ అకౌంట్లు",
+      "saasPackages": "సాస్ ప్యాకేజీలు",
+      "saasFeatures": "సాస్ ఫీచర్లు",
+      "platformTenantRoles": "ప్లాట్‌ఫార్మ్ టెనెంట్ రోల్స్",
+      "tenantEntitlements": "టెనెంట్ ఎంటైటిల్మెంట్స్",
+      "tenantRoles": "టెనెంట్ పాత్రలు",
+      "customers": "కస్టమర్లు",
+      "customerGroups": "కస్టమర్ గ్రూపులు"
+    },
+    "actions": {
+      "notifications": "నోటిఫికేషన్స్",
+      "profile": "యూజర్ ప్రొఫైల్",
+      "logout": "లాగ్ అవుట్"
+    },
+    "language": {
+      "label": "భాష",
+      "english": "ఇంగ్లీష్",
+      "telugu": "తెలుగు",
+      "hindi": "హిందీ"
+    }
+  },
+  "common": {
+    "btn_cancel": "రద్దు",
+    "btn_confirm": "నిర్ధారించండి",
+    "email": "ఇమెయిల్",
+    "phone": "ఫోన్",
+    "msg_no_results": "ఫలితాలు లేవు.",
+    "status": {
+      "active": "యాక్టివ్",
+      "inactive": "ఇనాక్టివ్"
+    },
+    "actions": {
+      "view": "చూడండి",
+      "edit": "సవరించు",
+      "delete": "తొలగించు",
+      "create": "సృష్టించు",
+      "update": "అప్డేట్",
+      "cancel": "రద్దు",
+      "close": "మూసివేయి"
+    },
+    "labels": {
+      "actions": "చర్యలు",
+      "description": "వివరణ",
+      "status": "స్థితి"
+    },
+    "messages": {
+      "closeErrorBanner": "లోపపు బ్యానర్ మూసివేయి"
+    }
+  },
+  "categories": {
+    "title": "కేటగిరీలు",
+    "add": "కేటగిరీ జోడించు",
+    "search": "కేటగిరీలు వెతుకు",
+    "empty": "కేటగిరీలు కనబడలేదు.",
+    "labels": {
+      "name": "కేటగిరీ పేరు",
+      "nameRequired": "కేటగిరీ పేరు *",
+      "description": "వివరణ",
+      "status": "స్థితి"
+    },
+    "placeholders": {
+      "name": "కేటగిరీ పేరును నమోదు చేయండి",
+      "description": "కేటగిరీ వివరణను నమోదు చేయండి",
+      "status": "కేటగిరీ స్థితిని ఎంచుకోండి"
+    },
+    "details": {
+      "titleFallback": "కేటగిరీ వివరాలు",
+      "closeAria": "వివరాల వీక్షణను మూసివేయి",
+      "editAria": "కేటగిరీని సవరించు",
+      "deleteAria": "కేటగిరీని తొలగించు"
+    },
+    "form": {
+      "titleCreate": "కేటగిరీ జోడించు",
+      "titleEdit": "కేటగిరీ సవరించు",
+      "cancelAria": "కేటగిరీ ఫారమ్ రద్దు చేయి",
+      "createAria": "కేటగిరీ సృష్టించు",
+      "updateAria": "కేటగిరీ అప్డేట్ చేయి"
+    },
+    "validation": {
+      "nameRequired": "కేటగిరీ పేరు అవసరం",
+      "nameMin": "కనీసం 2 అక్షరాలు అవసరం",
+      "descriptionMax": "గరిష్టంగా 500 అక్షరాలు అనుమతి"
+    },
+    "toast": {
+      "successCreate": "కేటగిరీ విజయవంతంగా సృష్టించబడింది.",
+      "successUpdate": "కేటగిరీ విజయవంతంగా అప్డేట్ చేయబడింది.",
+      "successDelete": "కేటగిరీ విజయవంతంగా తొలగించబడింది.",
+      "errorLoad": "కేటగిరీలు లోడ్ చేయడం విఫలమైంది. దయచేసి మళ్లీ ప్రయత్నించండి.",
+      "errorSave": "కేటగిరీ సేవ్ చేయడం విఫలమైంది. దయచేసి మళ్లీ ప్రయత్నించండి.",
+      "errorDelete": "కేటగిరీ తొలగించడం విఫలమైంది. దయచేసి మళ్లీ ప్రయత్నించండి.",
+      "errorDeleteMissingId": "కేటగిరీ తొలగించలేము: ఐడి లేదు."
+    },
+    "deleteConfirm": {
+      "title": "కేటగిరీ తొలగించు",
+      "message": "ఈ కేటగిరీని తొలగించాలనుకుంటున్నారా: {{name}}?"
+    }
+  },
+  "fields": {
+    "title": "ఫీల్డ్స్",
+    "add": "ఫీల్డ్ జోడించు",
+    "search": "ఫీల్డ్స్ వెతుకు",
+    "empty": "ఫీల్డ్స్ కనబడలేదు.",
+    "labels": {
+      "name": "ఫీల్డ్ పేరు",
+      "nameRequired": "ఫీల్డ్ పేరు *",
+      "key": "ఫీల్డ్ కీ",
+      "keyRequired": "ఫీల్డ్ కీ *",
+      "type": "రకం",
+      "defaultValue": "డిఫాల్ట్ విలువ",
+      "isRequired": "అవసరం",
+      "assignToFieldGroups": "ఫీల్డ్ గ్రూప్స్‌కు జోడించు",
+      "selectFieldGroups": "ఫీల్డ్ గ్రూప్స్ ఎంచుకోండి",
+      "noFieldGroupsAvailable": "ఫీల్డ్ గ్రూప్స్ లభ్యం కావు.",
+      "usedInFieldGroups": "ఉపయోగిస్తున్న ఫీల్డ్ గ్రూప్స్",
+      "notUsedInFieldGroups": "ఏ ఫీల్డ్ గ్రూప్‌లో ఉపయోగించలేదు",
+      "status": "స్థితి"
+    },
+    "placeholders": {
+      "name": "ఫీల్డ్ పేరును నమోదు చేయండి",
+      "key": "ఫీల్డ్ కీని నమోదు చేయండి",
+      "type": "ఫీల్డ్ రకాన్ని ఎంచుకోండి",
+      "defaultValue": "డిఫాల్ట్ విలువను నమోదు చేయండి",
+      "isRequired": "అవసరమైన అమరికను ఎంచుకోండి",
+      "status": "ఫీల్డ్ స్థితిని ఎంచుకోండి"
+    },
+    "types": {
+      "number": "సంఖ్య",
+      "percentage": "శాతం",
+      "text": "టెక్స్ట్",
+      "longText": "పొడవైన టెక్స్ట్"
+    },
+    "required": {
+      "required": "అవసరం",
+      "optional": "ఐచ్చికం"
+    },
+    "details": {
+      "titleFallback": "ఫీల్డ్ వివరాలు",
+      "closeAria": "ఫీల్డ్ వివరాలు మూసివేయి",
+      "editAria": "ఫీల్డ్ సవరించు",
+      "deleteAria": "ఫీల్డ్ తొలగించు"
+    },
+    "form": {
+      "titleCreate": "ఫీల్డ్ జోడించు",
+      "titleEdit": "ఫీల్డ్ సవరించు",
+      "cancelAria": "ఫీల్డ్ ఫారమ్ రద్దు చేయి",
+      "createAria": "ఫీల్డ్ సృష్టించు",
+      "updateAria": "ఫీల్డ్ అప్డేట్ చేయి"
+    },
+    "validation": {
+      "nameRequired": "ఫీల్డ్ పేరు అవసరం",
+      "nameMin": "కనీసం 2 అక్షరాలు అవసరం",
+      "keyRequired": "ఫీల్డ్ కీ అవసరం",
+      "keyMin": "కనీసం 2 అక్షరాలు అవసరం",
+      "defaultValueRequired": "డిఫాల్ట్ విలువ అవసరం"
+    },
+    "toast": {
+      "successCreate": "ఫీల్డ్ విజయవంతంగా సృష్టించబడింది.",
+      "successUpdate": "ఫీల్డ్ విజయవంతంగా అప్డేట్ చేయబడింది.",
+      "successDelete": "ఫీల్డ్ విజయవంతంగా తొలగించబడింది.",
+      "errorLoad": "ఫీల్డ్స్ లోడ్ చేయడం విఫలమైంది. దయచేసి మళ్లీ ప్రయత్నించండి.",
+      "errorSave": "ఫీల్డ్ సేవ్ చేయడం విఫలమైంది. దయచేసి మళ్లీ ప్రయత్నించండి.",
+      "errorDelete": "ఫీల్డ్ తొలగించడం విఫలమైంది. దయచేసి మళ్లీ ప్రయత్నించండి.",
+      "errorDeleteMissingId": "ఫీల్డ్ తొలగించలేము: ఐడి లేదు.",
+      "errorSaveMissingId": "ఫీల్డ్ అప్డేట్ చేయలేము: ఐడి లేదు."
+    },
+    "deleteConfirm": {
+      "title": "ఫీల్డ్ తొలగించు",
+      "message": "ఈ ఫీల్డ్‌ను తొలగించాలనుకుంటున్నారా: {{name}}?"
+    }
+  },
+  "fieldGroups": {
+    "title": "ఫీల్డ్ గ్రూప్స్",
+    "add": "ఫీల్డ్ గ్రూప్ జోడించు",
+    "search": "ఫీల్డ్ గ్రూప్స్ వెతుకు",
+    "empty": "ఫీల్డ్ గ్రూప్స్ కనబడలేదు.",
+    "labels": {
+      "name": "ఫీల్డ్ గ్రూప్ పేరు",
+      "nameRequired": "ఫీల్డ్ గ్రూప్ పేరు *",
+      "fields": "ఫీల్డ్స్",
+      "mappedCategories": "మ్యాప్ చేసిన కేటగిరీలు",
+      "version": "వర్షన్",
+      "status": "స్థితి",
+      "addField": "ఫీల్డ్ జోడించు",
+      "requiredInGroup": "ఈ గ్రూప్‌లో అవసరమా",
+      "defaultValue": "టెంప్లేట్ డిఫాల్ట్ విలువ",
+      "masterDefault": "మాస్టర్ డిఫాల్ట్",
+      "usedInGroups": "ఉపయోగిస్తున్న గ్రూప్స్",
+      "notUsed": "ఏ గ్రూప్‌లో ఉపయోగించలేదు"
+    },
+    "required": {
+      "inherit": "ఫీల్డ్ నుండి వారసత్వంగా",
+      "required": "అవసరం",
+      "optional": "ఐచ్చికం"
+    },
+    "placeholders": {
+      "name": "ఫీల్డ్ గ్రూప్ పేరును నమోదు చేయండి",
+      "status": "ఫీల్డ్ గ్రూప్ స్థితిని ఎంచుకోండి",
+      "mappedCategories": "మ్యాప్ చేయాల్సిన కేటగిరీలను ఎంచుకోండి",
+      "addField": "చేర్చాల్సిన ఫీల్డ్‌ని ఎంచుకోండి",
+      "defaultValue": "ఫీల్డ్ మాస్టర్ డిఫాల్ట్ ఉపయోగించాలంటే ఖాళీగా ఉంచండి"
+    },
+    "actions": {
+      "addField": "ఫీల్డ్ జోడించు"
+    },
+    "help": {
+      "fieldsPanel": "ఈ టెంప్లేట్ కోసం పునర్వినియోగించగల క్రమబద్ధమైన ఫీల్డ్ సెట్‌ను రూపొందించండి.",
+      "defaultValueHint": "ఐచ్చికం. ఫీల్డ్ మాస్టర్ డిఫాల్ట్ విలువను ఉపయోగించడానికి ఖాళీగా ఉంచండి."
+    },
+    "form": {
+      "titleCreate": "ఫీల్డ్ గ్రూప్ జోడించు",
+      "titleEdit": "ఫీల్డ్ గ్రూప్ సవరించు"
+    },
+    "validation": {
+      "nameRequired": "ఫీల్డ్ గ్రూప్ పేరు అవసరం",
+      "nameDuplicate": "ఫీల్డ్ గ్రూప్ పేరు ఇప్పటికే ఉంది. దయచేసి వేరే పేరు ఇవ్వండి.",
+      "fieldsRequired": "ఈ ఫీల్డ్ గ్రూప్‌కి కనీసం ఒక ప్రైసింగ్ ఫీల్డ్ జోడించండి.",
+      "defaultValueInvalid": "టెంప్లేట్ డిఫాల్ట్ విలువలు సరైన సంఖ్యలుగా ఉండాలి."
+    },
+    "toast": {
+      "successCreate": "ఫీల్డ్ గ్రూప్ విజయవంతంగా సృష్టించబడింది.",
+      "successUpdate": "ఫీల్డ్ గ్రూప్ విజయవంతంగా అప్డేట్ చేయబడింది.",
+      "successDelete": "ఫీల్డ్ గ్రూప్ విజయవంతంగా తొలగించబడింది.",
+      "errorLoad": "ఫీల్డ్ గ్రూప్స్ లోడ్ చేయడం విఫలమైంది. దయచేసి మళ్లీ ప్రయత్నించండి.",
+      "errorSave": "ఫీల్డ్ గ్రూప్ సేవ్ చేయడం విఫలమైంది. దయచేసి మళ్లీ ప్రయత్నించండి.",
+      "errorDelete": "ఫీల్డ్ గ్రూప్ తొలగించడం విఫలమైంది. దయచేసి మళ్లీ ప్రయత్నించండి."
+    },
+    "deleteConfirm": {
+      "title": "ఫీల్డ్ గ్రూప్ తొలగించు",
+      "message": "ఈ ఫీల్డ్ గ్రూప్‌ను తొలగించాలనుకుంటున్నారా: {{name}}?"
+    }
+  },
+  "units": {
+    "title": "యూనిట్స్",
+    "add": "యూనిట్ జోడించు",
+    "search": "యూనిట్స్ వెతుకు",
+    "empty": "యూనిట్స్ కనబడలేదు.",
+    "labels": {
+      "name": "యూనిట్ పేరు",
+      "nameRequired": "యూనిట్ పేరు *",
+      "symbol": "సింబల్",
+      "symbolRequired": "సింబల్ *",
+      "baseUnit": "బేస్ యూనిట్",
+      "baseUnitOptional": "బేస్ యూనిట్ (ఐచ్చికం)",
+      "conversionFactor": "కన్వర్షన్ ఫ్యాక్టర్",
+      "status": "స్థితి",
+      "noBaseUnit": "బేస్ యూనిట్ లేదు",
+      "mappedCategories": "మ్యాప్ చేసిన వర్గాలు"
+    },
+    "placeholders": {
+      "name": "యూనిట్ పేరును నమోదు చేయండి",
+      "symbol": "యూనిట్ సింబల్‌ను నమోదు చేయండి",
+      "baseUnit": "బేస్ యూనిట్‌ను ఎంచుకోండి",
+      "conversionFactor": "కన్వర్షన్ ఫ్యాక్టర్‌ను నమోదు చేయండి",
+      "status": "యూనిట్ స్థితిని ఎంచుకోండి",
+      "mappedCategories": "మ్యాప్ చేసిన వర్గాలను ఎంచుకోండి"
+    },
+    "help": {
+      "baseUnitRequiredForFactor": "కన్వర్షన్ ఫ్యాక్టర్‌ను మార్చడానికి బేస్ యూనిట్‌ను ఎంచుకోండి."
+    },
+    "details": {
+      "titleFallback": "యూనిట్ వివరాలు",
+      "closeAria": "యూనిట్ వివరాలు మూసివేయి",
+      "editAria": "యూనిట్ సవరించు",
+      "deleteAria": "యూనిట్ తొలగించు"
+    },
+    "form": {
+      "titleCreate": "యూనిట్ జోడించు",
+      "titleEdit": "యూనిట్ సవరించు",
+      "cancelAria": "యూనిట్ ఫారమ్ రద్దు చేయి",
+      "createAria": "యూనిట్ సృష్టించు",
+      "updateAria": "యూనిట్ అప్డేట్ చేయి"
+    },
+    "validation": {
+      "nameRequired": "యూనిట్ పేరు అవసరం",
+      "symbolRequired": "యూనిట్ సింబల్ అవసరం",
+      "conversionFactorRequired": "కన్వర్షన్ ఫ్యాక్టర్ అవసరం"
+    },
+    "toast": {
+      "successCreate": "యూనిట్ విజయవంతంగా సృష్టించబడింది.",
+      "successUpdate": "యూనిట్ విజయవంతంగా అప్డేట్ చేయబడింది.",
+      "successDelete": "యూనిట్ విజయవంతంగా తొలగించబడింది.",
+      "errorLoad": "యూనిట్స్ లోడ్ చేయడం విఫలమైంది. దయచేసి మళ్లీ ప్రయత్నించండి.",
+      "errorSave": "యూనిట్ సేవ్ చేయడం విఫలమైంది. దయచేసి మళ్లీ ప్రయత్నించండి.",
+      "errorDelete": "యూనిట్ తొలగించడం విఫలమైంది. దయచేసి మళ్లీ ప్రయత్నించండి.",
+      "errorDeleteMissingId": "యూనిట్ తొలగించలేము: ఐడి లేదు."
+    },
+    "deleteConfirm": {
+      "title": "యూనిట్ తొలగించు",
+      "message": "ఈ యూనిట్‌ను తొలగించాలనుకుంటున్నారా: {{name}}?"
+    }
+  },
+  "orderEntry": {
+    "title": "మల్టీ-చానల్ ఆర్డర్ ఎంట్రీ",
+    "subtitle": "డెలివరీ ఆధారిత ప్రమాణీకరణతో ఆఫ్‌లైన్ మరియు ఆన్‌లైన్ సహాయక ఆర్డర్ ప్రవాహం.",
+    "tabs": {
+      "customer": "1. కస్టమర్",
+      "items": "2. ఐటమ్స్",
+      "pricing": "3. ప్రైసింగ్",
+      "deliveryPlace": "4. డెలివరీ & ప్లేస్"
+    },
+    "steps": {
+      "customer": "స్టెప్ 1: కస్టమర్",
+      "items": "స్టెప్ 2: ఐటమ్స్",
+      "pricing": "స్టెప్ 3: ప్రైసింగ్ ప్రివ్యూ",
+      "deliveryPlace": "స్టెప్ 4: డెలివరీ + ప్లేస్"
+    },
+    "labels": {
+      "customerPhone": "కస్టమర్ ఫోన్",
+      "customerName": "కస్టమర్ పేరు",
+      "variant": "వేరియంట్",
+      "qty": "పరిమాణం",
+      "unitPrice": "యూనిట్ ధర",
+      "tax": "పన్ను",
+      "lineTotal": "లైన్ మొత్తం",
+      "action": "చర్య",
+      "subTotal": "సబ్ టోటల్",
+      "taxTotal": "మొత్తం పన్ను",
+      "deliveryCharge": "డెలివరీ ఛార్జ్",
+      "grandTotal": "గ్రాండ్ టోటల్",
+      "orderIntakeChannel": "ఆర్డర్ ఇన్‌టేక్ ఛానల్",
+      "deliveryType": "డెలివరీ రకం",
+      "deliveryAddress": "డెలివరీ చిరునామా",
+      "deliveryPincode": "డెలివరీ పిన్‌కోడ్",
+      "deliveryContactName": "డెలివరీ సంప్రదింపు పేరు",
+      "deliveryContactPhone": "డెలివరీ సంప్రదింపు ఫోన్",
+      "preferredDeliveryTime": "ఇష్టమైన డెలివరీ సమయం",
+      "googleLocation": "గూగుల్ లొకేషన్ / ప్లేస్",
+      "mapLatitude": "మ్యాప్ అక్షాంశం",
+      "mapLongitude": "మ్యాప్ రేఖాంశం",
+      "provisionalRiderName": "తాత్కాలిక రైడర్ పేరు",
+      "provisionalRiderPhone": "తాత్కాలిక రైడర్ ఫోన్",
+      "deliveryCharges": "డెలివరీ ఛార్జీలు",
+      "orderNotes": "ఆర్డర్ నోట్స్",
+      "currencySymbol": "రూ"
+    },
+    "placeholders": {
+      "customerPhone": "10 అంకెల మొబైల్ నమోదు చేయండి",
+      "customerName": "కస్టమర్ పేరు నమోదు చేయండి",
+      "selectVariant": "వేరియంట్ ఎంచుకోండి",
+      "qty": "పరిమాణం",
+      "orderIntakeChannel": "ఇన్‌టేక్ ఛానల్ ఎంచుకోండి",
+      "deliveryType": "డెలివరీ రకం ఎంచుకోండి",
+      "deliveryAddress": "కస్టమర్ చిరునామా ఎంచుకోండి",
+      "deliveryPincode": "6 అంకెల పిన్‌కోడ్ నమోదు చేయండి",
+      "deliveryContactName": "రిసీవర్ పేరు",
+      "deliveryContactPhone": "రిసీవర్ ఫోన్",
+      "preferredDeliveryTime": "ఉదా. ఈ రోజు సాయంత్రం 7:00",
+      "googleLocation": "మ్యాప్ లింక్ లేదా ప్రదేశం టెక్స్ట్ పేస్ట్ చేయండి",
+      "mapLatitude": "ఉదా. 17.385",
+      "mapLongitude": "ఉదా. 78.4867",
+      "provisionalRiderName": "రైడర్ మాడ్యూల్ వచ్చే వరకు",
+      "provisionalRiderPhone": "రైడర్ సంప్రదింపు",
+      "deliveryCharges": "0",
+      "orderNotes": "ఐచ్చికం"
+    },
+    "validation": {
+      "phoneRequired": "ఫోన్ అవసరం",
+      "customerNameRequired": "కస్టమర్ పేరు అవసరం",
+      "addressRequiredForDelivery": "డెలివరీకి చిరునామా అవసరం",
+      "deliveryPincodeInvalid": "చెల్లుబాటు అయ్యే 6 అంకెల పిన్‌కోడ్ నమోదు చేయండి",
+      "fieldRequired": "ఈ ఫీల్డ్ అవసరం"
+    },
+    "actions": {
+      "exitOrderEntry": "ఆర్డర్ ఎంట్రీ నుండి నిష్క్రమించండి",
+      "resolveCustomer": "కస్టమర్‌ను పరిష్కరించండి",
+      "addItem": "ఐటమ్ జోడించు",
+      "previous": "మునుపటి",
+      "next": "తదుపరి",
+      "placeOrder": "ఆర్డర్ ప్లేస్ చేయండి",
+      "placing": "ప్లేస్ అవుతోంది..."
+    },
+    "messages": {
+      "customerResolved": "పరిష్కరించబడింది",
+      "customerNotResolved": "కస్టమర్ ఇంకా పరిష్కరించబడలేదు",
+      "loadFailed": "ఆర్డర్ సెటప్ డేటా లోడ్ కాలేదు.",
+      "lookupLoading": "మొబైల్ ద్వారా కస్టమర్‌ను వెతుకుతోంది...",
+      "lookupFailed": "లుకప్ విఫలమైంది. మీరు పేరు నమోదు చేసి Resolve Customer ఉపయోగించవచ్చు.",
+      "lookupSelectPrompt": "ఈ మొబైల్ ఇప్పటికే ఉంది. కస్టమర్‌ను ఎంచుకుంటే వివరాలు ఆటోఫిల్ అవుతాయి.",
+      "lookupNoMatch": "ఈ మొబైల్‌కు కస్టమర్ దొరకలేదు. పేరు నమోదు చేసి కొత్త కస్టమర్ కోసం Resolve Customer ఉపయోగించండి.",
+      "stockChecking": "స్టాక్ చెక్ చేస్తోంది...",
+      "stockAvailable": "స్టాక్ అందుబాటులో ఉంది",
+      "stockNotAvailableRow": "స్టాక్ సరిపోదు"
+    },
+    "toast": {
+      "enterCustomerFirst": "ముందుగా సరైన ఫోన్ మరియు కస్టమర్ పేరు నమోదు చేయండి.",
+      "customerCreated": "కస్టమర్ సృష్టించబడింది.",
+      "customerResolved": "కస్టమర్ పరిష్కరించబడింది.",
+      "resolveFailed": "కస్టమర్ పరిష్కరించడంలో విఫలమైంది.",
+      "completeStepBeforeNext": "ముందుకు వెళ్లే ముందు అవసరమైన ఫీల్డ్స్ పూర్తి చేయండి.",
+      "completeCurrentStep": "ఈ దశలో అవసరమైన వివరాలు పూర్తి చేయండి.",
+      "completeAllSteps": "ఆర్డర్ ప్లేస్ చేయడానికి ముందు అన్ని అవసరమైన దశలు పూర్తి చేయండి.",
+      "resolveCustomerBeforePlace": "ఆర్డర్ ప్లేస్ చేసే ముందు కస్టమర్‌ను పరిష్కరించండి.",
+      "completeOrderDetails": "అన్ని అవసరమైన ఆర్డర్ వివరాలు పూర్తి చేయండి.",
+      "addOneItem": "కనీసం ఒక సరైన ఐటమ్ జోడించండి.",
+      "stockNotAvailable": "ఇవికోసం స్టాక్ సరిపోదు",
+      "orderPlaced": "ఆర్డర్ ప్లేస్ అయింది",
+      "draftCreatedPlaceFailed": "డ్రాఫ్ట్ సృష్టించబడింది కానీ ఆర్డర్ ప్లేస్ కాలేదు.",
+      "createDraftFailed": "ఆర్డర్ డ్రాఫ్ట్ సృష్టించడంలో విఫలమైంది.",
+      "customerAutoFilled": "కస్టమర్ ఎంపికై వివరాలు ఆటోఫిల్ అయ్యాయి."
+    }
+  },
+  "saas": {
+    "admin": {
+      "roles": {
+        "title": "రోల్స్",
+        "title_create": "రోల్ సృష్టించండి",
+        "title_edit": "రోల్ సవరించండి",
+        "subtitle": "ఈ రోల్ ఏమి చేయగలదో నిర్ణయించడానికి ఫీచర్లను కేటాయించండి.",
+        "btn_create": "రోల్ సృష్టించండి",
+        "btn_update": "రోల్ అప్డేట్ చేయండి",
+        "btn_grant_all": "అన్నీ ఇవ్వండి",
+        "btn_clear_all": "అన్నీ తొలగించండి",
+        "btn_open_platform_roles": "ప్లాట్‌ఫార్మ్ టెనెంట్ రోల్స్ తెరువు",
+        "lbl_role_key": "రోల్ కీ",
+        "lbl_role_name": "రోల్ పేరు",
+        "lbl_tenant": "టెనెంట్",
+        "lbl_allowed_features": "అనుమతించిన ఫీచర్లు",
+        "ph_select_tenant": "టెనెంట్ ఎంచుకోండి",
+        "ph_select_features": "ఒకటి లేదా ఎక్కువ ఫీచర్లు ఎంచుకోండి",
+        "msg_selected_count": "{{count}} ఫీచర్లు ఎంపికయ్యాయి",
+        "msg_tenant_only_features": "ఇక్కడ మీ ప్యాకేజ్‌లో ఉన్న tenant/company ఫీచర్లు మాత్రమే చూపబడతాయి. Platform/internal ఫీచర్లు చూపబడవు.",
+        "msg_no_features": "ఈ ప్యాకేజ్‌కు tenant ఫీచర్లు అందుబాటులో లేవు.",
+        "msg_platform_select_tenant": "ముందుగా టెనెంట్ ఎంచుకోండి. ఆ టెనెంట్ ప్యాకేజ్ ఫీచర్లు మరియు రోల్స్ తరువాత లోడ్ అవుతాయి.",
+        "msg_select_tenant_first": "ఈ రోల్ కోసం ప్యాకేజ్ ఫీచర్లు లోడ్ కావాలంటే ముందుగా టెనెంట్ ఎంచుకోండి.",
+        "msg_use_platform_flow": "ప్లాట్‌ఫార్మ్ అడ్మిన్‌లో టెనెంట్ ఎంపిక కోసం Platform Tenant Roles ను ఉపయోగించండి."
+      },
+      "employees": {
+        "title": "ఉద్యోగులు",
+        "title_create": "ఉద్యోగిని సృష్టించండి",
+        "title_edit": "ఉద్యోగిని సవరించండి",
+        "btn_create": "ఉద్యోగిని సృష్టించండి",
+        "btn_update": "ఉద్యోగిని అప్డేట్ చేయండి",
+        "btn_link_user": "యూజర్ లింక్/అన్‌లింక్",
+        "lbl_employee_code": "ఉద్యోగి కోడ్",
+        "lbl_full_name": "పూర్తి పేరు",
+        "lbl_department": "విభాగం",
+        "lbl_designation": "హోదా",
+        "lbl_status": "ఉద్యోగ స్థితి",
+        "lbl_linked_user": "లింక్ చేసిన యూజర్",
+        "ph_search": "కోడ్, పేరు లేదా విభాగం ద్వారా ఉద్యోగులను వెతకండి",
+        "tbl_code": "ఉద్యోగి కోడ్",
+        "tbl_name": "ఉద్యోగి పేరు",
+        "tbl_dept": "విభాగం",
+        "val_linked": "లింక్ చేసినది",
+        "status_on_leave": "లీవ్‌లో",
+        "opt_not_linked": "లింక్ చేయలేదు",
+        "msg_required_fields": "దయచేసి అవసరమైన ఫీల్డ్స్ పూర్తి చేయండి.",
+        "msg_create_success": "ఉద్యోగి విజయవంతంగా సృష్టించబడ్డారు.",
+        "msg_update_success": "ఉద్యోగి విజయవంతంగా అప్డేట్ అయ్యారు.",
+        "msg_create_failed": "ఉద్యోగిని సృష్టించడం విఫలమైంది.",
+        "msg_update_failed": "ఉద్యోగిని అప్డేట్ చేయడం విఫలమైంది.",
+        "msg_load_failed": "ఉద్యోగి వివరాలు లోడ్ చేయడం విఫలమైంది.",
+        "msg_load_users_failed": "లింకింగ్ కోసం యూజర్లను లోడ్ చేయడం విఫలమైంది.",
+        "err_code_exists": "ఉద్యోగి కోడ్ ఇప్పటికే ఉంది."
+      },
+      "users": {
+        "title": "యూజర్లు",
+        "subtitle": "టేనెంట్ యూజర్లను నిర్వహించండి, యాక్సెస్ లాక్ చేయండి మరియు రోల్స్ కేటాయించండి.",
+        "btn_invite": "యూజర్ ఆహ్వానించు",
+        "btn_assign_roles": "రోల్స్ కేటాయించు",
+        "lbl_roles": "రోల్స్",
+        "ph_search": "ఇమెయిల్ లేదా ఫోన్ ద్వారా యూజర్లను వెతకండి",
+        "tbl_email": "ఇమెయిల్",
+        "tbl_phone": "ఫోన్",
+        "tbl_status": "స్థితి",
+        "tbl_roles": "రోల్స్",
+        "tbl_last_login": "చివరి లాగిన్",
+        "opt_all_statuses": "అన్ని స్థితులు",
+        "opt_invited": "ఆహ్వానించబడ్డారు",
+        "opt_active": "సక్రియంగా ఉన్నారు",
+        "opt_locked": "లాక్ చేయబడ్ది",
+        "opt_disabled": "నిష్క్రియం చేయబడ్ది",
+        "msg_showing": "ఈ పేజ్లో {{count}} యూజర్లు చూపిస్తున్నాము (మొత్తం: {{total}})",
+        "msg_loading": "యూజర్లు లోడ్ అవుతున్నాయి...",
+        "btn_prev": "ముందుది",
+        "btn_next": "తరువాతిది",
+        "lbl_page": "పేజ్ {{page}} / {{total}}",
+        "title_assign_roles": "రోల్స్ కేటాయించండి",
+        "msg_loading_assignments": "అసైన్మెంట్లు లోడ్ అవుతున్నాయి...",
+        "btn_save_roles": "రోల్స్ సేవ్ చేయండి"
+      },
+      "dashboard": {
+        "title": "టేనెంట్ డ్యాష్‌బోర్డ్",
+        "subtitle": "టేనెంట్ యాక్సెస్ అడ్మినిస్ట్రేషన్ యొక్క ఆపరేషనల్ స్నాప్‌షాట్.",
+        "lbl_purchased_package": "కొనుగోలు చేసిన ప్యాకేజ్",
+        "msg_no_package": "ఏ ప్యాకేజీ ఇంకా కేటాయించబడలేదు.",
+        "lbl_entitled_features": "అర్హ లక్షణాలు",
+        "msg_no_features": "అర్హమైన లక్షణాలు ఏవీ లేవు.",
+        "lbl_tier": "టియర్",
+        "lbl_status": "స్థితి",
+        "card_users": "యూజర్లు",
+        "card_employees": "ఉద్యోగుల",
+        "card_roles": "రోల్స్",
+        "btn_open": "తెరవండి",
+        "msg_loading": "డ్యాష్‌బోర్డ్ లోడ్ అవుతోంది..."
+      }    },
+    "platform": {
+      "accounts": {
+        "title": "SaaS ఖాతాలు",
+        "subtitle": "టేనెంట్ ఖాతాలు, లైఫ్సైకల్ స్థితి మరియు ట్రయల్ వ్యవధిని స్థాపించండి మరియు నిర్వహించండి.",
+        "btn_create": "ఖాతా తయారుచేయండి",
+        "ph_search": "ఖాతా, టేనెంట్ కోడ్, లేదా సంపర్క ఇమెయిల్ వెతకండి",
+        "lbl_status": "స్థితి",
+        "msg_loading": "SaaS ఖాతాలు లోడ్ అవుతున్నాయి...",
+        "title_create": "SaaS ఖాతా తయారుచేయండి",
+        "title_edit": "SaaS ఖాతా సంపాదించండి",
+        "lbl_validation_header": "దిగువవాటిని సరిచేయండి:",
+        "section_account_details": "ఖాతా వివరాలు",
+        "lbl_account_name": "ఖాతా పేరు",
+        "lbl_legal_business_name": "చట్టపరమైన వ్యాపార పేరు",
+        "lbl_tenant_code": "టేనెంట్ కోడ్",
+        "lbl_tenant_code_mode": "టేనెంట్ కోడ్ మోడ్:",
+        "val_tenant_code_auto": "స్వయంచాలకంగా తయారు",
+        "val_tenant_code_manual": "మ్యాన్వల్ ఎంట్రీ",
+        "btn_switch_manual": "మ్యాన్వల్ ఎంట్రీకి మారండి",
+        "btn_switch_auto": "స్వయంచాలక తయారీకి మారండి",
+        "section_contact": "సంపర్క మరియు ప్రాంతీయ డిఫాల్ట్స్",
+        "lbl_primary_contact_name": "ప్రాథమిక సంపర్క పేరు",
+        "lbl_primary_contact_phone": "ప్రాథమిక సంపర్క ఫోన్",
+        "lbl_primary_contact_email": "ప్రాథమిక సంపర్క ఇమెయిల్",
+        "section_first_admin": "తొలి టేనెంట్ అడ్మిన్",
+        "lbl_first_admin_name": "తొలి టేనెంట్ అడ్మిన్ పేరు",
+        "lbl_first_admin_email": "తొలి టేనెంట్ అడ్మిన్ ఇమెయిల్",
+        "lbl_country_code": "దేశ కోడ్",
+        "lbl_currency": "కరెన్సీ",
+        "lbl_search_timezone": "టైమ్‌జోన్ వెతకండి",
+        "ph_search_timezone": "టైమ్‌జోన్ జాబితాను ఫిల్టర్ చేయడానికి టైప్ చేయండి",
+        "lbl_timezone": "టైమ్‌జోన్",
+        "section_subscription": "సబ్స్క్రిప్షన్ సెటప్",
+        "lbl_plan": "ప్లాన్",
+        "msg_no_plans": "ఇంకా ఏ ప్యాకేజ్ ప్లాన్లు అందుబాటులో లేవు. మొదట ఒక ప్యాకేజ్ తయారుచేయండి.",
+        "lbl_trial_mode": "ట్రయల్ మోడ్",
+        "lbl_trial_duration": "ట్రయల్ వ్యవధి (రోజులు)",
+        "section_optional": "ఐచ్ఛిక",
+        "lbl_billing_email": "బిల్లింగ్ ఇమెయిల్",
+        "lbl_support_phone": "సపోర్ట్ ఫోన్",
+        "lbl_notes": "నోట్స్",
+        "btn_save_draft": "డ్రాఫ్ట్ సేవ్ చేయండి",
+        "btn_save": "సేవ్ చేయండి",
+        "title_change_status": "ఖాతా స్థితి మార్చండి",
+        "lbl_current_status": "ప్రస్తుత స్థితి:",
+        "lbl_next_status": "తదుపరి స్థితి",
+        "lbl_reason": "కారణం (ఐచ్ఛిక)",
+        "btn_update_status": "స్థితి అప్డేట్ చేయండి",
+        "title_extend_trial": "ట్రయల్ పొడిగించండి",
+        "lbl_account": "ఖాతా:",
+        "lbl_extension_days": "పొడిగింపు రోజులు",
+        "btn_extend_trial": "ట్రయల్ పొడిగించండి",
+        "title_audit_log": "ఖాతా ఆడిట్ లాగ్",
+        "msg_no_audit": "ఆడిట్ ఎంట్రీలు కనుగొనబళ్ళలేదు.",
+        "lbl_audit_by": "చేత:",
+        "lbl_audit_at": "సమయం:",
+        "lbl_audit_reason": "కారణం:"
+      },
+      "features": {
+        "title": "ఫీచర్ క్యాటలాగ్",
+        "btn_add": "ఫీచర్ జోడించండి",
+        "title_create": "ఫీచర్ తయారుచేయండి",
+        "title_edit": "ఫీచర్ సంపాదించండి",
+        "msg_pick_template": "టెంప్లేట్ నుండి ఎంచుకోండి లేదా కస్టమ్ కీ నమోదు చేయండి:",
+        "lbl_template": "ఫీచర్ టెంప్లేట్స్",
+        "ph_select_template": "ఒక టెంప్లేట్ ఎంచుకోండి...",
+        "lbl_feature_key": "ఫీచర్ కీ",
+        "lbl_display_name": "ప్రదర్శన పేరు",
+        "lbl_module": "మాడ్యూల్",
+        "lbl_dependencies": "డిపెండెన్సీలు",
+        "ph_dependencies": "డిపెండెన్సీ ఫీచర్స్ ఎంచుకోండి",
+        "hint_dependencies": "JSON టెంప్లేట్ జాబితా నుండి డిపెండెన్సీ ఫీచర్స్ ఎంచుకోండి.",
+        "lbl_ui_visibility": "UI దృశ్యమానత్వం",
+        "opt_always": "ఎల్లప్పుడూ చూపించండి",
+        "opt_entitled_only": "అర్హత ఉంటే మాత్రమే చూపించండి",
+        "opt_hidden": "UI నుండి దాచండి",
+        "lbl_status": "స్థితి",
+        "lbl_beta": "బీటా ఫీచర్",
+        "btn_save": "సేవ్ చేయండి"
+      },
+      "packages": {
+        "title": "ప్యాకేజేస్",
+        "btn_create": "ప్యాకేజ్ తయారుచేయండి",
+        "title_create": "ప్యాకేజ్ తయారుచేయండి",
+        "title_edit": "ప్యాకేజ్ సంపాదించండి",
+        "lbl_plan_id": "ప్లాన్ ఆయ్డీ",
+        "lbl_plan_name": "ప్లాన్ పేరు",
+        "lbl_description": "వివరణ",
+        "lbl_tier": "టియర్",
+        "lbl_status": "స్థితి",
+        "lbl_features": "ఫీచర్స్",
+        "ph_features": "ఫీచర్ క్యాటలాగ్ నుండి ఫీచర్స్ ఎంచుకోండి",
+        "hint_features": "ఫీచర్ క్యాటలాగ్లో తయారు చేసిన ఫీచర్స్ మాత్రమే ఇక్కడ చూపించబడతాయి.",
+        "btn_save": "సేవ్ చేయండి"
+      },
+      "entitlements": {
+        "title": "టేనెంట్ ఎంటైటిల్మెంట్స్",
+        "subtitle": "టేనెంట్ కోడ్ ద్వారా వెతకండి మరియు ప్యాకేజ్/ఆడ్-ఆన్/సస్పెన్షన్ అప్డేట్ చేయండి.",
+        "lbl_tenant": "టేనెంట్",
+        "ph_tenant": "టేనెంట్ వెతకండి మరియు ఎంచుకోండి",
+        "ph_tenant_search": "ఖాతా పేరు లేదా టేనెంట్ కోడ్ ద్వారా వెతకండి",
+        "btn_load": "లోడ్ చేయండి",
+        "section_current": "ప్రస్తుత ఎంటైటిల్మెంట్",
+        "lbl_package": "ప్యాకేజ్:",
+        "lbl_addons": "ఆడ్-ఆన్స్:",
+        "lbl_suspended": "సస్పెండేడ్:",
+        "lbl_cache_version": "క్యాష్ వర్జన్:",
+        "lbl_package_plan": "ప్యాకేజ్ ప్లాన్",
+        "ph_package_plan": "ప్యాకేజ్ ప్లాన్ ఎంచుకోండి",
+        "lbl_addon_features": "ఆడ్-ఆన్ ఫీచర్స్",
+        "ph_addon_features": "ఆడ్-ఆన్ ఫీచర్స్ ఎంచుకోండి",
+        "lbl_suspended_features": "సస్పెండేడ్ ఫీచర్స్",
+        "ph_suspended_features": "సస్పెండేడ్ ఫీచర్స్ ఎంచుకోండి",
+        "lbl_change_reason": "మార్పు కారణం",
+        "btn_save": "ఎంటైటిల్మెంట్ సేవ్ చేయండి",
+        "section_effective": "అమలులో ఉన్న ఫీచర్స్",
+        "lbl_source": "మూలం:",
+        "lbl_account_status": "ఖాతా స్థితి:",
+        "lbl_reason_code": "కారణం కోడ్:"
+      }    }
+  },
+  "auth": {
+    "entry": {
+      "eyebrow": "యాక్సెస్ ధృవీకరణ",
+      "title": "మీ అడ్మిన్ లాగిన్ ఎంచుకోండి",
+      "subtitle": "Epic 3.5 ధృవీకరణ సమయంలో ప్లాట్‌ఫాం అడ్మిన్ మరియు టేనెంట్ అడ్మిన్ కోసం వేర్వేరు లాగిన్ ప్రవేశాలను ఉపయోగించండి.",
+      "platform_title": "ప్లాట్‌ఫాం అడ్మిన్",
+      "platform_subtitle": "SaaS ఖాతాలు, ప్యాకేజీలు, ఫీచర్లు మరియు టేనెంట్ ఎంటైటిల్మెంట్స్ నిర్వహించండి.",
+      "tenant_title": "టేనెంట్ అడ్మిన్",
+      "tenant_subtitle": "టేనెంట్ అడ్మినిస్ట్రేటర్‌గా సైన్ ఇన్ చేసి ప్యాకేజ్-ఆధారిత ఫీచర్ దర్శనాన్ని ధృవీకరించండి.",
+      "btn_platform": "ప్లాట్‌ఫాం లాగిన్",
+      "btn_tenant": "టేనెంట్ లాగిన్"
+    },
+    "common": {
+      "dev_mode": "డెవలప్‌మెంట్ సెషన్",
+      "back_to_entry": "లాగిన్ ఎంపికకు తిరిగి వెళ్ళండి",
+      "error_title": "లాగిన్ విఫలమైంది"
+    },
+    "platform": {
+      "title": "ప్లాట్‌ఫాం అడ్మిన్ లాగిన్",
+      "subtitle": "SaaS ప్లాట్‌ఫాం ఆపరేషన్ల కోసం కంపెనీ-సైడ్ అడ్మినిస్ట్రేటర్‌గా ప్రమాణీకరించండి.",
+      "demo_title": "డెమో క్రెడెన్షియల్స్",
+      "demo_email": "ఇమెయిల్: platform.admin@gom.dev",
+      "demo_password": "పాస్‌వర్డ్: Platform@123",
+      "lbl_email": "ఇమెయిల్",
+      "lbl_password": "పాస్‌వర్డ్",
+      "btn_submit": "ప్లాట్‌ఫాం అడ్మిన్‌గా లాగిన్ అవ్వండి"
+    },
+    "tenant": {
+      "title": "టేనెంట్ అడ్మిన్ లాగిన్",
+      "subtitle": "ఎంటైటిల్మెంట్ ఆధారిత నావిగేషన్ మరియు యాక్సెస్ నియమాలను ధృవీకరించడానికి టేనెంట్ సందర్భంలో ప్రమాణీకరించండి.",
+      "demo_title": "డెమో టేనెంట్ ఖాతాలు",
+      "demo_starter": "Starter: STARTER01 / starter.admin@gom.dev",
+      "demo_growth": "Growth: GROWTH01 / growth.admin@gom.dev",
+      "demo_scale": "Scale: SCALE01 / scale.admin@gom.dev",
+      "demo_password": "పాస్‌వర్డ్: Tenant@123",
+      "lbl_tenant_code": "టేనెంట్ కోడ్",
+      "lbl_email": "ఇమెయిల్",
+      "lbl_password": "పాస్‌వర్డ్",
+      "btn_submit": "టేనెంట్ అడ్మిన్‌గా లాగిన్ అవ్వండి"
+    },
+    "landing": {
+      "loading": "మీ యాక్సెస్ ప్రొఫైల్ లోడ్ అవుతోంది..."
+    },
+    "denied": {
+      "title": "యాక్సెస్ నిరాకరించబడింది",
+      "reason_actor_mismatch": "ఈ సెషన్ కోరిన స్క్రీన్‌కు అవసరమైన అడ్మిన్ రకానికి సరిపోలడం లేదు.",
+      "reason_feature_disabled": "ఈ స్క్రీన్ ప్రస్తుత ప్యాకేజ్ లేదా యాక్సెస్ ప్రొఫైల్‌లో అందుబాటులో లేదు.",
+      "reason_generic": "కోరిన స్క్రీన్ ప్రస్తుత సెషన్‌లో అందుబాటులో లేదు.",
+      "btn_logout": "లాగ్ అవుట్",
+      "btn_home": "ల్యాండింగ్‌కు వెళ్ళండి"
+    },
+    "errors": {
+      "invalid_platform_credentials": "చెల్లని ప్లాట్‌ఫాం అడ్మిన్ వివరాలు.",
+      "invalid_tenant_credentials": "చెల్లని టేనెంట్ అడ్మిన్ వివరాలు లేదా టేనెంట్ కోడ్."
+    }
+  }
+}

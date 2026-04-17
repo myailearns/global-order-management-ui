@@ -1,0 +1,244 @@
+<section class="master-page">
+  <header class="master-page__header">
+    <h2><i class="ri-stock-line" aria-hidden="true"></i> Stock</h2>
+    <div class="master-page__header-actions">
+      @if (canWrite()) {
+      <gom-lib-button type="button" variant="secondary" (buttonClick)="saveReorderLevel()" [disabled]="saving()">
+        <i class="ri-alarm-warning-line" aria-hidden="true"></i> Save Reorder Level
+      </gom-lib-button>
+      <gom-lib-button type="button" variant="primary" (buttonClick)="openAddStock()">
+        <i class="ri-add-line" aria-hidden="true"></i> Add Stock
+      </gom-lib-button>
+      }
+    </div>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="master-page__error">
+      <div style="display: flex; gap: 0.75rem; align-items: center;">
+        <i class="ri-alert-fill" style="font-size: 1.25rem; flex-shrink: 0;" aria-hidden="true"></i>
+        <span>{{ errorMessage() }}</span>
+      </div>
+    </div>
+  }
+
+  <section class="stock-controls">
+    <gom-lib-select
+      label="Group"
+      placeholder="Select group"
+      [options]="groupOptions()"
+      [formControl]="filtersForm.controls.groupId"
+      (valueChange)="onGroupSelectionChange($event)"
+    ></gom-lib-select>
+
+    <gom-lib-input
+      label="Reorder Level"
+      type="number"
+      placeholder="Enter reorder level"
+      [formControl]="reorderForm.controls.reorderLevel"
+      [error]="reorderForm.controls.reorderLevel.touched && reorderForm.controls.reorderLevel.invalid ? 'Reorder level must be >= 0' : ''"
+    ></gom-lib-input>
+  </section>
+
+  @if (summary()) {
+    <section class="summary-grid">
+      <article class="summary-card">
+        <p class="summary-card__label">On Hand</p>
+        <h3>{{ summary()!.onHand }}</h3>
+      </article>
+      <article class="summary-card">
+        <p class="summary-card__label">Reserved</p>
+        <h3>{{ summary()!.reserved }}</h3>
+      </article>
+      <article class="summary-card">
+        <p class="summary-card__label">Available</p>
+        <h3>{{ summary()!.available }}</h3>
+      </article>
+      <article class="summary-card">
+        <p class="summary-card__label">Base Unit</p>
+        <h3>{{ summary()!.baseUnit.name }} ({{ summary()!.baseUnit.symbol }})</h3>
+      </article>
+    </section>
+
+    @if (summary()!.isLowStock) {
+      <div class="stock-alert">
+        <i class="ri-error-warning-fill" aria-hidden="true"></i>
+        <span>
+          Low stock alert: Available ({{ summary()!.available }}) is below or equal to reorder level ({{ summary()!.reorderLevel }}).
+        </span>
+      </div>
+    }
+  }
+
+  <article class="master-page__table-shell">
+    <header class="table-header">
+      <h3>Stock History</h3>
+      <p>All stock movement events are tracked here.</p>
+    </header>
+
+    <gom-lib-table
+      [columns]="columns"
+      [rows]="rows()"
+      [loading]="loading()"
+      [pageSize]="10"
+      [pageSizeOptions]="[10, 20, 50]"
+      searchPlaceholder="Search stock history"
+      emptyMessage="No stock history found."
+      [mobileCardView]="true"
+      (rowAction)="onRowAction($event)"
+    ></gom-lib-table>
+  </article>
+</section>
+
+<gom-lib-modal
+  title="Add Stock"
+  [(show)]="addStockOpen"
+  (closed)="closeAddStock()"
+  size="medium"
+>
+  <section class="form-grid">
+    <gom-lib-input
+      label="Quantity"
+      type="number"
+      placeholder="Enter quantity"
+      [formControl]="addStockForm.controls.quantity"
+      [error]="addStockForm.controls.quantity.touched && addStockForm.controls.quantity.invalid ? 'Quantity is required' : ''"
+    ></gom-lib-input>
+
+    <gom-lib-select
+      label="Unit"
+      placeholder="Select unit"
+      [options]="filteredUnitOptions()"
+      [formControl]="addStockForm.controls.unitId"
+      [error]="addStockForm.controls.unitId.touched && addStockForm.controls.unitId.invalid ? 'Unit is required' : ''"
+    ></gom-lib-select>
+
+    <gom-lib-textarea
+      label="Notes"
+      [rows]="3"
+      placeholder="Optional notes"
+      [formControl]="addStockForm.controls.notes"
+    ></gom-lib-textarea>
+  </section>
+
+  <footer class="gom-modal__action-layout stock-form__actions" gom-modal-actions>
+    <div class="gom-modal__action-layout-start"></div>
+    <div class="gom-modal__action-layout-end">
+      <gom-lib-button
+        class="stock-form__action"
+        type="button"
+        variant="secondary"
+        [size]="cancelMode === 'icon-only' ? 'icon' : 'default'"
+        aria-label="Close"
+        title="Close"
+        (buttonClick)="closeAddStock()"
+      >
+        @if (shouldShowIcon(cancelMode)) {
+          <i class="ri-close-line" aria-hidden="true"></i>
+        }
+        @if (shouldShowText(cancelMode)) {
+          Cancel
+        }
+      </gom-lib-button>
+      <gom-lib-button
+        class="stock-form__action"
+        type="button"
+        variant="primary"
+        [size]="submitMode === 'icon-only' ? 'icon' : 'default'"
+        aria-label="Save Stock"
+        title="Save Stock"
+        (buttonClick)="saveAddStock()"
+        [disabled]="isAddStockSaveDisabled()"
+      >
+        @if (shouldShowIcon(submitMode)) {
+          <i class="ri-check-line" aria-hidden="true"></i>
+        }
+        @if (shouldShowText(submitMode)) {
+          {{ saving() ? 'Saving...' : 'Save Stock' }}
+        }
+      </gom-lib-button>
+    </div>
+  </footer>
+</gom-lib-modal>
+
+<gom-lib-modal
+  title="Edit Stock Entry"
+  [(show)]="editStockOpen"
+  (closed)="closeEditStock()"
+  size="medium"
+>
+  <section class="form-grid">
+    <gom-lib-input
+      label="Quantity"
+      type="number"
+      placeholder="Enter quantity"
+      [formControl]="editStockForm.controls.quantity"
+      [error]="editStockForm.controls.quantity.touched && editStockForm.controls.quantity.invalid ? 'Quantity is required' : ''"
+    ></gom-lib-input>
+
+    <gom-lib-select
+      label="Unit"
+      placeholder="Select unit"
+      [options]="filteredUnitOptions()"
+      [formControl]="editStockForm.controls.unitId"
+      [error]="editStockForm.controls.unitId.touched && editStockForm.controls.unitId.invalid ? 'Unit is required' : ''"
+    ></gom-lib-select>
+
+    <gom-lib-textarea
+      label="Notes"
+      [rows]="3"
+      placeholder="Optional notes"
+      [formControl]="editStockForm.controls.notes"
+    ></gom-lib-textarea>
+  </section>
+
+  <footer class="gom-modal__action-layout stock-form__actions" gom-modal-actions>
+    <div class="gom-modal__action-layout-start"></div>
+    <div class="gom-modal__action-layout-end">
+      <gom-lib-button
+        class="stock-form__action"
+        type="button"
+        variant="secondary"
+        [size]="cancelMode === 'icon-only' ? 'icon' : 'default'"
+        aria-label="Close"
+        title="Close"
+        (buttonClick)="closeEditStock()"
+      >
+        @if (shouldShowIcon(cancelMode)) {
+          <i class="ri-close-line" aria-hidden="true"></i>
+        }
+        @if (shouldShowText(cancelMode)) {
+          Cancel
+        }
+      </gom-lib-button>
+      <gom-lib-button
+        class="stock-form__action"
+        type="button"
+        variant="primary"
+        [size]="submitMode === 'icon-only' ? 'icon' : 'default'"
+        aria-label="Update Stock"
+        title="Update Stock"
+        (buttonClick)="saveEditStock()"
+        [disabled]="isEditStockSaveDisabled()"
+      >
+        @if (shouldShowIcon(submitMode)) {
+          <i class="ri-check-line" aria-hidden="true"></i>
+        }
+        @if (shouldShowText(submitMode)) {
+          {{ saving() ? 'Saving...' : 'Update Stock' }}
+        }
+      </gom-lib-button>
+    </div>
+  </footer>
+</gom-lib-modal>
+
+<gom-lib-confirmation-modal
+  [(show)]="deleteStockConfirmOpen"
+  title="Delete Stock Entry"
+  [message]="getDeleteMessage()"
+  confirmText="Delete"
+  [busy]="saving()"
+  confirmVariant="danger"
+  (confirmed)="confirmDeleteStock()"
+  (cancelled)="cancelDeleteStock()"
+></gom-lib-confirmation-modal>

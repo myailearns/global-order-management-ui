@@ -1,0 +1,77 @@
+.entitlements-page {
+  padding: 2rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.entitlements-page__header h1,
+.entitlements-page__header p {
+  margin: 0;
+}
+
+.entitlements-page__header p {
+  margin-top: 0.35rem;
+  color: var(--gom-color-text-secondary);
+}
+
+.entitlements-page__lookup {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.75rem;
+  align-items: end;
+}
+
+.entitlements-page__lookup-fields {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.entitlements-page__summary,
+.entitlements-page__effective {
+  border: 1px solid var(--gom-color-border);
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+}
+
+.entitlements-page__summary h3,
+.entitlements-page__effective h3,
+.entitlements-page__summary p,
+.entitlements-page__effective p {
+  margin: 0;
+}
+
+.entitlements-page__summary p + p,
+.entitlements-page__effective p + p {
+  margin-top: 0.35rem;
+}
+
+.entitlements-page__form {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.entitlements-page__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.entitlements-page__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.entitlements-page__chip {
+  border-radius: 999px;
+  border: 1px solid var(--gom-color-border);
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+  background: #fff;
+}
+
+@media (max-width: 768px) {
+  .entitlements-page__lookup {
+    grid-template-columns: 1fr;
+  }
+}

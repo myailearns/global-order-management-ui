@@ -29,6 +29,12 @@
   gap: theme.get-gap(xs);
 }
 
+.gom-table-mobile-toggle {
+  display: inline-flex;
+  align-items: center;
+  margin-right: theme.get-spacing(xxs);
+}
+
 .gom-table-search {
   min-width: 14rem;
   max-width: 24rem;
@@ -95,24 +101,62 @@
   border-radius: theme.get-radius(sm);
   background: theme.get-background(standard);
   box-shadow: inset 0 1px 0 rgba(15, 23, 42, 0.03);
+  scrollbar-width: thin;
+  scrollbar-color: theme.get-border(dark) theme.get-background(secondary);
+
+  &::-webkit-scrollbar {
+    height: 0.625rem;
+    width: 0.625rem;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: theme.get-background(secondary);
+    border-radius: 999px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: theme.get-border(dark);
+    border-radius: 999px;
+    border: 2px solid theme.get-background(secondary);
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: theme.get-border(primary);
+  }
+
+  &::-webkit-scrollbar-button {
+    display: none;
+    width: 0;
+    height: 0;
+  }
 }
 
 .gom-card-list {
   display: none;
 }
 
-.gom-card {
-  border: theme.get-border-size(thin) solid theme.get-border(standard);
-  border-radius: theme.get-radius(md);
-  background: theme.get-background(standard);
-  padding: theme.get-spacing(sm);
-  display: grid;
-  gap: theme.get-gap(xs);
+.gom-card-item {
+  transition: box-shadow 140ms ease, transform 140ms ease;
+}
+
+.gom-card-item--clickable {
+  cursor: pointer;
+
+  &:hover,
+  &:focus-within {
+    box-shadow: 0 0.25rem 0.75rem rgba(15, 23, 42, 0.1);
+    transform: translateY(-1px);
+  }
 }
 
 .gom-card__row {
   display: grid;
   gap: theme.get-gap(xxs);
+  padding-bottom: theme.get-spacing(xxs);
+
+  &:not(:last-child) {
+    margin-bottom: theme.get-spacing(xxs);
+  }
 }
 
 .gom-card__label {
@@ -125,6 +169,23 @@
   @include theme.typography-body;
   margin: 0;
   color: theme.get-text(default);
+}
+
+.gom-card__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: theme.get-gap(xs);
+  margin-top: theme.get-spacing(xs);
+  padding-top: theme.get-spacing(xs);
+  border-top: theme.get-border-size(hairline) solid theme.get-border(standard);
+}
+
+.gom-card__state {
+  @include theme.typography-body;
+  margin: 0;
+  color: theme.get-text(default-light);
+  text-align: center;
+  padding: theme.get-spacing(sm) 0;
 }
 
 .gom-table {
@@ -237,12 +298,71 @@ tbody tr:hover {
 
 .gom-table-actions {
   display: inline-flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: theme.get-gap(xs);
 }
 
-.gom-table-actions__button {
+.gom-table-action-menu {
+  position: relative;
   display: inline-flex;
+}
+
+.gom-table-submenu {
+  position: fixed;
+  z-index: 9999;
+  min-width: 12rem;
+  display: flex;
+  flex-direction: column;
+  gap: theme.get-gap(xxs);
+  padding: theme.get-spacing(xs);
+  border: theme.get-border-size(thin) solid theme.get-border(standard);
+  border-radius: theme.get-radius(sm);
+  background: theme.get-background(standard);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.16);
+}
+
+.gom-table-submenu__item {
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.gom-table-actions__button {
+  flex: 0 0 auto;
+}
+
+.gom-table-cell--actions {
+  white-space: nowrap;
+  overflow: visible;
+}
+
+.gom-table-cell-action {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+.gom-table-cell-action--chip {
+  text-decoration: none;
+}
+
+.gom-table-cell-action:hover {
+  color: theme.get-text(primary-active);
+}
+
+.gom-table-cell-action--chip:hover {
+  color: inherit;
+}
+
+.gom-table-header--actions,
+.gom-table-cell--actions {
+  min-width: 11.5rem;
 }
 
 .gom-table-footer {
@@ -254,12 +374,16 @@ tbody tr:hover {
   border-top: theme.get-border-size(hairline) solid theme.get-border(standard);
 }
 
-.gom-table-footer__left select {
-  margin-left: theme.get-spacing(xs);
-  padding: theme.get-spacing(xxs) theme.get-spacing(xs);
-  border-radius: theme.get-radius(sm);
-  border: theme.get-border-size(thin) solid theme.get-border(standard);
-  background: theme.get-background(standard);
+.gom-table-footer__left {
+  label {
+    display: inline-flex;
+    align-items: center;
+    gap: theme.get-gap(xs);
+  }
+}
+
+.gom-table-page-size-select {
+  min-width: 5rem;
 }
 
 .gom-table-footer__right {
@@ -290,11 +414,6 @@ tbody tr:hover {
   &:not([disabled]):hover {
     transform: translateY(-1px);
   }
-
-  &[disabled] {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
 }
 
 .checkbox-row {
@@ -323,13 +442,39 @@ tbody tr:hover {
     max-width: 100%;
   }
 
-  :host(.gom-table-mobile-card) .gom-table-wrap,
-  :host(.gom-table-mobile-card) .gom-table-footer {
+  :host(.gom-table-mobile-card).gom-table-mobile-cards-active .gom-table-wrap,
+  :host(.gom-table-mobile-card).gom-table-mobile-cards-active .gom-table-footer {
     display: none;
   }
 
-  .gom-card-list {
+  :host(.gom-table-mobile-card).gom-table-mobile-cards-active .gom-card-list {
     display: grid;
     gap: theme.get-gap(sm);
+  }
+
+  :host(.gom-table-mobile-card).gom-table-mobile-table-active .gom-card-list {
+    display: none;
+  }
+
+  :host(.gom-table-mobile-card).gom-table-mobile-table-active .gom-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  :host(.gom-table-mobile-card).gom-table-mobile-table-active .gom-table {
+    width: max-content;
+    min-width: 42rem;
+    table-layout: auto;
+  }
+
+  :host(.gom-table-mobile-card).gom-table-mobile-table-active th,
+  :host(.gom-table-mobile-card).gom-table-mobile-table-active td {
+    min-width: 8rem;
+    white-space: nowrap;
+  }
+
+  :host(.gom-table-mobile-card).gom-table-mobile-table-active th:last-child,
+  :host(.gom-table-mobile-card).gom-table-mobile-table-active td:last-child {
+    min-width: 4.5rem;
   }
 }

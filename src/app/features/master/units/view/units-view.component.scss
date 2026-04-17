@@ -1,0 +1,32 @@
+@use "../../../../shared/theming/styles/theme" as theme;
+
+.units-view {
+  display: grid;
+  gap: theme.get-gap(sm);
+}
+
+.units-view__row {
+  display: grid;
+  gap: theme.get-gap(xxs);
+
+  h4 {
+    margin: 0;
+    @include theme.typography-label;
+    color: theme.get-text(default-light);
+  }
+
+  p {
+    margin: 0;
+    @include theme.typography-body;
+    color: theme.get-text(primary);
+    word-break: break-word;
+  }
+}
+
+.units-view__actions {
+  width: 100%;
+}
+
+.units-view__action {
+  justify-content: center;
+}

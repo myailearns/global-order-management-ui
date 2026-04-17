@@ -1,18 +1,59 @@
-<section class="master-page">
-  <header class="master-page__header">
-    <h2><i class="ri-scales-3-line" aria-hidden="true"></i> Units</h2>
-    <gom-button type="button" variant="primary" (buttonClick)="onAddUnit()"><i class="ri-add-line" aria-hidden="true"></i> Add Unit</gom-button>
-  </header>
+<div class="units-container">
+  @if (errorMessage()) {
+    <div class="error-banner">
+      <div class="error-banner__content">
+        <i class="ri-alert-circle-fill" aria-hidden="true"></i>
+        <p>{{ errorMessage() }}</p>
+      </div>
+      <button class="error-banner__close" (click)="errorMessage.set(null)" [attr.aria-label]="text.closeErrorBanner | translate">
+        <i class="ri-close-line" aria-hidden="true"></i>
+      </button>
+    </div>
+  }
 
-  <article class="master-page__table-shell">
-    <gom-table
-      [columns]="columns"
-      [rows]="rows"
-      [pageSize]="10"
-      [pageSizeOptions]="[10, 20, 50]"
-      searchPlaceholder="Search units"
-      emptyMessage="No units found."
-      [mobileCardView]="true"
-    ></gom-table>
-  </article>
-</section>
+  <gom-units-list
+    [units]="units()"
+    [baseUnitNameById]="baseUnitNameById()"
+    [loading]="loading()"
+    [canCreate]="canCreateUnit()"
+    [canEdit]="canEditUnit()"
+    [canDelete]="canDeleteUnit()"
+    (addNew)="onAddNew()"
+    (action)="onAction($event)"
+  ></gom-units-list>
+
+  <gom-units-form
+    [isOpen]="formOpen()"
+    [initialData]="selectedUnitFormData()"
+    [baseUnitOptions]="unitAssignOptions()"
+    [categoryOptions]="categoryOptions()"
+    (formSubmit)="onFormSubmit($event)"
+    (formCancel)="onFormCancel()"
+  ></gom-units-form>
+
+  <gom-units-view
+    [isOpen]="viewOpen()"
+    [unit]="viewingUnit()"
+    [baseUnitName]="getViewingBaseUnitName()"
+    [busy]="loading()"
+    [canEdit]="canEditUnit()"
+    [canDelete]="canDeleteUnit()"
+    (viewClosed)="onViewClose()"
+    (edit)="onViewEdit($event)"
+    (delete)="onViewDelete($event)"
+  ></gom-units-view>
+
+  <gom-lib-confirmation-modal
+    [(show)]="deleteConfirmOpen"
+    [title]="text.deleteTitle | translate"
+    [message]="getDeleteMessage()"
+    [confirmText]="text.confirmDelete | translate"
+    [confirmIconOnly]="true"
+    confirmIcon="ri-delete-bin-line"
+    [cancelText]="text.close | translate"
+    confirmVariant="danger"
+    [busy]="loading()"
+    (confirmed)="onDeleteConfirmed()"
+    (cancelled)="onDeleteCancelled()"
+  ></gom-lib-confirmation-modal>
+</div>

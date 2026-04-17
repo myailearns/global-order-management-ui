@@ -1,21 +1,59 @@
-<div class="gom-shell">
-  <header class="gom-shell__topbar">
-    <button
-      type="button"
-      class="gom-shell__menu-button"
-      (click)="toggleMenu()"
-      [attr.aria-expanded]="menuOpen()"
-      aria-controls="gom-side-nav"
-      aria-label="Toggle navigation"
-    >
-      <span></span>
-      <span></span>
-      <span></span>
-    </button>
+<div class="gom-shell" [class.gom-shell--desktop-collapsed]="desktopNavCollapsed()">
+  <gom-lib-alert-toast></gom-lib-alert-toast>
 
-    <div class="gom-shell__brand">
-      <p class="gom-shell__eyebrow">Global Order Management</p>
-      <h1>Product Creation Module</h1>
+  @if (isAuthRoute()) {
+    <main class="gom-shell__content gom-shell__content--auth">
+      <router-outlet></router-outlet>
+    </main>
+  } @else {
+  <header class="gom-shell__topbar">
+    <div class="gom-shell__topbar-start">
+      <button
+        type="button"
+        class="gom-shell__menu-button"
+        (click)="toggleMenu()"
+        [attr.aria-expanded]="menuOpen()"
+        aria-controls="gom-side-nav"
+        [attr.aria-label]="'app.navigation.toggle' | translate"
+      >
+        <i class="ri-menu-2-line" aria-hidden="true"></i>
+      </button>
+
+      <div class="gom-shell__brand-mark" aria-hidden="true">
+        <i class="ri-global-line"></i>
+      </div>
+
+      <div class="gom-shell__brand">
+        <p class="gom-shell__eyebrow">{{ 'app.name' | translate }}</p>
+        <h1>{{ 'app.module' | translate }}</h1>
+      </div>
+    </div>
+
+    <div class="gom-shell__topbar-actions">
+      <label class="gom-shell__lang-picker">
+        <span>{{ 'app.language.label' | translate }}</span>
+        <gom-lib-select
+          [options]="languageSelectOptions"
+          [placeholder]="('app.language.label' | translate)"
+          [ngModel]="currentLanguage()"
+          (ngModelChange)="changeLanguage($event)"
+        ></gom-lib-select>
+      </label>
+
+      <button type="button" class="gom-shell__action-button" [attr.aria-label]="'app.actions.notifications' | translate">
+        <i class="ri-notification-3-line" aria-hidden="true"></i>
+      </button>
+      <button type="button" class="gom-shell__action-button" [attr.aria-label]="'app.actions.logout' | translate" (click)="logout()">
+        <i class="ri-logout-box-r-line" aria-hidden="true"></i>
+      </button>
+      <button
+        type="button"
+        class="gom-shell__profile-chip"
+        [attr.aria-label]="'app.actions.profile' | translate"
+        [attr.title]="currentSession()?.displayName || ''"
+      >
+        <span>{{ currentSession()?.initials || 'GU' }}</span>
+      </button>
     </div>
   </header>
 
@@ -25,7 +63,7 @@
       class="gom-shell__backdrop"
       [class.gom-shell__backdrop--visible]="menuOpen()"
       (click)="closeMenu()"
-      aria-label="Close menu"
+      [attr.aria-label]="'app.navigation.close' | translate"
     ></button>
 
     <aside
@@ -34,24 +72,56 @@
       [class.gom-shell__sidenav--open]="menuOpen()"
       aria-label="Main navigation"
     >
-      @for (section of sections; track section) {
+      <div class="gom-shell__sidenav-head">
+        <div class="gom-shell__sidenav-headcopy">
+          <p>{{ 'app.navigation.workspace' | translate }}</p>
+          <h3>{{ 'app.navigation.menu' | translate }}</h3>
+        </div>
+        <button
+          type="button"
+          class="gom-shell__sidenav-toggle"
+          (click)="toggleDesktopNav()"
+          [attr.aria-label]="desktopNavCollapsed() ? ('app.navigation.expandSidebar' | translate) : ('app.navigation.collapseSidebar' | translate)"
+          [attr.aria-expanded]="!desktopNavCollapsed()"
+        >
+          <i [class]="desktopNavCollapsed() ? 'ri-arrow-right-s-line' : 'ri-arrow-left-s-line'" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      @for (section of sections(); track section) {
         <section class="gom-shell__section">
-          <h2>{{ section }}</h2>
-          <nav>
-            <ul>
-              @for (item of navItemsBySection(section); track item.route) {
-                <li>
-                  <a
-                    [routerLink]="item.route"
-                    routerLinkActive="is-active"
-                    (click)="closeMenu()"
-                  >
-                    {{ item.label }}
-                  </a>
-                </li>
-              }
-            </ul>
-          </nav>
+          <button
+            type="button"
+            class="gom-shell__section-toggle"
+            (click)="toggleSection(section)"
+            [attr.aria-expanded]="isSectionExpanded(section)"
+            [attr.aria-label]="isSectionExpanded(section) ? ('app.navigation.collapse' | translate: { section: (getSectionTranslationKey(section) | translate) }) : ('app.navigation.expand' | translate: { section: (getSectionTranslationKey(section) | translate) })"
+            [attr.title]="desktopNavCollapsed() ? (getSectionTranslationKey(section) | translate) : null"
+          >
+            <span class="gom-shell__section-toggle-label">{{ getSectionTranslationKey(section) | translate }}</span>
+            <i [class]="isSectionExpanded(section) ? 'ri-arrow-up-s-line' : 'ri-arrow-down-s-line'" aria-hidden="true"></i>
+          </button>
+
+          @if (isSectionExpanded(section)) {
+            <nav>
+              <ul>
+                @for (item of navItemsBySection(section); track item.route) {
+                  <li>
+                    <a
+                      [routerLink]="item.route"
+                      routerLinkActive="is-active"
+                      [attr.title]="desktopNavCollapsed() ? (item.translationKey | translate) : null"
+                      (click)="closeMenu()"
+                    >
+                      <span class="gom-shell__nav-icon"><i [class]="item.icon" aria-hidden="true"></i></span>
+                      <span class="gom-shell__nav-label">{{ item.translationKey | translate }}</span>
+                      <span class="gom-shell__nav-trail" aria-hidden="true"><i class="ri-arrow-right-s-line"></i></span>
+                    </a>
+                  </li>
+                }
+              </ul>
+            </nav>
+          }
         </section>
       }
     </aside>
@@ -60,4 +130,5 @@
       <router-outlet></router-outlet>
     </main>
   </div>
+  }
 </div>

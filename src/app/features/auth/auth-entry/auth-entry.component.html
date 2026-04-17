@@ -1,0 +1,23 @@
+<section class="gom-auth-entry">
+  <div class="gom-auth-entry__hero">
+    <p class="gom-auth-entry__eyebrow">{{ 'auth.entry.eyebrow' | translate }}</p>
+    <h1>{{ 'auth.entry.title' | translate }}</h1>
+    <p class="gom-auth-entry__subtitle">{{ 'auth.entry.subtitle' | translate }}</p>
+  </div>
+
+  <div class="gom-auth-entry__grid">
+    <article class="gom-auth-entry__card">
+      <div class="gom-auth-entry__icon"><i class="ri-shield-star-line" aria-hidden="true"></i></div>
+      <h2>{{ 'auth.entry.platform_title' | translate }}</h2>
+      <p>{{ 'auth.entry.platform_subtitle' | translate }}</p>
+      <gom-lib-button type="button" (buttonClick)="openPlatformLogin()">{{ 'auth.entry.btn_platform' | translate }}</gom-lib-button>
+    </article>
+
+    <article class="gom-auth-entry__card">
+      <div class="gom-auth-entry__icon"><i class="ri-building-line" aria-hidden="true"></i></div>
+      <h2>{{ 'auth.entry.tenant_title' | translate }}</h2>
+      <p>{{ 'auth.entry.tenant_subtitle' | translate }}</p>
+      <gom-lib-button type="button" variant="secondary" (buttonClick)="openTenantLogin()">{{ 'auth.entry.btn_tenant' | translate }}</gom-lib-button>
+    </article>
+  </div>
+</section>

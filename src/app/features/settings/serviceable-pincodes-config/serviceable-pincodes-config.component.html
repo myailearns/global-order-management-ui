@@ -1,0 +1,40 @@
+<section class="settings-page">
+  <header class="settings-page__header">
+    <h2>Serviceable Delivery Pincodes</h2>
+    <p>Define where home delivery is available. For non-serviceable pincodes, suggest courier or pickup at order entry.</p>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="settings-page__error">{{ errorMessage() }}</div>
+  }
+
+  <form class="settings-card" [formGroup]="configForm" (ngSubmit)="save()">
+    <div class="settings-grid">
+      <gom-lib-checkbox
+        label="Enable serviceability check"
+        [formControl]="configForm.controls.enabled"
+      ></gom-lib-checkbox>
+
+      <gom-lib-select
+        label="When pincode is not serviceable"
+        [required]="true"
+        placeholder="Select suggestion"
+        [options]="suggestionOptions"
+        [formControl]="configForm.controls.nonServiceableSuggestion"
+      ></gom-lib-select>
+    </div>
+
+    <gom-lib-textarea
+      label="Serviceable pincodes"
+      placeholder="Enter one pincode per line or comma-separated (e.g. 500001)"
+      [rows]="10"
+      [formControl]="configForm.controls.serviceablePincodesText"
+    ></gom-lib-textarea>
+
+    <div class="settings-page__actions">
+      <gom-lib-button type="submit" [disabled]="loading() || saving()" variant="primary">
+        {{ saving() ? 'Saving...' : 'Save Pincode Rules' }}
+      </gom-lib-button>
+    </div>
+  </form>
+</section>

@@ -1,0 +1,154 @@
+.role-matrix {
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.role-matrix__page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+
+  h1 {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: var(--gom-color-text-primary);
+  }
+}
+
+.role-matrix__subtitle {
+  margin: 0.25rem 0 0;
+  font-size: 0.95rem;
+  color: var(--gom-color-text-secondary);
+}
+
+.role-matrix__switch-hint {
+  margin: 0.35rem 0 0;
+  font-size: 0.85rem;
+  color: var(--gom-color-text-secondary);
+}
+
+.role-matrix__page-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.role-matrix__form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  background: white;
+  border: 1px solid var(--gom-color-border);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+}
+
+.role-matrix__fields-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1rem;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.role-matrix__impact {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  background: color-mix(in srgb, var(--gom-color-primary) 8%, white);
+  border-left: 3px solid var(--gom-color-primary);
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  color: var(--gom-color-text-secondary);
+}
+
+/* Feature Picker */
+.role-matrix__picker {
+  background: white;
+  border: 1px solid var(--gom-color-border);
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+.role-matrix__picker-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--gom-color-border);
+  background: var(--gom-color-background-secondary, #f9fafb);
+}
+
+.role-matrix__picker-summary {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--gom-color-text-secondary);
+  white-space: nowrap;
+}
+
+.role-matrix__bulk-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.role-matrix__picker-body {
+  padding: 1rem 1.25rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.role-matrix__hint {
+  margin: 0;
+  font-size: 0.86rem;
+  color: var(--gom-color-text-secondary);
+  background: color-mix(in srgb, var(--gom-color-primary) 8%, white);
+  border: 1px solid color-mix(in srgb, var(--gom-color-primary) 18%, white);
+  border-radius: 0.5rem;
+  padding: 0.65rem 0.75rem;
+}
+
+.role-matrix__selected-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.role-matrix__selected-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.35rem 0.6rem;
+  background: color-mix(in srgb, var(--gom-color-primary) 8%, white);
+  border: 1px solid var(--gom-color-border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-size: 0.8rem;
+
+  &:hover {
+    border-color: var(--gom-color-primary);
+    background: color-mix(in srgb, var(--gom-color-primary) 10%, white);
+  }
+}
+
+.role-matrix__chip-remove {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--gom-color-primary);
+}
+
+.role-matrix__empty {
+  padding: 0 1.25rem 1.25rem;
+  text-align: left;
+  color: var(--gom-color-text-secondary);
+  font-size: 0.88rem;
+}

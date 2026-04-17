@@ -1,0 +1,80 @@
+@use "../../../shared/theming/styles/theme" as theme;
+
+.gom-auth-entry {
+  min-height: 100vh;
+  display: grid;
+  align-content: center;
+  gap: theme.get-gap(xl);
+  padding: theme.get-spacing(xl);
+}
+
+.gom-auth-entry__hero {
+  max-width: 42rem;
+
+  h1 {
+    margin: theme.get-spacing(xs) 0;
+    @include theme.typography-heading(xl);
+    color: theme.get-text(primary);
+  }
+}
+
+.gom-auth-entry__eyebrow {
+  margin: 0;
+  @include theme.typography-label;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: theme.get-text(hint);
+}
+
+.gom-auth-entry__subtitle {
+  margin: 0;
+  @include theme.typography-body;
+  color: theme.get-text(default-light);
+}
+
+.gom-auth-entry__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: theme.get-gap(lg);
+}
+
+.gom-auth-entry__card {
+  display: grid;
+  gap: theme.get-gap(sm);
+  padding: theme.get-spacing(lg);
+  border: theme.get-border-size(thin) solid theme.get-border(standard);
+  border-radius: theme.get-radius(lg);
+  background: rgba(theme.get-background(standard), 0.94);
+  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.08);
+
+  h2 {
+    margin: 0;
+    @include theme.typography-heading(md);
+    color: theme.get-text(primary);
+  }
+
+  p {
+    margin: 0;
+    color: theme.get-text(default-light);
+  }
+}
+
+.gom-auth-entry__icon {
+  width: 3rem;
+  height: 3rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: theme.get-radius(md);
+  color: theme.get-text(primary);
+  background: linear-gradient(160deg, theme.get-background(primary-light), theme.get-background(secondary));
+
+  i {
+    font-size: 1.4rem;
+  }
+}
+
+.gom-auth-entry__link {
+  display: inline-flex;
+  text-decoration: none;
+}

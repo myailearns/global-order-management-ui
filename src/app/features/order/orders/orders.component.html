@@ -1,0 +1,570 @@
+<section class="master-page">
+  <header class="master-page__header">
+    <h2><i class="ri-file-list-3-line" aria-hidden="true"></i> Orders</h2>
+    <div class="master-page__header-actions">
+      @if (isDevMode) {
+        <gom-lib-button type="button" variant="danger" (buttonClick)="openPurgeAllModal()">
+          <i class="ri-delete-bin-6-line" aria-hidden="true"></i> Dev: Delete All Orders
+        </gom-lib-button>
+      }
+      @if (canWrite()) {
+      <gom-lib-button type="button" variant="primary" (buttonClick)="openCreate()">
+        <i class="ri-add-line" aria-hidden="true"></i> Create Order
+      </gom-lib-button>
+      }
+    </div>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="master-page__error">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  <article class="master-page__table-shell">
+    <gom-lib-table
+      [columns]="columns"
+      [rows]="rows()"
+      [loading]="loading()"
+      [pageSize]="10"
+      [pageSizeOptions]="[10, 20, 50]"
+      searchPlaceholder="Search orders"
+      emptyMessage="No orders found."
+      [mobileCardView]="true"
+      (rowAction)="onRowAction($event)"
+    ></gom-lib-table>
+  </article>
+
+  <gom-lib-confirmation-modal
+    [(show)]="deleteModalOpen"
+    [title]="'Delete Order'"
+    [message]="deleteModalMessage"
+    [confirmText]="'Delete'"
+    [cancelText]="'Cancel'"
+    [confirmVariant]="'danger'"
+    [busy]="deleting()"
+    (confirmed)="confirmDeleteOrder()"
+    (cancelled)="closeDeleteModal()"
+  ></gom-lib-confirmation-modal>
+
+  <gom-lib-confirmation-modal
+    [(show)]="purgeAllModalOpen"
+    [title]="'Development: Delete All Orders'"
+    [message]="purgeAllModalMessage"
+    [confirmText]="'Delete All'"
+    [cancelText]="'Cancel'"
+    [confirmVariant]="'danger'"
+    [busy]="purgeAllBusy()"
+    (confirmed)="confirmPurgeAllOrders()"
+    (cancelled)="closePurgeAllModal()"
+  ></gom-lib-confirmation-modal>
+
+  <gom-lib-confirmation-modal
+    [(show)]="transitionModalOpen"
+    [title]="transitionModalTitle"
+    [message]="transitionModalMessage"
+    [confirmText]="'Update Status'"
+    [cancelText]="'Cancel'"
+    [confirmVariant]="transitionModalConfirmVariant"
+    [busy]="transitionBusy()"
+    (confirmed)="confirmTransition()"
+    (cancelled)="closeTransitionModal()"
+  ></gom-lib-confirmation-modal>
+
+  <gom-lib-modal
+    [(show)]="assignRiderModalOpen"
+    [title]="assignRiderOrderTarget()?.assignedRider?.name ? 'Reassign Rider' : 'Assign Rider'"
+    size="small"
+    [closeOnBackdropClick]="true"
+    (closed)="closeAssignRiderModal()"
+  >
+    <div class="assign-rider-form" [formGroup]="assignRiderForm">
+      <gom-lib-select
+        label="Rider"
+        formControlName="riderId"
+        placeholder="Select rider"
+        [options]="riderOptions()"
+      ></gom-lib-select>
+    </div>
+
+    <footer class="gom-confirmation-modal__actions gom-modal__action-layout" gom-modal-actions>
+      <div class="gom-modal__action-layout-start">
+        <gom-lib-button
+          type="button"
+          variant="secondary"
+          size="default"
+          [disabled]="assignRiderBusy()"
+          (buttonClick)="closeAssignRiderModal()"
+        >
+          Cancel
+        </gom-lib-button>
+      </div>
+      <div class="gom-modal__action-layout-end">
+        <gom-lib-button
+          type="button"
+          variant="primary"
+          size="default"
+          [disabled]="assignRiderBusy()"
+          (buttonClick)="confirmAssignRider()"
+        >
+          {{ assignRiderBusy() ? 'Assigning...' : 'Assign Rider' }}
+        </gom-lib-button>
+      </div>
+    </footer>
+  </gom-lib-modal>
+
+  <gom-lib-modal
+    [(show)]="dispatchModalOpen"
+    [title]="'Dispatch via Courier \u2014 ' + (dispatchOrderTarget()?.orderNo || '')"
+    size="small"
+    [closeOnBackdropClick]="true"
+    (closed)="closeDispatchModal()"
+  >
+    <div class="assign-rider-form" [formGroup]="dispatchForm">
+      <gom-lib-select
+        label="Courier Partner"
+        formControlName="courierPartnerId"
+        placeholder="Select courier partner"
+        [options]="courierPartnerOptions()"
+      ></gom-lib-select>
+      <gom-lib-input
+        label="Tracking Number"
+        formControlName="trackingNumber"
+        placeholder="e.g. 123456789"
+      ></gom-lib-input>
+      <gom-lib-input
+        label="AWB Number"
+        formControlName="awbNumber"
+        placeholder="e.g. AWB-987654"
+      ></gom-lib-input>
+      <gom-lib-input
+        label="Consignment Note"
+        formControlName="consignmentNote"
+        placeholder="e.g. CN-001234"
+      ></gom-lib-input>
+      <gom-lib-input
+        label="Estimated Delivery Date"
+        type="date"
+        formControlName="estimatedDeliveryDate"
+      ></gom-lib-input>
+    </div>
+
+    <footer class="gom-confirmation-modal__actions gom-modal__action-layout" gom-modal-actions>
+      <div class="gom-modal__action-layout-start">
+        <gom-lib-button
+          type="button"
+          variant="secondary"
+          size="default"
+          [disabled]="dispatchBusy()"
+          (buttonClick)="closeDispatchModal()"
+        >
+          Cancel
+        </gom-lib-button>
+      </div>
+      <div class="gom-modal__action-layout-end">
+        <gom-lib-button
+          type="button"
+          variant="primary"
+          size="default"
+          [disabled]="dispatchBusy()"
+          (buttonClick)="confirmDispatch()"
+        >
+          {{ dispatchBusy() ? 'Dispatching...' : 'Mark as Dispatched' }}
+        </gom-lib-button>
+      </div>
+    </footer>
+  </gom-lib-modal>
+
+  <gom-lib-modal
+    [(show)]="editOrderModalOpen"
+    [title]="'Edit Order Details — ' + (editOrderTarget()?.orderNo || '')"
+    size="large"
+    [closeOnBackdropClick]="true"
+    (closed)="closeEditOrderModal()"
+  >
+    <div class="assign-rider-form edit-order-form" [formGroup]="editOrderForm">
+      <div class="edit-policy-hint">
+        <i class="ri-information-line" aria-hidden="true"></i>
+        <span>{{ editPolicyHint }}</span>
+      </div>
+
+      <h4 class="view-order-section-title">Customer</h4>
+      <div class="view-order-grid">
+        <gom-lib-input label="Customer Name" formControlName="customerName" placeholder="Customer name"></gom-lib-input>
+        @if (getEditFieldLockReason('customerName'); as hint) {
+          <p class="edit-field-hint">{{ hint }}</p>
+        }
+        <gom-lib-input label="Customer Phone" formControlName="customerPhone" placeholder="10-digit mobile"></gom-lib-input>
+        @if (getEditFieldLockReason('customerPhone'); as hint) {
+          <p class="edit-field-hint">{{ hint }}</p>
+        }
+      </div>
+
+      <h4 class="view-order-section-title">Delivery</h4>
+      <div class="view-order-grid">
+        <gom-lib-input label="Delivery Address" formControlName="deliveryAddressText" placeholder="Delivery address"></gom-lib-input>
+        @if (getEditFieldLockReason('deliveryAddressText'); as hint) {
+          <p class="edit-field-hint">{{ hint }}</p>
+        }
+        <gom-lib-input label="Delivery Pincode" formControlName="deliveryPostalCode" placeholder="6-digit pincode"></gom-lib-input>
+        @if (getEditFieldLockReason('deliveryPostalCode'); as hint) {
+          <p class="edit-field-hint">{{ hint }}</p>
+        }
+        <gom-lib-input label="Delivery Contact Name" formControlName="deliveryContactName" placeholder="Receiver name"></gom-lib-input>
+        @if (getEditFieldLockReason('deliveryContactName'); as hint) {
+          <p class="edit-field-hint">{{ hint }}</p>
+        }
+        <gom-lib-input label="Delivery Contact Phone" formControlName="deliveryContactPhone" placeholder="Receiver phone"></gom-lib-input>
+        @if (getEditFieldLockReason('deliveryContactPhone'); as hint) {
+          <p class="edit-field-hint">{{ hint }}</p>
+        }
+        <gom-lib-input label="Preferred Delivery Time" formControlName="preferredDeliveryTime" type="datetime-local"></gom-lib-input>
+        @if (getEditFieldLockReason('preferredDeliveryTime'); as hint) {
+          <p class="edit-field-hint">{{ hint }}</p>
+        }
+        <gom-lib-input label="Location / Map Text" formControlName="deliveryLocationText" placeholder="Map link or location"></gom-lib-input>
+        @if (getEditFieldLockReason('deliveryLocationText'); as hint) {
+          <p class="edit-field-hint">{{ hint }}</p>
+        }
+        <gom-lib-input label="Latitude" formControlName="deliveryGeoLat" type="number" placeholder="e.g. 17.385"></gom-lib-input>
+        @if (getEditFieldLockReason('deliveryGeoLat'); as hint) {
+          <p class="edit-field-hint">{{ hint }}</p>
+        }
+        <gom-lib-input label="Longitude" formControlName="deliveryGeoLng" type="number" placeholder="e.g. 78.4867"></gom-lib-input>
+        @if (getEditFieldLockReason('deliveryGeoLng'); as hint) {
+          <p class="edit-field-hint">{{ hint }}</p>
+        }
+      </div>
+
+      <h4 class="view-order-section-title">Notes</h4>
+      <gom-lib-input label="Order Notes" formControlName="notes" placeholder="Operational notes"></gom-lib-input>
+      @if (getEditFieldLockReason('notes'); as hint) {
+        <p class="edit-field-hint">{{ hint }}</p>
+      }
+    </div>
+
+    <footer class="gom-confirmation-modal__actions gom-modal__action-layout" gom-modal-actions>
+      <div class="gom-modal__action-layout-start">
+        <gom-lib-button
+          type="button"
+          variant="secondary"
+          size="default"
+          [disabled]="editOrderBusy()"
+          (buttonClick)="closeEditOrderModal()"
+        >
+          Cancel
+        </gom-lib-button>
+      </div>
+      <div class="gom-modal__action-layout-end">
+        <gom-lib-button
+          type="button"
+          variant="primary"
+          size="default"
+          [disabled]="editOrderBusy() || !canSaveEditedOrderDetails"
+          (buttonClick)="saveEditedOrderDetails()"
+        >
+          {{ editOrderBusy() ? 'Saving...' : 'Save Changes' }}
+        </gom-lib-button>
+      </div>
+    </footer>
+  </gom-lib-modal>
+
+  <gom-lib-modal
+    [(show)]="editItemsModalOpen"
+    [title]="'Add / Change Items — ' + (editItemsTarget()?.orderNo || '')"
+    size="large"
+    [closeOnBackdropClick]="true"
+    (closed)="closeEditItemsModal()"
+  >
+    <div class="edit-items-shell">
+      <div class="edit-policy-hint">
+        <i class="ri-information-line" aria-hidden="true"></i>
+        <span>{{ editItemsPolicyHint(editItemsTarget()) }}</span>
+      </div>
+
+      <div class="add-item-row" [formGroup]="addItemForm">
+        <gom-lib-select
+          label="Add New Variant"
+          formControlName="variantId"
+          placeholder="Select variant"
+          [options]="addableVariantOptions()"
+        ></gom-lib-select>
+        <gom-lib-input
+          label="Quantity"
+          formControlName="quantity"
+          type="number"
+          placeholder="Qty"
+        ></gom-lib-input>
+        <div class="add-item-row__action">
+          <gom-lib-button
+            type="button"
+            variant="primary"
+            size="default"
+            [disabled]="editItemsBusy()"
+            (buttonClick)="addOrderItemFromModal()"
+          >
+            Add Item
+          </gom-lib-button>
+        </div>
+      </div>
+
+      @if (editItemsTarget(); as order) {
+        @if (getEditableOrderItems(order).length > 0) {
+          <div class="view-order-items-wrap">
+            <table class="view-order-items">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Status</th>
+                  <th>Qty</th>
+                  <th>Rate</th>
+                  <th>Total</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of getEditableOrderItems(order); track item._id) {
+                  <tr>
+                    <td>
+                      <div>{{ item.groupNameSnapshot }}</div>
+                      <small>{{ item.variantNameSnapshot }}</small>
+                    </td>
+                    <td>{{ item.status }}</td>
+                    <td>
+                      <input
+                        #qtyInput
+                        class="edit-item-qty"
+                        type="number"
+                        min="1"
+                        [disabled]="editItemsBusy() || !canModifyItem(item)"
+                        [value]="item.quantity"
+                      />
+                    </td>
+                    <td>Rs {{ (item.priceSnapshot.sellingPrice || 0).toLocaleString() }}</td>
+                    <td>Rs {{ (item.lineTotal || 0).toLocaleString() }}</td>
+                    <td>
+                      <div class="edit-item-actions">
+                        <gom-lib-button
+                          type="button"
+                          variant="secondary"
+                          size="default"
+                          [disabled]="editItemsBusy() || !canModifyItem(item)"
+                          (buttonClick)="saveOrderItemQuantity(item, qtyInput.value)"
+                        >
+                          Update Qty
+                        </gom-lib-button>
+                        <gom-lib-button
+                          type="button"
+                          variant="danger"
+                          size="default"
+                          [disabled]="editItemsBusy() || !canModifyItem(item)"
+                          (buttonClick)="cancelOrderItemFromModal(item)"
+                        >
+                          Remove Item
+                        </gom-lib-button>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <p class="view-order-empty">No items found on this order.</p>
+        }
+      }
+    </div>
+
+    <footer class="gom-confirmation-modal__actions gom-modal__action-layout" gom-modal-actions>
+      <div class="gom-modal__action-layout-start">
+        <gom-lib-button
+          type="button"
+          variant="secondary"
+          size="default"
+          [disabled]="editItemsBusy()"
+          (buttonClick)="createFollowUpOrderFromEditItems()"
+        >
+          Create New Order For Extra Items
+        </gom-lib-button>
+      </div>
+      <div class="gom-modal__action-layout-end">
+        <gom-lib-button
+          type="button"
+          variant="primary"
+          size="default"
+          [disabled]="editItemsBusy()"
+          (buttonClick)="closeEditItemsModal()"
+        >
+          {{ editItemsBusy() ? 'Working...' : 'Done' }}
+        </gom-lib-button>
+      </div>
+    </footer>
+  </gom-lib-modal>
+
+  <gom-lib-modal
+    [(show)]="viewOrderModalOpen"
+    [title]="'Order Details \u2014 ' + (viewOrderTarget()?.orderNo || '')"
+    size="large"
+    [closeOnBackdropClick]="true"
+    (closed)="closeViewOrderModal()"
+  >
+    @if (viewOrderLoading()) {
+      <p class="view-order-empty">Loading order details...</p>
+    }
+
+    @if (viewOrderTarget(); as order) {
+      <div class="view-order-grid">
+        <div><strong>Order No:</strong> {{ order.orderNo }}</div>
+        <div>
+          <strong>Status:</strong>
+          <button type="button" class="status-inline-link" (click)="openStatusHistoryModal(order)">
+            <gom-lib-chip [tone]="getStatusChipTone(order.status)">{{ order.status }}</gom-lib-chip>
+          </button>
+        </div>
+        <div><strong>Order Type:</strong> {{ order.orderType || '-' }}</div>
+        <div><strong>Source:</strong> {{ order.orderSource }}</div>
+        <div><strong>Customer Name:</strong> {{ viewOrderCustomerName }}</div>
+        <div><strong>Customer Phone:</strong> {{ viewOrderCustomerPhone }}</div>
+        <div><strong>Payment:</strong> {{ order.paymentStatus }}</div>
+        <div><strong>Total:</strong> Rs {{ (order.pricingSnapshot.grandTotal || 0).toLocaleString() }}</div>
+        <div><strong>Created:</strong> {{ order.createdAt | date: 'medium' }}</div>
+      </div>
+
+      <h4 class="view-order-section-title">Items ({{ viewOrderItemsCount }})</h4>
+      @if (getVisibleOrderItems(order).length > 0) {
+        <div class="view-order-items-wrap">
+          <table class="view-order-items">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Qty</th>
+                <th>Rate</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of getVisibleOrderItems(order); track $index) {
+                <tr>
+                  <td>
+                    <div>{{ item.groupNameSnapshot }}</div>
+                    <small>{{ item.variantNameSnapshot }}</small>
+                  </td>
+                  <td>{{ item.quantity }} {{ item.unitSnapshot || '' }}</td>
+                  <td>Rs {{ (item.priceSnapshot.sellingPrice || 0).toLocaleString() }}</td>
+                  <td>Rs {{ (item.lineTotal || 0).toLocaleString() }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <p class="view-order-empty">No items found for this order.</p>
+      }
+    }
+
+    <h4 class="view-order-section-title">Status History</h4>
+    @if (viewOrderTarget()?.timeline && viewOrderTarget()!.timeline!.length > 0) {
+      <div class="view-order-timeline">
+        @for (event of viewOrderTarget()?.timeline; track $index; let isFirst = $first; let isLast = $last) {
+          <div class="timeline-item">
+            <div class="timeline-marker" [class.timeline-marker--first]="isFirst">
+              <i class="ri-check-line" aria-hidden="true"></i>
+            </div>
+            <div class="timeline-content">
+              <div class="timeline-header">
+                <strong>
+                  @if (event.fromStatus) {
+                    {{ event.fromStatus }} → {{ event.toStatus }}
+                  } @else {
+                    Order Created
+                  }
+                </strong>
+                <small>{{ event.createdAt | date: 'medium' }}</small>
+              </div>
+              <div class="timeline-meta">
+                <span><strong>By:</strong> {{ event.actorName }} ({{ event.actorRole }})</span>
+                @if (event.reason) {
+                  <span><strong>Reason:</strong> {{ event.reason }}</span>
+                }
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    } @else {
+      <p class="view-order-empty">No status history available.</p>
+    }
+
+    <footer class="gom-confirmation-modal__actions gom-modal__action-layout" gom-modal-actions>
+      <div class="gom-modal__action-layout-start"></div>
+      <div class="gom-modal__action-layout-end">
+        <gom-lib-button
+          type="button"
+          variant="primary"
+          size="default"
+          (buttonClick)="closeViewOrderModal()"
+        >
+          Close
+        </gom-lib-button>
+      </div>
+    </footer>
+  </gom-lib-modal>
+
+  <gom-lib-modal
+    [(show)]="statusHistoryModalOpen"
+    [title]="'Status History \u2014 ' + (statusHistoryTarget()?.orderNo || '')"
+    size="medium"
+    [closeOnBackdropClick]="true"
+    (closed)="closeStatusHistoryModal()"
+  >
+    @if (statusHistoryLoading()) {
+      <p class="view-order-empty">Loading status history...</p>
+    }
+
+    @if (statusHistoryTarget()?.timeline && statusHistoryTarget()!.timeline!.length > 0) {
+      <div class="view-order-timeline">
+        @for (event of statusHistoryTarget()?.timeline; track $index; let isFirst = $first) {
+          <div class="timeline-item">
+            <div class="timeline-marker" [class.timeline-marker--first]="isFirst">
+              <i class="ri-check-line" aria-hidden="true"></i>
+            </div>
+            <div class="timeline-content">
+              <div class="timeline-header">
+                <strong>
+                  @if (event.fromStatus) {
+                    {{ event.fromStatus }} → {{ event.toStatus }}
+                  } @else {
+                    Order Created
+                  }
+                </strong>
+                <small>{{ event.createdAt | date: 'medium' }}</small>
+              </div>
+              <div class="timeline-meta">
+                <span><strong>By:</strong> {{ event.actorName }} ({{ event.actorRole }})</span>
+                @if (event.reason) {
+                  <span><strong>Reason:</strong> {{ event.reason }}</span>
+                }
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    } @else if (!statusHistoryLoading()) {
+      <p class="view-order-empty">No status history available.</p>
+    }
+
+    <footer class="gom-confirmation-modal__actions gom-modal__action-layout" gom-modal-actions>
+      <div class="gom-modal__action-layout-start"></div>
+      <div class="gom-modal__action-layout-end">
+        <gom-lib-button
+          type="button"
+          variant="primary"
+          size="default"
+          (buttonClick)="closeStatusHistoryModal()"
+        >
+          Close
+        </gom-lib-button>
+      </div>
+    </footer>
+  </gom-lib-modal>
+</section>

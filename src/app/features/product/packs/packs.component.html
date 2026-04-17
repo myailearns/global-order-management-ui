@@ -1,0 +1,148 @@
+<section class="master-page">
+  <header class="master-page__header">
+    <h2><i class="ri-box-3-line" aria-hidden="true"></i> Product Packs</h2>
+    @if (canWrite()) {
+    <gom-lib-button type="button" variant="primary" (buttonClick)="openCreatePack()">
+      <i class="ri-add-line" aria-hidden="true"></i> Add Pack
+    </gom-lib-button>
+    }
+  </header>
+
+  @if (errorMessage()) {
+    <div class="master-page__error">
+      <div style="display: flex; gap: 0.75rem; align-items: center;">
+        <i class="ri-alert-fill" style="font-size: 1.25rem; flex-shrink: 0;" aria-hidden="true"></i>
+        <span>{{ errorMessage() }}</span>
+      </div>
+    </div>
+  }
+
+  <article class="master-page__table-shell">
+    <gom-lib-table
+      [columns]="columns"
+      [rows]="rows()"
+      [loading]="loading()"
+      [pageSize]="10"
+      [pageSizeOptions]="[10, 20, 50]"
+      searchPlaceholder="Search packs"
+      emptyMessage="No packs found."
+      [mobileCardView]="true"
+      (rowAction)="onRowAction($event)"
+    ></gom-lib-table>
+  </article>
+</section>
+
+<gom-lib-modal
+  [title]="editingPackId() ? 'Edit Pack' : 'Create Pack'"
+  [(show)]="formOpen"
+  (closed)="closeForm()"
+  size="medium"
+>
+  <section class="form-grid" [formGroup]="packForm">
+    <gom-lib-input
+      label="Pack Name"
+      type="text"
+      placeholder="Enter pack name"
+      [formControl]="packForm.controls.name"
+      [error]="packForm.controls.name.touched && packForm.controls.name.invalid ? 'Pack name is required' : ''"
+    ></gom-lib-input>
+
+    <gom-lib-select
+      label="Status"
+      placeholder="Select status"
+      [options]="[{ value: 'ACTIVE', label: 'ACTIVE' }, { value: 'INACTIVE', label: 'INACTIVE' }]"
+      [formControl]="packForm.controls.status"
+    ></gom-lib-select>
+
+    <div class="items-header">
+      <h3>Pack Items</h3>
+      <gom-lib-button type="button" variant="secondary" (buttonClick)="addItemRow()">
+        <i class="ri-add-line" aria-hidden="true"></i> Add Item
+      </gom-lib-button>
+    </div>
+
+    <div class="item-list" formArrayName="items">
+      @for (group of itemControls.controls; track $index) {
+        <div class="item-row" [formGroupName]="$index">
+          <gom-lib-select
+            label="Variant"
+            placeholder="Select variant"
+            [options]="variantOptions()"
+            [formControl]="$any(group).controls.variantId"
+          ></gom-lib-select>
+
+          <gom-lib-input
+            label="Qty"
+            type="number"
+            placeholder="Enter qty"
+            [formControl]="$any(group).controls.quantity"
+          ></gom-lib-input>
+
+          <gom-lib-button type="button" variant="danger" (buttonClick)="removeItemRow($index)" [disabled]="itemControls.length <= 1">
+            Remove
+          </gom-lib-button>
+        </div>
+      }
+    </div>
+
+    <div class="price-preview">
+      <span class="price-preview__label">Pack Selling Price</span>
+      <span class="price-preview__value">{{ formPricePreview().sellingPrice | number:'1.2-2' }}</span>
+    </div>
+
+    <div class="price-preview">
+      <span class="price-preview__label">Pack Anchor Price</span>
+      <span class="price-preview__value">{{ formPricePreview().anchorPrice | number:'1.2-2' }}</span>
+    </div>
+  </section>
+
+  <footer class="gom-modal__action-layout packs-form__actions" gom-modal-actions>
+    <div class="gom-modal__action-layout-start"></div>
+    <div class="gom-modal__action-layout-end">
+      <gom-lib-button
+        class="packs-form__action"
+        type="button"
+        variant="secondary"
+        [size]="cancelMode === 'icon-only' ? 'icon' : 'default'"
+        aria-label="Close"
+        title="Close"
+        (buttonClick)="closeForm()"
+      >
+        @if (shouldShowIcon(cancelMode)) {
+          <i class="ri-close-line" aria-hidden="true"></i>
+        }
+        @if (shouldShowText(cancelMode)) {
+          Cancel
+        }
+      </gom-lib-button>
+      <gom-lib-button
+        class="packs-form__action"
+        type="button"
+        variant="primary"
+        [size]="submitMode === 'icon-only' ? 'icon' : 'default'"
+        [attr.aria-label]="editingPackId() ? 'Update Pack' : 'Create Pack'"
+        [attr.title]="editingPackId() ? 'Update Pack' : 'Create Pack'"
+        (buttonClick)="savePack()"
+        [disabled]="isSaveDisabled()"
+      >
+        @if (shouldShowIcon(submitMode)) {
+          <i class="ri-check-line" aria-hidden="true"></i>
+        }
+        @if (shouldShowText(submitMode)) {
+          {{ saving() ? 'Saving...' : (editingPackId() ? 'Update Pack' : 'Create Pack') }}
+        }
+      </gom-lib-button>
+    </div>
+  </footer>
+</gom-lib-modal>
+
+<gom-lib-confirmation-modal
+  [(show)]="deleteConfirmOpen"
+  title="Delete Pack"
+  [message]="getDeleteMessage()"
+  confirmText="Delete"
+  [busy]="saving()"
+  confirmVariant="danger"
+  (confirmed)="confirmDelete()"
+  (cancelled)="cancelDelete()"
+></gom-lib-confirmation-modal>

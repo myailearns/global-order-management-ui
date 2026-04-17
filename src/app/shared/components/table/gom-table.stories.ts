@@ -197,13 +197,13 @@ const DEMO_COLUMNS: GomTableColumn<ProductRow>[] = [
   standalone: true,
   imports: [CommonModule, GomTableComponent],
   template: `
-    <gom-table
+    <gom-lib-table
       [columns]="columns"
       [rows]="rows"
       dataMode="client"
       [pageSize]="5"
       [pageSizeOptions]="[5, 10, 20]"
-    ></gom-table>
+    ></gom-lib-table>
   `,
 })
 class ClientStoryComponent {
@@ -216,7 +216,7 @@ class ClientStoryComponent {
   standalone: true,
   imports: [CommonModule, GomTableComponent],
   template: `
-    <gom-table
+    <gom-lib-table
       [columns]="columns"
       [rows]="rows"
       [loading]="loading"
@@ -226,7 +226,7 @@ class ClientStoryComponent {
       [totalItems]="totalItems"
       [pageSizeOptions]="[5, 10, 20]"
       (queryChange)="handleQueryChange($event)"
-    ></gom-table>
+    ></gom-lib-table>
   `,
 })
 class ServerStoryComponent {

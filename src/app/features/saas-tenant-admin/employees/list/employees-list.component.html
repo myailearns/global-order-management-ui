@@ -1,0 +1,62 @@
+<div class="gom-employees-list">
+  <div class="gom-employees-list__header">
+    <h1>{{ translationKeys.TITLE_EMPLOYEES | translate }}</h1>
+    @if (canWrite()) {
+    <gom-lib-button 
+      variant="primary" 
+      (buttonClick)="onCreateEmployee()"
+      aria-label="Create new employee">
+      {{ translationKeys.BTN_CREATE_EMPLOYEE | translate }}
+    </gom-lib-button>
+    }
+  </div>
+
+  <!-- Search -->
+  <div class="gom-employees-list__filters">
+    <gom-lib-input
+      [formControl]="searchControl"
+      [placeholder]="translationKeys.PH_SEARCH_EMPLOYEES | translate"
+      type="search"
+      aria-label="Search employees">
+    </gom-lib-input>
+  </div>
+
+  <!-- Error -->
+  @if (errorMessage(); as error) {
+    <div class="gom-alert gom-alert--error" role="alert">
+      {{ error }}
+    </div>
+  }
+
+  <!-- Loading -->
+  @if (loading()) {
+    <div class="gom-employees-list__loading" aria-live="polite">Loading employees...</div>
+  }
+
+  <!-- Table -->
+  <gom-lib-table
+    [columns]="columns()"
+    [rows]="filteredEmployees()"
+    [totalItems]="total()"
+    [loading]="loading()"
+    [emptyMessage]="'common.msg_no_results' | translate"
+    (rowAction)="onTableAction($event)"
+    aria-label="Employees list">
+  </gom-lib-table>
+</div>
+
+<gom-lib-modal
+  [title]="employeeModalTitle"
+  [(show)]="formModalOpen"
+  (closed)="onEmployeeModalClosed()"
+  size="large"
+>
+  @if (formModalOpen()) {
+    <gom-employee-form
+      [modalMode]="true"
+      [employeeIdInput]="editingEmployeeId()"
+      (formSaved)="onEmployeeFormSaved()"
+      (formCancelled)="onEmployeeFormCancelled()"
+    ></gom-employee-form>
+  }
+</gom-lib-modal>

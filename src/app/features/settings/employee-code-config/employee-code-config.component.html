@@ -1,0 +1,107 @@
+<main class="settings-page">
+  <header class="settings-page__header">
+    <h2>Settings</h2>
+  </header>
+
+  @if (errorMessage()) {
+    <p class="settings-page__error">{{ errorMessage() }}</p>
+  }
+
+  @if (loading()) {
+    <p>Loading configuration…</p>
+  } @else {
+    <section class="settings-section">
+      <h3 class="settings-section__title">Employee Code Configuration</h3>
+      <p class="settings-section__desc">
+        Control how employee codes are generated when a new rider is created.
+        Changes apply to all new riders from this point forward.
+      </p>
+
+      <form [formGroup]="configForm" (ngSubmit)="save()" class="settings-form">
+
+        <!-- Strategy -->
+        <div class="settings-form--full">
+          <gom-lib-select
+            label="Generation Strategy"
+            [options]="strategyOptions"
+            [formControl]="configForm.controls.strategy"
+            [required]="true"
+          ></gom-lib-select>
+        </div>
+
+        <!-- Prefix -->
+        <gom-lib-input
+          label="Code Prefix"
+          type="text"
+          placeholder="e.g. RID, EMP, DR"
+          hint="Short prefix placed at the start of every employee code"
+          [required]="true"
+          [formControl]="configForm.controls.prefix"
+          [error]="configForm.controls.prefix.touched && configForm.controls.prefix.invalid ? 'Prefix is required' : ''"
+        ></gom-lib-input>
+
+        <!-- Separator -->
+        <gom-lib-select
+          label="Separator"
+          [options]="separatorOptions"
+          [formControl]="configForm.controls.separator"
+        ></gom-lib-select>
+
+        <!-- Sequence options — only relevant for PREFIX_SEQUENCE -->
+        @if (isSequence()) {
+          <gom-lib-select
+            label="Sequence Padding"
+            [options]="paddingOptions"
+            [formControl]="configForm.controls.sequencePadding"
+          ></gom-lib-select>
+
+          <gom-lib-input
+            label="Sequence Start"
+            type="number"
+            placeholder="1"
+            hint="First number in the sequence (e.g. 1 → RID-0001)"
+            [formControl]="configForm.controls.sequenceStart"
+          ></gom-lib-input>
+        }
+
+        <!-- Manual override toggle -->
+        @if (!isManual()) {
+          <div class="settings-form--full">
+            <gom-lib-checkbox
+              label="Allow manual override"
+              hint="Let operators enter a custom employee code instead of the auto-generated one"
+              [formControl]="configForm.controls.allowManualOverride"
+            ></gom-lib-checkbox>
+          </div>
+        }
+
+        <!-- Live preview -->
+        <div class="preview-box">
+          <p class="preview-box__label">Preview:</p>
+          <span class="preview-box__code">{{ previewCode() || '—' }}</span>
+          <span class="preview-box__hint">
+            @if (isManual()) {
+              User will enter the code manually
+            } @else if (isSequence()) {
+              Next code in the sequence
+            } @else {
+              Generated from rider name initials + last 4 digits of phone
+            }
+          </span>
+        </div>
+
+        <!-- Actions -->
+        <div class="settings-actions">
+          <gom-lib-button
+            label="Save Configuration"
+            variant="primary"
+            type="submit"
+            [disabled]="saving()"
+            (buttonClick)="save()"
+          ></gom-lib-button>
+        </div>
+
+      </form>
+    </section>
+  }
+</main>

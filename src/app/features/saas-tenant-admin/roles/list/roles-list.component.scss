@@ -1,0 +1,31 @@
+.roles-list {
+  padding: 2rem;
+}
+
+.roles-list__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.roles-list__header h1 {
+  margin: 0;
+}
+
+.roles-list__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.roles-list__subtitle {
+  margin: 0.35rem 0 0;
+  color: var(--gom-color-text-secondary);
+  font-size: 0.9rem;
+}
+
+.roles-list__tenant-picker {
+  max-width: 24rem;
+  margin-bottom: 1rem;
+}

@@ -1,0 +1,650 @@
+[
+  {
+    "featureKey": "category.list",
+    "displayName": "View Categories",
+    "module": "masters",
+    "description": "List and view all product categories",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["view", "search", "filter", "export"]
+  },
+  {
+    "featureKey": "category.create",
+    "displayName": "Create Category",
+    "module": "masters",
+    "description": "Create new product categories",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["create"]
+  },
+  {
+    "featureKey": "category.edit",
+    "displayName": "Edit Category",
+    "module": "masters",
+    "description": "Edit existing product categories",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": ["category.list"],
+    "actions": ["edit", "update"]
+  },
+  {
+    "featureKey": "category.delete",
+    "displayName": "Delete Category",
+    "module": "masters",
+    "description": "Delete product categories",
+    "planAvailability": ["GROWTH", "SCALE"],
+    "dependencies": ["category.list"],
+    "actions": ["delete"]
+  },
+  {
+    "featureKey": "field.list",
+    "displayName": "View Fields",
+    "module": "masters",
+    "description": "List and view all custom fields",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["view", "search", "filter"]
+  },
+  {
+    "featureKey": "field.create",
+    "displayName": "Create Field",
+    "module": "masters",
+    "description": "Create new custom fields",
+    "planAvailability": ["GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["create"]
+  },
+  {
+    "featureKey": "field.edit",
+    "displayName": "Edit Field",
+    "module": "masters",
+    "description": "Edit existing custom fields",
+    "planAvailability": ["GROWTH", "SCALE"],
+    "dependencies": ["field.list"],
+    "actions": ["edit", "update"]
+  },
+  {
+    "featureKey": "field.delete",
+    "displayName": "Delete Field",
+    "module": "masters",
+    "description": "Delete custom fields",
+    "planAvailability": ["SCALE"],
+    "dependencies": ["field.list"],
+    "actions": ["delete"]
+  },
+  {
+    "featureKey": "fieldGroup.list",
+    "displayName": "View Field Groups",
+    "module": "masters",
+    "description": "List and view all field groups",
+    "planAvailability": ["GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["view", "search", "filter"]
+  },
+  {
+    "featureKey": "fieldGroup.create",
+    "displayName": "Create Field Group",
+    "module": "masters",
+    "description": "Create new field groups",
+    "planAvailability": ["GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["create"]
+  },
+  {
+    "featureKey": "fieldGroup.edit",
+    "displayName": "Edit Field Group",
+    "module": "masters",
+    "description": "Edit existing field groups",
+    "planAvailability": ["GROWTH", "SCALE"],
+    "dependencies": ["fieldGroup.list"],
+    "actions": ["edit", "update"]
+  },
+  {
+    "featureKey": "fieldGroup.delete",
+    "displayName": "Delete Field Group",
+    "module": "masters",
+    "description": "Delete field groups",
+    "planAvailability": ["SCALE"],
+    "dependencies": ["fieldGroup.list"],
+    "actions": ["delete"]
+  },
+  {
+    "featureKey": "unit.list",
+    "displayName": "View Units",
+    "module": "masters",
+    "description": "List and view all product units",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["view", "search", "filter"]
+  },
+  {
+    "featureKey": "unit.create",
+    "displayName": "Create Unit",
+    "module": "masters",
+    "description": "Create new product units",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["create"]
+  },
+  {
+    "featureKey": "unit.edit",
+    "displayName": "Edit Unit",
+    "module": "masters",
+    "description": "Edit existing product units",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": ["unit.list"],
+    "actions": ["edit", "update"]
+  },
+  {
+    "featureKey": "unit.delete",
+    "displayName": "Delete Unit",
+    "module": "masters",
+    "description": "Delete product units",
+    "planAvailability": ["GROWTH", "SCALE"],
+    "dependencies": ["unit.list"],
+    "actions": ["delete"]
+  },
+  {
+    "featureKey": "taxProfile.list",
+    "displayName": "View Tax Profiles",
+    "module": "masters",
+    "description": "List and view all tax profiles",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["view", "search", "filter"]
+  },
+  {
+    "featureKey": "taxProfile.create",
+    "displayName": "Create Tax Profile",
+    "module": "masters",
+    "description": "Create new tax profiles",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["create"]
+  },
+  {
+    "featureKey": "taxProfile.edit",
+    "displayName": "Edit Tax Profile",
+    "module": "masters",
+    "description": "Edit existing tax profiles",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": ["taxProfile.list"],
+    "actions": ["edit", "update"]
+  },
+  {
+    "featureKey": "taxProfile.delete",
+    "displayName": "Delete Tax Profile",
+    "module": "masters",
+    "description": "Delete tax profiles",
+    "planAvailability": ["GROWTH", "SCALE"],
+    "dependencies": ["taxProfile.list"],
+    "actions": ["delete"]
+  },
+  {
+    "featureKey": "group.list",
+    "displayName": "View Product Groups",
+    "module": "product",
+    "description": "List and view all product groups",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["view", "search", "filter", "export"]
+  },
+  {
+    "featureKey": "group.create",
+    "displayName": "Create Product Group",
+    "module": "product",
+    "description": "Create new product groups",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["create"]
+  },
+  {
+    "featureKey": "group.edit",
+    "displayName": "Edit Product Group",
+    "module": "product",
+    "description": "Edit existing product groups",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": ["group.list"],
+    "actions": ["edit", "update", "clone"]
+  },
+  {
+    "featureKey": "group.delete",
+    "displayName": "Delete Product Group",
+    "module": "product",
+    "description": "Delete product groups",
+    "planAvailability": ["GROWTH", "SCALE"],
+    "dependencies": ["group.list"],
+    "actions": ["delete"]
+  },
+  {
+    "featureKey": "variant.list",
+    "displayName": "View Product Variants",
+    "module": "product",
+    "description": "List and view all product variants",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["view", "search", "filter"]
+  },
+  {
+    "featureKey": "variant.create",
+    "displayName": "Create Product Variant",
+    "module": "product",
+    "description": "Create new product variants",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["create"]
+  },
+  {
+    "featureKey": "variant.edit",
+    "displayName": "Edit Product Variant",
+    "module": "product",
+    "description": "Edit existing product variants",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": ["variant.list"],
+    "actions": ["edit", "update"]
+  },
+  {
+    "featureKey": "variant.delete",
+    "displayName": "Delete Product Variant",
+    "module": "product",
+    "description": "Delete product variants",
+    "planAvailability": ["GROWTH", "SCALE"],
+    "dependencies": ["variant.list"],
+    "actions": ["delete"]
+  },
+  {
+    "featureKey": "pack.list",
+    "displayName": "View Product Packs",
+    "module": "product",
+    "description": "List and view all product packs",
+    "planAvailability": ["GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["view", "search", "filter"]
+  },
+  {
+    "featureKey": "pack.create",
+    "displayName": "Create Product Pack",
+    "module": "product",
+    "description": "Create new product packs",
+    "planAvailability": ["GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["create"]
+  },
+  {
+    "featureKey": "pack.edit",
+    "displayName": "Edit Product Pack",
+    "module": "product",
+    "description": "Edit existing product packs",
+    "planAvailability": ["GROWTH", "SCALE"],
+    "dependencies": ["pack.list"],
+    "actions": ["edit", "update"]
+  },
+  {
+    "featureKey": "pack.delete",
+    "displayName": "Delete Product Pack",
+    "module": "product",
+    "description": "Delete product packs",
+    "planAvailability": ["SCALE"],
+    "dependencies": ["pack.list"],
+    "actions": ["delete"]
+  },
+  {
+    "featureKey": "stock.list",
+    "displayName": "View Stock",
+    "module": "product",
+    "description": "List and view all product stock",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["view", "search", "filter", "export"]
+  },
+  {
+    "featureKey": "stock.create",
+    "displayName": "Create Stock Entry",
+    "module": "product",
+    "description": "Create new stock entries",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["create"]
+  },
+  {
+    "featureKey": "stock.edit",
+    "displayName": "Edit Stock",
+    "module": "product",
+    "description": "Edit existing stock entries",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": ["stock.list"],
+    "actions": ["edit", "update"]
+  },
+  {
+    "featureKey": "stock.delete",
+    "displayName": "Delete Stock Entry",
+    "module": "product",
+    "description": "Delete stock entries",
+    "planAvailability": ["GROWTH", "SCALE"],
+    "dependencies": ["stock.list"],
+    "actions": ["delete"]
+  },
+  {
+    "featureKey": "order.list",
+    "displayName": "View Orders",
+    "module": "orders",
+    "description": "List and view all orders",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["view", "search", "filter", "export"]
+  },
+  {
+    "featureKey": "order.create",
+    "displayName": "Create Order",
+    "module": "orders",
+    "description": "Create new orders",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["create"]
+  },
+  {
+    "featureKey": "order.edit",
+    "displayName": "Edit Order",
+    "module": "orders",
+    "description": "Edit existing orders",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": ["order.list"],
+    "actions": ["edit", "update", "cancel"]
+  },
+  {
+    "featureKey": "order.delete",
+    "displayName": "Delete Order",
+    "module": "orders",
+    "description": "Delete orders",
+    "planAvailability": ["GROWTH", "SCALE"],
+    "dependencies": ["order.list"],
+    "actions": ["delete"]
+  },
+  {
+    "featureKey": "customer.list",
+    "displayName": "View Customers",
+    "module": "customers",
+    "description": "List and view all customers",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["view", "search", "filter", "export"]
+  },
+  {
+    "featureKey": "customer.create",
+    "displayName": "Create Customer",
+    "module": "customers",
+    "description": "Create new customers",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["create"]
+  },
+  {
+    "featureKey": "customer.edit",
+    "displayName": "Edit Customer",
+    "module": "customers",
+    "description": "Edit existing customers",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": ["customer.list"],
+    "actions": ["edit", "update"]
+  },
+  {
+    "featureKey": "customer.delete",
+    "displayName": "Delete Customer",
+    "module": "customers",
+    "description": "Delete customers",
+    "planAvailability": ["GROWTH", "SCALE"],
+    "dependencies": ["customer.list"],
+    "actions": ["delete"]
+  },
+  {
+    "featureKey": "customerGroup.list",
+    "displayName": "View Customer Groups",
+    "module": "customers",
+    "description": "List and view all customer groups",
+    "planAvailability": ["GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["view", "search", "filter"]
+  },
+  {
+    "featureKey": "customerGroup.create",
+    "displayName": "Create Customer Group",
+    "module": "customers",
+    "description": "Create new customer groups",
+    "planAvailability": ["GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["create"]
+  },
+  {
+    "featureKey": "customerGroup.edit",
+    "displayName": "Edit Customer Group",
+    "module": "customers",
+    "description": "Edit existing customer groups",
+    "planAvailability": ["GROWTH", "SCALE"],
+    "dependencies": ["customerGroup.list"],
+    "actions": ["edit", "update"]
+  },
+  {
+    "featureKey": "customerGroup.delete",
+    "displayName": "Delete Customer Group",
+    "module": "customers",
+    "description": "Delete customer groups",
+    "planAvailability": ["SCALE"],
+    "dependencies": ["customerGroup.list"],
+    "actions": ["delete"]
+  },
+  {
+    "featureKey": "rider.list",
+    "displayName": "View Riders",
+    "module": "delivery",
+    "description": "List and view all delivery riders",
+    "planAvailability": ["GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["view", "search", "filter"]
+  },
+  {
+    "featureKey": "rider.create",
+    "displayName": "Create Rider",
+    "module": "delivery",
+    "description": "Create new delivery riders",
+    "planAvailability": ["GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["create"]
+  },
+  {
+    "featureKey": "rider.edit",
+    "displayName": "Edit Rider",
+    "module": "delivery",
+    "description": "Edit existing delivery riders",
+    "planAvailability": ["GROWTH", "SCALE"],
+    "dependencies": ["rider.list"],
+    "actions": ["edit", "update"]
+  },
+  {
+    "featureKey": "rider.delete",
+    "displayName": "Delete Rider",
+    "module": "delivery",
+    "description": "Delete delivery riders",
+    "planAvailability": ["SCALE"],
+    "dependencies": ["rider.list"],
+    "actions": ["delete"]
+  },
+  {
+    "featureKey": "courierPartner.list",
+    "displayName": "View Courier Partners",
+    "module": "delivery",
+    "description": "List and view all courier partners",
+    "planAvailability": ["GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["view", "search", "filter"]
+  },
+  {
+    "featureKey": "courierPartner.create",
+    "displayName": "Create Courier Partner",
+    "module": "delivery",
+    "description": "Create new courier partners",
+    "planAvailability": ["GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["create"]
+  },
+  {
+    "featureKey": "courierPartner.edit",
+    "displayName": "Edit Courier Partner",
+    "module": "delivery",
+    "description": "Edit existing courier partners",
+    "planAvailability": ["GROWTH", "SCALE"],
+    "dependencies": ["courierPartner.list"],
+    "actions": ["edit", "update"]
+  },
+  {
+    "featureKey": "courierPartner.delete",
+    "displayName": "Delete Courier Partner",
+    "module": "delivery",
+    "description": "Delete courier partners",
+    "planAvailability": ["SCALE"],
+    "dependencies": ["courierPartner.list"],
+    "actions": ["delete"]
+  },
+  {
+    "featureKey": "employee.list",
+    "displayName": "View Employees",
+    "module": "tenant-admin",
+    "description": "List and view all tenant employees",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["view", "search", "filter", "export"]
+  },
+  {
+    "featureKey": "employee.create",
+    "displayName": "Create Employee",
+    "module": "tenant-admin",
+    "description": "Create new tenant employees",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["create"]
+  },
+  {
+    "featureKey": "employee.edit",
+    "displayName": "Edit Employee",
+    "module": "tenant-admin",
+    "description": "Edit existing employee details",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": ["employee.list"],
+    "actions": ["edit", "update", "assign-role"]
+  },
+  {
+    "featureKey": "employee.delete",
+    "displayName": "Delete Employee",
+    "module": "tenant-admin",
+    "description": "Delete tenant employees",
+    "planAvailability": ["GROWTH", "SCALE"],
+    "dependencies": ["employee.list"],
+    "actions": ["delete", "deactivate"]
+  },
+  {
+    "featureKey": "user.list",
+    "displayName": "View Users",
+    "module": "tenant-admin",
+    "description": "List and view all tenant users",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["view", "search", "filter", "export"]
+  },
+  {
+    "featureKey": "user.create",
+    "displayName": "Create User",
+    "module": "tenant-admin",
+    "description": "Create new tenant users/accounts",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["create"]
+  },
+  {
+    "featureKey": "user.edit",
+    "displayName": "Edit User",
+    "module": "tenant-admin",
+    "description": "Edit existing user accounts and permissions",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": ["user.list"],
+    "actions": ["edit", "update", "reset-password", "assign-role"]
+  },
+  {
+    "featureKey": "user.delete",
+    "displayName": "Delete User",
+    "module": "tenant-admin",
+    "description": "Delete tenant users",
+    "planAvailability": ["GROWTH", "SCALE"],
+    "dependencies": ["user.list"],
+    "actions": ["delete", "deactivate"]
+  },
+  {
+    "featureKey": "role.list",
+    "displayName": "View Roles",
+    "module": "tenant-admin",
+    "description": "List and view all tenant roles",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["view", "search", "filter"]
+  },
+  {
+    "featureKey": "role.create",
+    "displayName": "Create Role",
+    "module": "tenant-admin",
+    "description": "Create new tenant roles",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["create"]
+  },
+  {
+    "featureKey": "role.edit",
+    "displayName": "Edit Role",
+    "module": "tenant-admin",
+    "description": "Edit existing roles and permissions",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": ["role.list"],
+    "actions": ["edit", "update", "assign-feature"]
+  },
+  {
+    "featureKey": "role.delete",
+    "displayName": "Delete Role",
+    "module": "tenant-admin",
+    "description": "Delete tenant roles",
+    "planAvailability": ["GROWTH", "SCALE"],
+    "dependencies": ["role.list"],
+    "actions": ["delete"]
+  },
+  {
+    "featureKey": "featureAssignment.manage",
+    "displayName": "Manage Feature Assignment to Roles",
+    "module": "tenant-admin",
+    "description": "Assign purchased features to roles",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": ["role.edit"],
+    "actions": ["assign", "unassign", "view-purchased-features"]
+  },
+  {
+    "featureKey": "permissionManagement.manage",
+    "displayName": "Manage Role Permissions",
+    "module": "tenant-admin",
+    "description": "Manage detailed permissions for roles (CRUD operations on features)",
+    "planAvailability": ["GROWTH", "SCALE"],
+    "dependencies": ["role.edit"],
+    "actions": ["assign-permission", "revoke-permission", "view-permissions"]
+  },
+  {
+    "featureKey": "roleAssignment.manage",
+    "displayName": "Assign Roles to Users",
+    "module": "tenant-admin",
+    "description": "Assign and remove roles from users/employees",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": ["user.edit", "role.list"],
+    "actions": ["assign-role", "remove-role", "view-user-roles"]
+  },
+  {
+    "featureKey": "tenantDashboard.view",
+    "displayName": "View Tenant Dashboard",
+    "module": "tenant-admin",
+    "description": "Access tenant admin dashboard with overview and analytics",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["view"]
+  }
+]

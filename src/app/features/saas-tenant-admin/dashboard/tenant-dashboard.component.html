@@ -1,0 +1,48 @@
+<section class="tenant-dashboard">
+  <header class="tenant-dashboard__header">
+    <h1>{{ 'saas.admin.dashboard.title' | translate }}</h1>
+    <p>{{ 'saas.admin.dashboard.subtitle' | translate }}</p>
+  </header>
+
+  @if (loading()) {
+    <div class="tenant-dashboard__loading">{{ 'saas.admin.dashboard.msg_loading' | translate }}</div>
+  }
+
+  @if (summary(); as summaryData) {
+    <section class="tenant-dashboard__summary">
+      <article class="tenant-dashboard__summary-card">
+        <h2>{{ 'saas.admin.dashboard.lbl_purchased_package' | translate }}</h2>
+        @if (summaryData.package) {
+          <p><strong>{{ summaryData.package.name }}</strong> ({{ summaryData.package.planId }})</p>
+          <p>{{ 'saas.admin.dashboard.lbl_tier' | translate }}: {{ summaryData.package.tier }}</p>
+          <p>{{ 'saas.admin.dashboard.lbl_status' | translate }}: {{ summaryData.package.status }}</p>
+        } @else {
+          <p>{{ 'saas.admin.dashboard.msg_no_package' | translate }}</p>
+        }
+      </article>
+
+      <article class="tenant-dashboard__summary-card">
+        <h2>{{ 'saas.admin.dashboard.lbl_entitled_features' | translate }}</h2>
+        @if (summaryData.entitledFeatures.length) {
+          <ul class="tenant-dashboard__feature-list">
+            @for (feature of summaryData.entitledFeatures; track feature.featureKey) {
+              <li>{{ feature.displayName }} ({{ feature.module }})</li>
+            }
+          </ul>
+        } @else {
+          <p>{{ 'saas.admin.dashboard.msg_no_features' | translate }}</p>
+        }
+      </article>
+    </section>
+  }
+
+  <div class="tenant-dashboard__cards">
+    @for (card of cards(); track card.title) {
+      <article class="tenant-dashboard__card">
+        <h2>{{ card.title }}</h2>
+        <p class="tenant-dashboard__value">{{ card.value }}</p>
+        <gom-lib-button variant="secondary" (buttonClick)="card.action()">{{ 'saas.admin.dashboard.btn_open' | translate }}</gom-lib-button>
+      </article>
+    }
+  </div>
+</section>

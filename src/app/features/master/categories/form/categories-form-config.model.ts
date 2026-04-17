@@ -1,0 +1,45 @@
+import { GomDynamicFormConfig } from '../../../../shared/components/dynamic-form';
+
+export const DEFAULT_CATEGORY_FORM_CONFIG: GomDynamicFormConfig = {
+  fields: [
+    {
+      key: 'name',
+      control: 'input',
+      inputType: 'text',
+      labelKey: 'categories.labels.nameRequired',
+      placeholderKey: 'categories.placeholders.name',
+      validators: {
+        required: true,
+        minLength: 2,
+      },
+      validationMessages: {
+        required: 'categories.validation.nameRequired',
+        minlength: 'categories.validation.nameMin',
+      },
+    },
+    {
+      key: 'description',
+      control: 'textarea',
+      labelKey: 'categories.labels.description',
+      placeholderKey: 'categories.placeholders.description',
+      rows: 3,
+      validators: {
+        maxLength: 500,
+      },
+      validationMessages: {
+        maxlength: 'categories.validation.descriptionMax',
+      },
+    },
+    {
+      key: 'status',
+      control: 'select',
+      labelKey: 'categories.labels.status',
+      placeholderKey: 'categories.placeholders.status',
+      defaultValue: 'ACTIVE',
+      validators: {
+        required: true,
+      },
+      optionsSource: 'categoryStatusOptions',
+    },
+  ],
+};
