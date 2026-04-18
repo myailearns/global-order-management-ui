@@ -4,11 +4,11 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
-import { GomAlertToastService } from '../../../../shared/components/alert';
+import { GomAlertToastService } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../../core/auth/auth-session.service';
-import { GomButtonComponent } from '../../../../shared/components/form-controls';
-import { GomChipTone, GomTableColumn, GomTableComponent, GomTableRow } from '../../../../shared/components/table';
-import { GomModalComponent } from '../../../../shared/components/modal';
+import { GomButtonComponent } from '@gomlibs/ui';
+import { GomChipTone, GomTableColumn, GomTableComponent, GomTableRow } from '@gomlibs/ui';
+import { GomModalComponent } from '@gomlibs/ui';
 
 import { TenantAccessService } from '../../services';
 import { RoleWithPermissions, UserRoleAssignment, UserWithRoles, UserStatus } from '../../models';

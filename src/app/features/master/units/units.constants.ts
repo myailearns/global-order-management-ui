@@ -1,4 +1,4 @@
-import { GomSelectOption } from '../../../shared/components/form-controls';
+import { GomSelectOption } from '@gomlibs/ui';
 
 export const UNIT_DEFAULT_STATUS = 'ACTIVE' as const;
 

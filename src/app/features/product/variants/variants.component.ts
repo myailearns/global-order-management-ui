@@ -9,16 +9,16 @@ import {
   FormControlsModule,
   GomButtonComponent,
   GomSelectOption,
-} from '../../../shared/components/form-controls';
+} from '@gomlibs/ui';
 import {
   GomButtonContentMode,
   getButtonContentMode,
   showButtonIcon,
   showButtonText,
-} from '../../../shared/components/config';
-import { GomTableColumn, GomTableComponent, GomTableRow } from '../../../shared/components/table';
-import { GomConfirmationModalComponent, GomModalComponent } from '../../../shared/components/modal';
-import { GomAlertToastService } from '../../../shared/components/alert';
+} from '@gomlibs/ui';
+import { GomTableColumn, GomTableComponent, GomTableRow } from '@gomlibs/ui';
+import { GomConfirmationModalComponent, GomModalComponent } from '@gomlibs/ui';
+import { GomAlertToastService } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { Group, Unit, Variant, VariantPricePreview, VariantsService } from './variants.service';
 

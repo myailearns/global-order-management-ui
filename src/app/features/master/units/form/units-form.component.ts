@@ -4,9 +4,9 @@ import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angu
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
-import { GomButtonContentMode, getButtonContentMode, showButtonIcon, showButtonText } from '../../../../shared/components/config';
-import { GomButtonComponent, GomInputComponent, GomSelectComponent, GomSelectOption } from '../../../../shared/components/form-controls';
-import { GomModalComponent } from '../../../../shared/components/modal';
+import { GomButtonContentMode, getButtonContentMode, showButtonIcon, showButtonText } from '@gomlibs/ui';
+import { GomButtonComponent, GomInputComponent, GomSelectComponent, GomSelectOption } from '@gomlibs/ui';
+import { GomModalComponent } from '@gomlibs/ui';
 import { UNIT_DEFAULT_STATUS, UNIT_STATUS_OPTIONS, UNIT_UI_TEXT } from '../units.constants';
 import { UnitPayload, UnitStatus } from '../units.service';
 

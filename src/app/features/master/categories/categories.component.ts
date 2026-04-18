@@ -7,8 +7,8 @@ import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { CategoriesListComponent, CategoryAction } from './list/categories-list.component';
 import { CategoriesFormComponent, CategoryFormData } from './form/categories-form.component';
 import { CategoriesViewComponent } from './view/categories-view.component';
-import { GomConfirmationModalComponent } from '../../../shared/components/modal';
-import { GomAlertToastService } from '../../../shared/components/alert';
+import { GomConfirmationModalComponent } from '@gomlibs/ui';
+import { GomAlertToastService } from '@gomlibs/ui';
 
 @Component({
   selector: 'gom-categories',

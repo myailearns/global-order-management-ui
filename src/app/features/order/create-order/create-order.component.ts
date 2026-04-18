@@ -7,10 +7,10 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { catchError, debounceTime, distinctUntilChanged, map, of, switchMap, throttleTime } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 
-import { GomAlertToastService } from '../../../shared/components/alert';
-import { GomButtonContentMode, getButtonContentMode, showButtonIcon, showButtonText } from '../../../shared/components/config';
-import { FormControlsModule, GomButtonComponent, GomSelectOption } from '../../../shared/components/form-controls';
-import { GomTabContentComponent, GomTabsComponent, TabItem } from '../../../shared/components/tabs';
+import { GomAlertToastService } from '@gomlibs/ui';
+import { GomButtonContentMode, getButtonContentMode, showButtonIcon, showButtonText } from '@gomlibs/ui';
+import { FormControlsModule, GomButtonComponent, GomSelectOption } from '@gomlibs/ui';
+import { GomTabContentComponent, GomTabsComponent, TabItem } from '@gomlibs/ui';
 import {
   Customer,
   Group,

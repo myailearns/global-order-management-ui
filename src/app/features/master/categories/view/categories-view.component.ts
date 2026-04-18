@@ -7,10 +7,10 @@ import {
   getButtonContentMode,
   showButtonIcon,
   showButtonText,
-} from '../../../../shared/components/config';
+} from '@gomlibs/ui';
 import { CATEGORY_UI_TEXT } from '../categories.constants';
-import { GomButtonComponent } from '../../../../shared/components/form-controls';
-import { GomModalComponent } from '../../../../shared/components/modal';
+import { GomButtonComponent } from '@gomlibs/ui';
+import { GomModalComponent } from '@gomlibs/ui';
 import { Category } from '../categories.service';
 
 @Component({

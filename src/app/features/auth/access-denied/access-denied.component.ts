@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
-import { GomButtonComponent } from '../../../shared/components/form-controls';
+import { GomButtonComponent } from '@gomlibs/ui';
 
 @Component({
   selector: 'gom-access-denied',

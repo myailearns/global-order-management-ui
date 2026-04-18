@@ -4,10 +4,10 @@ import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { catchError, combineLatest, debounceTime, of, startWith, switchMap } from 'rxjs';
 
-import { GomAlertToastService } from '../../../shared/components/alert';
-import { FormControlsModule, GomButtonComponent } from '../../../shared/components/form-controls';
-import { GomConfirmationModalComponent, GomModalComponent } from '../../../shared/components/modal';
-import { GomTableColumn, GomTableComponent, GomTableRow } from '../../../shared/components/table';
+import { GomAlertToastService } from '@gomlibs/ui';
+import { FormControlsModule, GomButtonComponent } from '@gomlibs/ui';
+import { GomConfirmationModalComponent, GomModalComponent } from '@gomlibs/ui';
+import { GomTableColumn, GomTableComponent, GomTableRow } from '@gomlibs/ui';
 import { DeliveryService, EmployeeCodePreview, Rider, RiderPayload, RiderStatus } from '../delivery.service';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
 

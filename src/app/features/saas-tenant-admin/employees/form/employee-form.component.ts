@@ -4,8 +4,8 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
-import { GomAlertToastService } from '../../../../shared/components/alert';
-import { GomButtonComponent, GomInputComponent, GomSelectComponent, GomSelectOption } from '../../../../shared/components/form-controls';
+import { GomAlertToastService } from '@gomlibs/ui';
+import { GomButtonComponent, GomInputComponent, GomSelectComponent, GomSelectOption } from '@gomlibs/ui';
 import { TenantAccessService } from '../../services';
 import { CreateEmployeeRequest, EmployeeStatus, UpdateEmployeeRequest, UserWithRoles } from '../../models';
 

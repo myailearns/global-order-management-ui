@@ -1,4 +1,4 @@
-import { GomSelectOption } from '../../../shared/components/form-controls';
+import { GomSelectOption } from '@gomlibs/ui';
 
 export const FIELD_DEFAULT_STATUS = 'ACTIVE' as const;
 export const FIELD_DEFAULT_TYPE = 'NUMBER' as const;

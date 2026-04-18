@@ -2,9 +2,9 @@ import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 
-import { GomButtonContentMode, getButtonContentMode, showButtonIcon, showButtonText } from '../../../../shared/components/config';
-import { GomButtonComponent } from '../../../../shared/components/form-controls';
-import { GomModalComponent } from '../../../../shared/components/modal';
+import { GomButtonContentMode, getButtonContentMode, showButtonIcon, showButtonText } from '@gomlibs/ui';
+import { GomButtonComponent } from '@gomlibs/ui';
+import { GomModalComponent } from '@gomlibs/ui';
 import { UNIT_UI_TEXT } from '../units.constants';
 import { Unit } from '../units.service';
 

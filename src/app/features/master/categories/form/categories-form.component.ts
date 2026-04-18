@@ -11,18 +11,18 @@ import {
   getButtonContentMode,
   showButtonIcon,
   showButtonText,
-} from '../../../../shared/components/config';
+} from '@gomlibs/ui';
 import {
   GomButtonComponent,
   GomSelectOption,
-} from '../../../../shared/components/form-controls';
-import { GomModalComponent } from '../../../../shared/components/modal';
+} from '@gomlibs/ui';
+import { GomModalComponent } from '@gomlibs/ui';
 import {
   GomDynamicFormComponent,
   GomDynamicFormConfig,
   GomDynamicFormFieldConfig,
   GomDynamicFormLoaderService,
-} from '../../../../shared/components/dynamic-form';
+} from '@gomlibs/ui';
 
 export interface CategoryFormData {
   name: string;

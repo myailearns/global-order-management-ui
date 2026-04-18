@@ -3,8 +3,8 @@ import { CommonModule } from '@angular/common';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { CATEGORY_DEFAULT_STATUS, CATEGORY_UI_TEXT } from '../categories.constants';
 import { Category } from '../categories.service';
-import { GomButtonComponent } from '../../../../shared/components/form-controls';
-import { GomTableColumn, GomTableComponent, GomTableRow } from '../../../../shared/components/table';
+import { GomButtonComponent } from '@gomlibs/ui';
+import { GomTableColumn, GomTableComponent, GomTableRow } from '@gomlibs/ui';
 
 interface CategoryTableRow extends GomTableRow {
   _id?: string;

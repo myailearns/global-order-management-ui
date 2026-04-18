@@ -3,16 +3,16 @@ import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angula
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
-import { FormControlsModule, GomButtonComponent } from '../../../shared/components/form-controls';
+import { FormControlsModule, GomButtonComponent } from '@gomlibs/ui';
 import {
   GomButtonContentMode,
   getButtonContentMode,
   showButtonIcon,
   showButtonText,
-} from '../../../shared/components/config';
-import { GomTableColumn, GomTableComponent, GomTableRow } from '../../../shared/components/table';
-import { GomModalComponent } from '../../../shared/components/modal';
-import { GomAlertToastService } from '../../../shared/components/alert';
+} from '@gomlibs/ui';
+import { GomTableColumn, GomTableComponent, GomTableRow } from '@gomlibs/ui';
+import { GomModalComponent } from '@gomlibs/ui';
+import { GomAlertToastService } from '@gomlibs/ui';
 import { TaxProfile, TaxProfilesService } from './tax-profiles.service';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
 

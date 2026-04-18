@@ -4,8 +4,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { catchError, debounceTime, of, startWith, switchMap } from 'rxjs';
 
-import { GomAlertToastService } from '../../../shared/components/alert';
-import { FormControlsModule, GomButtonComponent } from '../../../shared/components/form-controls';
+import { GomAlertToastService } from '@gomlibs/ui';
+import { FormControlsModule, GomButtonComponent } from '@gomlibs/ui';
 import {
   DeliveryService,
   EmployeeCodeConfig,

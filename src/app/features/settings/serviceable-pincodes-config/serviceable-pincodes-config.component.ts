@@ -3,8 +3,8 @@ import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 
-import { GomAlertToastService } from '../../../shared/components/alert';
-import { FormControlsModule, GomButtonComponent } from '../../../shared/components/form-controls';
+import { GomAlertToastService } from '@gomlibs/ui';
+import { FormControlsModule, GomButtonComponent } from '@gomlibs/ui';
 import {
   DeliveryPincodeConfig,
   DeliveryService,

@@ -1,4 +1,4 @@
-import { GomDynamicFormConfig } from '../../../../shared/components/dynamic-form';
+import { GomDynamicFormConfig } from '@gomlibs/ui';
 
 export const DEFAULT_CATEGORY_FORM_CONFIG: GomDynamicFormConfig = {
   fields: [

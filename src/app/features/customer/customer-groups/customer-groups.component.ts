@@ -2,10 +2,10 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
-import { GomAlertToastService } from '../../../shared/components/alert';
-import { GomButtonComponent, GomInputComponent } from '../../../shared/components/form-controls';
-import { GomConfirmationModalComponent, GomModalComponent } from '../../../shared/components/modal';
-import { GomTableColumn, GomTableComponent, GomTableRow } from '../../../shared/components/table';
+import { GomAlertToastService } from '@gomlibs/ui';
+import { GomButtonComponent, GomInputComponent } from '@gomlibs/ui';
+import { GomConfirmationModalComponent, GomModalComponent } from '@gomlibs/ui';
+import { GomTableColumn, GomTableComponent, GomTableRow } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import {
   CustomerEngagementService,

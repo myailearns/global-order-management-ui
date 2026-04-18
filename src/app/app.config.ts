@@ -5,7 +5,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
 
 import { routes } from './app.routes';
-import { ThemedModule } from './shared/theming/theming.module';
+import { ThemedModule } from '@gomlibs/ui';
 import { tenantHeadersInterceptor } from './core/http/tenant-headers.interceptor';
 
 export const appConfig: ApplicationConfig = {

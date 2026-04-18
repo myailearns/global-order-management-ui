@@ -3,8 +3,8 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 
-import { GomAlertToastService } from '../../../shared/components/alert';
-import { GomButtonComponent, GomSelectComponent, GomSelectOption, GomTextareaComponent } from '../../../shared/components/form-controls';
+import { GomAlertToastService } from '@gomlibs/ui';
+import { GomButtonComponent, GomSelectComponent, GomSelectOption, GomTextareaComponent } from '@gomlibs/ui';
 import { SaasAccountService } from '../accounts/saas-account.service';
 import { EntitlementsService } from './entitlements.service';
 import { EffectiveFeaturesResult, TenantEntitlement } from './entitlements.model';

@@ -4,10 +4,10 @@ import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angu
 import { TranslateModule } from '@ngx-translate/core';
 import { startWith } from 'rxjs';
 
-import { GomAlertToastService } from '../../../shared/components/alert';
-import { GomButtonComponent, GomInputComponent, GomSelectComponent, GomSelectOption, GomTextareaComponent } from '../../../shared/components/form-controls';
-import { GomModalComponent } from '../../../shared/components/modal';
-import { GomTableColumn, GomTableComponent, GomTableRow } from '../../../shared/components/table';
+import { GomAlertToastService } from '@gomlibs/ui';
+import { GomButtonComponent, GomInputComponent, GomSelectComponent, GomSelectOption, GomTextareaComponent } from '@gomlibs/ui';
+import { GomModalComponent } from '@gomlibs/ui';
+import { GomTableColumn, GomTableComponent, GomTableRow } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { SaasAccountService } from './saas-account.service';
 import { AccountStatus, AuditLogItem, CreateAccountRequest, TenantAccount, TrialMode, UpdateAccountRequest } from './saas-account.model';
