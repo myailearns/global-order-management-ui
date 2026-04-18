@@ -1,7 +1,9 @@
 {
   "buildCommand": "npm run build",
+  "installCommand": "npm install",
   "outputDirectory": "dist/gom-ui/browser",
   "cleanUrls": true,
+  "framework": null,
   "rewrites": [
     {
       "source": "/(.*)",
