@@ -3,7 +3,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
-import { GomButtonComponent } from '../../../shared/components/form-controls';
+import { GomButtonComponent } from '@gomlibs/ui';
 import { TenantAccessService } from '../services';
 import { TenantAdminSummary } from '../models';
 

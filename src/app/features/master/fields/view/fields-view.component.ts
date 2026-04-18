@@ -7,9 +7,9 @@ import {
   getButtonContentMode,
   showButtonIcon,
   showButtonText,
-} from '../../../../shared/components/config';
-import { GomButtonComponent } from '../../../../shared/components/form-controls';
-import { GomModalComponent } from '../../../../shared/components/modal';
+} from '@gomlibs/ui';
+import { GomButtonComponent } from '@gomlibs/ui';
+import { GomModalComponent } from '@gomlibs/ui';
 import { FIELD_UI_TEXT } from '../fields.constants';
 import { Field } from '../fields.service';
 

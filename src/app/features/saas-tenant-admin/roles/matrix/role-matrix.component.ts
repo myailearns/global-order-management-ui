@@ -5,8 +5,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { catchError, forkJoin, map, of, switchMap } from 'rxjs';
 
-import { GomAlertToastService } from '../../../../shared/components/alert';
-import { GomButtonComponent, GomInputComponent, GomSelectComponent, GomSelectOption } from '../../../../shared/components/form-controls';
+import { GomAlertToastService } from '@gomlibs/ui';
+import { GomButtonComponent, GomInputComponent, GomSelectComponent, GomSelectOption } from '@gomlibs/ui';
 import { RoleWithPermissions, TenantAdminSummary } from '../../models';
 import { TenantAccessService } from '../../services';
 import { SaasAccountService } from '../../../saas-platform/accounts/saas-account.service';

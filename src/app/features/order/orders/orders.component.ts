@@ -3,11 +3,11 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
-import { GomButtonComponent, GomInputComponent, GomSelectComponent, GomSelectOption } from '../../../shared/components/form-controls';
-import { GomConfirmationModalComponent, GomModalComponent } from '../../../shared/components/modal';
-import { GomChipTone, GomChipComponent } from '../../../shared/components';
-import { GomTableColumn, GomTableComponent, GomTableRow } from '../../../shared/components/table';
-import { GomAlertToastService } from '../../../shared/components/alert';
+import { GomButtonComponent, GomInputComponent, GomSelectComponent, GomSelectOption } from '@gomlibs/ui';
+import { GomConfirmationModalComponent, GomModalComponent } from '@gomlibs/ui';
+import { GomChipTone, GomChipComponent } from '@gomlibs/ui';
+import { GomTableColumn, GomTableComponent, GomTableRow } from '@gomlibs/ui';
+import { GomAlertToastService } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { CourierPartner, Order, OrderItem, OrdersService, Rider, UpdateOrderEditableFieldsPayload, Variant } from './orders.service';
 import { environment } from '../../../../environments/environment';

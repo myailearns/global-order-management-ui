@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 
-import { GomButtonComponent } from '../../../shared/components/form-controls';
+import { GomButtonComponent } from '@gomlibs/ui';
 
 @Component({
   selector: 'gom-auth-entry',

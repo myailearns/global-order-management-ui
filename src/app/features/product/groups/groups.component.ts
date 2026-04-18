@@ -14,16 +14,16 @@ import {
   FormControlsModule,
   GomButtonComponent,
   GomSelectOption,
-} from '../../../shared/components/form-controls';
+} from '@gomlibs/ui';
 import {
   GomButtonContentMode,
   getButtonContentMode,
   showButtonIcon,
   showButtonText,
-} from '../../../shared/components/config';
-import { GomTableColumn, GomTableComponent, GomTableRow } from '../../../shared/components/table';
-import { GomTabsComponent, GomTabContentComponent, TabItem } from '../../../shared/components/tabs';
-import { GomModalComponent } from '../../../shared/components/modal';
+} from '@gomlibs/ui';
+import { GomTableColumn, GomTableComponent, GomTableRow } from '@gomlibs/ui';
+import { GomTabsComponent, GomTabContentComponent, TabItem } from '@gomlibs/ui';
+import { GomModalComponent } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import {
   Category,

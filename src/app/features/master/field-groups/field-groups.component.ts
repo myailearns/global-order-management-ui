@@ -4,12 +4,12 @@ import { FormArray, FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Va
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { forkJoin } from 'rxjs';
 
-import { GomAlertToastService } from '../../../shared/components/alert';
+import { GomAlertToastService } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
-import { GomButtonContentMode, getButtonContentMode, showButtonIcon, showButtonText } from '../../../shared/components/config';
-import { GomButtonComponent, GomInputComponent, GomSelectComponent, GomSelectOption } from '../../../shared/components/form-controls';
-import { GomConfirmationModalComponent, GomModalComponent } from '../../../shared/components/modal';
-import { GomTableColumn, GomTableComponent, GomTableRow } from '../../../shared/components/table';
+import { GomButtonContentMode, getButtonContentMode, showButtonIcon, showButtonText } from '@gomlibs/ui';
+import { GomButtonComponent, GomInputComponent, GomSelectComponent, GomSelectOption } from '@gomlibs/ui';
+import { GomConfirmationModalComponent, GomModalComponent } from '@gomlibs/ui';
+import { GomTableColumn, GomTableComponent, GomTableRow } from '@gomlibs/ui';
 import { CategoryOption, FieldGroup, FieldGroupFieldItem, FieldGroupPayload, FieldGroupsService, PricingField, ProductGroupUsage } from './field-groups.service';
 
 interface FieldGroupRow extends GomTableRow {

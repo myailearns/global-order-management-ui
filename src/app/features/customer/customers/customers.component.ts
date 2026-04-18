@@ -1,11 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 
-import { GomAlertToastService } from '../../../shared/components/alert';
+import { GomAlertToastService } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
-import { GomButtonComponent, GomInputComponent } from '../../../shared/components/form-controls';
-import { GomModalComponent } from '../../../shared/components/modal';
-import { GomTableColumn, GomTableComponent, GomTableRow } from '../../../shared/components/table';
+import { GomButtonComponent, GomInputComponent } from '@gomlibs/ui';
+import { GomModalComponent } from '@gomlibs/ui';
+import { GomTableColumn, GomTableComponent, GomTableRow } from '@gomlibs/ui';
 import {
   CustomerEngagementService,
   CustomerInsight,

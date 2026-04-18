@@ -9,15 +9,15 @@ import {
   getButtonContentMode,
   showButtonIcon,
   showButtonText,
-} from '../../../../shared/components/config';
+} from '@gomlibs/ui';
 import {
   GomDynamicFormComponent,
   GomDynamicFormConfig,
   GomDynamicFormFieldConfig,
   GomDynamicFormLoaderService,
-} from '../../../../shared/components/dynamic-form';
-import { GomButtonComponent, GomSelectComponent, GomSelectOption } from '../../../../shared/components/form-controls';
-import { GomModalComponent } from '../../../../shared/components/modal';
+} from '@gomlibs/ui';
+import { GomButtonComponent, GomSelectComponent, GomSelectOption } from '@gomlibs/ui';
+import { GomModalComponent } from '@gomlibs/ui';
 import {
   FIELD_DEFAULT_STATUS,
   FIELD_DEFAULT_TYPE,

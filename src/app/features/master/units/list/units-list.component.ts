@@ -2,8 +2,8 @@ import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, injec
 import { CommonModule } from '@angular/common';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
-import { GomButtonComponent } from '../../../../shared/components/form-controls';
-import { GomTableColumn, GomTableComponent, GomTableRow } from '../../../../shared/components/table';
+import { GomButtonComponent } from '@gomlibs/ui';
+import { GomTableColumn, GomTableComponent, GomTableRow } from '@gomlibs/ui';
 import { UNIT_DEFAULT_STATUS, UNIT_UI_TEXT } from '../units.constants';
 import { Unit } from '../units.service';
 

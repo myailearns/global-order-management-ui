@@ -3,9 +3,9 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { forkJoin } from 'rxjs';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
-import { GomAlertToastService } from '../../../shared/components/alert';
-import { GomConfirmationModalComponent } from '../../../shared/components/modal';
-import { GomSelectOption } from '../../../shared/components/form-controls';
+import { GomAlertToastService } from '@gomlibs/ui';
+import { GomConfirmationModalComponent } from '@gomlibs/ui';
+import { GomSelectOption } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { UNIT_UI_TEXT } from './units.constants';
 import { CategoryOption, Unit, UnitPayload, UnitsService } from './units.service';

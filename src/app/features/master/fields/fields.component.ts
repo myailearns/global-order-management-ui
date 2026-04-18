@@ -4,8 +4,8 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { forkJoin, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 
-import { GomAlertToastService } from '../../../shared/components/alert';
-import { GomConfirmationModalComponent } from '../../../shared/components/modal';
+import { GomAlertToastService } from '@gomlibs/ui';
+import { GomConfirmationModalComponent } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { FIELD_DEFAULT_STATUS, FIELD_DEFAULT_TYPE, FIELD_UI_TEXT } from './fields.constants';
 import { Field, FieldGroupUpdatePayload, FieldGroupUsage, FieldsService } from './fields.service';

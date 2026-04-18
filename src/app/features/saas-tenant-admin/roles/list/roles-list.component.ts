@@ -4,10 +4,10 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 
-import { GomAlertToastService } from '../../../../shared/components/alert';
+import { GomAlertToastService } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../../core/auth/auth-session.service';
-import { GomButtonComponent, GomSelectComponent, GomSelectOption } from '../../../../shared/components/form-controls';
-import { GomTableColumn, GomTableComponent, GomTableRow } from '../../../../shared/components/table';
+import { GomButtonComponent, GomSelectComponent, GomSelectOption } from '@gomlibs/ui';
+import { GomTableColumn, GomTableComponent, GomTableRow } from '@gomlibs/ui';
 import { TenantAccessService } from '../../services';
 import { RoleStatus, RoleWithPermissions } from '../../models';
 import { SaasAccountService } from '../../../saas-platform/accounts/saas-account.service';

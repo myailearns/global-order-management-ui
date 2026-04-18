@@ -4,7 +4,7 @@
  */
 
 // Import theme system (palette, colors, breakpoints, typography, sizing)
-@use "app/shared/theming/styles/theme" as *;
+@use "theme" as *;
 
 // Import Remix Icon font
 @import "remixicon/fonts/remixicon.css";

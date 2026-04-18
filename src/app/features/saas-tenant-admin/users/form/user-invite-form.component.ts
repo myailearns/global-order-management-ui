@@ -4,9 +4,9 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 
-import { GomAlertToastService } from '../../../../shared/components/alert';
-import { GomButtonComponent, GomInputComponent } from '../../../../shared/components/form-controls';
-import { GomModalComponent } from '../../../../shared/components/modal';
+import { GomAlertToastService } from '@gomlibs/ui';
+import { GomButtonComponent, GomInputComponent } from '@gomlibs/ui';
+import { GomModalComponent } from '@gomlibs/ui';
 
 import { TenantAccessService } from '../../services';
 import { CreateUserRequest } from '../../models';

@@ -6,8 +6,8 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { take } from 'rxjs';
 
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
-import { GomAlertToastService } from '../../../shared/components/alert';
-import { GomButtonComponent, GomInputComponent } from '../../../shared/components/form-controls';
+import { GomAlertToastService } from '@gomlibs/ui';
+import { GomButtonComponent, GomInputComponent } from '@gomlibs/ui';
 
 @Component({
   selector: 'gom-platform-login',

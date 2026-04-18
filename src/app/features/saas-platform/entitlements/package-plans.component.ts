@@ -3,10 +3,10 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 
-import { GomAlertToastService } from '../../../shared/components/alert';
-import { GomButtonComponent, GomInputComponent, GomSelectComponent, GomSelectOption, GomTextareaComponent } from '../../../shared/components/form-controls';
-import { GomModalComponent } from '../../../shared/components/modal';
-import { GomTableColumn, GomTableComponent, GomTableRow } from '../../../shared/components/table';
+import { GomAlertToastService } from '@gomlibs/ui';
+import { GomButtonComponent, GomInputComponent, GomSelectComponent, GomSelectOption, GomTextareaComponent } from '@gomlibs/ui';
+import { GomModalComponent } from '@gomlibs/ui';
+import { GomTableColumn, GomTableComponent, GomTableRow } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { EntitlementsService } from './entitlements.service';
 import { FeatureCatalogItem, PackagePlan } from './entitlements.model';

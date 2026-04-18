@@ -3,11 +3,11 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormControl } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
-import { GomAlertToastService } from '../../../../shared/components/alert';
+import { GomAlertToastService } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../../core/auth/auth-session.service';
-import { GomButtonComponent, GomInputComponent } from '../../../../shared/components/form-controls';
-import { GomTableColumn, GomTableComponent, GomTableRow } from '../../../../shared/components/table';
-import { GomModalComponent } from '../../../../shared/components/modal';
+import { GomButtonComponent, GomInputComponent } from '@gomlibs/ui';
+import { GomTableColumn, GomTableComponent, GomTableRow } from '@gomlibs/ui';
+import { GomModalComponent } from '@gomlibs/ui';
 
 import { TenantAccessService } from '../../services';
 import { EmployeeProfile } from '../../models';
