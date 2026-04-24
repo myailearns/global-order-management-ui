@@ -1,0 +1,171 @@
+<gom-lib-modal
+  [title]="(initialData ? 'fieldGroups.form.titleEdit' : 'fieldGroups.form.titleCreate') | translate"
+  [show]="isOpen"
+  (showChange)="isOpen = $event"
+  (closed)="onCancel()"
+  size="large"
+>
+  <section class="field-group-form">
+    @if (errorMessage()) {
+      <div class="field-group-form__error">
+        <i class="ri-alert-fill" aria-hidden="true"></i>
+        <span>{{ errorMessage() }}</span>
+      </div>
+    }
+
+    <div class="form-grid form-grid--two">
+      <gom-lib-input
+        [label]="('fieldGroups.labels.nameRequired' | translate)"
+        [placeholder]="('fieldGroups.placeholders.name' | translate)"
+        [formControl]="form.controls.name"
+        [error]="form.controls.name.touched && form.controls.name.invalid ? ('fieldGroups.validation.nameRequired' | translate) : ''"
+      ></gom-lib-input>
+
+      <gom-lib-select
+        [label]="('fieldGroups.labels.status' | translate)"
+        [placeholder]="('fieldGroups.placeholders.status' | translate)"
+        [options]="statusOptions"
+        [formControl]="form.controls.status"
+      ></gom-lib-select>
+
+      <gom-lib-select
+        [label]="('fieldGroups.labels.mappedCategories' | translate)"
+        [placeholder]="('fieldGroups.placeholders.mappedCategories' | translate)"
+        [multiple]="true"
+        [options]="categoryOptions()"
+        [selectedValues]="selectedCategoryIds"
+        [closeMenuTrigger]="categorySelectCloseToken"
+        (selectedValuesChange)="onMappedCategorySelectionChange($event)"
+      ></gom-lib-select>
+    </div>
+
+    <div class="field-group-form__panel">
+      <div class="field-group-form__panel-header">
+        <div>
+          <h3>{{ 'fieldGroups.labels.fields' | translate }}</h3>
+          <p>{{ 'fieldGroups.help.fieldsPanel' | translate }}</p>
+        </div>
+      </div>
+
+      <div class="field-group-form__add-row">
+        <gom-lib-select
+          [label]="('fieldGroups.labels.addField' | translate)"
+          [placeholder]="('fieldGroups.placeholders.addField' | translate)"
+          [multiple]="true"
+          [options]="availableFieldOptions()"
+          [selectedValues]="selectedAddFieldIds"
+          [closeMenuTrigger]="addFieldSelectCloseToken"
+          (selectedValuesChange)="onAddFieldSelectionChange($event)"
+        ></gom-lib-select>
+
+        <gom-lib-button
+          type="button"
+          variant="secondary"
+          [size]="addFieldMode === 'icon-only' ? 'icon' : 'default'"
+          [disabled]="selectedAddFieldIds.length === 0"
+          (buttonClick)="addSelectedField()"
+        >
+          @if (shouldShowIcon(addFieldMode)) {
+            <i class="ri-add-line" aria-hidden="true"></i>
+          }
+          @if (shouldShowText(addFieldMode)) {
+            {{ 'fieldGroups.actions.addField' | translate }}
+          } @else {
+            <span class="sr-only">{{ 'fieldGroups.actions.addField' | translate }}</span>
+          }
+        </gom-lib-button>
+      </div>
+
+      @if (selectedFields().length > 0) {
+        <div class="field-group-form__items">
+          @for (item of selectedFields(); track item.fieldId; let index = $index) {
+            <article
+              class="field-item-card"
+              draggable="true"
+              [class.field-item-card--dragging]="dragSourceIndex() === index"
+              [class.field-item-card--drag-over]="dragOverIndex() === index"
+              (dragstart)="onFieldDragStart(index, $event)"
+              (dragover)="onFieldDragOver(index, $event)"
+              (drop)="onFieldDrop(index, $event)"
+              (dragend)="onFieldDragEnd()"
+            >
+              <div class="field-item-card__meta">
+                <div>
+                  <h4>{{ item.field?.name || '-' }}</h4>
+                  <p>
+                    {{ 'fieldGroups.labels.usedInGroups' | translate }}:
+                    {{ getFieldUsageText(item.fieldId) }}
+                  </p>
+                  <div class="field-item-card__required">
+                    <gom-lib-select
+                      [label]="('fieldGroups.labels.requiredInGroup' | translate)"
+                      [options]="requiredOverrideOptions"
+                      [formControl]="item.control.controls.requiredOverride"
+                    ></gom-lib-select>
+                  </div>
+                </div>
+
+                <div class="field-item-card__actions">
+                  <gom-lib-button
+                    type="button"
+                    variant="danger"
+                    [size]="rowDeleteMode === 'icon-only' ? 'icon' : 'default'"
+                    (buttonClick)="removeField(index)"
+                  >
+                    @if (shouldShowIcon(rowDeleteMode)) {
+                      <i class="ri-delete-bin-line" aria-hidden="true"></i>
+                    }
+                    @if (shouldShowText(rowDeleteMode)) {
+                      {{ 'common.actions.delete' | translate }}
+                    } @else {
+                      <span class="sr-only">{{ 'common.actions.delete' | translate }}</span>
+                    }
+                  </gom-lib-button>
+                </div>
+              </div>
+            </article>
+          }
+        </div>
+      } @else {
+        <p class="field-group-form__empty">{{ 'fieldGroups.validation.fieldsRequired' | translate }}</p>
+      }
+    </div>
+  </section>
+
+  <footer class="gom-modal__action-layout" gom-modal-actions>
+    <div class="gom-modal__action-layout-start"></div>
+    <div class="gom-modal__action-layout-end">
+      <gom-lib-button
+        type="button"
+        variant="secondary"
+        [size]="cancelMode === 'icon-only' ? 'icon' : 'default'"
+        (buttonClick)="onCancel()"
+      >
+        @if (shouldShowIcon(cancelMode)) {
+          <i class="ri-close-line" aria-hidden="true"></i>
+        }
+        @if (shouldShowText(cancelMode)) {
+          {{ 'common.actions.cancel' | translate }}
+        } @else {
+          <span class="sr-only">{{ 'common.actions.cancel' | translate }}</span>
+        }
+      </gom-lib-button>
+      <gom-lib-button
+        type="button"
+        variant="primary"
+        [size]="submitMode === 'icon-only' ? 'icon' : 'default'"
+        [disabled]="form.invalid || fieldItems.length === 0"
+        (buttonClick)="onSubmit()"
+      >
+        @if (shouldShowIcon(submitMode)) {
+          <i class="ri-check-line" aria-hidden="true"></i>
+        }
+        @if (shouldShowText(submitMode)) {
+          {{ (initialData ? 'common.actions.update' : 'common.actions.create') | translate }}
+        } @else {
+          <span class="sr-only">{{ (initialData ? 'common.actions.update' : 'common.actions.create') | translate }}</span>
+        }
+      </gom-lib-button>
+    </div>
+  </footer>
+</gom-lib-modal>

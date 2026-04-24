@@ -1,0 +1,166 @@
+<gom-lib-modal
+  [title]="'media.imagePicker.title' | translate"
+  [(show)]="show"
+  (opened)="onModalOpened()"
+  (closed)="onModalClosed()"
+  size="large"
+>
+  <div class="picker">
+    <!-- Toolbar: Search + Upload button -->
+    <div class="picker__toolbar">
+      <gom-lib-input
+        class="picker__search"
+        [placeholder]="'media.imagePicker.searchPlaceholder' | translate"
+        (valueChange)="onSearchChange($event)"
+      ></gom-lib-input>
+      @if (canUpload()) {
+        <gom-lib-button type="button" variant="secondary" (buttonClick)="toggleUploadPanel()" [disabled]="maxUploadFiles() <= 0">
+          <i class="ri-upload-2-line" aria-hidden="true"></i> {{ 'media.imagePicker.uploadNew' | translate }}
+        </gom-lib-button>
+      }
+    </div>
+
+    <!-- Inline Upload Panel -->
+    @if (uploadPanelOpen()) {
+      <div class="picker__upload-panel">
+        <gom-image-upload
+          [maxFiles]="maxUploadFiles()"
+          [disabled]="uploading()"
+          (filesSelected)="onFilesUploaded($event)"
+        ></gom-image-upload>
+        @if (uploading()) {
+          <p class="picker__uploading">
+            <i class="ri-loader-4-line ri-spin" aria-hidden="true"></i>
+            {{ 'media.imagePicker.uploading' | translate }}
+          </p>
+        }
+      </div>
+    }
+
+    <!-- Scrollable image sections -->
+    <div class="picker__body">
+      <!-- Your Images section (tenant) -->
+      @if (canUpload()) {
+        <section class="picker__section">
+          <h5 class="picker__section-label">
+            <i class="ri-user-line" aria-hidden="true"></i>
+            {{ 'media.imagePicker.yourImages' | translate }}
+          </h5>
+          @if (tenantLoading()) {
+            <div class="picker__section-loading">
+              <i class="ri-loader-4-line ri-spin" aria-hidden="true"></i>
+            </div>
+          } @else if (tenantAssets().length === 0) {
+            <p class="picker__section-empty">{{ 'media.imagePicker.noTenantImages' | translate }}</p>
+          } @else {
+            <div class="picker__grid">
+              @for (asset of tenantAssets(); track asset._id) {
+                <div
+                  class="picker__card"
+                  [class.picker__card--selected]="isSelected(asset._id)"
+                  [class.picker__card--added]="isAlreadyAdded(asset._id)"
+                  (click)="toggleSelect(asset)"
+                >
+                  <div class="picker__card-img-wrapper">
+                    <img [src]="asset.url" [alt]="asset.name" class="picker__card-img" loading="lazy" />
+                    @if (isAlreadyAdded(asset._id)) {
+                      <div class="picker__card-added-badge">
+                        {{ 'media.imagePicker.added' | translate }}
+                      </div>
+                    }
+                    @if (isSelected(asset._id)) {
+                      <div class="picker__card-check">
+                        <i class="ri-checkbox-circle-fill" aria-hidden="true"></i>
+                      </div>
+                    }
+                  </div>
+                  <span class="picker__card-name" [title]="asset.name">{{ asset.name }}</span>
+                </div>
+              }
+            </div>
+
+            @if (tenantTotalPages() > 1) {
+              <div class="picker__pagination">
+                <gom-lib-button type="button" variant="secondary" [disabled]="tenantPage() <= 1" (buttonClick)="onTenantPageChange(tenantPage() - 1)">
+                  <i class="ri-arrow-left-s-line" aria-hidden="true"></i>
+                </gom-lib-button>
+                <span class="picker__pagination-info">{{ tenantPage() }} / {{ tenantTotalPages() }}</span>
+                <gom-lib-button type="button" variant="secondary" [disabled]="tenantPage() >= tenantTotalPages()" (buttonClick)="onTenantPageChange(tenantPage() + 1)">
+                  <i class="ri-arrow-right-s-line" aria-hidden="true"></i>
+                </gom-lib-button>
+              </div>
+            }
+          }
+        </section>
+      }
+
+      <!-- Platform Images section -->
+      <section class="picker__section">
+        <h5 class="picker__section-label">
+          <i class="ri-building-line" aria-hidden="true"></i>
+          {{ 'media.imagePicker.platformImages' | translate }}
+        </h5>
+        @if (platformLoading()) {
+          <div class="picker__section-loading">
+            <i class="ri-loader-4-line ri-spin" aria-hidden="true"></i>
+          </div>
+        } @else if (platformAssets().length === 0) {
+          <p class="picker__section-empty">{{ 'media.imagePicker.noPlatformImages' | translate }}</p>
+        } @else {
+          <div class="picker__grid">
+            @for (asset of platformAssets(); track asset._id) {
+              <div
+                class="picker__card"
+                [class.picker__card--selected]="isSelected(asset._id)"
+                [class.picker__card--added]="isAlreadyAdded(asset._id)"
+                (click)="toggleSelect(asset)"
+              >
+                <div class="picker__card-img-wrapper">
+                  <img [src]="asset.url" [alt]="asset.name" class="picker__card-img" loading="lazy" />
+                  @if (isAlreadyAdded(asset._id)) {
+                    <div class="picker__card-added-badge">
+                      {{ 'media.imagePicker.added' | translate }}
+                    </div>
+                  }
+                  @if (isSelected(asset._id)) {
+                    <div class="picker__card-check">
+                      <i class="ri-checkbox-circle-fill" aria-hidden="true"></i>
+                    </div>
+                  }
+                </div>
+                <span class="picker__card-name" [title]="asset.name">{{ asset.name }}</span>
+              </div>
+            }
+          </div>
+
+          @if (platformTotalPages() > 1) {
+            <div class="picker__pagination">
+              <gom-lib-button type="button" variant="secondary" [disabled]="platformPage() <= 1" (buttonClick)="onPlatformPageChange(platformPage() - 1)">
+                <i class="ri-arrow-left-s-line" aria-hidden="true"></i>
+              </gom-lib-button>
+              <span class="picker__pagination-info">{{ platformPage() }} / {{ platformTotalPages() }}</span>
+              <gom-lib-button type="button" variant="secondary" [disabled]="platformPage() >= platformTotalPages()" (buttonClick)="onPlatformPageChange(platformPage() + 1)">
+                <i class="ri-arrow-right-s-line" aria-hidden="true"></i>
+              </gom-lib-button>
+            </div>
+          }
+        }
+      </section>
+    </div>
+
+    <!-- Footer actions -->
+    <div class="picker__actions">
+      <gom-lib-button type="button" variant="secondary" (buttonClick)="close()">
+        {{ 'media.actions.cancel' | translate }}
+      </gom-lib-button>
+      <gom-lib-button
+        type="button"
+        variant="primary"
+        [disabled]="selectionCount() === 0"
+        (buttonClick)="confirmSelection()"
+      >
+        {{ 'media.imagePicker.addImages' | translate }} ({{ selectionCount() }})
+      </gom-lib-button>
+    </div>
+  </div>
+</gom-lib-modal>

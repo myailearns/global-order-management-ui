@@ -102,3 +102,9 @@ export interface AuditLogItem {
   reason?: string | null;
   createdAt: string;
 }
+
+export interface TenantStorageItem {
+  tenantCode: string;
+  size: number;
+  count: number;
+}

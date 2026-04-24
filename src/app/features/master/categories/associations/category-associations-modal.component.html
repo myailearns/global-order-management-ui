@@ -1,0 +1,136 @@
+<gom-lib-modal
+  [show]="isOpen"
+  (showChange)="isOpen = $event"
+  [title]="(category?.name || '') + ' — ' + ('categories.associations.title' | translate)"
+  [closeOnBackdropClick]="true"
+  size="large"
+  (closed)="onClose()"
+>
+  @if (loading()) {
+    <div class="associations__loading">
+      <i class="ri-loader-4-line ri-spin" aria-hidden="true"></i>
+      {{ 'common.messages.loading' | translate }}
+    </div>
+  } @else {
+    <gom-lib-tabs [tabs]="tabs" [activeTab]="activeTab()" (tabChange)="switchTab($event)">
+
+      <!-- Field Groups Tab -->
+      <gom-lib-tab-content tabId="fieldGroups" [activeTab]="activeTab()">
+        <div class="associations__section">
+          <div class="associations__section-header">
+            <h4>{{ 'categories.associations.linkedFieldGroups' | translate }} ({{ fieldGroups().length }})</h4>
+            <gom-lib-button variant="secondary" (buttonClick)="toggleAddFieldGroup()" [disabled]="saving()">
+              <i [class]="showAddFieldGroup() ? 'ri-close-line' : 'ri-add-line'" aria-hidden="true"></i>
+              {{ (showAddFieldGroup() ? 'common.actions.cancel' : 'categories.associations.addFieldGroup') | translate }}
+            </gom-lib-button>
+          </div>
+
+          @if (showAddFieldGroup()) {
+            <div class="associations__available">
+              <p class="associations__available-label">{{ 'categories.associations.availableFieldGroups' | translate }}</p>
+              @if (availableFieldGroups().length === 0) {
+                <p class="associations__empty-hint">{{ 'categories.associations.noAvailableFieldGroups' | translate }}</p>
+              } @else {
+                <div class="associations__chip-list">
+                  @for (item of availableFieldGroups(); track item._id) {
+                    <button class="associations__chip associations__chip--add" (click)="addFieldGroup(item)" [disabled]="saving()">
+                      <i class="ri-add-circle-line" aria-hidden="true"></i> {{ item.name }}
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+          }
+
+          @if (fieldGroups().length === 0) {
+            <p class="associations__empty">{{ 'categories.associations.noFieldGroups' | translate }}</p>
+          } @else {
+            <div class="associations__chip-list">
+              @for (item of fieldGroups(); track item._id) {
+                <span class="associations__chip associations__chip--linked">
+                  <i class="ri-layout-grid-line" aria-hidden="true"></i>
+                  {{ item.name }}
+                  <button class="associations__chip-remove" (click)="removeFieldGroup(item)" [disabled]="saving()"
+                    [attr.aria-label]="'categories.associations.removeAria' | translate : { name: item.name }">
+                    <i class="ri-close-line" aria-hidden="true"></i>
+                  </button>
+                </span>
+              }
+            </div>
+          }
+        </div>
+      </gom-lib-tab-content>
+
+      <!-- Units Tab -->
+      <gom-lib-tab-content tabId="units" [activeTab]="activeTab()">
+        <div class="associations__section">
+          <div class="associations__section-header">
+            <h4>{{ 'categories.associations.linkedUnits' | translate }} ({{ units().length }})</h4>
+            <gom-lib-button variant="secondary" (buttonClick)="toggleAddUnit()" [disabled]="saving()">
+              <i [class]="showAddUnit() ? 'ri-close-line' : 'ri-add-line'" aria-hidden="true"></i>
+              {{ (showAddUnit() ? 'common.actions.cancel' : 'categories.associations.addUnit') | translate }}
+            </gom-lib-button>
+          </div>
+
+          @if (showAddUnit()) {
+            <div class="associations__available">
+              <p class="associations__available-label">{{ 'categories.associations.availableUnits' | translate }}</p>
+              @if (availableUnits().length === 0) {
+                <p class="associations__empty-hint">{{ 'categories.associations.noAvailableUnits' | translate }}</p>
+              } @else {
+                <div class="associations__chip-list">
+                  @for (item of availableUnits(); track item._id) {
+                    <button class="associations__chip associations__chip--add" (click)="addUnit(item)" [disabled]="saving()">
+                      <i class="ri-add-circle-line" aria-hidden="true"></i> {{ item.name }} ({{ item.symbol }})
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+          }
+
+          @if (units().length === 0) {
+            <p class="associations__empty">{{ 'categories.associations.noUnits' | translate }}</p>
+          } @else {
+            <div class="associations__chip-list">
+              @for (item of units(); track item._id) {
+                <span class="associations__chip associations__chip--linked">
+                  <i class="ri-scales-3-line" aria-hidden="true"></i>
+                  {{ item.name }} ({{ item.symbol }})
+                  <button class="associations__chip-remove" (click)="removeUnit(item)" [disabled]="saving()"
+                    [attr.aria-label]="'categories.associations.removeAria' | translate : { name: item.name }">
+                    <i class="ri-close-line" aria-hidden="true"></i>
+                  </button>
+                </span>
+              }
+            </div>
+          }
+        </div>
+      </gom-lib-tab-content>
+
+      <!-- Groups Tab (read-only) -->
+      <gom-lib-tab-content tabId="groups" [activeTab]="activeTab()">
+        <div class="associations__section">
+          <div class="associations__section-header">
+            <h4>{{ 'categories.associations.linkedGroups' | translate }} ({{ groups().length }})</h4>
+          </div>
+          <p class="associations__hint">{{ 'categories.associations.groupsHint' | translate }}</p>
+
+          @if (groups().length === 0) {
+            <p class="associations__empty">{{ 'categories.associations.noGroups' | translate }}</p>
+          } @else {
+            <div class="associations__chip-list">
+              @for (item of groups(); track item._id) {
+                <span class="associations__chip associations__chip--readonly">
+                  <i class="ri-price-tag-3-line" aria-hidden="true"></i>
+                  {{ item.name }}
+                </span>
+              }
+            </div>
+          }
+        </div>
+      </gom-lib-tab-content>
+
+    </gom-lib-tabs>
+  }
+</gom-lib-modal>

@@ -10,15 +10,17 @@ import { GomModalComponent } from '@gomlibs/ui';
 import { GomTableColumn, GomTableComponent, GomTableRow } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { SaasAccountService } from './saas-account.service';
-import { AccountStatus, AuditLogItem, CreateAccountRequest, TenantAccount, TrialMode, UpdateAccountRequest } from './saas-account.model';
+import { AccountStatus, AuditLogItem, CreateAccountRequest, TenantAccount, TenantStorageItem, TrialMode, UpdateAccountRequest } from './saas-account.model';
 import { EntitlementsService } from '../entitlements/entitlements.service';
 
 interface AccountRow extends GomTableRow {
   id: string;
   accountName: string;
   tenantCode: string;
+  tenantUrl: string;
   planId: string;
   status: AccountStatus;
+  mediaUsage: string;
   trialEndAt: string;
   updatedAt: string;
 }
@@ -68,6 +70,7 @@ export class SaasAccountsComponent implements OnInit {
   readonly selectedAccount = signal<TenantAccount | null>(null);
   readonly auditLogs = signal<AuditLogItem[]>([]);
   readonly lastBootstrapMessage = signal('');
+  readonly storageMap = signal<Record<string, TenantStorageItem>>({});
 
   readonly statusOptions: GomSelectOption[] = [
     { value: '', label: 'All Statuses' },
@@ -142,17 +145,23 @@ export class SaasAccountsComponent implements OnInit {
     reason: [''],
   });
 
-  readonly rows = computed<AccountRow[]>(() =>
-    this.accounts().map((item) => ({
-      id: item._id,
-      accountName: item.accountName,
-      tenantCode: item.tenantCode,
-      planId: item.planId,
-      status: item.accountStatus,
-      trialEndAt: item.trialEndAt ? new Date(item.trialEndAt).toLocaleDateString() : '-',
-      updatedAt: new Date(item.updatedAt).toLocaleDateString(),
-    })),
-  );
+  readonly rows = computed<AccountRow[]>(() => {
+    const storage = this.storageMap();
+    return this.accounts().map((item) => {
+      const s = storage[item.tenantCode];
+      return {
+        id: item._id,
+        accountName: item.accountName,
+        tenantCode: item.tenantCode,
+        tenantUrl: `${globalThis.location.origin}/login/${item.tenantCode}`,
+        planId: item.planId,
+        status: item.accountStatus,
+        mediaUsage: s ? `${s.count} images · ${this.formatBytes(s.size)}` : '—',
+        trialEndAt: item.trialEndAt ? new Date(item.trialEndAt).toLocaleDateString() : '-',
+        updatedAt: new Date(item.updatedAt).toLocaleDateString(),
+      };
+    });
+  });
 
   readonly hasRows = computed(() => this.rows().length > 0);
 
@@ -187,8 +196,10 @@ export class SaasAccountsComponent implements OnInit {
   readonly columns: GomTableColumn<AccountRow>[] = [
     { key: 'accountName', header: 'Account', sortable: true, width: '18rem' },
     { key: 'tenantCode', header: 'Tenant Code', sortable: true, width: '12rem' },
+    { key: 'tenantUrl', header: 'Tenant URL', width: '20rem' },
     { key: 'planId', header: 'Plan', sortable: true, width: '10rem' },
     { key: 'status', header: 'Status', width: '10rem' },
+    { key: 'mediaUsage', header: 'Media Storage', width: '14rem' },
     { key: 'trialEndAt', header: 'Trial End', width: '10rem' },
     { key: 'updatedAt', header: 'Updated', width: '10rem' },
     {
@@ -208,6 +219,7 @@ export class SaasAccountsComponent implements OnInit {
     this.setupTenantCodeAutoGeneration();
     this.loadPlanOptions();
     this.loadAccounts();
+    this.loadTenantStorage();
   }
 
   toggleTenantCodeInputMode(): void {
@@ -248,6 +260,25 @@ export class SaasAccountsComponent implements OnInit {
     this.search.set(value.trim());
     this.page.set(1);
     this.loadAccounts();
+  }
+
+  loadTenantStorage(): void {
+    this.service.getPerTenantStorage().subscribe({
+      next: (items) => {
+        const map: Record<string, TenantStorageItem> = {};
+        for (const item of items) {
+          map[item.tenantCode] = item;
+        }
+        this.storageMap.set(map);
+      },
+      error: () => { /* silent — column shows dash */ },
+    });
+  }
+
+  formatBytes(bytes: number): string {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   }
 
   onStatusFilterChange(value: string): void {
@@ -447,9 +478,10 @@ export class SaasAccountsComponent implements OnInit {
         this.loading.set(false);
         this.formModalOpen.set(false);
         const bootstrapInfo = result.tenantAdminBootstrap;
+        const tenantUrl = `${globalThis.location.origin}/login/${createPayload.tenantCode}`;
         const bootstrapMessage = bootstrapInfo
-          ? `First tenant admin ${bootstrapInfo.fullName} (${bootstrapInfo.email}) created with role ${bootstrapInfo.roleKey}.`
-          : 'SaaS account created.';
+          ? `First tenant admin ${bootstrapInfo.fullName} (${bootstrapInfo.email}) created with role ${bootstrapInfo.roleKey}.\nTenant URL: ${tenantUrl}`
+          : `SaaS account created.\nTenant URL: ${tenantUrl}`;
         this.lastBootstrapMessage.set(bootstrapMessage);
         this.toast.success(bootstrapMessage);
         this.clearDraft();

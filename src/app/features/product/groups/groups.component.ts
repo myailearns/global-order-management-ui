@@ -23,8 +23,11 @@ import {
 } from '@gomlibs/ui';
 import { GomTableColumn, GomTableComponent, GomTableRow } from '@gomlibs/ui';
 import { GomTabsComponent, GomTabContentComponent, TabItem } from '@gomlibs/ui';
-import { GomModalComponent } from '@gomlibs/ui';
+import { GomModalComponent, GomAlertToastService } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
+import { MediaAssetService } from '../../saas-platform/media/media-asset.service';
+import { GroupImage, GroupImageEntry } from '../../saas-platform/media/media-asset.model';
+import { ImagePickerComponent, PickedImage } from '../../../shared/components/image-picker/image-picker.component';
 import {
   Category,
   Field,
@@ -72,12 +75,15 @@ type FormulaTarget = 'sellingPrice' | 'anchorPrice';
     GomTabsComponent,
     GomTabContentComponent,
     GomModalComponent,
+    ImagePickerComponent,
   ],
   templateUrl: './groups.component.html',
   styleUrl: './groups.component.scss',
 })
 export class GroupsComponent implements OnInit {
   private readonly groupsService = inject(GroupsService);
+  private readonly mediaService = inject(MediaAssetService);
+  private readonly toast = inject(GomAlertToastService);
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
   private readonly authSession = inject(AuthSessionService);
@@ -128,6 +134,21 @@ export class GroupsComponent implements OnInit {
 
   readonly allowedUnitIds = signal<string[]>([]);
 
+  // --- Images ---
+  readonly MAX_IMAGES = 10;
+  readonly groupImages = signal<GroupImage[]>([]);
+  readonly pickerOpen = signal(false);
+  readonly canUploadOwn = computed(() => {
+    const session = this.authSession.session();
+    if (!session || session.actorType !== 'tenant') return false;
+    const keys = new Set(
+      (session.featureKeys ?? []).map((k: string) => String(k || '').trim().toLowerCase()).filter(Boolean),
+    );
+    return keys.has('media.upload');
+  });
+  readonly imageCount = computed(() => this.groupImages().length);
+  readonly existingImageIds = computed(() => new Set(this.groupImages().map((img) => img.mediaAssetId._id)));
+
   readonly columns: GomTableColumn<GroupRow>[] = [
     { key: 'name', header: 'Group Name', sortable: true, filterable: true, width: '16rem' },
     { key: 'categoryName', header: 'Category', sortable: true, filterable: true, width: '12rem' },
@@ -155,9 +176,9 @@ export class GroupsComponent implements OnInit {
       header: 'Actions',
       width: '20rem',
       actionButtons: [
-        { label: 'Edit', actionKey: 'edit', variant: 'secondary' },
-        { label: 'Add Stock', actionKey: 'add-stock', variant: 'secondary' },
-        { label: 'Add Variant', actionKey: 'add-variant', variant: 'secondary' },
+        { label: 'Edit', icon: 'ri-pencil-line', actionKey: 'edit', variant: 'secondary' },
+        { label: 'Add Stock', icon: 'ri-stock-line', actionKey: 'add-stock', variant: 'secondary' },
+        { label: 'Add Variant', icon: 'ri-price-tag-3-line', actionKey: 'add-variant', variant: 'secondary' },
       ],
     },
   ];
@@ -307,6 +328,7 @@ export class GroupsComponent implements OnInit {
     { id: 3, label: '3. Field Values' },
     { id: 4, label: '4. Pricing Formula' },
     { id: 5, label: '5. Units' },
+    { id: 6, label: '6. Images' },
   ]);
 
   ngOnInit(): void {
@@ -416,6 +438,7 @@ export class GroupsComponent implements OnInit {
 
     this.currentStep.set(1);
     this.wizardOpen.set(true);
+    this.loadGroupImages(existing._id);
   }
 
   onFieldGroupSelectionChange(ids: string[]): void {
@@ -571,7 +594,7 @@ export class GroupsComponent implements OnInit {
       return;
     }
 
-    if (step < 5) {
+    if (step < 6) {
       this.currentStep.set(step + 1);
     }
   }
@@ -627,16 +650,100 @@ export class GroupsComponent implements OnInit {
       : this.groupsService.createGroup(payload);
 
     request.subscribe({
-      next: () => {
-        this.saving.set(false);
-        this.closeWizard();
-        this.loadInitialData();
+      next: (result) => {
+        const pendingImages = this.groupImages();
+        const newGroupId = !editId && result?.data?._id ? result.data._id : null;
+
+        if (newGroupId && pendingImages.length > 0) {
+          const entries: GroupImageEntry[] = pendingImages.map((img, i) => ({
+            mediaAssetId: img.mediaAssetId._id,
+            source: img.source,
+            sortOrder: i,
+          }));
+          this.mediaService.attachGroupImages(newGroupId, entries).subscribe({
+            next: () => {
+              this.saving.set(false);
+              this.closeWizard();
+              this.loadInitialData();
+            },
+            error: () => {
+              this.toast.error('Group saved but failed to attach images.');
+              this.saving.set(false);
+              this.closeWizard();
+              this.loadInitialData();
+            },
+          });
+        } else {
+          this.saving.set(false);
+          this.closeWizard();
+          this.loadInitialData();
+        }
       },
       error: (error) => {
         console.error('Failed to save group', error);
         this.errorMessage.set('Failed to save group. Please check formulas and required fields.');
         this.saving.set(false);
       },
+    });
+  }
+
+  // --- Image Methods ---
+
+  openPicker(): void {
+    this.pickerOpen.set(true);
+  }
+
+  onImagesSelected(picked: PickedImage[]): void {
+    const editId = this.editingGroupId();
+    if (!editId) {
+      // New group — add locally, will attach after save
+      const current = this.groupImages();
+      const existingIds = new Set(current.map((img) => img.mediaAssetId._id));
+      const newImages: GroupImage[] = picked
+        .filter((p) => !existingIds.has(p.asset._id))
+        .map((p, i) => ({ mediaAssetId: p.asset, source: p.source, sortOrder: current.length + i }));
+      this.groupImages.set([...current, ...newImages].slice(0, this.MAX_IMAGES));
+      return;
+    }
+
+    const entries: GroupImageEntry[] = picked.map((p, i) => ({
+      mediaAssetId: p.asset._id,
+      source: p.source,
+      sortOrder: this.groupImages().length + i,
+    }));
+
+    this.mediaService.attachGroupImages(editId, entries).subscribe({
+      next: () => {
+        this.toast.success('Images attached.');
+        this.loadGroupImages(editId);
+      },
+      error: (err) => {
+        const msg = err?.error?.message || 'Failed to attach images.';
+        this.toast.error(msg);
+      },
+    });
+  }
+
+  removeImage(image: GroupImage): void {
+    const editId = this.editingGroupId();
+    if (!editId) {
+      this.groupImages.set(this.groupImages().filter((img) => img.mediaAssetId._id !== image.mediaAssetId._id));
+      return;
+    }
+
+    this.mediaService.detachGroupImages(editId, [image.mediaAssetId._id]).subscribe({
+      next: () => {
+        this.toast.success('Image removed.');
+        this.loadGroupImages(editId);
+      },
+      error: () => this.toast.error('Failed to remove image.'),
+    });
+  }
+
+  loadGroupImages(groupId: string): void {
+    this.mediaService.getGroupImages(groupId).subscribe({
+      next: (images) => this.groupImages.set(images || []),
+      error: () => this.groupImages.set([]),
     });
   }
 
@@ -676,6 +783,10 @@ export class GroupsComponent implements OnInit {
 
     if (step === 5) {
       return this.unitsForm.valid && this.allowedUnitIds().length > 0;
+    }
+
+    if (step === 6) {
+      return true; // Images step is always valid (optional)
     }
 
     return false;
@@ -751,6 +862,7 @@ export class GroupsComponent implements OnInit {
     this.formulaForm.reset({ sellingPrice: '', anchorPrice: '' });
     this.unitsForm.reset({ baseUnitId: '' });
     this.replaceValuesForm(new FormRecord<FormControl<number | null>>({}));
+    this.groupImages.set([]);
   }
 
   private buildPayload(): GroupPayload | null {

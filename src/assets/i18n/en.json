@@ -22,6 +22,7 @@
       "stock": "Stock",
       "variants": "Variants",
       "packs": "Packs",
+      "mediaLibrary": "Media Library",
       "orders": "Orders",
       "orderManagement": "Order Management",
       "riders": "Riders",
@@ -40,7 +41,13 @@
       "saasPackages": "SaaS Packages",
       "saasFeatures": "SaaS Features",
       "platformTenantRoles": "Platform Tenant Roles",
-      "tenantEntitlements": "Tenant Entitlements"
+      "tenantEntitlements": "Tenant Entitlements",
+      "templates": "Templates",
+      "categoryTemplates": "Category Templates",
+      "marketplace": "Marketplace",
+      "platformTemplates": "Platform Templates",
+      "businessTemplates": "Business Templates",
+      "platformMedia": "Platform Media"
     },
     "actions": {
       "notifications": "Notifications",
@@ -128,6 +135,32 @@
     "deleteConfirm": {
       "title": "Delete Category",
       "message": "Are you sure you want to delete category: {{name}}?"
+    },
+    "associations": {
+      "title": "Associations",
+      "manage": "Manage",
+      "tabs": {
+        "fieldGroups": "Field Groups",
+        "units": "Units",
+        "groups": "Groups"
+      },
+      "linkedFieldGroups": "Linked Field Groups",
+      "linkedUnits": "Linked Units",
+      "linkedGroups": "Linked Groups",
+      "addFieldGroup": "Add",
+      "addUnit": "Add",
+      "availableFieldGroups": "Available field groups to add:",
+      "availableUnits": "Available units to add:",
+      "noFieldGroups": "No field groups linked to this category.",
+      "noUnits": "No units linked to this category.",
+      "noGroups": "No product groups using this category.",
+      "noAvailableFieldGroups": "All field groups are already linked.",
+      "noAvailableUnits": "All units are already linked.",
+      "groupsHint": "Groups are managed from the Product Groups page. This view is read-only.",
+      "removeAria": "Remove {{name}}",
+      "updated": "Associations updated successfully.",
+      "errorLoad": "Failed to load associations.",
+      "errorUpdate": "Failed to update associations."
     }
   },
   "fields": {
@@ -706,6 +739,174 @@
     "errors": {
       "invalid_platform_credentials": "Invalid platform admin credentials.",
       "invalid_tenant_credentials": "Invalid tenant admin credentials or tenant code."
+    }
+  },
+  "categoryTemplates": {
+    "pageTitle": "Category Templates",
+    "pageDescription": "Browse and subscribe to platform templates to instantly set up categories, fields, units, and more.",
+    "noDescription": "No description provided.",
+    "subscribed": "Subscribed",
+    "subscribe": "Subscribe",
+    "subscribing": "Subscribing…",
+    "subscribeAll": "Subscribe All",
+    "unsubscribe": "Unsubscribe",
+    "subscribedOn": "Subscribed",
+    "clonedAs": "Cloned as",
+    "view": "View",
+    "loadingTemplates": "Loading templates\u2026",
+    "noTemplatesAvailable": "No templates available at the moment.",
+    "noSubscriptions": "You haven't subscribed to any templates yet.",
+    "noBusinessTemplates": "No business templates available yet.",
+    "businessHint": "Pick a business type to subscribe to all its categories, fields, units, and tax profiles in one click.",
+    "categories": "Categories",
+    "fieldGroups": "Field Groups",
+    "units": "Units",
+    "taxProfiles": "Tax Profiles",
+    "includedCategories": "Included Categories",
+    "includedUnits": "Included Units",
+    "includedTaxProfiles": "Included Tax Profiles",
+    "btPreviewTitle": "Business Template Preview",
+    "preview": {
+      "title": "Template Preview",
+      "loading": "Loading template details\u2026",
+      "fields": "Fields",
+      "fieldGroups": "Field Groups",
+      "units": "Units",
+      "fieldsTitle": "Fields",
+      "fieldGroupsTitle": "Field Groups",
+      "unitsTitle": "Units",
+      "fieldName": "Name",
+      "fieldKey": "Key",
+      "fieldType": "Type",
+      "unitName": "Name",
+      "unitSymbol": "Symbol",
+      "noFieldsInGroup": "No fields in this group.",
+      "emptyTemplate": "This template has no linked entities yet.",
+      "close": "Close"
+    }
+  },
+  "tenantMedia": {
+    "title": "Media Library",
+    "description": "Upload and manage your images for product groups.",
+    "empty": "No images uploaded yet. Click Upload to add your first image."
+  },
+  "businessTemplates": {
+    "title": "Business Templates",
+    "subtitle": "Create business type bundles that tenants can subscribe to with one click.",
+    "createBtn": "Create Business Template",
+    "loading": "Loading\u2026",
+    "empty": "No business templates yet. Create one to bundle categories for tenant onboarding.",
+    "noDescription": "No description",
+    "categoriesLabel": "categories",
+    "createTitle": "Create Business Template",
+    "editTitle": "Edit Business Template",
+    "previewTitle": "Business Template Preview",
+    "deleteTitle": "Delete Business Template",
+    "deleteMessage": "Are you sure you want to delete \"{{name}}\"? This will not affect existing tenant subscriptions.",
+    "form": {
+      "name": "Name",
+      "namePlaceholder": "e.g. Grocery Store",
+      "code": "Code",
+      "codePlaceholder": "e.g. grocery_store",
+      "description": "Description",
+      "descriptionPlaceholder": "Describe what this business type includes",
+      "icon": "Icon",
+      "categories": "Categories",
+      "categoriesHint": "Select which platform categories belong to this business type.",
+      "noCategoriesAvailable": "No platform categories found. Create categories in Platform Templates first.",
+      "cancel": "Cancel",
+      "create": "Create",
+      "update": "Update",
+      "delete": "Delete"
+    },
+    "preview": {
+      "categories": "Categories",
+      "fieldGroups": "Field Groups",
+      "units": "Units",
+      "taxProfiles": "Tax Profiles",
+      "categoriesTitle": "Included Categories",
+      "fieldGroupsTitle": "Field Groups",
+      "unitsTitle": "Units",
+      "taxProfilesTitle": "Tax Profiles"
+    }
+  },
+  "media": {
+    "title": "Platform Media Library",
+    "description": "Manage shared platform images available to all tenants.",
+    "loading": "Loading images...",
+    "empty": "No images found.",
+    "imageCount": "image(s)",
+    "searchPlaceholder": "Search images by name...",
+    "storage": {
+      "title": "Storage Usage",
+      "platform": "Platform",
+      "tenants": "Tenants",
+      "totalImages": "total images"
+    },
+    "actions": {
+      "upload": "Upload Image",
+      "delete": "Delete",
+      "cancel": "Cancel"
+    },
+    "pagination": {
+      "prev": "Previous",
+      "next": "Next"
+    },
+    "uploadModal": {
+      "title": "Upload Images",
+      "nameLabel": "Image Name",
+      "namePlaceholder": "Enter a name for this image",
+      "nameRequired": "Image name is required"
+    },
+    "uploadQueue": {
+      "uploading": "Uploading {{current}} of {{total}}...",
+      "uploadCount": "Upload {{count}} Image(s)"
+    },
+    "deleteConfirm": {
+      "title": "Delete Image",
+      "message": "Are you sure you want to delete \"{{name}}\"? This cannot be undone."
+    },
+    "usedCount": "Used {{count}}x",
+    "deleteDisabledHint": "Cannot delete — used by {{count}} group(s)",
+    "infoModal": {
+      "title": "Image Details",
+      "dimensions": "Dimensions",
+      "fileSize": "File Size",
+      "format": "Format",
+      "uploaded": "Uploaded",
+      "usageTitle": "Usage across tenants",
+      "notUsed": "This image is not used by any tenant yet.",
+      "groups": "group(s)"
+    },
+    "upload": {
+      "dragOrClick": "Drag & drop an image or click to browse",
+      "hint": "Max file size: {{maxSize}} MB. Supported: JPEG, PNG, WebP, GIF",
+      "hintMulti": "Max {{maxFiles}} images, up to {{maxSize}} MB each. JPEG, PNG, WebP, GIF",
+      "clear": "Remove",
+      "clearAll": "Clear All",
+      "selected": "selected",
+      "uploadAll": "Upload All",
+      "errorInvalidType": "Invalid file type. Only JPEG, PNG, WebP, and GIF are allowed.",
+      "errorTooLarge": "File is too large. Maximum size is {{maxSize}} MB.",
+      "errorMaxFiles": "You can select up to {{maxFiles}} images."
+    },
+    "picker": {
+      "title": "Select Platform Images",
+      "searchPlaceholder": "Search platform images...",
+      "empty": "No platform images available.",
+      "select": "Select"
+    },
+    "imagePicker": {
+      "title": "Add Images",
+      "searchPlaceholder": "Search images...",
+      "uploadNew": "Upload New",
+      "uploading": "Uploading...",
+      "yourImages": "Your Images",
+      "platformImages": "Platform Images",
+      "noTenantImages": "You haven't uploaded any images yet.",
+      "noPlatformImages": "No platform images available.",
+      "added": "Added",
+      "addImages": "Add Images"
     }
   }
 }

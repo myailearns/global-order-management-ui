@@ -14,7 +14,7 @@ interface CategoryTableRow extends GomTableRow {
 }
 
 export interface CategoryAction {
-  action: 'view' | 'edit' | 'delete';
+  action: 'view' | 'edit' | 'delete' | 'manage';
   category: Category;
 }
 
@@ -44,7 +44,7 @@ export class CategoriesListComponent implements OnChanges {
     {
       key: 'actions',
       header: CATEGORY_UI_TEXT.actionsLabel,
-      width: '12rem',
+      width: '16rem',
       actionButtons: [
         { label: CATEGORY_UI_TEXT.viewAction, actionKey: 'view', variant: 'secondary' },
         { label: CATEGORY_UI_TEXT.editAction, actionKey: 'edit', variant: 'secondary' },
@@ -103,6 +103,10 @@ export class CategoriesListComponent implements OnChanges {
     if (event.actionKey === 'delete') {
       this.onDelete(category);
     }
+
+    if (event.actionKey === 'manage') {
+      this.action.emit({ action: 'manage', category });
+    }
   }
 
   onRowClick(row: GomTableRow): void {
@@ -130,6 +134,7 @@ export class CategoriesListComponent implements OnChanges {
     this.columns[3].actionButtons = [
       { label: this.translate.instant(this.text.viewAction), actionKey: 'view', variant: 'secondary' },
       ...(this.canEdit ? [
+        { label: this.translate.instant('categories.associations.manage'), actionKey: 'manage', variant: 'secondary' as const, icon: 'ri-links-line' },
         { label: this.translate.instant(this.text.editAction), actionKey: 'edit', variant: 'secondary' as const },
       ] : []),
       ...(this.canDelete ? [

@@ -15,7 +15,7 @@ interface NavItem {
   route: string;
   icon: string;
   translationKey: string;
-  section: 'Master Setup' | 'Product Setup' | 'Order Management' | 'Settings';
+  section: 'Master Setup' | 'Marketplace' | 'Product Setup' | 'Order Management' | 'Settings';
   actor: UserActor;
   capability?: AppCapability;
   /** If provided, the nav item is shown only when session has at least one of these feature keys. */
@@ -63,6 +63,7 @@ export class GomShellComponent {
   ];
   readonly expandedSections = signal<Record<NavItem['section'], boolean>>({
     'Master Setup': true,
+    'Marketplace': true,
     'Product Setup': true,
     'Order Management': true,
     'Settings': true,
@@ -74,10 +75,12 @@ export class GomShellComponent {
     { label: 'Field Groups', route: '/masters/field-groups', icon: 'ri-folders-line', translationKey: 'app.navigation.fieldGroups', section: 'Master Setup', actor: 'tenant', capability: 'masters', featureKeys: ['fieldGroup.list', 'fieldGroup.create', 'fieldGroup.edit', 'fieldGroup.delete'] },
     { label: 'Units', route: '/masters/units', icon: 'ri-scales-3-line', translationKey: 'app.navigation.units', section: 'Master Setup', actor: 'tenant', capability: 'masters', featureKeys: ['unit.list', 'unit.create', 'unit.edit', 'unit.delete'] },
     { label: 'Tax Profiles', route: '/masters/tax-profiles', icon: 'ri-percent-line', translationKey: 'app.navigation.taxProfiles', section: 'Master Setup', actor: 'tenant', capability: 'masters', featureKeys: ['taxProfile.list', 'taxProfile.create', 'taxProfile.edit'] },
+    { label: 'Category Templates', route: '/templates/browse', icon: 'ri-store-2-line', translationKey: 'app.navigation.categoryTemplates', section: 'Marketplace', actor: 'tenant', capability: 'masters' },
     { label: 'Group Creation', route: '/product/groups', icon: 'ri-folder-add-line', translationKey: 'app.navigation.groupCreation', section: 'Product Setup', actor: 'tenant', capability: 'product' },
     { label: 'Stock', route: '/product/stock', icon: 'ri-stock-line', translationKey: 'app.navigation.stock', section: 'Product Setup', actor: 'tenant', capability: 'product' },
     { label: 'Variants', route: '/product/variants', icon: 'ri-price-tag-3-line', translationKey: 'app.navigation.variants', section: 'Product Setup', actor: 'tenant', capability: 'product' },
     { label: 'Packs', route: '/product/packs', icon: 'ri-box-3-line', translationKey: 'app.navigation.packs', section: 'Product Setup', actor: 'tenant', capability: 'product' },
+    { label: 'Media Library', route: '/product/media', icon: 'ri-image-line', translationKey: 'app.navigation.mediaLibrary', section: 'Product Setup', actor: 'tenant', capability: 'product', featureKeys: ['media.upload'] },
     { label: 'Orders', route: '/orders/list', icon: 'ri-file-list-3-line', translationKey: 'app.navigation.orders', section: 'Order Management', actor: 'tenant', capability: 'orders' },
     { label: 'Customers', route: '/customers/list', icon: 'ri-user-3-line', translationKey: 'app.navigation.customers', section: 'Order Management', actor: 'tenant', capability: 'customers' },
     { label: 'Customer Groups', route: '/customers/groups', icon: 'ri-team-line', translationKey: 'app.navigation.customerGroups', section: 'Order Management', actor: 'tenant', capability: 'customer-groups' },
@@ -90,6 +93,9 @@ export class GomShellComponent {
     { label: 'SaaS Features', route: '/settings/saas-features', icon: 'ri-function-line', translationKey: 'app.navigation.saasFeatures', section: 'Settings', actor: 'platform', capability: 'platform-admin' },
     { label: 'Tenant Entitlements', route: '/settings/tenant-entitlements', icon: 'ri-shield-keyhole-line', translationKey: 'app.navigation.tenantEntitlements', section: 'Settings', actor: 'platform', capability: 'platform-admin' },
     { label: 'Platform Tenant Roles', route: '/settings/tenant-roles', icon: 'ri-shield-user-line', translationKey: 'app.navigation.platformTenantRoles', section: 'Settings', actor: 'platform', capability: 'platform-admin' },
+    { label: 'Platform Templates', route: '/settings/platform-templates', icon: 'ri-file-copy-2-line', translationKey: 'app.navigation.platformTemplates', section: 'Settings', actor: 'platform', capability: 'platform-admin' },
+    { label: 'Business Templates', route: '/settings/business-templates', icon: 'ri-store-2-line', translationKey: 'app.navigation.businessTemplates', section: 'Settings', actor: 'platform', capability: 'platform-admin' },
+    { label: 'Platform Media', route: '/settings/platform-media', icon: 'ri-image-line', translationKey: 'app.navigation.platformMedia', section: 'Settings', actor: 'platform', capability: 'platform-admin' },
     { label: 'Tenant Dashboard', route: '/saas-admin/dashboard', icon: 'ri-dashboard-line', translationKey: 'app.navigation.tenantDashboard', section: 'Settings', actor: 'tenant', capability: 'tenant-admin' },
     { label: 'Tenant Users', route: '/saas-admin/users', icon: 'ri-user-settings-line', translationKey: 'app.navigation.tenantUsers', section: 'Settings', actor: 'tenant', capability: 'tenant-admin' },
     { label: 'Tenant Employees', route: '/saas-admin/employees', icon: 'ri-id-card-line', translationKey: 'app.navigation.tenantEmployees', section: 'Settings', actor: 'tenant', capability: 'tenant-admin' },
@@ -98,7 +104,7 @@ export class GomShellComponent {
 
   readonly sections = computed<Array<NavItem['section']>>(() => {
     const visibleItems = this.visibleNavItems();
-    const orderedSections: Array<NavItem['section']> = ['Master Setup', 'Product Setup', 'Order Management', 'Settings'];
+    const orderedSections: Array<NavItem['section']> = ['Master Setup', 'Marketplace', 'Product Setup', 'Order Management', 'Settings'];
     return orderedSections.filter((section) => visibleItems.some((item) => item.section === section));
   });
 
@@ -168,6 +174,10 @@ export class GomShellComponent {
   getSectionTranslationKey(section: NavItem['section']): string {
     if (section === 'Master Setup') {
       return 'app.navigation.masterSetup';
+    }
+
+    if (section === 'Marketplace') {
+      return 'app.navigation.marketplace';
     }
 
     if (section === 'Product Setup') {

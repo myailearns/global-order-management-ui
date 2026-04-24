@@ -1,16 +1,15 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { FormArray, FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { forkJoin } from 'rxjs';
 
 import { GomAlertToastService } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
-import { GomButtonContentMode, getButtonContentMode, showButtonIcon, showButtonText } from '@gomlibs/ui';
-import { GomButtonComponent, GomInputComponent, GomSelectComponent, GomSelectOption } from '@gomlibs/ui';
-import { GomConfirmationModalComponent, GomModalComponent } from '@gomlibs/ui';
+import { GomButtonComponent } from '@gomlibs/ui';
+import { GomConfirmationModalComponent } from '@gomlibs/ui';
 import { GomTableColumn, GomTableComponent, GomTableRow } from '@gomlibs/ui';
-import { CategoryOption, FieldGroup, FieldGroupFieldItem, FieldGroupPayload, FieldGroupsService, PricingField, ProductGroupUsage } from './field-groups.service';
+import { CategoryOption, FieldGroup, FieldGroupPayload, FieldGroupsService, PricingField, ProductGroupUsage } from './field-groups.service';
+import { FieldGroupsFormComponent } from './form/field-groups-form.component';
 
 interface FieldGroupRow extends GomTableRow {
   _id: string;
@@ -21,28 +20,16 @@ interface FieldGroupRow extends GomTableRow {
   actions: string;
 }
 
-type FieldGroupStatus = 'ACTIVE' | 'INACTIVE';
-type RequiredOverrideOption = 'INHERIT' | 'REQUIRED' | 'OPTIONAL';
-
-type FieldGroupFieldForm = FormGroup<{
-  fieldId: FormControl<string>;
-  defaultValue: FormControl<string>;
-  requiredOverride: FormControl<RequiredOverrideOption>;
-}>;
-
 @Component({
   selector: 'gom-field-groups',
   standalone: true,
   imports: [
     CommonModule,
-    ReactiveFormsModule,
     TranslateModule,
     GomButtonComponent,
-    GomInputComponent,
-    GomSelectComponent,
     GomTableComponent,
-    GomModalComponent,
     GomConfirmationModalComponent,
+    FieldGroupsFormComponent,
   ],
   templateUrl: './field-groups.component.html',
   styleUrl: './field-groups.component.scss',
@@ -51,13 +38,7 @@ export class FieldGroupsComponent implements OnInit {
   private readonly fieldGroupsService = inject(FieldGroupsService);
   private readonly toast = inject(GomAlertToastService);
   private readonly translate = inject(TranslateService);
-  private readonly fb = inject(FormBuilder);
   private readonly authSession = inject(AuthSessionService);
-
-  readonly addFieldMode: GomButtonContentMode = getButtonContentMode('secondary-action');
-  readonly rowDeleteMode: GomButtonContentMode = getButtonContentMode('danger-action');
-  readonly submitMode: GomButtonContentMode = getButtonContentMode('primary-action');
-  readonly cancelMode: GomButtonContentMode = getButtonContentMode('dismiss');
 
   readonly columns: GomTableColumn<FieldGroupRow>[] = [
     { key: 'name', header: '', sortable: true, filterable: true, width: '20rem' },
@@ -72,18 +53,7 @@ export class FieldGroupsComponent implements OnInit {
     },
   ];
 
-  readonly statusOptions: GomSelectOption[] = [
-    { label: '', value: 'ACTIVE' },
-    { label: '', value: 'INACTIVE' },
-  ];
-  readonly requiredOverrideOptions: GomSelectOption[] = [
-    { label: '', value: 'INHERIT' },
-    { label: '', value: 'REQUIRED' },
-    { label: '', value: 'OPTIONAL' },
-  ];
-
   readonly loading = signal(false);
-  readonly saving = signal(false);
   readonly errorMessage = signal<string | null>(null);
   readonly canCreateFieldGroup = computed(() => this.authSession.hasFeature('fieldGroup.create'));
   readonly canEditFieldGroup = computed(() => this.authSession.hasFeature('fieldGroup.edit'));
@@ -92,25 +62,11 @@ export class FieldGroupsComponent implements OnInit {
   readonly deleteConfirmOpen = signal(false);
   readonly selectedFieldGroup = signal<FieldGroup | null>(null);
   readonly pendingDeleteFieldGroup = signal<FieldGroup | null>(null);
-  readonly fieldItemsVersion = signal(0);
-  readonly dragSourceIndex = signal<number | null>(null);
-  readonly dragOverIndex = signal<number | null>(null);
 
   readonly fieldGroups = signal<FieldGroup[]>([]);
   readonly fields = signal<PricingField[]>([]);
   readonly groups = signal<ProductGroupUsage[]>([]);
   readonly categories = signal<CategoryOption[]>([]);
-
-  readonly form = this.fb.group({
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    status: ['ACTIVE' as FieldGroupStatus, [Validators.required]],
-    fields: this.fb.array<FieldGroupFieldForm>([]),
-  });
-
-  selectedAddFieldIds: string[] = [];
-  selectedCategoryIds: string[] = [];
-  addFieldSelectCloseToken = 0;
-  categorySelectCloseToken = 0;
 
   readonly rows = computed<FieldGroupRow[]>(() =>
     this.fieldGroups().map((fieldGroup) => ({
@@ -123,61 +79,6 @@ export class FieldGroupsComponent implements OnInit {
     }))
   );
 
-  readonly selectedFields = computed(() => {
-    this.fieldItemsVersion();
-    return this.fieldItems.controls.map((control, index) => {
-      const fieldId = control.controls.fieldId.value;
-      const field = this.fields().find((item) => item._id === fieldId) || null;
-      return {
-        index,
-        fieldId,
-        field,
-        control,
-      };
-    });
-  });
-
-  readonly availableFieldOptions = computed<GomSelectOption[]>(() => {
-    this.fieldItemsVersion();
-    const selectedIds = new Set(this.fieldItems.controls.map((control) => control.controls.fieldId.value));
-
-    return this.fields()
-      .filter((field) => this.isPricingField(field) && field.status === 'ACTIVE' && !selectedIds.has(field._id))
-      .map((field) => ({
-        value: field._id,
-        label: `${field.name} (${field.key})`,
-      }));
-  });
-
-  readonly categoryOptions = computed<GomSelectOption[]>(() =>
-    this.categories()
-      .filter((category) => category.status === 'ACTIVE')
-      .map((category) => ({
-        value: category._id,
-        label: category.name,
-      }))
-  );
-
-  readonly fieldUsageById = computed(() => {
-    const usage = new Map<string, string[]>();
-
-    for (const group of this.groups()) {
-      for (const resolvedField of group.resolvedFields || []) {
-        const fieldId = String(resolvedField.fieldId);
-        if (!usage.has(fieldId)) {
-          usage.set(fieldId, []);
-        }
-
-        const groupNames = usage.get(fieldId) || [];
-        if (!groupNames.includes(group.name)) {
-          groupNames.push(group.name);
-        }
-      }
-    }
-
-    return usage;
-  });
-
   constructor() {
     this.translate.onLangChange.subscribe(() => this.rebuildStaticText());
     this.rebuildStaticText();
@@ -187,18 +88,6 @@ export class FieldGroupsComponent implements OnInit {
     this.loadData();
   }
 
-  get fieldItems(): FormArray<FieldGroupFieldForm> {
-    return this.form.controls.fields;
-  }
-
-  shouldShowIcon(mode: GomButtonContentMode): boolean {
-    return showButtonIcon(mode);
-  }
-
-  shouldShowText(mode: GomButtonContentMode): boolean {
-    return showButtonText(mode);
-  }
-
   onAddFieldGroup(): void {
     if (!this.canCreateFieldGroup()) {
       return;
@@ -206,7 +95,6 @@ export class FieldGroupsComponent implements OnInit {
 
     this.selectedFieldGroup.set(null);
     this.errorMessage.set(null);
-    this.resetForm();
     this.formOpen.set(true);
   }
 
@@ -221,7 +109,9 @@ export class FieldGroupsComponent implements OnInit {
       if (!this.canEditFieldGroup()) {
         return;
       }
-      this.openEdit(fieldGroup);
+      this.selectedFieldGroup.set(fieldGroup);
+      this.errorMessage.set(null);
+      this.formOpen.set(true);
       return;
     }
 
@@ -234,114 +124,19 @@ export class FieldGroupsComponent implements OnInit {
     }
   }
 
-  addSelectedField(): void {
-    if (!this.selectedAddFieldIds.length) {
-      return;
-    }
-
-    const existingFieldIds = new Set(this.fieldItems.controls.map((control) => control.controls.fieldId.value));
-    let addedCount = 0;
-
-    for (const fieldId of this.selectedAddFieldIds) {
-      if (existingFieldIds.has(fieldId)) {
-        continue;
-      }
-
-      const field = this.fields().find((item) => item._id === fieldId);
-      if (!field) {
-        continue;
-      }
-
-      this.fieldItems.push(this.createFieldItemGroup({
-        fieldId,
-        order: this.fieldItems.length + 1,
-        defaultValue: null,
-      }));
-      existingFieldIds.add(fieldId);
-      addedCount += 1;
-    }
-
-    if (!addedCount) {
-      return;
-    }
-
-    this.bumpFieldItemsVersion();
-    this.selectedAddFieldIds = [];
-    this.addFieldSelectCloseToken += 1;
-  }
-
-  onAddFieldSelectionChange(values: string[]): void {
-    this.selectedAddFieldIds = [...values];
-  }
-
-  onMappedCategorySelectionChange(values: string[]): void {
-    this.selectedCategoryIds = [...values];
-  }
-
-  removeField(index: number): void {
-    this.fieldItems.removeAt(index);
-    this.bumpFieldItemsVersion();
-  }
-
-  onFieldDragStart(index: number, event: DragEvent): void {
-    this.dragSourceIndex.set(index);
-    if (event.dataTransfer) {
-      event.dataTransfer.effectAllowed = 'move';
-      event.dataTransfer.setData('text/plain', String(index));
-    }
-  }
-
-  onFieldDragOver(index: number, event: DragEvent): void {
-    event.preventDefault();
-    if (this.dragSourceIndex() === null || this.dragSourceIndex() === index) {
-      return;
-    }
-
-    this.dragOverIndex.set(index);
-    if (event.dataTransfer) {
-      event.dataTransfer.dropEffect = 'move';
-    }
-  }
-
-  onFieldDrop(targetIndex: number, event: DragEvent): void {
-    event.preventDefault();
-    const sourceIndex = this.dragSourceIndex();
-    this.clearDragState();
-
-    if (sourceIndex === null || sourceIndex === targetIndex) {
-      return;
-    }
-
-    this.reorderField(sourceIndex, targetIndex);
-  }
-
-  onFieldDragEnd(): void {
-    this.clearDragState();
-  }
-
-  saveFieldGroup(): void {
+  onFormSubmit(payload: FieldGroupPayload): void {
     const isEdit = !!this.selectedFieldGroup()?._id;
     const canProceed = isEdit ? this.canEditFieldGroup() : this.canCreateFieldGroup();
     if (!canProceed) {
       return;
     }
 
-    if (this.form.invalid || this.fieldItems.length === 0) {
-      this.form.markAllAsTouched();
-      this.fieldItems.controls.forEach((control) => control.markAllAsTouched());
-      if (this.fieldItems.length === 0) {
-        this.errorMessage.set(this.translate.instant('fieldGroups.validation.fieldsRequired'));
-      }
-      return;
-    }
-
-    const enteredName = String(this.form.controls.name.value || '').trim().toLowerCase();
+    const enteredName = payload.name.toLowerCase();
     const editingId = this.selectedFieldGroup()?._id || null;
     const hasDuplicateName = this.fieldGroups().some((item) => {
       if (editingId && item._id === editingId) {
         return false;
       }
-
       return String(item.name || '').trim().toLowerCase() === enteredName;
     });
 
@@ -352,12 +147,7 @@ export class FieldGroupsComponent implements OnInit {
       return;
     }
 
-    const payload = this.buildPayload();
-    if (!payload) {
-      return;
-    }
-
-    this.saving.set(true);
+    this.loading.set(true);
     this.errorMessage.set(null);
 
     const selected = this.selectedFieldGroup();
@@ -367,7 +157,6 @@ export class FieldGroupsComponent implements OnInit {
 
     request.subscribe({
       next: () => {
-        this.saving.set(false);
         this.formOpen.set(false);
         this.selectedFieldGroup.set(null);
         this.toast.success(this.translate.instant(selected ? 'fieldGroups.toast.successUpdate' : 'fieldGroups.toast.successCreate'));
@@ -379,15 +168,14 @@ export class FieldGroupsComponent implements OnInit {
         const message = apiMessage || this.translate.instant('fieldGroups.toast.errorSave');
         this.errorMessage.set(message);
         this.toast.error(message);
-        this.saving.set(false);
+        this.loading.set(false);
       },
     });
   }
 
-  closeForm(): void {
+  onFormCancel(): void {
     this.formOpen.set(false);
     this.selectedFieldGroup.set(null);
-    this.resetForm();
   }
 
   cancelDelete(): void {
@@ -435,25 +223,6 @@ export class FieldGroupsComponent implements OnInit {
     });
   }
 
-  formatMasterDefault(field: PricingField | null): string {
-    if (!field) {
-      return '-';
-    }
-
-    return typeof field.defaultValue === 'number'
-      ? String(field.defaultValue)
-      : '-';
-  }
-
-  getFieldUsageText(fieldId: string): string {
-    const groupNames = this.fieldUsageById().get(fieldId) || [];
-    if (!groupNames.length) {
-      return this.translate.instant('fieldGroups.labels.notUsed');
-    }
-
-    return groupNames.join(', ');
-  }
-
   private loadData(): void {
     this.loading.set(true);
     this.errorMessage.set(null);
@@ -479,116 +248,6 @@ export class FieldGroupsComponent implements OnInit {
     });
   }
 
-  private openEdit(fieldGroup: FieldGroup): void {
-    this.selectedFieldGroup.set(fieldGroup);
-    this.errorMessage.set(null);
-    this.resetForm();
-
-    this.form.patchValue({
-      name: fieldGroup.name,
-      status: fieldGroup.status,
-    });
-    this.selectedCategoryIds = [...(fieldGroup.categoryIds || [])];
-    this.categorySelectCloseToken += 1;
-
-    [...fieldGroup.fields]
-      .sort((a, b) => a.order - b.order)
-      .forEach((item) => {
-        this.fieldItems.push(this.createFieldItemGroup(item));
-      });
-    this.bumpFieldItemsVersion();
-
-    this.form.markAsPristine();
-    this.form.markAsUntouched();
-    this.formOpen.set(true);
-  }
-
-  private createFieldItemGroup(item?: Partial<FieldGroupFieldItem>): FieldGroupFieldForm {
-    let requiredOverride: RequiredOverrideOption = 'INHERIT';
-    if (item?.requiredOverride === true) {
-      requiredOverride = 'REQUIRED';
-    } else if (item?.requiredOverride === false) {
-      requiredOverride = 'OPTIONAL';
-    }
-
-    return this.fb.group({
-      fieldId: this.fb.nonNullable.control(item?.fieldId || '', [Validators.required]),
-      defaultValue: this.fb.nonNullable.control(
-        typeof item?.defaultValue === 'number' ? String(item.defaultValue) : '',
-        []
-      ),
-      requiredOverride: this.fb.nonNullable.control(requiredOverride),
-    });
-  }
-
-  private resetForm(): void {
-    this.form.reset({
-      name: '',
-      status: 'ACTIVE',
-    });
-    this.selectedAddFieldIds = [];
-    this.selectedCategoryIds = [];
-    this.addFieldSelectCloseToken += 1;
-    this.categorySelectCloseToken += 1;
-
-    while (this.fieldItems.length > 0) {
-      this.fieldItems.removeAt(0);
-    }
-    this.bumpFieldItemsVersion();
-  }
-
-  private bumpFieldItemsVersion(): void {
-    this.fieldItemsVersion.update((value) => value + 1);
-  }
-
-  private reorderField(sourceIndex: number, targetIndex: number): void {
-    const sourceControl = this.fieldItems.at(sourceIndex);
-    this.fieldItems.removeAt(sourceIndex);
-
-    const nextIndex = sourceIndex < targetIndex ? targetIndex - 1 : targetIndex;
-    this.fieldItems.insert(nextIndex, sourceControl);
-    this.bumpFieldItemsVersion();
-  }
-
-  private clearDragState(): void {
-    this.dragSourceIndex.set(null);
-    this.dragOverIndex.set(null);
-  }
-
-  private buildPayload(): FieldGroupPayload | null {
-    const fields = this.fieldItems.controls.map((control, index) => {
-      const rawValue = control.controls.defaultValue.value.trim();
-      const normalizedDefaultValue = rawValue === '' ? null : Number(rawValue);
-
-      if (rawValue !== '' && !Number.isFinite(normalizedDefaultValue)) {
-        this.errorMessage.set(this.translate.instant('fieldGroups.validation.defaultValueInvalid'));
-        return null;
-      }
-
-      return {
-        fieldId: control.controls.fieldId.value,
-        order: index + 1,
-        defaultValue: normalizedDefaultValue,
-        requiredOverride: control.controls.requiredOverride.value,
-      };
-    });
-
-    if (fields.includes(null)) {
-      return null;
-    }
-
-    return {
-      name: String(this.form.controls.name.value || '').trim(),
-      status: (this.form.controls.status.value || 'ACTIVE') as FieldGroupStatus,
-      categoryIds: [...this.selectedCategoryIds],
-      fields: fields.filter((item): item is NonNullable<typeof item> => !!item),
-    };
-  }
-
-  private isPricingField(field: PricingField): boolean {
-    return field.fieldKind !== 'METADATA' && (field.type === 'NUMBER' || field.type === 'PERCENTAGE');
-  }
-
   private extractApiMessage(error: unknown): string {
     const maybeError = error as {
       error?: { message?: string; error?: string };
@@ -604,12 +263,6 @@ export class FieldGroupsComponent implements OnInit {
   }
 
   private rebuildStaticText(): void {
-    this.statusOptions[0].label = this.translate.instant('common.status.active');
-    this.statusOptions[1].label = this.translate.instant('common.status.inactive');
-    this.requiredOverrideOptions[0].label = this.translate.instant('fieldGroups.required.inherit');
-    this.requiredOverrideOptions[1].label = this.translate.instant('fieldGroups.required.required');
-    this.requiredOverrideOptions[2].label = this.translate.instant('fieldGroups.required.optional');
-
     this.columns[0].header = this.translate.instant('fieldGroups.labels.name');
     this.columns[1].header = this.translate.instant('fieldGroups.labels.fields');
     this.columns[2].header = this.translate.instant('fieldGroups.labels.version');

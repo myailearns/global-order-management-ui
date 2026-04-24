@@ -7,13 +7,14 @@ import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { CategoriesListComponent, CategoryAction } from './list/categories-list.component';
 import { CategoriesFormComponent, CategoryFormData } from './form/categories-form.component';
 import { CategoriesViewComponent } from './view/categories-view.component';
+import { CategoryAssociationsModalComponent } from './associations/category-associations-modal.component';
 import { GomConfirmationModalComponent } from '@gomlibs/ui';
 import { GomAlertToastService } from '@gomlibs/ui';
 
 @Component({
   selector: 'gom-categories',
   standalone: true,
-  imports: [CommonModule, TranslateModule, CategoriesListComponent, CategoriesFormComponent, CategoriesViewComponent, GomConfirmationModalComponent],
+  imports: [CommonModule, TranslateModule, CategoriesListComponent, CategoriesFormComponent, CategoriesViewComponent, CategoryAssociationsModalComponent, GomConfirmationModalComponent],
   templateUrl: './categories.component.html',
   styleUrl: './categories.component.scss'
 })
@@ -39,6 +40,8 @@ export class CategoriesComponent implements OnInit {
   pendingDeleteCategory = signal<Category | null>(null);
   deleteConfirmOpen = signal(false);
   errorMessage = signal<string | null>(null);
+  associationsOpen = signal(false);
+  associationsCategory = signal<Category | null>(null);
 
   ngOnInit() {
     this.loadCategories();
@@ -97,6 +100,11 @@ export class CategoriesComponent implements OnInit {
         return;
       }
       this.requestDeleteCategory(action.category);
+    }
+
+    if (action.action === 'manage') {
+      this.associationsCategory.set(action.category);
+      this.associationsOpen.set(true);
     }
   }
 
@@ -163,8 +171,9 @@ export class CategoriesComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error deleting category:', error);
-        this.errorMessage.set(this.translate.instant(this.text.errorDelete));
-        this.toast.error(this.translate.instant(this.text.errorDelete));
+        const msg = error?.error?.message || this.translate.instant(this.text.errorDelete);
+        this.errorMessage.set(msg);
+        this.toast.error(msg);
         this.pendingDeleteCategory.set(null);
         this.loading.set(false);
       },
@@ -222,5 +231,10 @@ export class CategoriesComponent implements OnInit {
   onFormCancel() {
     this.formOpen.set(false);
     this.selectedCategory.set(null);
+  }
+
+  onAssociationsClosed(): void {
+    this.associationsOpen.set(false);
+    this.associationsCategory.set(null);
   }
 }

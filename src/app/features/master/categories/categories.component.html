@@ -52,4 +52,10 @@
     (confirmed)="onDeleteConfirmed()"
     (cancelled)="onDeleteCancelled()"
   ></gom-lib-confirmation-modal>
+
+  <gom-category-associations-modal
+    [isOpen]="associationsOpen()"
+    [category]="associationsCategory()"
+    (closed)="onAssociationsClosed()"
+  ></gom-category-associations-modal>
 </div>

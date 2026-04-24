@@ -63,7 +63,7 @@ export interface FieldGroupPayload {
     fieldId: string;
     order: number;
     defaultValue: number | null;
-    requiredOverride: 'REQUIRED' | 'OPTIONAL' | 'INHERIT';
+    requiredOverride: boolean | null;
   }>;
 }
 

@@ -1,0 +1,559 @@
+@use "theme" as theme;
+
+// ─── Page Layout ────────────────────────────────────────
+
+.media-page {
+  display: flex;
+  flex-direction: column;
+  gap: theme.get-gap(lg);
+
+  &__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: theme.get-gap(md);
+    flex-wrap: wrap;
+  }
+
+  &__title-group {
+    display: flex;
+    flex-direction: column;
+    gap: theme.get-gap(xxs);
+  }
+
+  &__title {
+    margin: 0;
+    @include theme.typography-heading(xl);
+    display: flex;
+    align-items: center;
+    gap: theme.get-gap(xs);
+
+    i { color: theme.get-text(hint); }
+  }
+
+  &__subtitle {
+    margin: 0;
+    font-size: theme.get-font-size(sm);
+    color: theme.get-text(hint);
+  }
+
+  &__toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: theme.get-gap(md);
+    flex-wrap: wrap;
+  }
+
+  &__search {
+    position: relative;
+    width: 100%;
+    max-width: 22rem;
+
+    gom-lib-input { display: block; width: 100%; }
+  }
+
+  &__search-icon {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1rem;
+    color: theme.get-text(placeholder);
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  &__count {
+    font-size: theme.get-font-size(sm);
+    color: theme.get-text(hint);
+    white-space: nowrap;
+  }
+}
+
+// ─── Storage Monitor Bar (platform only) ────────────────
+
+.storage-bar {
+  padding: theme.get-spacing(xs) theme.get-spacing(sm);
+  border: theme.get-border-size(hairline) solid theme.get-border(light);
+  border-radius: theme.get-radius(sm);
+  background: theme.get-background(white);
+  display: flex;
+  flex-direction: column;
+  gap: theme.get-gap(xs);
+
+  &--warning {
+    border-color: theme.get-border(warning);
+    background: theme.get-background(warning-light);
+  }
+
+  &--danger {
+    border-color: theme.get-border(danger);
+    background: theme.get-background(danger-light);
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  &__label {
+    font-size: theme.get-font-size(sm);
+    font-weight: theme.get-font-weight(medium);
+    color: theme.get-text(default);
+    display: flex;
+    align-items: center;
+    gap: theme.get-gap(xxs);
+
+    i { font-size: 1.125rem; color: theme.get-text(hint); }
+  }
+
+  &__value {
+    font-size: theme.get-font-size(sm);
+    font-weight: theme.get-font-weight(semibold);
+    color: theme.get-text(default);
+  }
+
+  &__track {
+    position: relative;
+    height: 0.5rem;
+    background: theme.get-background(secondary);
+    border-radius: theme.get-radius(full);
+    overflow: hidden;
+  }
+
+  &__fill {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    border-radius: theme.get-radius(full);
+    transition: width 0.4s ease;
+
+    &--platform { left: 0; background: theme.get-background(primary); z-index: 2; }
+    &--tenants { background: theme.get-background(success); z-index: 1; }
+  }
+
+  &__legend {
+    display: flex;
+    align-items: center;
+    gap: theme.get-gap(md);
+    flex-wrap: wrap;
+  }
+
+  &__legend-item {
+    font-size: theme.get-font-size(xs);
+    color: theme.get-text(hint);
+    display: flex;
+    align-items: center;
+    gap: theme.get-gap(xxs);
+  }
+
+  &__legend-total { margin-left: auto; }
+
+  &__dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: theme.get-radius(full);
+
+    &--platform { background: theme.get-background(primary); }
+    &--tenants { background: theme.get-background(success); }
+  }
+}
+
+// ─── Empty / Loading States ─────────────────────────────
+
+.media-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: theme.get-gap(xs);
+  padding: theme.get-spacing(xxl) theme.get-spacing(sm);
+  color: theme.get-text(hint);
+
+  i { font-size: 2.5rem; opacity: 0.5; }
+  p { margin: 0; font-size: theme.get-font-size(sm); }
+}
+
+// ─── Grid ────────────────────────────────────────────────
+
+.media-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  gap: theme.get-gap(md);
+}
+
+// ─── Card ────────────────────────────────────────────────
+
+.media-card {
+  border-radius: theme.get-radius(sm);
+  overflow: hidden;
+  border: theme.get-border-size(hairline) solid theme.get-border(light);
+  background: theme.get-background(white);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+
+  &:hover {
+    border-color: theme.get-border(standard);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  }
+
+  &__visual {
+    position: relative;
+    aspect-ratio: 1;
+    overflow: hidden;
+    background: theme.get-background(secondary);
+  }
+
+  &__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.25s ease;
+  }
+
+  &:hover &__img { transform: scale(1.03); }
+
+  &__usage-badge {
+    position: absolute;
+    top: theme.get-spacing(xxs);
+    left: theme.get-spacing(xxs);
+    padding: 2px theme.get-spacing(xxs);
+    font-size: theme.get-font-size(xs);
+    font-weight: theme.get-font-weight(semibold);
+    background: rgba(0, 0, 0, 0.65);
+    color: #fff;
+    border-radius: theme.get-radius(xs);
+    line-height: 1.4;
+    pointer-events: none;
+  }
+
+  &__overlay {
+    position: absolute;
+    top: theme.get-spacing(xxs);
+    right: theme.get-spacing(xxs);
+    display: flex;
+    gap: theme.get-gap(xxs);
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+
+  &:hover &__overlay { opacity: 1; }
+
+  &__action-btn {
+    width: 2rem;
+    height: 2rem;
+    border-radius: theme.get-radius(xs);
+    border: none;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    transition: background 0.15s ease;
+
+    &:hover { background: rgba(0, 0, 0, 0.8); }
+    &--danger:hover { background: theme.get-background(danger); }
+    &:disabled { opacity: 0.4; cursor: not-allowed; }
+    &:focus-visible { outline: 2px solid theme.get-border(primary); outline-offset: 2px; }
+  }
+
+  &__body {
+    padding: theme.get-spacing(xs);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  &__name {
+    font-size: theme.get-font-size(sm);
+    font-weight: theme.get-font-weight(medium);
+    color: theme.get-text(default);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__meta {
+    font-size: theme.get-font-size(xs);
+    color: theme.get-text(hint);
+  }
+}
+
+// ─── Pagination ──────────────────────────────────────────
+
+.media-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: theme.get-gap(md);
+  padding-top: theme.get-spacing(xs);
+
+  &__info {
+    font-size: theme.get-font-size(sm);
+    color: theme.get-text(hint);
+    min-width: 4rem;
+    text-align: center;
+  }
+}
+
+// ─── Upload Queue ────────────────────────────────────────
+
+.upload-queue {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  &__file-input { position: absolute; width: 0; height: 0; overflow: hidden; opacity: 0; }
+
+  &__dropzone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    padding: 1.5rem;
+    border: 2px dashed theme.get-border(light);
+    border-radius: theme.get-radius(md);
+    cursor: pointer;
+    transition: border-color 0.2s, background-color 0.2s;
+    background: theme.get-background(secondary);
+
+    &:hover,
+    &--dragging {
+      border-color: theme.get-border(primary);
+      background: theme.get-background(primary-light);
+    }
+  }
+
+  &__drop-icon { font-size: 2rem; color: theme.get-text(hint); }
+  &__drop-text { margin: 0; font-size: theme.get-font-size(sm); font-weight: theme.get-font-weight(medium); color: theme.get-text(default); }
+  &__drop-hint { margin: 0; font-size: theme.get-font-size(xs); color: theme.get-text(hint); }
+
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-height: 20rem;
+    overflow-y: auto;
+  }
+
+  &__row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem;
+    border-radius: theme.get-radius(sm);
+    border: theme.get-border-size(hairline) solid theme.get-border(light);
+    background: theme.get-background(white);
+    transition: border-color 0.15s;
+
+    &--done { border-color: theme.get-border(success); }
+    &--failed { border-color: theme.get-border(danger); }
+    &--uploading { border-color: theme.get-border(primary); }
+  }
+
+  &__thumb {
+    width: 2.5rem;
+    height: 2.5rem;
+    object-fit: cover;
+    border-radius: theme.get-radius(xs);
+    flex-shrink: 0;
+  }
+
+  &__name-field { flex: 1; min-width: 0; }
+
+  &__name-input {
+    width: 100%;
+    padding: 0.25rem 0.5rem;
+    font-size: theme.get-font-size(sm);
+    border: theme.get-border-size(hairline) solid theme.get-border(light);
+    border-radius: theme.get-radius(xs);
+    outline: none;
+    &:focus { border-color: theme.get-border(primary); }
+  }
+
+  &__name-label {
+    font-size: theme.get-font-size(sm);
+    color: theme.get-text(default);
+  }
+
+  &__status {
+    width: 1.25rem;
+    text-align: center;
+    flex-shrink: 0;
+    &--success { color: theme.get-text(success); }
+    &--error { color: theme.get-text(danger); }
+  }
+
+  &__progress {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+  }
+
+  &__progress-bar {
+    height: 0.375rem;
+    background: theme.get-background(secondary);
+    border-radius: theme.get-radius(full);
+    overflow: hidden;
+  }
+
+  &__progress-fill {
+    height: 100%;
+    background: theme.get-background(primary);
+    border-radius: theme.get-radius(full);
+    transition: width 0.3s ease;
+  }
+
+  &__progress-text {
+    font-size: theme.get-font-size(xs);
+    color: theme.get-text(hint);
+    text-align: center;
+  }
+
+  &__footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: theme.get-gap(xs);
+    padding-top: theme.get-spacing(xs);
+    border-top: theme.get-border-size(hairline) solid theme.get-border(light);
+  }
+}
+
+// ─── Spin Animation ─────────────────────────────────────
+
+@keyframes ri-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.ri-spin {
+  display: inline-block;
+  animation: ri-spin 1s linear infinite;
+}
+
+// ─── Info / Usage Modal (platform only) ──────────────────
+
+.info-modal {
+  display: flex;
+  flex-direction: column;
+  gap: theme.get-gap(lg);
+
+  &__loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: theme.get-gap(xs);
+    padding: theme.get-spacing(xl) 0;
+    color: theme.get-text(hint);
+    font-size: theme.get-font-size(sm);
+  }
+
+  &__preview {
+    display: flex;
+    justify-content: center;
+    background: theme.get-background(secondary);
+    border-radius: theme.get-radius(sm);
+    padding: theme.get-spacing(xs);
+
+    img {
+      max-width: 100%;
+      max-height: 14rem;
+      object-fit: contain;
+      border-radius: theme.get-radius(xs);
+    }
+  }
+
+  &__details {
+    display: flex;
+    flex-direction: column;
+    gap: theme.get-gap(sm);
+  }
+
+  &__name {
+    margin: 0;
+    font-size: theme.get-font-size(heading-sm);
+    font-weight: theme.get-font-weight(semibold);
+    color: theme.get-text(default);
+    word-break: break-word;
+  }
+
+  &__meta-grid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: theme.get-gap(xxs) theme.get-gap(md);
+    font-size: theme.get-font-size(sm);
+    color: theme.get-text(default);
+  }
+
+  &__meta-label {
+    color: theme.get-text(hint);
+    font-weight: theme.get-font-weight(medium);
+  }
+
+  &__usage {
+    border-top: theme.get-border-size(hairline) solid theme.get-border(light);
+    padding-top: theme.get-spacing(sm);
+  }
+
+  &__usage-title {
+    margin: 0 0 theme.get-spacing(xs) 0;
+    font-size: theme.get-font-size(sm);
+    font-weight: theme.get-font-weight(semibold);
+    color: theme.get-text(default);
+    display: flex;
+    align-items: center;
+    gap: theme.get-gap(xs);
+
+    i { color: theme.get-text(hint); }
+  }
+
+  &__usage-count {
+    background: theme.get-background(primary-light);
+    color: theme.get-text(primary);
+    padding: 1px theme.get-spacing(xxs);
+    border-radius: theme.get-radius(xs);
+    font-size: theme.get-font-size(xs);
+    font-weight: theme.get-font-weight(bold);
+  }
+
+  &__usage-empty {
+    margin: 0;
+    font-size: theme.get-font-size(sm);
+    color: theme.get-text(hint);
+    font-style: italic;
+  }
+
+  &__tenant-list {
+    display: flex;
+    flex-direction: column;
+    gap: theme.get-gap(xs);
+  }
+
+  &__tenant-row {
+    display: flex;
+    align-items: center;
+    gap: theme.get-gap(xs);
+    padding: theme.get-spacing(xxs) theme.get-spacing(xs);
+    background: theme.get-background(secondary);
+    border-radius: theme.get-radius(xs);
+    font-size: theme.get-font-size(sm);
+
+    i { color: theme.get-text(hint); font-size: 1.125rem; }
+  }
+
+  &__tenant-name {
+    flex: 1;
+    font-weight: theme.get-font-weight(medium);
+    color: theme.get-text(default);
+  }
+
+  &__tenant-count {
+    color: theme.get-text(hint);
+    font-size: theme.get-font-size(xs);
+  }
+}

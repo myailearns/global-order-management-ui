@@ -1,0 +1,126 @@
+<gom-lib-modal
+  [show]="show"
+  (showChange)="showChange.emit($event)"
+  [title]="preview?.category?.name || ('categoryTemplates.preview.title' | translate)"
+  [closeOnBackdropClick]="true"
+  size="large"
+  (closed)="onClose()"
+>
+  @if (loading) {
+    <div class="preview-loading">
+      <i class="ri-loader-4-line spin" aria-hidden="true"></i>
+      <p>{{ 'categoryTemplates.preview.loading' | translate }}</p>
+    </div>
+  } @else if (preview) {
+    <div class="template-preview">
+
+      <!-- Summary -->
+      <div class="preview-summary">
+        @if (preview.category.description) {
+          <p class="preview-description">{{ preview.category.description }}</p>
+        }
+        <div class="preview-badges">
+          <span class="preview-badge">
+            <i class="ri-layout-grid-line" aria-hidden="true"></i>
+            {{ preview.summary.fieldCount }} {{ 'categoryTemplates.preview.fields' | translate }}
+          </span>
+          <span class="preview-badge">
+            <i class="ri-folders-line" aria-hidden="true"></i>
+            {{ preview.summary.fieldGroupCount }} {{ 'categoryTemplates.preview.fieldGroups' | translate }}
+          </span>
+          <span class="preview-badge">
+            <i class="ri-scales-3-line" aria-hidden="true"></i>
+            {{ preview.summary.unitCount }} {{ 'categoryTemplates.preview.units' | translate }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Fields Section -->
+      @if (preview.fields.length > 0) {
+        <section class="preview-section">
+          <h4 class="preview-section__title">
+            <i class="ri-layout-grid-line" aria-hidden="true"></i>
+            {{ 'categoryTemplates.preview.fieldsTitle' | translate }}
+          </h4>
+          <div class="preview-table">
+            <div class="preview-table__header">
+              <span>{{ 'categoryTemplates.preview.fieldName' | translate }}</span>
+              <span>{{ 'categoryTemplates.preview.fieldKey' | translate }}</span>
+              <span>{{ 'categoryTemplates.preview.fieldType' | translate }}</span>
+            </div>
+            @for (field of preview.fields; track field._id) {
+              <div class="preview-table__row">
+                <span>{{ field.name }}</span>
+                <span class="preview-mono">{{ field.key }}</span>
+                <span class="preview-badge preview-badge--small">{{ field.type }}</span>
+              </div>
+            }
+          </div>
+        </section>
+      }
+
+      <!-- Field Groups Section -->
+      @if (preview.fieldGroups.length > 0) {
+        <section class="preview-section">
+          <h4 class="preview-section__title">
+            <i class="ri-folders-line" aria-hidden="true"></i>
+            {{ 'categoryTemplates.preview.fieldGroupsTitle' | translate }}
+          </h4>
+          @for (fg of preview.fieldGroups; track fg._id) {
+            <div class="preview-group-card">
+              <h5>{{ fg.name }}</h5>
+              @if (fg.fields.length > 0) {
+                <div class="preview-group-fields">
+                  @for (f of fg.fields; track f.fieldId) {
+                    <span class="preview-chip">{{ f.fieldName }}</span>
+                  }
+                </div>
+              } @else {
+                <p class="preview-empty-note">{{ 'categoryTemplates.preview.noFieldsInGroup' | translate }}</p>
+              }
+            </div>
+          }
+        </section>
+      }
+
+      <!-- Units Section -->
+      @if (preview.units.length > 0) {
+        <section class="preview-section">
+          <h4 class="preview-section__title">
+            <i class="ri-scales-3-line" aria-hidden="true"></i>
+            {{ 'categoryTemplates.preview.unitsTitle' | translate }}
+          </h4>
+          <div class="preview-table">
+            <div class="preview-table__header">
+              <span>{{ 'categoryTemplates.preview.unitName' | translate }}</span>
+              <span>{{ 'categoryTemplates.preview.unitSymbol' | translate }}</span>
+            </div>
+            @for (unit of preview.units; track unit._id) {
+              <div class="preview-table__row">
+                <span>{{ unit.name }}</span>
+                <span class="preview-mono">{{ unit.symbol }}</span>
+              </div>
+            }
+          </div>
+        </section>
+      }
+
+      @if (preview.fields.length === 0 && preview.fieldGroups.length === 0 && preview.units.length === 0) {
+        <div class="preview-empty">
+          <i class="ri-inbox-line" aria-hidden="true"></i>
+          <p>{{ 'categoryTemplates.preview.emptyTemplate' | translate }}</p>
+        </div>
+      }
+
+    </div>
+  }
+
+  <!-- Footer -->
+  <div class="gom-modal__action-layout" footer>
+    <div class="gom-modal__action-layout-end">
+      <gom-lib-button variant="secondary" (buttonClick)="onClose()">
+        {{ 'categoryTemplates.preview.close' | translate }}
+      </gom-lib-button>
+    </div>
+  </div>
+</gom-lib-modal>

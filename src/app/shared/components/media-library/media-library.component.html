@@ -1,0 +1,278 @@
+<section class="media-page">
+  <header class="media-page__header">
+    <div class="media-page__title-group">
+      <h2 class="media-page__title">
+        <i class="ri-image-line" aria-hidden="true"></i>
+        {{ (isPlatform() ? 'media.title' : 'tenantMedia.title') | translate }}
+      </h2>
+      <p class="media-page__subtitle">{{ (isPlatform() ? 'media.description' : 'tenantMedia.description') | translate }}</p>
+    </div>
+    <gom-lib-button type="button" variant="primary" (buttonClick)="openUploadModal()">
+      <i class="ri-upload-2-line" aria-hidden="true"></i> {{ 'media.actions.upload' | translate }}
+    </gom-lib-button>
+  </header>
+
+  <!-- Platform-only: Storage Monitor -->
+  @if (isPlatform() && storageSummary()) {
+    <div class="storage-bar" [class.storage-bar--warning]="storageLevel() === 'warning'" [class.storage-bar--danger]="storageLevel() === 'danger'">
+      <div class="storage-bar__header">
+        <span class="storage-bar__label">
+          <i class="ri-cloud-line" aria-hidden="true"></i>
+          {{ 'media.storage.title' | translate }}
+        </span>
+        <span class="storage-bar__value">{{ formatStorage(storageSummary()!.total.size) }} / {{ STORAGE_LIMIT_GB }} GB</span>
+      </div>
+      <div class="storage-bar__track">
+        <div class="storage-bar__fill storage-bar__fill--platform" [style.width.%]="(storageSummary()!.platform.size / (STORAGE_LIMIT_GB * 1024 * 1024 * 1024)) * 100"></div>
+        <div class="storage-bar__fill storage-bar__fill--tenants" [style.width.%]="(storageSummary()!.tenants.size / (STORAGE_LIMIT_GB * 1024 * 1024 * 1024)) * 100" [style.left.%]="(storageSummary()!.platform.size / (STORAGE_LIMIT_GB * 1024 * 1024 * 1024)) * 100"></div>
+      </div>
+      <div class="storage-bar__legend">
+        <span class="storage-bar__legend-item">
+          <span class="storage-bar__dot storage-bar__dot--platform"></span>
+          {{ 'media.storage.platform' | translate }}: {{ formatStorage(storageSummary()!.platform.size) }} ({{ storageSummary()!.platform.count }})
+        </span>
+        <span class="storage-bar__legend-item">
+          <span class="storage-bar__dot storage-bar__dot--tenants"></span>
+          {{ 'media.storage.tenants' | translate }}: {{ formatStorage(storageSummary()!.tenants.size) }} ({{ storageSummary()!.tenants.count }})
+        </span>
+        <span class="storage-bar__legend-item storage-bar__legend-total">
+          {{ storageSummary()!.total.count }} {{ 'media.storage.totalImages' | translate }}
+        </span>
+      </div>
+    </div>
+  }
+
+  <div class="media-page__toolbar">
+    <div class="media-page__search">
+      <i class="ri-search-line media-page__search-icon" aria-hidden="true"></i>
+      <gom-lib-input
+        [placeholder]="'media.searchPlaceholder' | translate"
+        (valueChange)="onSearchChange($event)"
+      ></gom-lib-input>
+    </div>
+    @if (!loading() && total() > 0) {
+      <span class="media-page__count">{{ total() }} {{ 'media.imageCount' | translate }}</span>
+    }
+  </div>
+
+  @if (loading()) {
+    <div class="media-state">
+      <i class="ri-loader-4-line ri-spin" aria-hidden="true"></i>
+      <p>{{ 'media.loading' | translate }}</p>
+    </div>
+  } @else if (assets().length === 0) {
+    <div class="media-state media-state--empty">
+      <i class="ri-image-line" aria-hidden="true"></i>
+      <p>{{ (isPlatform() ? 'media.empty' : 'tenantMedia.empty') | translate }}</p>
+    </div>
+  } @else {
+    <div class="media-grid">
+      @for (asset of assets(); track asset._id) {
+        <div class="media-card">
+          <div class="media-card__visual">
+            <img [src]="asset.url" [alt]="asset.name" class="media-card__img" loading="lazy" />
+            @if (isPlatform() && asset.usageCount && asset.usageCount > 0) {
+              <span class="media-card__usage-badge">{{ 'media.usedCount' | translate: { count: asset.usageCount } }}</span>
+            }
+            <div class="media-card__overlay">
+              @if (isPlatform()) {
+                <button class="media-card__action-btn" type="button" (click)="openInfoModal(asset)" [attr.aria-label]="'Info ' + asset.name">
+                  <i class="ri-information-line" aria-hidden="true"></i>
+                </button>
+              }
+              <button
+                class="media-card__action-btn media-card__action-btn--danger"
+                type="button"
+                [disabled]="isPlatform() && asset.usageCount !== undefined && asset.usageCount > 0"
+                (click)="confirmDelete(asset)"
+                [attr.aria-label]="'Delete ' + asset.name"
+                [title]="isPlatform() && asset.usageCount && asset.usageCount > 0 ? ('media.deleteDisabledHint' | translate: { count: asset.usageCount }) : ''"
+              >
+                <i class="ri-delete-bin-line" aria-hidden="true"></i>
+              </button>
+            </div>
+          </div>
+          <div class="media-card__body">
+            <span class="media-card__name" [title]="asset.name">{{ asset.name }}</span>
+            <span class="media-card__meta">{{ asset.width }}×{{ asset.height }} · {{ formatFileSize(asset.size) }}</span>
+          </div>
+        </div>
+      }
+    </div>
+
+    @if (totalPages() > 1) {
+      <div class="media-pagination">
+        <gom-lib-button type="button" variant="secondary" [disabled]="page() <= 1" (buttonClick)="onPageChange(page() - 1)">
+          <i class="ri-arrow-left-s-line" aria-hidden="true"></i> {{ 'media.pagination.prev' | translate }}
+        </gom-lib-button>
+        <span class="media-pagination__info">{{ page() }} / {{ totalPages() }}</span>
+        <gom-lib-button type="button" variant="secondary" [disabled]="page() >= totalPages()" (buttonClick)="onPageChange(page() + 1)">
+          {{ 'media.pagination.next' | translate }} <i class="ri-arrow-right-s-line" aria-hidden="true"></i>
+        </gom-lib-button>
+      </div>
+    }
+  }
+</section>
+
+<!-- Upload Modal -->
+<gom-lib-modal
+  [title]="'media.uploadModal.title' | translate"
+  [(show)]="uploadModalOpen"
+  (closed)="closeUploadModal()"
+  size="large"
+>
+  <div class="upload-queue">
+    @if (!isUploading()) {
+      <input
+        #queueFileInput
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif"
+        multiple
+        (change)="onFileInputChange($event)"
+        class="upload-queue__file-input"
+      />
+      <div
+        class="upload-queue__dropzone"
+        [class.upload-queue__dropzone--dragging]="dragging()"
+        (click)="openFilePicker()"
+        (dragover)="onDragOver($event)"
+        (dragleave)="onDragLeave($event)"
+        (drop)="onDrop($event)"
+      >
+        <i class="ri-upload-cloud-2-line upload-queue__drop-icon" aria-hidden="true"></i>
+        <p class="upload-queue__drop-text">{{ 'media.upload.dragOrClick' | translate }}</p>
+        <p class="upload-queue__drop-hint">{{ 'media.upload.hint' | translate: { maxSize: 5 } }}</p>
+      </div>
+    }
+
+    @if (uploadQueue().length > 0) {
+      <div class="upload-queue__list">
+        @for (item of uploadQueue(); track item.id) {
+          <div class="upload-queue__row" [class.upload-queue__row--done]="item.status === 'done'" [class.upload-queue__row--failed]="item.status === 'failed'" [class.upload-queue__row--uploading]="item.status === 'uploading'">
+            <img [src]="item.dataUrl" [alt]="item.name" class="upload-queue__thumb" />
+            <div class="upload-queue__name-field">
+              @if (item.status === 'pending') {
+                <input
+                  type="text"
+                  class="upload-queue__name-input"
+                  [value]="item.name"
+                  (input)="updateQueueItemName(item.id, $any($event.target).value)"
+                  [placeholder]="'media.uploadModal.namePlaceholder' | translate"
+                />
+              } @else {
+                <span class="upload-queue__name-label">{{ item.name }}</span>
+              }
+            </div>
+            <div class="upload-queue__status">
+              @if (item.status === 'uploading') {
+                <i class="ri-loader-4-line ri-spin" aria-hidden="true"></i>
+              } @else if (item.status === 'done') {
+                <i class="ri-check-line upload-queue__status--success" aria-hidden="true"></i>
+              } @else if (item.status === 'failed') {
+                <i class="ri-error-warning-line upload-queue__status--error" aria-hidden="true"></i>
+              }
+            </div>
+            @if (item.status === 'pending' && !isUploading()) {
+              <gom-lib-button type="button" variant="secondary" size="icon" (buttonClick)="removeQueueItem(item.id)">
+                <i class="ri-close-line" aria-hidden="true"></i>
+              </gom-lib-button>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    @if (isUploading()) {
+      <div class="upload-queue__progress">
+        <div class="upload-queue__progress-bar">
+          <div class="upload-queue__progress-fill" [style.width.%]="(uploadProgress()!.current / uploadProgress()!.total) * 100"></div>
+        </div>
+        <span class="upload-queue__progress-text">
+          {{ 'media.uploadQueue.uploading' | translate: { current: uploadProgress()!.current, total: uploadProgress()!.total } }}
+        </span>
+      </div>
+    }
+
+    <div class="upload-queue__footer">
+      <gom-lib-button type="button" variant="secondary" [disabled]="isUploading()" (buttonClick)="closeUploadModal()">
+        {{ 'media.actions.cancel' | translate }}
+      </gom-lib-button>
+      @if (pendingCount() > 0 && !isUploading()) {
+        <gom-lib-button type="button" variant="primary" [disabled]="hasInvalidNames()" (buttonClick)="uploadAll()">
+          <i class="ri-upload-2-line" aria-hidden="true"></i>
+          {{ 'media.uploadQueue.uploadCount' | translate: { count: pendingCount() } }}
+        </gom-lib-button>
+      }
+    </div>
+  </div>
+</gom-lib-modal>
+
+<!-- Delete Confirmation -->
+<gom-lib-confirmation-modal
+  [(show)]="deleteConfirmOpen"
+  [title]="'media.deleteConfirm.title' | translate"
+  [message]="'media.deleteConfirm.message' | translate: { name: deletingName() }"
+  [confirmText]="'media.actions.delete' | translate"
+  [cancelText]="'media.actions.cancel' | translate"
+  confirmVariant="danger"
+  (confirmed)="executeDelete()"
+  (cancelled)="cancelDelete()"
+></gom-lib-confirmation-modal>
+
+<!-- Platform-only: Image Detail / Usage Modal -->
+@if (isPlatform()) {
+  <gom-lib-modal
+    [title]="'media.infoModal.title' | translate"
+    [(show)]="infoModalOpen"
+    (closed)="closeInfoModal()"
+    size="medium"
+  >
+    @if (infoLoading()) {
+      <div class="info-modal__loading">
+        <i class="ri-loader-4-line ri-spin" aria-hidden="true"></i>
+        {{ 'media.loading' | translate }}
+      </div>
+    } @else if (usageDetail()) {
+      <div class="info-modal">
+        <div class="info-modal__preview">
+          <img [src]="usageDetail()!.asset.url" [alt]="usageDetail()!.asset.name" />
+        </div>
+        <div class="info-modal__details">
+          <h3 class="info-modal__name">{{ usageDetail()!.asset.name }}</h3>
+          <div class="info-modal__meta-grid">
+            <span class="info-modal__meta-label">{{ 'media.infoModal.dimensions' | translate }}</span>
+            <span>{{ usageDetail()!.asset.width }}×{{ usageDetail()!.asset.height }}</span>
+            <span class="info-modal__meta-label">{{ 'media.infoModal.fileSize' | translate }}</span>
+            <span>{{ formatFileSize(usageDetail()!.asset.size) }}</span>
+            <span class="info-modal__meta-label">{{ 'media.infoModal.format' | translate }}</span>
+            <span>{{ usageDetail()!.asset.format | uppercase }}</span>
+            <span class="info-modal__meta-label">{{ 'media.infoModal.uploaded' | translate }}</span>
+            <span>{{ usageDetail()!.asset.createdAt | date:'mediumDate' }}</span>
+          </div>
+        </div>
+
+        <div class="info-modal__usage">
+          <h4 class="info-modal__usage-title">
+            <i class="ri-bar-chart-2-line" aria-hidden="true"></i>
+            {{ 'media.infoModal.usageTitle' | translate }}
+            <span class="info-modal__usage-count">{{ usageDetail()!.totalUsage }}</span>
+          </h4>
+
+          @if (usageDetail()!.tenants.length === 0) {
+            <p class="info-modal__usage-empty">{{ 'media.infoModal.notUsed' | translate }}</p>
+          } @else {
+            <div class="info-modal__tenant-list">
+              @for (tenant of usageDetail()!.tenants; track tenant.tenantId) {
+                <div class="info-modal__tenant-row">
+                  <i class="ri-store-2-line" aria-hidden="true"></i>
+                  <span class="info-modal__tenant-name">{{ tenant.tenantName }}</span>
+                  <span class="info-modal__tenant-count">{{ tenant.groupCount }} {{ 'media.infoModal.groups' | translate }}</span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    }
+  </gom-lib-modal>
+}

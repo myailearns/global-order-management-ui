@@ -22,6 +22,7 @@
       "stock": "स्टॉक",
       "variants": "वैरिएंट्स",
       "packs": "पैक्स",
+      "mediaLibrary": "मीडिया लाइब्रेरी",
       "orders": "ऑर्डर्स",
       "orderManagement": "ऑर्डर प्रबंधन",
       "riders": "राइडर्स",
@@ -39,8 +40,11 @@
       "platformTenantRoles": "प्लेटफॉर्म टेनेंट रोल्स",
       "tenantEntitlements": "टेनेंट एंटाइटलमेंट्स",
       "tenantRoles": "टेनेंट रोल्स",
+      "categoryTemplates": "कैटेगरी टेम्प्लेट्स",
+      "marketplace": "मार्केटप्लेस",
       "customers": "ग्राहक",
-      "customerGroups": "ग्राहक समूह"
+      "customerGroups": "ग्राहक समूह",
+      "platformMedia": "प्लेटफॉर्म मीडिया"
     },
     "actions": {
       "notifications": "सूचनाएं",
@@ -128,6 +132,32 @@
     "deleteConfirm": {
       "title": "कैटेगरी हटाएं",
       "message": "क्या आप इस कैटेगरी को हटाना चाहते हैं: {{name}}?"
+    },
+    "associations": {
+      "title": "संबंध",
+      "manage": "प्रबंधित करें",
+      "tabs": {
+        "fieldGroups": "फील्ड ग्रुप्स",
+        "units": "यूनिट्स",
+        "groups": "ग्रुप्स"
+      },
+      "linkedFieldGroups": "जुड़े हुए फील्ड ग्रुप्स",
+      "linkedUnits": "जुड़ी हुई यूनिट्स",
+      "linkedGroups": "जुड़े हुए ग्रुप्स",
+      "addFieldGroup": "जोड़ें",
+      "addUnit": "जोड़ें",
+      "availableFieldGroups": "जोड़ने के लिए उपलब्ध फील्ड ग्रुप्स:",
+      "availableUnits": "जोड़ने के लिए उपलब्ध यूनिट्स:",
+      "noFieldGroups": "इस कैटेगरी से कोई फील्ड ग्रुप नहीं जुड़ा है।",
+      "noUnits": "इस कैटेगरी से कोई यूनिट नहीं जुड़ी है।",
+      "noGroups": "इस कैटेगरी का उपयोग करने वाला कोई प्रोडक्ट ग्रुप नहीं है।",
+      "noAvailableFieldGroups": "सभी फील्ड ग्रुप्स पहले से जुड़े हुए हैं।",
+      "noAvailableUnits": "सभी यूनिट्स पहले से जुड़ी हुई हैं।",
+      "groupsHint": "ग्रुप्स प्रोडक्ट ग्रुप्स पेज से प्रबंधित होते हैं। यह व्यू केवल पढ़ने के लिए है।",
+      "removeAria": "{{name}} हटाएं",
+      "updated": "संबंध सफलतापूर्वक अपडेट किए गए।",
+      "errorLoad": "संबंध लोड करने में विफल।",
+      "errorUpdate": "संबंध अपडेट करने में विफल।"
     }
   },
   "fields": {
@@ -706,6 +736,123 @@
     "errors": {
       "invalid_platform_credentials": "अमान्य प्लेटफॉर्म एडमिन क्रेडेंशियल्स।",
       "invalid_tenant_credentials": "अमान्य टेनेंट एडमिन क्रेडेंशियल्स या टेनेंट कोड।"
+    }
+  },
+  "categoryTemplates": {
+    "pageTitle": "कैटेगरी टेम्प्लेट्स",
+    "pageDescription": "कैटेगरी, फील्ड्स, यूनिट्स और अन्य चीजों को तुरंत सेटअप करने के लिए प्लेटफॉर्म टेम्प्लेट्स ब्राउज़ करें और सब्सक्राइब करें।",
+    "noDescription": "कोई विवरण नहीं दिया गया।",
+    "subscribed": "सब्सक्राइब किया",
+    "subscribe": "सब्सक्राइब",
+    "subscribing": "सब्सक्राइब हो रहा है…",
+    "unsubscribe": "अनसब्सक्राइब",
+    "subscribedOn": "सब्सक्राइब किया",
+    "clonedAs": "के रूप में क्लोन किया",
+    "loadingTemplates": "टेम्प्लेट्स लोड हो रहे हैं…",
+    "noTemplatesAvailable": "इस समय कोई टेम्प्लेट उपलब्ध नहीं है।",
+    "noSubscriptions": "आपने अभी तक किसी टेम्प्लेट को सब्सक्राइब नहीं किया है।",
+    "view": "देखें",
+    "preview": {
+      "title": "टेम्प्लेट प्रीव्यू",
+      "loading": "टेम्प्लेट विवरण लोड हो रहे हैं…",
+      "fields": "फील्ड्स",
+      "fieldGroups": "फील्ड ग्रुप्स",
+      "units": "यूनिट्स",
+      "fieldsTitle": "फील्ड्स",
+      "fieldGroupsTitle": "फील्ड ग्रुप्स",
+      "unitsTitle": "यूनिट्स",
+      "fieldName": "नाम",
+      "fieldKey": "की",
+      "fieldType": "प्रकार",
+      "unitName": "नाम",
+      "unitSymbol": "प्रतीक",
+      "noFieldsInGroup": "इस ग्रुप में कोई फील्ड नहीं है।",
+      "emptyTemplate": "इस टेम्प्लेट में कोई लिंक्ड आइटम नहीं है।",
+      "close": "बंद करें"
+    }
+  },
+  "tenantMedia": {
+    "title": "मीडिया लाइब्रेरी",
+    "description": "प्रोडक्ट ग्रुप्स के लिए अपनी इमेज अपलोड और प्रबंधित करें।",
+    "empty": "अभी तक कोई इमेज अपलोड नहीं की गई। अपलोड पर क्लिक करें।"
+  },
+  "media": {
+    "title": "प्लेटफॉर्म मीडिया लाइब्रेरी",
+    "description": "सभी टेनेंट्स को उपलब्ध शेयर्ड प्लेटफॉर्म इमेज प्रबंधित करें।",
+    "loading": "इमेज लोड हो रही हैं...",
+    "empty": "कोई इमेज नहीं मिली।",
+    "imageCount": "इमेज",
+    "searchPlaceholder": "नाम से इमेज खोजें...",
+    "storage": {
+      "title": "स्टोरेज उपयोग",
+      "platform": "प्लेटफॉर्म",
+      "tenants": "टेनेंट",
+      "totalImages": "कुल इमेज"
+    },
+    "actions": {
+      "upload": "इमेज अपलोड",
+      "delete": "हटाएं",
+      "cancel": "रद्द"
+    },
+    "pagination": {
+      "prev": "पिछला",
+      "next": "अगला"
+    },
+    "uploadModal": {
+      "title": "इमेज अपलोड करें",
+      "nameLabel": "इमेज का नाम",
+      "namePlaceholder": "इस इमेज के लिए एक नाम दर्ज करें",
+      "nameRequired": "इमेज का नाम आवश्यक है"
+    },
+    "uploadQueue": {
+      "uploading": "{{total}} में से {{current}} अपलोड हो रहा है...",
+      "uploadCount": "{{count}} इमेज अपलोड करें"
+    },
+    "deleteConfirm": {
+      "title": "इमेज हटाएं",
+      "message": "क्या आप वाकई \"{{name}}\" को हटाना चाहते हैं? इसे वापस नहीं किया जा सकता।"
+    },
+    "usedCount": "{{count}}x उपयोग",
+    "deleteDisabledHint": "हटा नहीं सकते — {{count}} ग्रुप(ओं) में उपयोग हो रहा है",
+    "infoModal": {
+      "title": "इमेज विवरण",
+      "dimensions": "आयाम",
+      "fileSize": "फ़ाइल आकार",
+      "format": "फ़ॉर्मैट",
+      "uploaded": "अपलोड तारीख",
+      "usageTitle": "टेनेंट उपयोग",
+      "notUsed": "यह इमेज अभी तक किसी टेनेंट ने उपयोग नहीं किया है।",
+      "groups": "ग्रुप"
+    },
+    "upload": {
+      "dragOrClick": "इमेज ड्रैग & ड्रॉप करें या ब्राउज़ करने के लिए क्लिक करें",
+      "hint": "अधिकतम फ़ाइल आकार: {{maxSize}} MB. समर्थित: JPEG, PNG, WebP, GIF",
+      "hintMulti": "अधिकतम {{maxFiles}} इमेज, प्रत्येक {{maxSize}} MB तक। JPEG, PNG, WebP, GIF",
+      "clear": "हटाएं",
+      "clearAll": "सब हटाएं",
+      "selected": "चयनित",
+      "uploadAll": "सब अपलोड करें",
+      "errorInvalidType": "अमान्य फ़ाइल प्रकार। केवल JPEG, PNG, WebP, और GIF की अनुमति है।",
+      "errorTooLarge": "फ़ाइल बहुत बड़ी है। अधिकतम आकार {{maxSize}} MB है।",
+      "errorMaxFiles": "आप अधिकतम {{maxFiles}} इमेज चुन सकते हैं।"
+    },
+    "picker": {
+      "title": "प्लेटफॉर्म इमेज चुनें",
+      "searchPlaceholder": "प्लेटफॉर्म इमेज खोजें...",
+      "empty": "कोई प्लेटफॉर्म इमेज उपलब्ध नहीं।",
+      "select": "चुनें"
+    },
+    "imagePicker": {
+      "title": "इमेज जोड़ें",
+      "searchPlaceholder": "इमेज खोजें...",
+      "uploadNew": "नया अपलोड करें",
+      "uploading": "अपलोड हो रहा है...",
+      "yourImages": "आपकी इमेज",
+      "platformImages": "प्लेटफॉर्म इमेज",
+      "noTenantImages": "आपने अभी तक कोई इमेज अपलोड नहीं की है।",
+      "noPlatformImages": "कोई प्लेटफॉर्म इमेज उपलब्ध नहीं।",
+      "added": "जोड़ा गया",
+      "addImages": "इमेज जोड़ें"
     }
   }
 }

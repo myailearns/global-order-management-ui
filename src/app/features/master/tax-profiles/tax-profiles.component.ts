@@ -1,20 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 
-import { FormControlsModule, GomButtonComponent } from '@gomlibs/ui';
-import {
-  GomButtonContentMode,
-  getButtonContentMode,
-  showButtonIcon,
-  showButtonText,
-} from '@gomlibs/ui';
+import { GomButtonComponent } from '@gomlibs/ui';
 import { GomTableColumn, GomTableComponent, GomTableRow } from '@gomlibs/ui';
-import { GomModalComponent } from '@gomlibs/ui';
 import { GomAlertToastService } from '@gomlibs/ui';
 import { TaxProfile, TaxProfilesService } from './tax-profiles.service';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
+import { TaxProfilesFormComponent, TaxProfileFormData, TaxProfileFormPayload } from './form/tax-profiles-form.component';
 
 interface TaxProfileRow extends GomTableRow {
   _id: string;
@@ -33,45 +25,27 @@ interface TaxProfileRow extends GomTableRow {
   standalone: true,
   imports: [
     CommonModule,
-    ReactiveFormsModule,
-    FormControlsModule,
     GomButtonComponent,
     GomTableComponent,
-    GomModalComponent,
+    TaxProfilesFormComponent,
   ],
   templateUrl: './tax-profiles.component.html',
   styleUrl: './tax-profiles.component.scss',
 })
 export class TaxProfilesComponent implements OnInit {
   private readonly service = inject(TaxProfilesService);
-  private readonly fb = inject(FormBuilder);
   private readonly toast = inject(GomAlertToastService);
-  private readonly destroyRef = inject(DestroyRef);
   private readonly authSession = inject(AuthSessionService);
 
   readonly loading = signal(false);
   readonly canCreateTaxProfile = computed(() => this.authSession.hasFeature('taxProfile.create'));
   readonly canEditTaxProfile = computed(() => this.authSession.hasFeature('taxProfile.edit'));
-  readonly saving = signal(false);
   readonly errorMessage = signal<string | null>(null);
 
   readonly taxProfiles = signal<TaxProfile[]>([]);
   readonly formOpen = signal(false);
   readonly editingId = signal<string | null>(null);
-
-  readonly submitMode: GomButtonContentMode = getButtonContentMode('primary-action');
-  readonly cancelMode: GomButtonContentMode = getButtonContentMode('dismiss');
-
-  readonly taxProfileForm = this.fb.group({
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    countryCode: ['IN', [Validators.required, Validators.minLength(2), Validators.maxLength(3)]],
-    taxMode: ['GST' as 'GST' | 'NO_TAX', [Validators.required]],
-    rate: [5, [Validators.required, Validators.min(0)]],
-    inclusive: ['NO' as 'YES' | 'NO'],
-    hsnCode: [''],
-    status: ['ACTIVE' as 'ACTIVE' | 'INACTIVE', [Validators.required]],
-    effectiveFrom: [''],
-  });
+  readonly editingFormData = signal<TaxProfileFormData | null>(null);
 
   readonly columns: GomTableColumn<TaxProfileRow>[] = [
     { key: 'name', header: 'Tax Profile', sortable: true, filterable: true, width: '14rem' },
@@ -104,13 +78,6 @@ export class TaxProfilesComponent implements OnInit {
   );
 
   ngOnInit(): void {
-    this.taxProfileForm.controls.taxMode.valueChanges
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((taxMode) => {
-        this.syncRateControl(taxMode || 'GST');
-      });
-
-    this.syncRateControl(this.taxProfileForm.controls.taxMode.value || 'GST');
     this.loadTaxProfiles();
   }
 
@@ -136,22 +103,14 @@ export class TaxProfilesComponent implements OnInit {
     }
 
     this.editingId.set(null);
-    this.taxProfileForm.reset({
-      name: '',
-      countryCode: 'IN',
-      taxMode: 'GST',
-      rate: 5,
-      inclusive: 'NO',
-      hsnCode: '',
-      status: 'ACTIVE',
-      effectiveFrom: '',
-    });
+    this.editingFormData.set(null);
     this.formOpen.set(true);
   }
 
   closeForm(): void {
     this.formOpen.set(false);
     this.editingId.set(null);
+    this.editingFormData.set(null);
   }
 
   onRowAction(event: { actionKey: string; row: GomTableRow }): void {
@@ -169,45 +128,27 @@ export class TaxProfilesComponent implements OnInit {
     }
 
     this.editingId.set(profile._id);
-    this.taxProfileForm.reset({
+    this.editingFormData.set({
       name: profile.name,
       countryCode: profile.countryCode || 'IN',
       taxMode: profile.taxMode,
       rate: profile.rate,
-      inclusive: profile.inclusive ? 'YES' : 'NO',
+      inclusive: profile.inclusive,
       hsnCode: profile.hsnCode || '',
       status: profile.status,
-      effectiveFrom: this.toDateInput(profile.effectiveFrom),
+      effectiveFrom: profile.effectiveFrom,
     });
     this.formOpen.set(true);
   }
 
-  saveTaxProfile(): void {
+  onFormSubmit(payload: TaxProfileFormPayload): void {
     const isEdit = !!this.editingId();
     const canProceed = isEdit ? this.canEditTaxProfile() : this.canCreateTaxProfile();
     if (!canProceed) {
       return;
     }
 
-    this.taxProfileForm.markAllAsTouched();
-    if (this.taxProfileForm.invalid) {
-      this.toast.error('Please fill all required fields.');
-      return;
-    }
-
-    const raw = this.taxProfileForm.getRawValue();
-    const payload = {
-      name: String(raw.name || '').trim(),
-      countryCode: String(raw.countryCode || 'IN').trim().toUpperCase(),
-      taxMode: raw.taxMode || 'GST',
-      rate: Number(raw.rate || 0),
-      inclusive: raw.inclusive === 'YES',
-      hsnCode: String(raw.hsnCode || '').trim(),
-      status: raw.status || 'ACTIVE',
-      effectiveFrom: raw.effectiveFrom ? new Date(raw.effectiveFrom).toISOString() : null,
-    };
-
-    this.saving.set(true);
+    this.loading.set(true);
     const editingId = this.editingId();
     const request$ = editingId
       ? this.service.updateTaxProfile(editingId, payload)
@@ -218,52 +159,16 @@ export class TaxProfilesComponent implements OnInit {
         this.toast.success(editingId ? 'Tax profile updated successfully.' : 'Tax profile created successfully.');
         this.closeForm();
         this.loadTaxProfiles();
-        this.saving.set(false);
       },
       error: (error) => {
         this.toast.error(this.extractApiMessage(error) || 'Failed to save tax profile.');
-        this.saving.set(false);
+        this.loading.set(false);
       },
     });
   }
 
-  isSaveDisabled(): boolean {
-    return this.saving() || this.taxProfileForm.invalid;
-  }
-
-  shouldShowIcon(mode: GomButtonContentMode): boolean {
-    return showButtonIcon(mode);
-  }
-
-  shouldShowText(mode: GomButtonContentMode): boolean {
-    return showButtonText(mode);
-  }
-
-  private toDateInput(value?: string | null): string {
-    if (!value) {
-      return '';
-    }
-
-    const parsed = new Date(value);
-    if (Number.isNaN(parsed.getTime())) {
-      return '';
-    }
-
-    return parsed.toISOString().slice(0, 10);
-  }
-
-  private syncRateControl(taxMode: string): void {
-    const rateControl = this.taxProfileForm.controls.rate;
-
-    if (taxMode === 'NO_TAX') {
-      rateControl.setValue(0, { emitEvent: false });
-      rateControl.disable({ emitEvent: false });
-      return;
-    }
-
-    if (rateControl.disabled) {
-      rateControl.enable({ emitEvent: false });
-    }
+  onFormCancel(): void {
+    this.closeForm();
   }
 
   private extractApiMessage(error: unknown): string {

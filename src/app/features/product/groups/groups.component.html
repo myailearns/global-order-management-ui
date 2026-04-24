@@ -222,6 +222,47 @@
       </section>
     </gom-lib-tab-content>
 
+    <gom-lib-tab-content [tabId]="6" [activeTab]="currentStep()">
+      <section class="wizard__body">
+        <div class="images-section">
+          <div class="images-section__header">
+            <h4>Group Images ({{ imageCount() }}/{{ MAX_IMAGES }})</h4>
+            <div class="images-section__actions">
+              <gom-lib-button type="button" variant="secondary" (buttonClick)="openPicker()" [disabled]="imageCount() >= MAX_IMAGES">
+                <i class="ri-image-add-line" aria-hidden="true"></i> Add Images
+              </gom-lib-button>
+            </div>
+          </div>
+
+          @if (groupImages().length === 0) {
+            <div class="images-section__empty">
+              <i class="ri-image-line" aria-hidden="true"></i>
+              <p>No images added yet. Use the buttons above to add images.</p>
+            </div>
+          } @else {
+            <div class="images-section__grid">
+              @for (img of groupImages(); track img.mediaAssetId._id) {
+                <div class="images-section__card">
+                  <div class="images-section__card-img-wrapper">
+                    <img [src]="img.mediaAssetId.url" [alt]="img.mediaAssetId.name" class="images-section__card-img" loading="lazy" />
+                    <span class="images-section__card-badge" [class.images-section__card-badge--platform]="img.source === 'PLATFORM'">
+                      {{ img.source === 'PLATFORM' ? 'Platform' : 'Own' }}
+                    </span>
+                  </div>
+                  <div class="images-section__card-footer">
+                    <span class="images-section__card-name" [title]="img.mediaAssetId.name">{{ img.mediaAssetId.name }}</span>
+                    <gom-lib-button type="button" variant="secondary" (buttonClick)="removeImage(img)">
+                      <i class="ri-close-line" aria-hidden="true"></i>
+                    </gom-lib-button>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </section>
+    </gom-lib-tab-content>
+
   </gom-lib-tabs>
 
   <footer class="wizard__footer gom-modal__action-layout groups-wizard__actions" gom-modal-actions>
@@ -246,7 +287,7 @@
         </gom-lib-button>
       }
 
-      @if (currentStep() < 5) {
+      @if (currentStep() < 6) {
         <gom-lib-button
           class="groups-wizard__action"
           type="button"
@@ -266,7 +307,7 @@
         </gom-lib-button>
       }
 
-      @if (currentStep() === 5) {
+      @if (currentStep() === 6) {
         <gom-lib-button
           class="groups-wizard__action"
           type="button"
@@ -288,3 +329,12 @@
     </div>
   </footer>
 </gom-lib-modal>
+
+<!-- Image Picker -->
+<gom-image-picker
+  [(show)]="pickerOpen"
+  [existingImageIds]="existingImageIds()"
+  [canUpload]="canUploadOwn()"
+  [maxImages]="MAX_IMAGES"
+  (imagesSelected)="onImagesSelected($event)"
+></gom-image-picker>

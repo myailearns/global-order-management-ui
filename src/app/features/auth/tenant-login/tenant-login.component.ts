@@ -27,12 +27,21 @@ export class TenantLoginComponent {
 
   readonly submitting = signal(false);
   readonly errorMessage = signal('');
+  readonly tenantCodeFromUrl = signal('');
 
   readonly form = this.fb.nonNullable.group({
     tenantCode: ['STARTER01', [Validators.required]],
     email: ['starter.admin@gom.dev', [Validators.required, Validators.email]],
     password: ['Tenant@123', [Validators.required]],
   });
+
+  constructor() {
+    const code = this.route.snapshot.queryParamMap.get('tenantCode');
+    if (code) {
+      this.form.patchValue({ tenantCode: code });
+      this.tenantCodeFromUrl.set(code);
+    }
+  }
 
   submit(): void {
     if (this.form.invalid || this.submitting()) {

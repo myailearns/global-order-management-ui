@@ -25,6 +25,8 @@ const TENANT_ROUTE_PREFIXES = [
   '/courier-partners',
   '/tenant-config',
   '/tenant-access',
+  '/tenant/templates',
+  '/media',
 ] as const;
 
 function isTenantApiRequest(url: string): boolean {
