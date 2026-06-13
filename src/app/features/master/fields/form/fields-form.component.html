@@ -10,9 +10,25 @@
     <form [formGroup]="form" (ngSubmit)="onSubmit()" class="fields-form">
       <gom-lib-dynamic-form
         [form]="form"
-        [fields]="fields"
+        [fields]="primaryFields"
         [selectOptionsBySource]="selectOptionsBySource"
       ></gom-lib-dynamic-form>
+
+      @if (form.get('type')?.value === 'NUMBER' && form.get('valueFormat')?.value === 'CURRENCY') {
+        <gom-lib-input
+          [label]="'fields.labels.currencyCode' | translate"
+          [formControl]="currencyCodePreviewControl"
+          [hint]="'fields.hints.currencyCodeFixed' | translate"
+        ></gom-lib-input>
+      }
+
+      @if (secondaryFields.length > 0) {
+        <gom-lib-dynamic-form
+          [form]="form"
+          [fields]="secondaryFields"
+          [selectOptionsBySource]="selectOptionsBySource"
+        ></gom-lib-dynamic-form>
+      }
 
       <section class="fields-form__group-assignment">
         @if (fieldGroupOptions.length > 0) {

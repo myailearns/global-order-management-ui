@@ -2,16 +2,20 @@
   <header class="master-page__header">
     <h2><i class="ri-file-list-3-line" aria-hidden="true"></i> Orders</h2>
     <div class="master-page__header-actions">
-      @if (isDevMode) {
+      @if (isDevMode && canDeleteOrder()) {
         <gom-lib-button type="button" variant="danger" (buttonClick)="openPurgeAllModal()">
           <i class="ri-delete-bin-6-line" aria-hidden="true"></i> Dev: Delete All Orders
         </gom-lib-button>
       }
-      @if (canWrite()) {
-      <gom-lib-button type="button" variant="primary" (buttonClick)="openCreate()">
+      <gom-lib-button
+        type="button"
+        variant="primary"
+        (buttonClick)="openCreate()"
+        gomDisableIfNoFeature="order.create"
+        [disabled]="loading() || !canCreateOrder()"
+      >
         <i class="ri-add-line" aria-hidden="true"></i> Create Order
       </gom-lib-button>
-      }
     </div>
   </header>
 
@@ -430,6 +434,14 @@
         <div><strong>Created:</strong> {{ order.createdAt | date: 'medium' }}</div>
       </div>
 
+      <h4 class="view-order-section-title">Offer & Profit Snapshot</h4>
+      <div class="view-order-summary-grid">
+        <div><strong>Coupons Applied:</strong> {{ getCouponsUsedLabel(order) }}</div>
+        <div><strong>Discount:</strong> Rs {{ (order.pricingSnapshot.discount || 0).toLocaleString() }}</div>
+        <div><strong>Profit:</strong> {{ getProfitLabel(order) }}</div>
+        <div><strong>Margin:</strong> {{ getOrderMarginLabel(order) }}</div>
+      </div>
+
       <h4 class="view-order-section-title">Items ({{ viewOrderItemsCount }})</h4>
       @if (getVisibleOrderItems(order).length > 0) {
         <div class="view-order-items-wrap">
@@ -438,7 +450,10 @@
               <tr>
                 <th>Product</th>
                 <th>Qty</th>
-                <th>Rate</th>
+                <th>Buy Price</th>
+                <th>Discount</th>
+                <th>COGS</th>
+                <th>Item Profit</th>
                 <th>Total</th>
               </tr>
             </thead>
@@ -451,6 +466,9 @@
                   </td>
                   <td>{{ item.quantity }} {{ item.unitSnapshot || '' }}</td>
                   <td>Rs {{ (item.priceSnapshot.sellingPrice || 0).toLocaleString() }}</td>
+                  <td>Rs {{ getItemDiscountValue(item).toLocaleString() }}</td>
+                  <td>Rs {{ (item.priceSnapshot.cogsLineTotal || 0).toLocaleString() }}</td>
+                  <td>Rs {{ (item.priceSnapshot.grossLineProfit || 0).toLocaleString() }}</td>
                   <td>Rs {{ (item.lineTotal || 0).toLocaleString() }}</td>
                 </tr>
               }
@@ -460,6 +478,64 @@
       } @else {
         <p class="view-order-empty">No items found for this order.</p>
       }
+    }
+
+    <h4 class="view-order-section-title">Customer Feedback</h4>
+    @if (viewOrderTarget()?.status !== 'DELIVERED') {
+      <p class="view-order-empty">Feedback is only available for delivered orders.</p>
+    } @else if (viewOrderRatingLoading()) {
+      <p class="view-order-empty">Loading feedback...</p>
+    } @else if (viewOrderRating(); as rating) {
+      <div class="view-order-feedback">
+        <div class="view-order-feedback-row">
+          <span class="view-order-feedback-label">Overall Rating</span>
+          <span class="view-order-feedback-stars">
+            @for (star of [1, 2, 3, 4, 5]; track star) {
+              <i class="ri-star-fill" [class.feedback-star--filled]="star <= rating.rating" aria-hidden="true"></i>
+            }
+          </span>
+        </div>
+        @if (rating.riderRating) {
+          <div class="view-order-feedback-row">
+            <span class="view-order-feedback-label">Rider Courtesy</span>
+            <span class="view-order-feedback-stars">
+              @for (star of [1, 2, 3, 4, 5]; track star) {
+                <i class="ri-star-fill" [class.feedback-star--filled]="star <= rating.riderRating" aria-hidden="true"></i>
+              }
+            </span>
+          </div>
+        }
+        @if (rating.feedback) {
+          <div class="view-order-feedback-comment">
+            <span class="view-order-feedback-label">Comment</span>
+            <p>{{ rating.feedback }}</p>
+          </div>
+        }
+        <p class="view-order-feedback-date">Submitted {{ rating.createdAt | date: 'mediumDate' }}</p>
+      </div>
+    } @else {
+      <p class="view-order-empty">No feedback submitted for this order.</p>
+    }
+
+    <h4 class="view-order-section-title">Return Request</h4>
+    @if (!['RETURN_REQUESTED', 'RETURN_IN_TRANSIT', 'RETURNED', 'REFUNDED'].includes(viewOrderTarget()?.status || '')) {
+      <p class="view-order-empty">No return request for this order.</p>
+    } @else if (viewOrderReturnLoading()) {
+      <p class="view-order-empty">Loading return details...</p>
+    } @else if (viewOrderReturnRequest(); as returnRequest) {
+      <div class="view-order-return">
+        <div class="view-order-return-row">
+          <span class="view-order-return-label">Status</span>
+          <span>{{ returnRequest.status }}</span>
+        </div>
+        <div class="view-order-return-row">
+          <span class="view-order-return-label">Customer Comment</span>
+          <p>{{ viewOrderReturnReason }}</p>
+        </div>
+        <p class="view-order-return-date">Submitted {{ returnRequest.createdAt | date: 'mediumDate' }}</p>
+      </div>
+    } @else {
+      <p class="view-order-empty">Return request details are not available.</p>
     }
 
     <h4 class="view-order-section-title">Status History</h4>

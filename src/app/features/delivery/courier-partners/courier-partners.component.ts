@@ -2,11 +2,18 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
-import { GomAlertToastService } from '@gomlibs/ui';
+import {
+  FormControlsModule,
+  GomAlertToastService,
+  GomButtonComponent,
+  GomConfirmationModalComponent,
+  GomModalComponent,
+  GomTableColumn,
+  GomTableComponent,
+  GomTableRow,
+} from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
-import { FormControlsModule, GomButtonComponent } from '@gomlibs/ui';
-import { GomConfirmationModalComponent, GomModalComponent } from '@gomlibs/ui';
-import { GomTableColumn, GomTableComponent, GomTableRow } from '@gomlibs/ui';
+import { DisableIfNoFeatureDirective } from '../../../shared/directives/disable-if-no-feature.directive';
 import { CourierPartner, CourierPartnerPayload, CourierPartnerStatus, DeliveryService } from '../delivery.service';
 
 interface CourierPartnerRow extends GomTableRow {
@@ -28,6 +35,7 @@ interface CourierPartnerRow extends GomTableRow {
     CommonModule,
     ReactiveFormsModule,
     FormControlsModule,
+    DisableIfNoFeatureDirective,
     GomButtonComponent,
     GomTableComponent,
     GomModalComponent,
@@ -43,7 +51,19 @@ export class CourierPartnersComponent implements OnInit {
 
   readonly loading = signal(false);
   private readonly authSession = inject(AuthSessionService);
-  readonly canWrite = computed(() => this.authSession.canWrite('delivery'));
+  readonly canCreatePartner = computed(() => this.authSession.hasFeature('courierPartner.create') && (this.courierPartnerCreateRemaining() ?? Infinity) > 0);
+  readonly canUpdatePartner = computed(() => this.authSession.hasFeature('courierPartner.update'));
+  readonly canDeletePartner = computed(() => this.authSession.hasFeature('courierPartner.delete'));
+  readonly courierPartnerCreateLimit = computed(() => this.authSession.getFeatureConfigNumber('courierPartner.create', 'max_count'));
+  readonly courierPartnerCreateUsed = computed(() => this.partners().length);
+  readonly courierPartnerCreateRemaining = computed(() => {
+    const limit = this.courierPartnerCreateLimit();
+    if (limit === null) {
+      return null;
+    }
+
+    return Math.max(limit - this.courierPartnerCreateUsed(), 0);
+  });
 
   readonly saving = signal(false);
   readonly errorMessage = signal<string | null>(null);
@@ -199,9 +219,6 @@ export class CourierPartnersComponent implements OnInit {
   }
 
   onRowAction(event: { actionKey: string; row: GomTableRow }): void {
-    if (!this.canWrite()) {
-      return;
-    }
     const id = typeof event.row['_id'] === 'string' ? event.row['_id'] : '';
     const partner = this.partners().find((item) => item._id === id);
     if (!partner) {
@@ -209,6 +226,9 @@ export class CourierPartnersComponent implements OnInit {
     }
 
     if (event.actionKey === 'edit') {
+      if (!this.canUpdatePartner()) {
+        return;
+      }
       this.editingId.set(partner._id);
       this.partnerForm.reset({
         name: partner.name,
@@ -224,6 +244,9 @@ export class CourierPartnersComponent implements OnInit {
     }
 
     if (event.actionKey === 'deactivate') {
+      if (!this.canUpdatePartner()) {
+        return;
+      }
       this.statusTarget.set({
         partnerId: partner._id,
         partnerName: partner.name,
@@ -235,6 +258,9 @@ export class CourierPartnersComponent implements OnInit {
     }
 
     if (event.actionKey === 'activate') {
+      if (!this.canUpdatePartner()) {
+        return;
+      }
       this.statusTarget.set({
         partnerId: partner._id,
         partnerName: partner.name,
@@ -246,6 +272,9 @@ export class CourierPartnersComponent implements OnInit {
     }
 
     if (event.actionKey === 'delete') {
+      if (!this.canDeletePartner()) {
+        return;
+      }
       this.statusTarget.set({
         partnerId: partner._id,
         partnerName: partner.name,
@@ -263,6 +292,16 @@ export class CourierPartnersComponent implements OnInit {
   confirmStatusChange(): void {
     const target = this.statusTarget();
     if (!target) {
+      this.closeStatusConfirm();
+      return;
+    }
+
+    if (target.action === 'delete' && !this.canDeletePartner()) {
+      this.closeStatusConfirm();
+      return;
+    }
+
+    if (target.action !== 'delete' && !this.canUpdatePartner()) {
       this.closeStatusConfirm();
       return;
     }
@@ -341,6 +380,15 @@ export class CourierPartnersComponent implements OnInit {
   }
 
   savePartner(): void {
+    const isEditing = Boolean(this.editingId());
+    if (isEditing && !this.canUpdatePartner()) {
+      return;
+    }
+
+    if (!isEditing && !this.canCreatePartner()) {
+      return;
+    }
+
     this.partnerForm.markAllAsTouched();
     if (this.partnerForm.invalid) {
       return;
@@ -379,7 +427,9 @@ export class CourierPartnersComponent implements OnInit {
   }
 
   isSaveDisabled(): boolean {
-    return this.saving() || this.partnerForm.invalid;
+    const isEditing = Boolean(this.editingId());
+    const hasPermission = isEditing ? this.canUpdatePartner() : this.canCreatePartner();
+    return this.saving() || this.partnerForm.invalid || !hasPermission;
   }
 
   private extractApiMessage(error: unknown): string {

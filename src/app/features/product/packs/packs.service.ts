@@ -24,16 +24,41 @@ export interface ApiSuccess<T> {
 export interface Pack {
   _id: string;
   name: string;
+  description?: string;
+  allowOutOfStockItems?: boolean;
+  outOfStockThreshold?: number;
   items: Array<{
     variantId: string;
     variantName: string;
     quantity: number;
     sellingPrice: number;
     anchorPrice: number;
+    actualPrice?: number;
+    percentOfTotal?: number;
   }>;
   price: {
     sellingPrice: number;
     anchorPrice: number;
+  };
+  actualPrice?: number;
+  discountPercentage?: number;
+  discountDescription?: string;
+  badges?: Array<{
+    label: string;
+    color?: 'primary' | 'success' | 'warning' | 'danger' | 'info' | 'dark';
+  }>;
+  images?: Array<{
+    url: string;
+    mediaType?: 'IMAGE' | 'VIDEO';
+    thumbnailUrl?: string;
+    format?: string;
+    mimeType?: string;
+  }>;
+  stockSummary?: {
+    outOfStock: boolean;
+    outOfStockItemCount: number;
+    threshold: number;
+    totalItems: number;
   };
   status: 'ACTIVE' | 'INACTIVE';
   updatedAt: string;
@@ -46,18 +71,36 @@ export interface VariantOption {
   effectivePrice?: {
     sellingPrice: number;
     anchorPrice: number;
+    actualPrice?: number;
   };
   price: {
     sellingPrice: number;
     anchorPrice: number;
+    actualPrice?: number;
   };
 }
 
 export interface CreatePackPayload {
   name: string;
+  description?: string;
+  allowOutOfStockItems?: boolean;
+  outOfStockThreshold?: number;
   items: Array<{
     variantId: string;
     quantity: number;
+  }>;
+  discountPercentage?: number;
+  discountDescription?: string;
+  badges?: Array<{
+    label: string;
+    color?: 'primary' | 'success' | 'warning' | 'danger' | 'info' | 'dark';
+  }>;
+  images?: Array<{
+    url: string;
+    mediaType?: 'IMAGE' | 'VIDEO';
+    thumbnailUrl?: string;
+    format?: string;
+    mimeType?: string;
   }>;
   status?: 'ACTIVE' | 'INACTIVE';
 }

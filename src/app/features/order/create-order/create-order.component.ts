@@ -74,6 +74,7 @@ export class CreateOrderComponent implements OnInit {
   readonly pricingRevision = signal(0);
   readonly deliveryPincodeConfig = signal<TenantDeliveryPincodeConfig>({
     enabled: false,
+    pincodeMode: 'DISABLED',
     serviceablePincodes: [],
     nonServiceableSuggestion: 'CALL_COURIER',
   });
@@ -380,10 +381,12 @@ export class CreateOrderComponent implements OnInit {
       .subscribe({
         next: (response) => {
           const cfg = response.data?.deliveryPincodeConfig;
+          const pincodeMode = cfg?.pincodeMode || (cfg?.enabled ? 'RESTRICTED' : 'DISABLED');
           this.deliveryPincodeConfig.set({
-            enabled: Boolean(cfg?.enabled),
+            enabled: pincodeMode === 'RESTRICTED',
+            pincodeMode: pincodeMode as 'DISABLED' | 'SERVE_ALL' | 'RESTRICTED',
             serviceablePincodes: Array.isArray(cfg?.serviceablePincodes)
-              ? cfg.serviceablePincodes.map((code) => String(code || '').trim()).filter(Boolean)
+              ? cfg.serviceablePincodes.map((code: string) => String(code || '').trim()).filter(Boolean)
               : [],
             nonServiceableSuggestion: cfg?.nonServiceableSuggestion || 'CALL_COURIER',
           });
@@ -391,11 +394,20 @@ export class CreateOrderComponent implements OnInit {
         error: () => {
           this.deliveryPincodeConfig.set({
             enabled: false,
+            pincodeMode: 'DISABLED',
             serviceablePincodes: [],
             nonServiceableSuggestion: 'CALL_COURIER',
           });
         },
       });
+  }
+
+  private pincodeMatchesPattern(pincode: string, raw: string): boolean {
+    const pattern = raw.split(':')[0]; // strip :days suffix
+    if (pattern.endsWith('*')) {
+      return pincode.startsWith(pattern.slice(0, -1));
+    }
+    return pincode === pattern;
   }
 
   get isNonServiceableDeliveryPincode(): boolean {
@@ -410,7 +422,7 @@ export class CreateOrderComponent implements OnInit {
     }
 
     const config = this.deliveryPincodeConfig();
-    if (!config.enabled || !config.serviceablePincodes.length) {
+    if (config.pincodeMode !== 'RESTRICTED' || !config.serviceablePincodes.length) {
       return false;
     }
 
@@ -419,7 +431,7 @@ export class CreateOrderComponent implements OnInit {
       return false;
     }
 
-    return !config.serviceablePincodes.includes(pincode);
+    return !config.serviceablePincodes.some((pattern) => this.pincodeMatchesPattern(pincode, pattern));
   }
 
   get nonServiceablePincodeMessage(): string {

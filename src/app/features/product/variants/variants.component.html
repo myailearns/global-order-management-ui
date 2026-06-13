@@ -1,11 +1,15 @@
 <section class="master-page">
   <header class="master-page__header">
     <h2><i class="ri-price-tag-3-line" aria-hidden="true"></i> Variants</h2>
-    @if (canWrite()) {
-    <gom-lib-button type="button" variant="primary" (buttonClick)="openCreateVariant()">
+    <gom-lib-button
+      type="button"
+      variant="primary"
+      (buttonClick)="openCreateVariant()"
+      gomDisableIfNoFeature="variant.create"
+      [disabled]="saving() || !canCreateVariant() || (variantCreateRemaining() ?? 1) <= 0"
+    >
       <i class="ri-add-line" aria-hidden="true"></i> Add Variant
     </gom-lib-button>
-    }
   </header>
 
   @if (errorMessage()) {
@@ -14,6 +18,16 @@
         <i class="ri-alert-fill" style="font-size: 1.25rem; flex-shrink: 0;" aria-hidden="true"></i>
         <span>{{ errorMessage() }}</span>
       </div>
+    </div>
+  }
+
+  @if (canCreateVariant()) {
+    <div class="quota-banner">
+      @if (variantCreateLimit() !== null) {
+        <p>Variant quota: {{ variantCreateUsed() }} / {{ variantCreateLimit() }} used ({{ variantCreateRemaining() }} remaining)</p>
+      } @else {
+        <p>Variant quota: {{ variantCreateUsed() }} used (unlimited)</p>
+      }
     </div>
   }
 

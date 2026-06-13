@@ -1,0 +1,479 @@
+<div class="offer-wizard-container">
+  <div class="wizard-header">
+    <div class="wizard-title">
+      <button class="back-btn" (click)="goBack()" type="button">
+        <i class="ri-arrow-left-line"></i>
+        {{ 'common.btn_back' | translate }}
+      </button>
+      <h1>{{ 'gom.offers.wizard_title' | translate }}</h1>
+      <p>{{ 'gom.offers.wizard_subtitle' | translate }}</p>
+    </div>
+    
+    <div class="wizard-tabs" role="tablist" aria-label="Offer wizard steps">
+      @for (tab of tabs; track tab.id) {
+        <button
+          type="button"
+          class="wizard-tab"
+          [class.wizard-tab--active]="activeTab() === tab.id"
+          (click)="onTabChange(tab.id)"
+        >
+          {{ tab.label | translate }}
+        </button>
+      }
+    </div>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="alert alert-error">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  <div class="wizard-content">
+    <!-- Tab 1: Basic Info -->
+    @if (activeTab() === 'basic-info') {
+      <div class="tab-panel">
+        <h2>{{ 'gom.offers.step_basic_info' | translate }}</h2>
+        <form [formGroup]="basicInfoForm" class="form-grid">
+          <div class="form-group full-width">
+            <gom-lib-input
+              formControlName="name"
+              [label]="'gom.offers.field_name' | translate"
+              [required]="true"
+              [placeholder]="'gom.offers.placeholder_name' | translate"
+            ></gom-lib-input>
+          </div>
+
+          <div class="form-group full-width">
+            <gom-lib-textarea
+              formControlName="description"
+              [label]="'gom.offers.field_description' | translate"
+              [placeholder]="'gom.offers.placeholder_description' | translate"
+              [rows]="3"
+            ></gom-lib-textarea>
+          </div>
+
+          <div class="form-group">
+            <gom-lib-select
+              formControlName="type"
+              [label]="'gom.offers.field_type' | translate"
+              [required]="true"
+              [options]="offerTypeOptions"
+            ></gom-lib-select>
+          </div>
+
+          <div class="form-group">
+            <gom-lib-select
+              formControlName="triggerType"
+              [label]="'gom.offers.field_trigger' | translate"
+              [required]="true"
+              [options]="triggerTypeOptions"
+            ></gom-lib-select>
+          </div>
+
+          <div class="form-group">
+            <gom-lib-input
+              formControlName="priority"
+              [label]="'gom.offers.field_priority' | translate"
+              type="number"
+              placeholder="e.g. 1"
+            ></gom-lib-input>
+          </div>
+
+          <div class="form-group">
+            <label class="native-input-label" for="offer-start-date">
+              {{ 'gom.offers.field_start_date' | translate }}
+              <span class="required-marker" aria-hidden="true">*</span>
+            </label>
+            <input
+              id="offer-start-date"
+              class="native-date-input"
+              formControlName="startDate"
+              type="datetime-local"
+              [min]="minStartDateTime()"
+            />
+            @if (basicInfoForm.controls['startDate'].touched && basicInfoForm.controls['startDate'].hasError('pastStartDate')) {
+              <p class="hint error-hint">{{ 'gom.offers.validation_start_date_not_past' | translate }}</p>
+            }
+          </div>
+
+          <div class="form-group">
+            <label class="native-input-label" for="offer-end-date">
+              {{ 'gom.offers.field_end_date' | translate }}
+              <span class="required-marker" aria-hidden="true">*</span>
+            </label>
+            <input
+              id="offer-end-date"
+              class="native-date-input"
+              formControlName="endDate"
+              type="datetime-local"
+              [min]="minEndDateTime()"
+            />
+            @if (basicInfoForm.controls['endDate'].touched && basicInfoForm.hasError('endDateBeforeStartDate')) {
+              <p class="hint error-hint">{{ 'gom.offers.validation_end_date_after_start' | translate }}</p>
+            }
+          </div>
+        </form>
+      </div>
+    }
+
+    <!-- Tab 2: Offer Details (Dynamic based on type) -->
+    @if (activeTab() === 'offer-details') {
+      <div class="tab-panel">
+        <h2>{{ 'gom.offers.step_details' | translate }}</h2>
+        <form [formGroup]="offerDetailsForm" class="form-grid">
+          <!-- Discount Type Details -->
+          @if (
+            selectedOfferType === 'ORDER_DISCOUNT'
+            || selectedOfferType === 'PRODUCT_DISCOUNT'
+            || selectedOfferType === 'CATEGORY_DISCOUNT'
+            || selectedOfferType === 'PACK_DISCOUNT'
+            || selectedOfferType === 'FREE_DELIVERY'
+          ) {
+            <div class="form-group">
+              <gom-lib-select
+                formControlName="discountType"
+                [label]="'gom.offers.field_discount_type' | translate"
+                [required]="true"
+                [options]="discountTypeOptions"
+              ></gom-lib-select>
+            </div>
+
+            @if (showDiscountValue) {
+              <div class="form-group">
+                <gom-lib-input
+                  formControlName="discountValue"
+                  [label]="selectedDiscountType === 'PERCENT' ? ('gom.offers.field_discount_value_percent' | translate) : ('gom.offers.field_discount_value_amount' | translate)"
+                  [required]="true"
+                  type="number"
+                  [placeholder]="selectedDiscountType === 'PERCENT' ? 'e.g. 10 for 10%' : 'e.g. 50'"
+                ></gom-lib-input>
+              </div>
+            }
+
+            <div class="form-group">
+              <gom-lib-input
+                formControlName="minOrderValue"
+                [label]="'gom.offers.field_min_order_value' | translate"
+                type="number"
+                placeholder="0.00"
+              ></gom-lib-input>
+            </div>
+
+            @if (showMaxDiscountCap) {
+              <div class="form-group">
+                <gom-lib-input
+                  formControlName="maxDiscount"
+                  [label]="'gom.offers.field_max_discount' | translate"
+                  type="number"
+                  placeholder="0.00"
+                ></gom-lib-input>
+              </div>
+            }
+          }
+
+          <!-- B1G1 Type Details -->
+          @if (selectedOfferType === 'BUY_X_GET_Y') {
+            <div class="form-group">
+              <gom-lib-select
+                formControlName="b1g1RewardType"
+                [label]="'gom.offers.field_b1g1_reward_type' | translate"
+                [options]="b1g1RewardTypeOptions"
+              ></gom-lib-select>
+            </div>
+
+            <div class="form-group">
+              <gom-lib-input
+                formControlName="b1g1MinQty"
+                [label]="'gom.offers.field_b1g1_min_qty' | translate"
+                type="number"
+              ></gom-lib-input>
+            </div>
+
+            <div class="form-group">
+              <gom-lib-input
+                formControlName="b1g1GetCount"
+                [label]="'gom.offers.field_b1g1_get_count' | translate"
+                type="number"
+              ></gom-lib-input>
+            </div>
+
+            <div class="form-group">
+              <gom-lib-input
+                formControlName="b1g1MaxRepeat"
+                [label]="'gom.offers.field_b1g1_max_repeat' | translate"
+                type="number"
+              ></gom-lib-input>
+            </div>
+
+            @if (offerDetailsForm.get('b1g1RewardType')?.value === 'DIFFERENT_ITEM') {
+              <div class="form-group full-width">
+                <gom-lib-select
+                  formControlName="b1g1GetVariantId"
+                  [label]="'gom.offers.field_b1g1_reward_products' | translate"
+                  [options]="rewardProductOptions()"
+                  [searchable]="(rewardProductOptions().length) >= 10"
+                  [searchPlaceholder]="'gom.offers.placeholder_search_products' | translate"
+                  [placeholder]="'gom.offers.placeholder_all_products' | translate"
+                ></gom-lib-select>
+                <p class="hint">{{ 'gom.offers.hint_b1g1_reward_single_product' | translate }}</p>
+              </div>
+            }
+          }
+
+          <!-- FREE_DELIVERY Type Details -->
+          @if (showDeliveryFields) {
+            <div class="form-group">
+              <gom-lib-input
+                formControlName="deliveryMinCartValue"
+                [label]="'gom.offers.field_delivery_min_cart_value' | translate"
+                [required]="true"
+                type="number"
+                step="0.01"
+                placeholder="e.g. 200"
+              ></gom-lib-input>
+              <p class="hint">{{ 'gom.offers.hint_delivery_min_cart_value' | translate }}</p>
+            </div>
+
+            <div class="form-group">
+              <gom-lib-input
+                formControlName="deliveryMaxChargeCap"
+                [label]="'gom.offers.field_delivery_max_charge' | translate"
+                [required]="true"
+                type="number"
+                step="0.01"
+                placeholder="e.g. 50"
+              ></gom-lib-input>
+              <p class="hint">{{ 'gom.offers.hint_delivery_max_charge' | translate }}</p>
+            </div>
+
+            <div class="form-group full-width">
+              <gom-lib-select
+                formControlName="deliveryMethods"
+                [label]="'gom.offers.field_delivery_methods' | translate"
+                [required]="true"
+                [options]="deliveryMethodOptions"
+                [multiple]="true"
+                [placeholder]="'gom.offers.placeholder_select_delivery_methods' | translate"
+              ></gom-lib-select>
+              <p class="hint">{{ 'gom.offers.hint_delivery_methods' | translate }}</p>
+            </div>
+
+            <div class="form-group full-width">
+              <div class="form-label">
+                {{ 'gom.offers.field_delivery_pin_codes' | translate }}
+                <span class="required-marker" aria-hidden="true">*</span>
+              </div>
+              <div class="delivery-pin-mode-group" role="radiogroup" aria-label="Delivery pin code mode">
+                <label class="delivery-pin-mode-option">
+                  <input
+                    type="radio"
+                    name="deliveryPinCodesMode"
+                    value="all"
+                    formControlName="deliveryPinCodesMode"
+                  />
+                  <span>{{ 'gom.offers.option_delivery_all_service_areas' | translate }}</span>
+                </label>
+                @if (showSpecificPinCodeOption()) {
+                  <label class="delivery-pin-mode-option">
+                    <input
+                      type="radio"
+                      name="deliveryPinCodesMode"
+                      value="specific"
+                      formControlName="deliveryPinCodesMode"
+                    />
+                    <span>{{ 'gom.offers.option_delivery_specific_pin_codes' | translate }}</span>
+                  </label>
+                }
+              </div>
+            </div>
+
+            @if (showSpecificPinCodeOption() && selectedDeliveryPinCodeMode === 'specific') {
+              <div class="form-group full-width">
+                <gom-lib-select
+                  formControlName="deliveryPinCodes"
+                  [label]="'gom.offers.field_select_pin_codes' | translate"
+                  [required]="true"
+                  [options]="deliveryPinCodeOptions()"
+                  [multiple]="true"
+                  [searchable]="(deliveryPinCodeOptions().length) >= 10"
+                  [searchPlaceholder]="'gom.offers.placeholder_search_pin_codes' | translate"
+                  [placeholder]="'gom.offers.placeholder_select_pin_codes' | translate"
+                ></gom-lib-select>
+                <p class="hint">{{ 'gom.offers.hint_delivery_specific_pin_codes' | translate }}</p>
+              </div>
+            }
+          }
+
+          <!-- Coupon Code -->
+          @if (selectedTriggerType === 'COUPON') {
+            <div class="form-group full-width">
+              <gom-lib-input
+                formControlName="couponCode"
+                [label]="'gom.offers.field_coupon_code' | translate"
+                [placeholder]="'gom.offers.placeholder_coupon_code' | translate"
+              ></gom-lib-input>
+            </div>
+          }
+        </form>
+      </div>
+    }
+
+    <!-- Tab 3: Limits & Applicability -->
+    @if (activeTab() === 'limits-applicability') {
+      <div class="tab-panel">
+        <h2>{{ 'gom.offers.step_limits' | translate }}</h2>
+        <form [formGroup]="limitsForm" class="form-grid">
+
+          <!-- Usage Limits (always shown) -->
+          <div class="form-group">
+            <gom-lib-input
+              formControlName="usageLimit"
+              [label]="'gom.offers.field_usage_limit' | translate"
+              type="number"
+              [placeholder]="'gom.offers.placeholder_unlimited' | translate"
+            ></gom-lib-input>
+            <p class="hint">{{ 'gom.offers.hint_usage_limit' | translate }}</p>
+          </div>
+
+          <div class="form-group">
+            <gom-lib-input
+              formControlName="perCustomerLimit"
+              [label]="'gom.offers.field_per_customer_limit' | translate"
+              type="number"
+              [placeholder]="'gom.offers.placeholder_unlimited' | translate"
+            ></gom-lib-input>
+            <p class="hint">{{ 'gom.offers.hint_per_customer_limit' | translate }}</p>
+          </div>
+
+          @if (showDeliveryFields) {
+            <div class="form-group">
+              <gom-lib-input
+                formControlName="deliveryRepeatLimit"
+                [label]="'gom.offers.field_delivery_repeat_limit' | translate"
+                type="number"
+                placeholder="e.g. 5"
+              ></gom-lib-input>
+              <p class="hint">{{ 'gom.offers.hint_delivery_repeat_limit' | translate }}</p>
+            </div>
+          }
+
+          <!-- CATEGORY_DISCOUNT: pick which categories this applies to -->
+          @if (showApplicableCategories) {
+            <div class="form-group full-width">
+              <gom-lib-select
+                formControlName="applicableCategories"
+                [label]="'gom.offers.field_applicable_categories' | translate"
+                [options]="categoryOptions()"
+                [multiple]="true"
+                [placeholder]="'gom.offers.placeholder_all_categories' | translate"
+              ></gom-lib-select>
+              <p class="hint">{{ 'gom.offers.hint_all_selected_by_default' | translate }}</p>
+            </div>
+          }
+
+          <!-- PRODUCT_DISCOUNT: pick which products this applies to -->
+          @if (showApplicableProducts) {
+            <div class="form-group full-width">
+              <gom-lib-select
+                formControlName="applicableProducts"
+                [label]="'gom.offers.field_applicable_products' | translate"
+                [options]="productOptions()"
+                [multiple]="true"
+                [placeholder]="'gom.offers.placeholder_all_products' | translate"
+              ></gom-lib-select>
+              <p class="hint">{{ 'gom.offers.hint_all_selected_by_default' | translate }}</p>
+            </div>
+          }
+
+          @if (showDeliveryCategories) {
+            <div class="form-group full-width">
+              <gom-lib-select
+                formControlName="deliveryApplicableCategories"
+                [label]="'gom.offers.field_delivery_applicable_categories' | translate"
+                [options]="categoryOptions()"
+                [multiple]="true"
+                [placeholder]="'gom.offers.placeholder_all_categories' | translate"
+              ></gom-lib-select>
+              <p class="hint">{{ 'gom.offers.hint_delivery_categories_optional' | translate }}</p>
+            </div>
+
+            <div class="form-group full-width">
+              <gom-lib-select
+                formControlName="deliveryExcludedCategories"
+                [label]="'gom.offers.field_delivery_excluded_categories' | translate"
+                [options]="categoryOptions()"
+                [multiple]="true"
+                [placeholder]="'gom.offers.placeholder_none_excluded' | translate"
+              ></gom-lib-select>
+              <p class="hint">{{ 'gom.offers.hint_delivery_excluded_categories' | translate }}</p>
+            </div>
+          }
+
+          <!-- PACK_DISCOUNT: no category/product scoping — pack itself defines scope -->
+          @if (selectedOfferType === 'PACK_DISCOUNT') {
+            <div class="form-group full-width">
+              <div class="info-banner">
+                <i class="ri-information-line"></i>
+                {{ 'gom.offers.hint_pack_scope' | translate }}
+              </div>
+            </div>
+          }
+
+          <!-- Excluded Categories -->
+          @if (showExcludedCategories) {
+            <div class="form-group full-width">
+              <gom-lib-select
+                formControlName="excludedCategories"
+                [label]="'gom.offers.field_excluded_categories' | translate"
+                [options]="categoryOptions()"
+                [multiple]="true"
+                [placeholder]="'gom.offers.placeholder_no_exclusions' | translate"
+              ></gom-lib-select>
+              <p class="hint">{{ 'gom.offers.hint_optional' | translate }}</p>
+            </div>
+          }
+
+          <!-- Excluded Products -->
+          @if (showExcludedProducts) {
+            <div class="form-group full-width">
+              <gom-lib-select
+                formControlName="excludedProducts"
+                [label]="'gom.offers.field_excluded_products' | translate"
+                [options]="productOptions()"
+                [multiple]="true"
+                [placeholder]="'gom.offers.placeholder_no_exclusions' | translate"
+              ></gom-lib-select>
+              <p class="hint">{{ 'gom.offers.hint_optional' | translate }}</p>
+            </div>
+          }
+
+        </form>
+      </div>
+    }
+  </div>
+
+  <div class="wizard-actions">
+    <gom-lib-button type="button" variant="secondary" (buttonClick)="cancel()">
+      {{ 'gom.common.cancel' | translate }}
+    </gom-lib-button>
+
+    @if (activeTab() !== 'basic-info') {
+      <gom-lib-button type="button" variant="secondary" (buttonClick)="goToPreviousStep()">
+        {{ 'gom.common.previous' | translate }}
+      </gom-lib-button>
+    }
+
+    @if (activeTab() !== 'limits-applicability') {
+      <gom-lib-button type="button" variant="primary" [disabled]="!canGoToNextStep()" (buttonClick)="goToNextStep()">
+        {{ 'gom.common.next' | translate }}
+      </gom-lib-button>
+    }
+
+    @if (activeTab() === 'limits-applicability') {
+      <gom-lib-button type="button" variant="primary" [disabled]="loading()" (buttonClick)="submit()">
+        {{ (isEditMode() ? 'gom.offers.btn_update_offer' : 'gom.offers.btn_create_offer') | translate }}
+      </gom-lib-button>
+    }
+  </div>
+</div>

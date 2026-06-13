@@ -7,6 +7,9 @@ import { EmployeeFormComponent } from './employees/form/employee-form.component'
 import { RolesListComponent } from './roles/list/roles-list.component';
 import { RoleMatrixComponent } from './roles/matrix/index';
 import { TenantDashboardComponent } from './dashboard/tenant-dashboard.component';
+import { OffersListComponent } from './offers/list';
+import { OfferCreateWizardComponent } from './offers/create-wizard';
+import { ProgramSettingsComponent } from './offers/settings';
 
 /**
  * EPIC 3 UI - Feature module routes
@@ -35,12 +38,18 @@ export const SAAS_TENANT_ADMIN_ROUTES: Routes = [
       {
         path: 'employees',
         component: EmployeesListComponent,
-        data: { title: 'saas.admin.employees.title' },
+        data: {
+          title: 'saas.admin.employees.title',
+          featureKeys: ['rider.list', 'rider.create', 'rider.update', 'rider.delete'],
+        },
       },
       {
         path: 'employees/create',
         component: EmployeeFormComponent,
-        data: { title: 'saas.admin.employees.btn_create' },
+        data: {
+          title: 'saas.admin.employees.btn_create',
+          featureKeys: ['rider.list', 'rider.create', 'rider.update', 'rider.delete'],
+        },
       },
       {
         path: 'roles',
@@ -56,6 +65,26 @@ export const SAAS_TENANT_ADMIN_ROUTES: Routes = [
         path: 'dashboard',
         component: TenantDashboardComponent,
         data: { title: 'saas.admin.dashboard.title' },
+      },
+      {
+        path: 'offers',
+        component: OffersListComponent,
+        data: { title: 'gom.offers.title' },
+      },
+      {
+        path: 'offers/create',
+        component: OfferCreateWizardComponent,
+        data: { title: 'gom.offers.btn_create' },
+      },
+      {
+        path: 'offers/edit/:id',
+        component: OfferCreateWizardComponent,
+        data: { title: 'gom.offers.btn_edit' },
+      },
+      {
+        path: 'offers/settings',
+        component: ProgramSettingsComponent,
+        data: { title: 'gom.offers.btn_settings' },
       },
     ],
   },

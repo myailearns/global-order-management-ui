@@ -1,16 +1,30 @@
 <section class="master-page">
   <header class="master-page__header">
     <h2><i class="ri-bike-line" aria-hidden="true"></i> Riders</h2>
-    @if (canWrite()) {
-    <gom-lib-button type="button" variant="primary" (buttonClick)="openCreate()">
+    <gom-lib-button
+      type="button"
+      variant="primary"
+      (buttonClick)="openCreate()"
+      [gomDisableIfNoFeature]="'rider.create'"
+      [disabled]="saving() || !canCreateRider() || (riderCreateRemaining() ?? 1) <= 0"
+    >
       <i class="ri-add-line" aria-hidden="true"></i> Add Rider
     </gom-lib-button>
-    }
   </header>
 
   @if (errorMessage()) {
     <div class="master-page__error">
       {{ errorMessage() }}
+    </div>
+  }
+
+  @if (canCreateRider()) {
+    <div class="quota-banner">
+      @if (riderCreateLimit() !== null) {
+        <p>Rider quota: {{ riderCreateUsed() }} / {{ riderCreateLimit() }} used ({{ riderCreateRemaining() }} remaining)</p>
+      } @else {
+        <p>Rider quota: {{ riderCreateUsed() }} used (unlimited)</p>
+      }
     </div>
   }
 

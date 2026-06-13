@@ -20,6 +20,15 @@ export const FIELD_REQUIRED_OPTIONS: GomSelectOption[] = [
   { label: 'fields.required.optional', value: 'false' },
 ];
 
+export const FIELD_VALUE_FORMAT_OPTIONS: GomSelectOption[] = [
+  { label: 'fields.valueFormat.number', value: 'NUMBER' },
+  { label: 'fields.valueFormat.currency', value: 'CURRENCY' },
+];
+
+export const FIELD_CURRENCY_OPTIONS: GomSelectOption[] = [
+  { label: 'fields.currencies.inr', value: 'INR' },
+];
+
 export const FIELD_UI_TEXT = {
   pageTitle: 'fields.title',
   addField: 'fields.add',

@@ -12,6 +12,7 @@ import {
   CreateAccountResult,
   CreateAccountRequest,
   TenantAccount,
+  TenantStorageItem,
   UpdateAccountRequest,
 } from './saas-account.model';
 
@@ -87,5 +88,12 @@ export class SaasAccountService {
         params,
       })
       .pipe(map((res) => ({ items: res.data, meta: res.meta })));
+  }
+
+  getPerTenantStorage(): Observable<TenantStorageItem[]> {
+    const url = `${environment.apiBaseUrl}/platform/templates/media/tenant-storage`;
+    return this.http
+      .get<ApiResponse<TenantStorageItem[]>>(url, { headers: this.platformHeaders })
+      .pipe(map((res) => res.data));
   }
 }

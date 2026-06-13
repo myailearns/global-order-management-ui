@@ -1,0 +1,188 @@
+<section class="bulk-grid">
+  <header class="bulk-grid__toolbar">
+    <div class="bulk-grid__toolbar-left">
+      @if (enableBulkAddInput) {
+        <input
+          class="bulk-grid__bulk-add-input"
+          type="number"
+          min="1"
+          [formControl]="bulkAddCountControl"
+          (blur)="updateBulkAddCount(bulkAddCountControl.value)"
+          aria-label="Number of rows to add"
+        />
+      }
+      <gom-lib-button type="button" variant="secondary" [disabled]="readonly || rowCount() >= maxRows" (buttonClick)="addRow(undefined, bulkAddCountControl.value)">
+        {{ addButtonLabel }}
+      </gom-lib-button>
+      <gom-lib-button type="button" variant="secondary" [disabled]="readonly || rowCount() === 0" (buttonClick)="clearRows()">
+        {{ clearButtonLabel }}
+      </gom-lib-button>
+    </div>
+
+    @if (enableColumnPresets && (hasOptionalColumns() || hasAdvancedColumns())) {
+      <div class="bulk-grid__toolbar-center">
+        @if (hasOptionalColumns()) {
+          <gom-lib-button type="button" [variant]="showOptionalColumns() ? 'primary' : 'secondary'" (buttonClick)="toggleOptionalColumns()">
+            {{ showOptionalColumns() ? 'Hide' : 'Show' }} {{ optionalColumnsLabel }}
+          </gom-lib-button>
+        }
+
+        @if (hasAdvancedColumns()) {
+          <gom-lib-button type="button" [variant]="showAdvancedColumns() ? 'primary' : 'secondary'" (buttonClick)="toggleAdvancedColumns()">
+            {{ showAdvancedColumns() ? 'Hide' : 'Show' }} {{ advancedColumnsLabel }}
+          </gom-lib-button>
+        }
+      </div>
+    }
+
+    <div class="bulk-grid__toolbar-right">
+      @if (enableColumnPresets) {
+        <p class="bulk-grid__preset-note">{{ mode === 'create' ? 'Create mode shows essential columns first.' : 'Update mode shows all editable columns.' }}</p>
+      }
+      <p class="bulk-grid__count">{{ rowCount() }} / {{ maxRows }}</p>
+    </div>
+  </header>
+
+  @if (rowCount() === 0) {
+    <div class="bulk-grid__empty">{{ emptyMessage }}</div>
+  } @else {
+    <div class="bulk-grid__table-wrap">
+      <table class="bulk-grid__table">
+        <thead>
+          <tr>
+            @if (enableRowSelection) {
+              <th class="bulk-grid__selection-col">
+                <input
+                  type="checkbox"
+                  [checked]="areAllRowsSelected()"
+                  [disabled]="readonly || rowCount() === 0"
+                  (change)="toggleSelectAllRows($any($event.target).checked)"
+                  aria-label="Select all rows"
+                />
+              </th>
+            }
+            @for (column of visibleColumns(); track trackColumn($index, column); let colIndex = $index) {
+              <th
+                [style.width]="getColumnWidth(column)"
+                [class.bulk-grid__cell--frozen]="isFrozen(colIndex)"
+                [style.left]="isFrozen(colIndex) ? getStickyLeft(colIndex) : null"
+              >
+                {{ column.label }}
+                @if (column.required) {
+                  <span class="bulk-grid__required" aria-hidden="true">*</span>
+                }
+              </th>
+            }
+            <th class="bulk-grid__actions-col">Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @for (row of rowsArray.controls; track $index; let rowIndex = $index) {
+            <tr [formGroup]="row">
+              @if (enableRowSelection) {
+                <td class="bulk-grid__selection-col">
+                  <input
+                    type="checkbox"
+                    [checked]="isRowSelected(rowIndex)"
+                    [disabled]="readonly"
+                    (change)="toggleRowSelection(rowIndex, $any($event.target).checked)"
+                    [attr.aria-label]="'Select row ' + (rowIndex + 1)"
+                  />
+                </td>
+              }
+              @for (column of visibleColumns(); track trackColumn($index, column); let colIndex = $index) {
+                <td
+                  class="bulk-grid__cell"
+                  [class.bulk-grid__cell--frozen]="isFrozen(colIndex)"
+                  [style.left]="isFrozen(colIndex) ? getStickyLeft(colIndex) : null"
+                  [style.width]="getColumnWidth(column)"
+                  [attr.data-row-index]="rowIndex"
+                  [attr.data-column-key]="column.key"
+                  (keydown.arrowdown)="onCellVerticalNavigation($event, rowIndex, column.key, 1)"
+                  (keydown.arrowup)="onCellVerticalNavigation($event, rowIndex, column.key, -1)"
+                >
+                  @switch (column.type) {
+                    @case ('select') {
+                      <gom-lib-select
+                        [formControlName]="column.key"
+                        [options]="column.options || []"
+                        [placeholder]="column.placeholder || 'Select'"
+                        [searchable]="(column.options?.length ?? 0) >= 10"
+                        [isDisabled]="isColumnReadonly(column)"
+                        [error]="hasCellError(rowIndex, column.key) ? 'Required' : ''"
+                      ></gom-lib-select>
+                    }
+                    @case ('boolean') {
+                      <gom-lib-checkbox
+                        [formControlName]="column.key"
+                      ></gom-lib-checkbox>
+                    }
+                    @default {
+                      <gom-lib-input
+                        [formControlName]="column.key"
+                        [type]="column.type === 'number' ? 'number' : 'text'"
+                        [placeholder]="column.placeholder || ''"
+                        [error]="hasCellError(rowIndex, column.key) ? 'Required' : ''"
+                      ></gom-lib-input>
+                    }
+                  }
+                </td>
+              }
+
+              <td class="bulk-grid__row-actions">
+                @if (rowSecondaryActionLabel || rowSecondaryActionIcon) {
+                  @if (rowSecondaryActionIcon) {
+                    <gom-lib-button
+                      type="button"
+                      variant="secondary"
+                      size="icon"
+                      [disabled]="readonly"
+                      [title]="rowSecondaryActionTooltip"
+                      (buttonClick)="onRowSecondaryAction(rowIndex)"
+                      [attr.aria-label]="rowSecondaryActionTooltip"
+                    >
+                      <i [class]="rowSecondaryActionIcon" aria-hidden="true"></i>
+                    </gom-lib-button>
+                  } @else {
+                    <gom-lib-button
+                      type="button"
+                      variant="secondary"
+                      [disabled]="readonly"
+                      (buttonClick)="onRowSecondaryAction(rowIndex)"
+                    >{{ rowSecondaryActionLabel }}</gom-lib-button>
+                  }
+                }
+                @if (rowTertiaryActionLabel || rowTertiaryActionIcon) {
+                  @if (rowTertiaryActionIcon) {
+                    <gom-lib-button
+                      type="button"
+                      variant="secondary"
+                      size="icon"
+                      [disabled]="readonly"
+                      [title]="rowTertiaryActionTooltip"
+                      (buttonClick)="onRowTertiaryAction(rowIndex)"
+                      [attr.aria-label]="rowTertiaryActionTooltip"
+                    >
+                      <i [class]="rowTertiaryActionIcon" aria-hidden="true"></i>
+                    </gom-lib-button>
+                  } @else {
+                    <gom-lib-button
+                      type="button"
+                      variant="secondary"
+                      [disabled]="readonly"
+                      (buttonClick)="onRowTertiaryAction(rowIndex)"
+                    >{{ rowTertiaryActionLabel }}</gom-lib-button>
+                  }
+                }
+                <gom-lib-button type="button" variant="danger" size="icon" [disabled]="readonly" (buttonClick)="removeRow(rowIndex)" aria-label="Remove row">
+                  <i class="ri-delete-bin-line" aria-hidden="true"></i>
+                </gom-lib-button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

@@ -59,6 +59,9 @@
         [closeMenuTrigger]="categorySelectCloseToken"
         (selectedValuesChange)="onMappedCategorySelectionChange($event)"
       ></gom-lib-select>
+      @if (mappedCategoriesInvalid) {
+        <p class="units-form__validation-error">{{ 'units.validation.mappedCategoriesRequired' | translate }}</p>
+      }
     </div>
 
     <div gom-modal-actions class="units-form__actions gom-modal__action-layout">

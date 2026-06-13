@@ -3,17 +3,23 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormControl } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
-import { GomAlertToastService } from '@gomlibs/ui';
+import {
+  GomAlertToastService,
+  GomButtonComponent,
+  GomInputComponent,
+  GomModalComponent,
+  GomTableColumn,
+  GomTableComponent,
+  GomTableRow,
+} from '@gomlibs/ui';
 import { AuthSessionService } from '../../../../core/auth/auth-session.service';
-import { GomButtonComponent, GomInputComponent } from '@gomlibs/ui';
-import { GomTableColumn, GomTableComponent, GomTableRow } from '@gomlibs/ui';
-import { GomModalComponent } from '@gomlibs/ui';
 
 import { TenantAccessService } from '../../services';
 import { EmployeeProfile } from '../../models';
 import { TRANSLATION_KEYS, UI_CONFIG } from '../../constants';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { EmployeeFormComponent } from '../form/employee-form.component';
+import { DisableIfNoFeatureDirective } from '../../../../shared/directives/disable-if-no-feature.directive';
 
 interface EmployeeRow extends GomTableRow {
   employeeId: string;
@@ -36,6 +42,7 @@ interface EmployeeRow extends GomTableRow {
     FormsModule,
     ReactiveFormsModule,
     TranslateModule,
+    DisableIfNoFeatureDirective,
     GomButtonComponent,
     GomInputComponent,
     GomTableComponent,

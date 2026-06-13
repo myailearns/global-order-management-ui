@@ -7,22 +7,25 @@ import { catchError, debounceTime, distinctUntilChanged, forkJoin, of, startWith
 
 import {
   FormControlsModule,
+  GomAlertToastService,
   GomButtonComponent,
-  GomSelectOption,
-} from '@gomlibs/ui';
-import {
   GomButtonContentMode,
+  GomConfirmationModalComponent,
+  GomModalComponent,
+  GomSelectOption,
+  GomTableColumn,
+  GomTableComponent,
+  GomTableRow,
   getButtonContentMode,
   showButtonIcon,
   showButtonText,
 } from '@gomlibs/ui';
-import { GomTableColumn, GomTableComponent, GomTableRow } from '@gomlibs/ui';
-import { GomConfirmationModalComponent, GomModalComponent } from '@gomlibs/ui';
-import { GomAlertToastService } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
+import { DisableIfNoFeatureDirective } from '../../../shared/directives/disable-if-no-feature.directive';
 import { Group, Unit, Variant, VariantPricePreview, VariantsService } from './variants.service';
 
 interface VariantRow extends GomTableRow {
+  id: string;
   _id: string;
   name: string;
   itemType: string;
@@ -44,6 +47,7 @@ interface VariantRow extends GomTableRow {
     CommonModule,
     ReactiveFormsModule,
     FormControlsModule,
+    DisableIfNoFeatureDirective,
     GomButtonComponent,
     GomTableComponent,
     GomModalComponent,
@@ -60,7 +64,22 @@ export class VariantsComponent implements OnInit {
   private readonly authSession = inject(AuthSessionService);
 
   readonly loading = signal(false);
-  readonly canWrite = computed(() => this.authSession.canWrite('product'));
+  readonly canCreateVariant = computed(() => this.authSession.hasFeature('variant.create') && (this.variantCreateRemaining() ?? Infinity) > 0);
+  readonly canUpdateVariant = computed(
+    () => this.authSession.hasFeature('variant.edit')
+      || this.authSession.hasFeature('variant.update')
+  );
+  readonly canDeleteVariant = computed(() => this.authSession.hasFeature('variant.delete'));
+  readonly variantCreateLimit = computed(() => this.authSession.getFeatureConfigNumber('variant.create', 'max_count'));
+  readonly variantCreateUsed = computed(() => this.variants().length);
+  readonly variantCreateRemaining = computed(() => {
+    const limit = this.variantCreateLimit();
+    if (limit === null) {
+      return null;
+    }
+
+    return Math.max(limit - this.variantCreateUsed(), 0);
+  });
   readonly saving = signal(false);
   readonly errorMessage = signal<string | null>(null);
 
@@ -277,8 +296,18 @@ export class VariantsComponent implements OnInit {
       header: 'Actions',
       width: '10rem',
       actionButtons: [
-        { label: 'Edit', actionKey: 'edit', variant: 'secondary' },
-        { label: 'Delete', actionKey: 'delete', variant: 'secondary' },
+        {
+          label: () => this.canUpdateVariant() ? 'Edit' : 'No permission to edit variants',
+          actionKey: 'edit',
+          variant: 'secondary',
+          disabled: () => !this.canUpdateVariant(),
+        },
+        {
+          label: () => this.canDeleteVariant() ? 'Delete' : 'No permission to delete variants',
+          actionKey: 'delete',
+          variant: 'secondary',
+          disabled: () => !this.canDeleteVariant(),
+        },
       ],
     },
   ];
@@ -307,6 +336,7 @@ export class VariantsComponent implements OnInit {
       const symbol = unit?.symbol || '';
 
       return {
+        id: variant._id,
         _id: variant._id,
         name: variant.name,
         itemType: variant.itemType === 'PACK' ? 'Pack of Items' : 'Individual Item',
@@ -362,15 +392,15 @@ export class VariantsComponent implements OnInit {
       units: this.service.listUnits(),
     }).subscribe({
       next: ({ groups, units }) => {
-        const activeGroups = (groups.data || []).filter((item) => item.status === 'ACTIVE');
+        const allGroups = (groups.data || []);
         const activeUnits = (units.data || []).filter((item) => item.status === 'ACTIVE');
 
-        this.groups.set(activeGroups);
+        this.groups.set(allGroups);
         this.units.set(activeUnits);
 
         const selectedGroupId =
-          activeGroups.find((item) => item._id === this.requestedGroupId)?._id
-          || activeGroups[0]?._id
+          allGroups.find((item) => item._id === this.requestedGroupId)?._id
+          || allGroups[0]?._id
           || '';
 
         this.filtersForm.patchValue({ groupId: selectedGroupId });
@@ -597,21 +627,27 @@ export class VariantsComponent implements OnInit {
   }
 
   onRowAction(event: { actionKey: string; row: GomTableRow }): void {
-    if (!this.canWrite()) {
-      return;
-    }
-    const id = typeof event.row['_id'] === 'string' ? event.row['_id'] : '';
+    const rawId = event.row['_id'] ?? event.row['id'];
+    const id = typeof rawId === 'string' ? rawId : '';
     const variant = this.variants().find((item) => item._id === id);
     if (!variant) {
+      this.toast.warning('Unable to find the selected variant. Please refresh and try again.');
       return;
     }
 
     if (event.actionKey === 'edit') {
+      if (!this.canUpdateVariant()) {
+        this.toast.warning('Your current package does not allow editing variants.');
+        return;
+      }
       this.openEditVariant(variant);
       return;
     }
 
     if (event.actionKey === 'delete') {
+      if (!this.canDeleteVariant()) {
+        return;
+      }
       this.deletingVariantId.set(variant._id);
       this.deleteConfirmOpen.set(true);
     }

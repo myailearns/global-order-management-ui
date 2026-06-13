@@ -18,3 +18,44 @@
   display: grid;
   gap: 0.75rem;
 }
+
+.feature-filters {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  background: #fafafa;
+}
+
+.feature-filters__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.feature-filters__header h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.feature-filters__hint,
+.feature-filters__empty {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.82rem;
+}
+
+.feature-filters__row {
+  display: grid;
+  grid-template-columns: minmax(10rem, 1fr) minmax(10rem, 1fr) auto;
+  gap: 0.5rem;
+  align-items: end;
+}
+
+@media (max-width: 768px) {
+  .feature-filters__row {
+    grid-template-columns: 1fr;
+  }
+}

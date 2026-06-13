@@ -14,6 +14,49 @@
         [selectOptionsBySource]="selectOptionsBySource"
       ></gom-lib-dynamic-form>
 
+      <section class="category-form__image-block">
+        <div class="category-form__image-copy">
+          <h4>{{ 'categories.labels.image' | translate }}</h4>
+          <p>{{ 'categories.form.imageHint' | translate }}</p>
+        </div>
+
+        @if (form.get('imageUrl')?.value) {
+          <div class="category-form__image-preview">
+            <img [src]="form.get('imageUrl')?.value" alt="" />
+            <div class="category-form__image-meta">
+              <span>{{ 'categories.form.imageAttached' | translate }}</span>
+              <div class="category-form__image-actions">
+                <gom-lib-button
+                  type="button"
+                  variant="secondary"
+                  (buttonClick)="openImagePicker()"
+                >
+                  {{ 'categories.form.changeImage' | translate }}
+                </gom-lib-button>
+                <gom-lib-button
+                  type="button"
+                  variant="secondary"
+                  (buttonClick)="clearImage()"
+                >
+                  {{ 'categories.form.removeImage' | translate }}
+                </gom-lib-button>
+              </div>
+            </div>
+          </div>
+        } @else {
+          <div class="category-form__picker-empty">
+            <gom-lib-button
+              type="button"
+              variant="secondary"
+              (buttonClick)="openImagePicker()"
+            >
+              <i class="ri-image-add-line" aria-hidden="true"></i>
+              {{ 'categories.form.chooseImage' | translate }}
+            </gom-lib-button>
+          </div>
+        }
+      </section>
+
       <div gom-modal-actions class="category-form__actions gom-modal__action-layout">
         <div class="gom-modal__action-layout-start">
           <gom-lib-button
@@ -56,3 +99,11 @@
     </form>
   }
 </gom-lib-modal>
+
+<gom-image-picker
+  [(show)]="pickerOpen"
+  [existingImageIds]="emptyImageIds"
+  [canUpload]="canUploadOwn()"
+  [maxImages]="categoryImageLimit()"
+  (imagesSelected)="onImagesSelected($event)"
+></gom-image-picker>

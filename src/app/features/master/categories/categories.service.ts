@@ -8,9 +8,36 @@ export interface Category {
   _id?: string;
   name: string;
   description?: string;
+  imageAssetId?: string | null;
+  imageUrl?: string;
   status?: 'ACTIVE' | 'INACTIVE';
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface AssociationItem {
+  _id: string;
+  name: string;
+  symbol?: string;
+  status?: string;
+}
+
+export interface CategoryAssociations {
+  fieldGroups: AssociationItem[];
+  units: AssociationItem[];
+  groups: AssociationItem[];
+}
+
+export interface AvailableAssociations {
+  fieldGroups: AssociationItem[];
+  units: AssociationItem[];
+}
+
+export interface UpdateAssociationsPayload {
+  addFieldGroupIds?: string[];
+  removeFieldGroupIds?: string[];
+  addUnitIds?: string[];
+  removeUnitIds?: string[];
 }
 
 interface ApiSuccess<T> {
@@ -45,19 +72,38 @@ export class CategoriesService {
     return this.authSession.getTenantHeaders();
   }
 
-  getCategories(): Observable<ApiPaginated<Category>> {
-    return this.http.get<ApiPaginated<Category>>(this.apiUrl, { headers: this.tenantHeaders });
+  getCategories(page?: number, limit?: number, status?: 'ACTIVE' | 'INACTIVE'): Observable<ApiPaginated<Category>> {
+    const params = new URLSearchParams();
+    if (page) params.set('page', String(page));
+    if (limit) params.set('limit', String(limit));
+    if (status) params.set('status', status);
+
+    const query = params.toString();
+    const url = query ? `${this.apiUrl}?${query}` : this.apiUrl;
+    return this.http.get<ApiPaginated<Category>>(url, { headers: this.tenantHeaders });
   }
 
-  createCategory(category: { name: string; description?: string; status?: 'ACTIVE' | 'INACTIVE' }): Observable<ApiSuccess<Category>> {
+  createCategory(category: { name: string; description?: string; imageAssetId?: string | null; imageUrl?: string; status?: 'ACTIVE' | 'INACTIVE' }): Observable<ApiSuccess<Category>> {
     return this.http.post<ApiSuccess<Category>>(this.apiUrl, category, { headers: this.tenantHeaders });
   }
 
-  updateCategory(id: string, category: { name: string; description?: string; status?: 'ACTIVE' | 'INACTIVE' }): Observable<ApiSuccess<Category>> {
+  updateCategory(id: string, category: { name: string; description?: string; imageAssetId?: string | null; imageUrl?: string; status?: 'ACTIVE' | 'INACTIVE' }): Observable<ApiSuccess<Category>> {
     return this.http.put<ApiSuccess<Category>>(`${this.apiUrl}/${id}`, category, { headers: this.tenantHeaders });
   }
 
   deleteCategory(id: string): Observable<ApiSuccess<null>> {
     return this.http.delete<ApiSuccess<null>>(`${this.apiUrl}/${id}`, { headers: this.tenantHeaders });
+  }
+
+  getAssociations(id: string): Observable<ApiSuccess<CategoryAssociations>> {
+    return this.http.get<ApiSuccess<CategoryAssociations>>(`${this.apiUrl}/${id}/associations`, { headers: this.tenantHeaders });
+  }
+
+  getAvailableAssociations(id: string): Observable<ApiSuccess<AvailableAssociations>> {
+    return this.http.get<ApiSuccess<AvailableAssociations>>(`${this.apiUrl}/${id}/available-associations`, { headers: this.tenantHeaders });
+  }
+
+  updateAssociations(id: string, payload: UpdateAssociationsPayload): Observable<ApiSuccess<CategoryAssociations>> {
+    return this.http.patch<ApiSuccess<CategoryAssociations>>(`${this.apiUrl}/${id}/associations`, payload, { headers: this.tenantHeaders });
   }
 }

@@ -1,0 +1,242 @@
+<section class="bt-page">
+  <header class="bt-page__header">
+    <div>
+      <h1>{{ 'businessTemplates.title' | translate }}</h1>
+      <p>{{ 'businessTemplates.subtitle' | translate }}</p>
+    </div>
+    <gom-lib-button (buttonClick)="openCreate()">
+      <i class="ri-add-line" aria-hidden="true"></i>
+      {{ 'businessTemplates.createBtn' | translate }}
+    </gom-lib-button>
+  </header>
+
+  @if (loading() && templates().length === 0) {
+    <div class="bt-page__loading">
+      <i class="ri-loader-4-line ri-spin" aria-hidden="true"></i>
+      {{ 'businessTemplates.loading' | translate }}
+    </div>
+  } @else if (templates().length === 0) {
+    <div class="bt-page__empty">
+      <i class="ri-archive-line" aria-hidden="true"></i>
+      <p>{{ 'businessTemplates.empty' | translate }}</p>
+    </div>
+  } @else {
+    <div class="bt-grid">
+      @for (bt of templates(); track bt._id) {
+        <div class="bt-card">
+          <div class="bt-card__header">
+            <div class="bt-card__icon">
+              <i [class]="bt.icon" aria-hidden="true"></i>
+            </div>
+            <span class="bt-card__status" [class.bt-card__status--active]="bt.status === 'ACTIVE'">
+              {{ bt.status }}
+            </span>
+          </div>
+          <div class="bt-card__body">
+            <h3 class="bt-card__name">{{ bt.name }}</h3>
+            <p class="bt-card__code">{{ bt.code }}</p>
+            <p class="bt-card__desc">{{ bt.description || ('businessTemplates.noDescription' | translate) }}</p>
+            <div class="bt-card__categories">
+              <i class="ri-folder-3-line" aria-hidden="true"></i>
+              <span>{{ bt.categoryIds.length }} {{ 'businessTemplates.categoriesLabel' | translate }}</span>
+            </div>
+          </div>
+          <div class="bt-card__actions">
+            <gom-lib-button size="icon" variant="secondary" (buttonClick)="openPreview(bt)">
+              <i class="ri-eye-line" aria-hidden="true"></i>
+            </gom-lib-button>
+            <gom-lib-button size="icon" variant="secondary" (buttonClick)="openEdit(bt)">
+              <i class="ri-pencil-line" aria-hidden="true"></i>
+            </gom-lib-button>
+            <gom-lib-button size="icon" variant="danger" (buttonClick)="confirmDelete(bt)">
+              <i class="ri-delete-bin-line" aria-hidden="true"></i>
+            </gom-lib-button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</section>
+
+<!-- Create/Edit Modal -->
+<gom-lib-modal
+  [title]="isEditing() ? ('businessTemplates.editTitle' | translate) : ('businessTemplates.createTitle' | translate)"
+  [(show)]="formOpen"
+  (closed)="cancelForm()"
+  size="large"
+>
+  <div class="bt-form">
+    <div class="bt-form__row">
+      <div class="bt-form__field">
+        <label class="bt-form__label">{{ 'businessTemplates.form.name' | translate }} *</label>
+        <gom-lib-input
+          [ngModel]="formName()"
+          [placeholder]="'businessTemplates.form.namePlaceholder' | translate"
+          (valueChange)="onNameChange($event)"
+        ></gom-lib-input>
+      </div>
+      <div class="bt-form__field">
+        <label class="bt-form__label">{{ 'businessTemplates.form.code' | translate }} *</label>
+        <gom-lib-input
+          [ngModel]="formCode()"
+          [placeholder]="'businessTemplates.form.codePlaceholder' | translate"
+          [disabled]="isEditing()"
+          (valueChange)="formCode.set($event)"
+        ></gom-lib-input>
+      </div>
+    </div>
+
+    <div class="bt-form__field">
+      <label class="bt-form__label">{{ 'businessTemplates.form.description' | translate }}</label>
+      <gom-lib-input
+        [ngModel]="formDescription()"
+        [placeholder]="'businessTemplates.form.descriptionPlaceholder' | translate"
+        (valueChange)="formDescription.set($event)"
+      ></gom-lib-input>
+    </div>
+
+    <div class="bt-form__field">
+      <label class="bt-form__label">{{ 'businessTemplates.form.icon' | translate }}</label>
+      <div class="bt-form__icon-grid">
+        @for (icon of iconOptions; track icon) {
+          <button
+            type="button"
+            class="bt-form__icon-btn"
+            [class.bt-form__icon-btn--selected]="formIcon() === icon"
+            (click)="selectIcon(icon)"
+          >
+            <i [class]="icon" aria-hidden="true"></i>
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="bt-form__field">
+      <label class="bt-form__label">{{ 'businessTemplates.form.categories' | translate }}</label>
+      <p class="bt-form__hint">{{ 'businessTemplates.form.categoriesHint' | translate }}</p>
+      <div class="bt-form__cat-grid">
+        @for (cat of categories(); track cat._id) {
+          <button
+            type="button"
+            class="bt-form__cat-chip"
+            [class.bt-form__cat-chip--selected]="isCategorySelected(cat._id)"
+            (click)="toggleCategory(cat._id)"
+          >
+            @if (isCategorySelected(cat._id)) {
+              <i class="ri-checkbox-circle-fill" aria-hidden="true"></i>
+            } @else {
+              <i class="ri-add-circle-line" aria-hidden="true"></i>
+            }
+            {{ cat.name }}
+          </button>
+        } @empty {
+          <p class="bt-form__no-cats">{{ 'businessTemplates.form.noCategoriesAvailable' | translate }}</p>
+        }
+      </div>
+    </div>
+
+    <div class="bt-form__footer">
+      <gom-lib-button variant="secondary" (buttonClick)="cancelForm()">
+        {{ 'businessTemplates.form.cancel' | translate }}
+      </gom-lib-button>
+      <gom-lib-button variant="primary" (buttonClick)="saveTemplate()" [disabled]="loading()">
+        {{ isEditing() ? ('businessTemplates.form.update' | translate) : ('businessTemplates.form.create' | translate) }}
+      </gom-lib-button>
+    </div>
+  </div>
+</gom-lib-modal>
+
+<!-- Preview Modal -->
+<gom-lib-modal
+  [title]="'businessTemplates.previewTitle' | translate"
+  [(show)]="previewOpen"
+  (closed)="closePreview()"
+  size="large"
+>
+  @if (previewLoading()) {
+    <div class="bt-preview__loading">
+      <i class="ri-loader-4-line ri-spin" aria-hidden="true"></i>
+      {{ 'businessTemplates.loading' | translate }}
+    </div>
+  } @else if (previewData()) {
+    <div class="bt-preview">
+      <div class="bt-preview__summary">
+        <div class="bt-preview__stat">
+          <span class="bt-preview__stat-value">{{ previewData()!.summary.categoryCount }}</span>
+          <span class="bt-preview__stat-label">{{ 'businessTemplates.preview.categories' | translate }}</span>
+        </div>
+        <div class="bt-preview__stat">
+          <span class="bt-preview__stat-value">{{ previewData()!.summary.fieldGroupCount }}</span>
+          <span class="bt-preview__stat-label">{{ 'businessTemplates.preview.fieldGroups' | translate }}</span>
+        </div>
+        <div class="bt-preview__stat">
+          <span class="bt-preview__stat-value">{{ previewData()!.summary.unitCount }}</span>
+          <span class="bt-preview__stat-label">{{ 'businessTemplates.preview.units' | translate }}</span>
+        </div>
+        <div class="bt-preview__stat">
+          <span class="bt-preview__stat-value">{{ previewData()!.summary.taxProfileCount }}</span>
+          <span class="bt-preview__stat-label">{{ 'businessTemplates.preview.taxProfiles' | translate }}</span>
+        </div>
+      </div>
+
+      <div class="bt-preview__section">
+        <h4><i class="ri-folder-3-line" aria-hidden="true"></i> {{ 'businessTemplates.preview.categoriesTitle' | translate }}</h4>
+        <div class="bt-preview__tag-list">
+          @for (cat of previewData()!.categories; track cat._id) {
+            <span class="bt-preview__tag">{{ cat.name }}</span>
+          }
+        </div>
+      </div>
+
+      @if (previewData()!.fieldGroups.length > 0) {
+        <div class="bt-preview__section">
+          <h4><i class="ri-stack-line" aria-hidden="true"></i> {{ 'businessTemplates.preview.fieldGroupsTitle' | translate }}</h4>
+          @for (fg of previewData()!.fieldGroups; track fg._id) {
+            <div class="bt-preview__fg">
+              <strong>{{ fg.name }}</strong>
+              <div class="bt-preview__tag-list">
+                @for (f of fg.fields; track f.key) {
+                  <span class="bt-preview__tag bt-preview__tag--field">{{ f.name }} ({{ f.key }})</span>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      @if (previewData()!.units.length > 0) {
+        <div class="bt-preview__section">
+          <h4><i class="ri-ruler-line" aria-hidden="true"></i> {{ 'businessTemplates.preview.unitsTitle' | translate }}</h4>
+          <div class="bt-preview__tag-list">
+            @for (u of previewData()!.units; track u._id) {
+              <span class="bt-preview__tag">{{ u.name }} ({{ u.symbol }})</span>
+            }
+          </div>
+        </div>
+      }
+
+      @if (previewData()!.taxProfiles.length > 0) {
+        <div class="bt-preview__section">
+          <h4><i class="ri-percent-line" aria-hidden="true"></i> {{ 'businessTemplates.preview.taxProfilesTitle' | translate }}</h4>
+          <div class="bt-preview__tag-list">
+            @for (t of previewData()!.taxProfiles; track t._id) {
+              <span class="bt-preview__tag">{{ t.name }} ({{ t.rate }}%)</span>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+</gom-lib-modal>
+
+<!-- Delete Confirmation -->
+<gom-lib-confirmation-modal
+  [(show)]="deleteConfirmOpen"
+  [title]="'businessTemplates.deleteTitle' | translate"
+  [message]="'businessTemplates.deleteMessage' | translate: { name: deletingTemplate()?.name || '' }"
+  [confirmText]="'businessTemplates.form.delete' | translate"
+  [cancelText]="'businessTemplates.form.cancel' | translate"
+  confirmVariant="danger"
+  (confirmed)="executeDelete()"
+  (cancelled)="cancelDelete()"
+></gom-lib-confirmation-modal>

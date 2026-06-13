@@ -5,6 +5,20 @@
   gap: theme.get-gap(sm);
 }
 
+.category-view__image-shell {
+  padding: theme.get-spacing(xxs);
+  border-radius: theme.get-radius(xl);
+  background: theme.get-background(secondary);
+}
+
+.category-view__image {
+  display: block;
+  width: 100%;
+  max-height: 12rem;
+  object-fit: cover;
+  border-radius: theme.get-radius(lg);
+}
+
 .category-view__row {
   display: grid;
   gap: theme.get-gap(xxs);

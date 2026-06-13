@@ -22,9 +22,11 @@ export interface ApiSuccess<T> {
 }
 
 export type PincodeFallbackSuggestion = 'CALL_COURIER' | 'CALL_PICKUP';
+export type PincodeMode = 'DISABLED' | 'SERVE_ALL' | 'RESTRICTED';
 
 export interface TenantDeliveryPincodeConfig {
   enabled: boolean;
+  pincodeMode: PincodeMode;
   serviceablePincodes: string[];
   nonServiceableSuggestion: PincodeFallbackSuggestion;
 }
@@ -160,8 +162,31 @@ export interface Order {
   items?: OrderItem[];
   timeline?: OrderEvent[];
   pricingSnapshot: {
+    subTotal?: number;
+    discount?: number;
+    tax?: number;
+    deliveryCharge?: number;
+    roundOff?: number;
     grandTotal: number;
   };
+  promotionSnapshot?: {
+    coupon?: {
+      code?: string;
+      codes?: string[];
+      coupons?: Array<{
+        code?: string;
+      }>;
+    } | null;
+  } | null;
+  profitabilitySnapshot?: {
+    revenueNet?: number;
+    cogsTotal?: number;
+    grossProfit?: number;
+    grossMarginPct?: number | null;
+    computedAt?: string;
+    version?: number;
+    isEstimated?: boolean;
+  } | null;
   notes?: string;
   createdAt: string;
 }
@@ -178,6 +203,10 @@ export interface OrderItem {
   priceSnapshot: {
     sellingPrice: number;
     anchorPrice: number;
+    actualCostPerUnit?: number;
+    cogsLineTotal?: number;
+    grossLineProfit?: number;
+    grossLineMarginPct?: number | null;
     discount: number;
     tax: number;
   };
@@ -241,6 +270,31 @@ export interface UpdateOrderEditableFieldsPayload {
   deliveryGeoLat?: number;
   deliveryGeoLng?: number;
   notes?: string;
+}
+
+export interface OrderRating {
+  id: string;
+  orderId: string;
+  rating: number;
+  riderRating?: number;
+  feedback?: string;
+  createdAt: string;
+}
+
+export interface ReturnRequestItem {
+  orderItemId: string;
+  quantity: number;
+  reason?: string;
+}
+
+export interface ReturnRequest {
+  _id: string;
+  orderId: string;
+  status: 'REQUESTED' | 'APPROVED' | 'REJECTED' | 'RETURNED' | 'REFUNDED';
+  refundStatus: 'PENDING' | 'PROCESSED';
+  items: ReturnRequestItem[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 @Injectable({
@@ -433,5 +487,13 @@ export class OrdersService {
 
   purgeAllOrdersDev(): Observable<ApiSuccess<PurgeOrdersResult>> {
     return this.http.delete<ApiSuccess<PurgeOrdersResult>>(`${this.ordersUrl}/dev/purge-all`);
+  }
+
+  getOrderRating(orderId: string): Observable<ApiSuccess<OrderRating | null>> {
+    return this.http.get<ApiSuccess<OrderRating | null>>(`${this.ordersUrl}/${orderId}/rating`);
+  }
+
+  listReturns(orderId: string): Observable<ApiPaginated<ReturnRequest>> {
+    return this.http.get<ApiPaginated<ReturnRequest>>(`${environment.apiBaseUrl}/returns?orderId=${encodeURIComponent(orderId)}`);
   }
 }

@@ -1,0 +1,409 @@
+<section class="settings-page">
+  <header class="settings-page__header">
+    <h2>Customer Storefront</h2>
+    <p>Configure your public-facing online store with clear sections for access, branding, catalog, and commerce.</p>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="settings-page__error">{{ errorMessage() }}</div>
+  }
+
+  <form class="settings-card" [formGroup]="configForm" (ngSubmit)="save()">
+
+    <div class="settings-card__intro">
+      <span class="chip">Tenant: {{ tenantCode() || 'loading...' }}</span>
+      <span class="chip chip--soft">Slug and colors are prefilled with defaults</span>
+    </div>
+
+    <gom-lib-tabs [tabs]="tabs" [activeTab]="activeTab()" (tabChange)="switchTab($event)">
+      <gom-lib-tab-content tabId="basic" [activeTab]="activeTab()">
+        <fieldset class="settings-section">
+          <legend>Store Access</legend>
+          <div class="settings-grid">
+            <gom-lib-checkbox
+              label="Enable customer storefront"
+              [formControl]="configForm.controls.enabled"
+            ></gom-lib-checkbox>
+
+            <gom-lib-input
+              label="Store Slug (URL identifier)"
+              placeholder="e.g. fresh-mart"
+              [formControl]="configForm.controls.storeSlug"
+              hint="Defaults to tenant code. Lowercase letters, numbers, and hyphens only."
+            ></gom-lib-input>
+
+            <gom-lib-input
+              label="Store Display Name (optional override)"
+              placeholder="Defaults to tenant account name"
+              [formControl]="configForm.controls.storeDisplayName"
+              hint="If empty, customer app will use your SaaS account/business name automatically."
+            ></gom-lib-input>
+
+            <div class="logo-upload-section">
+              <div class="logo-upload-header">
+                <span class="field-label">Store Logo</span>
+                <span class="logo-dim-badge">
+                  <i class="ri-image-line" aria-hidden="true"></i>
+                  Ideal: 280 &times; 68 px &nbsp;&bull;&nbsp; 4:1 ratio &nbsp;&bull;&nbsp; PNG / SVG
+                </span>
+              </div>
+              <p class="logo-upload-hint">Your logo appears in the store header at 140&times;34 px. Upload a horizontal (wide) logo for best results. The image is automatically centre-cropped and resized.</p>
+
+              <input
+                #logoFileInput
+                type="file"
+                class="logo-file-input"
+                accept="image/jpeg,image/png,image/webp,image/svg+xml"
+                (change)="onLogoInputChange($event)"
+              />
+
+              @if (!configForm.get('logoUrl')?.value) {
+                <div class="logo-empty-card">
+                  <i class="ri-image-add-line" aria-hidden="true"></i>
+                  <div>
+                    <p class="logo-empty-card__title">No logo uploaded yet</p>
+                    <p class="logo-empty-card__caption">Upload a logo to use across storefront pages.</p>
+                  </div>
+                  <gom-lib-button
+                    type="button"
+                    variant="secondary"
+                    gomDisableIfNoCapability="tenant-admin"
+                    [disabled]="uploadingLogo() || !canWrite()"
+                    (buttonClick)="logoFileInput.click()">
+                    Upload logo
+                  </gom-lib-button>
+                </div>
+              } @else {
+                <div class="logo-current-card">
+                  <div class="logo-current-card__thumb-wrap">
+                    <img [src]="configForm.get('logoUrl')?.value" alt="Current logo" class="logo-current-card__thumb" />
+                  </div>
+                  <div class="logo-current-card__meta">
+                    <p class="logo-current-card__title">Current logo</p>
+                    <p class="logo-current-card__caption">Replace anytime. Recommended ratio: 4:1.</p>
+                  </div>
+                  <gom-lib-button
+                    type="button"
+                    variant="secondary"
+                    [gomDisableIfNoCapability]="'tenant-admin'"
+                    [disabled]="uploadingLogo() || !canWrite()"
+                    (buttonClick)="logoFileInput.click()">
+                    Replace logo
+                  </gom-lib-button>
+                </div>
+              }
+
+              @if (uploadingLogo()) {
+                <span class="upload-status">Uploading &amp; optimising logo...</span>
+              }
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="settings-section">
+          <legend>Branding Colors</legend>
+          <p class="section-hint">Defaults come from GOM theme tokens. Switch to custom only if this tenant needs a branded override.</p>
+          <div class="section-actions">
+            @if (!useCustomColors()) {
+              <gom-lib-button
+                type="button"
+                variant="secondary"
+                [gomDisableIfNoCapability]="'tenant-admin'"
+                [disabled]="!canWrite()"
+                (buttonClick)="enableCustomColors()">
+                Switch to custom colors
+              </gom-lib-button>
+            } @else {
+              <gom-lib-button
+                type="button"
+                variant="secondary"
+                [gomDisableIfNoCapability]="'tenant-admin'"
+                [disabled]="!canWrite()"
+                (buttonClick)="resetThemeDefaults()">
+                Use defaults
+              </gom-lib-button>
+            }
+          </div>
+          @if (!useCustomColors()) {
+            <div class="default-theme-card">
+              <div class="default-theme-row">
+                <span class="default-theme-label">Primary</span>
+                <span class="default-theme-value">
+                  <span class="default-dot" [style.background]="'#0a5d8b'"></span>
+                  #0a5d8b
+                </span>
+              </div>
+              <div class="default-theme-row">
+                <span class="default-theme-label">Secondary</span>
+                <span class="default-theme-value">
+                  <span class="default-dot" [style.background]="'#fa5c00'"></span>
+                  #fa5c00
+                </span>
+              </div>
+              <div class="default-theme-row">
+                <span class="default-theme-label">Accent (Tertiary)</span>
+                <span class="default-theme-value">
+                  <span class="default-dot" [style.background]="'#fbd03b'"></span>
+                  #fbd03b
+                </span>
+              </div>
+            </div>
+          } @else {
+            <div class="settings-grid settings-grid--3col">
+              <div class="color-field">
+                <label for="primaryColor">Primary Color</label>
+                <div class="color-input-row">
+                  <input id="primaryColor" type="color" formControlName="primaryColor" class="color-picker" />
+                  <gom-lib-input [formControl]="configForm.controls.primaryColor" placeholder="#0a5d8b"></gom-lib-input>
+                </div>
+              </div>
+
+              <div class="color-field">
+                <label for="secondaryColor">Secondary Color</label>
+                <div class="color-input-row">
+                  <input id="secondaryColor" type="color" formControlName="secondaryColor" class="color-picker" />
+                  <gom-lib-input [formControl]="configForm.controls.secondaryColor" placeholder="#fa5c00"></gom-lib-input>
+                </div>
+              </div>
+
+              <div class="color-field">
+                <label for="accentColor">Accent (Tertiary) Color</label>
+                <div class="color-input-row">
+                  <input id="accentColor" type="color" formControlName="accentColor" class="color-picker" />
+                  <gom-lib-input [formControl]="configForm.controls.accentColor" placeholder="#fbd03b"></gom-lib-input>
+                </div>
+              </div>
+            </div>
+          }
+        </fieldset>
+      </gom-lib-tab-content>
+
+      <gom-lib-tab-content tabId="branding" [activeTab]="activeTab()">
+        <fieldset class="settings-section">
+          <legend>Store Content</legend>
+          <div class="settings-grid">
+            <gom-lib-input
+              label="Welcome Message"
+              placeholder="Welcome to Fresh Mart!"
+              [formControl]="configForm.controls.welcomeMessage"
+            ></gom-lib-input>
+
+            <gom-lib-input
+              label="Footer Text"
+              placeholder="Fresh Mart - Delivering freshness since 2020"
+              [formControl]="configForm.controls.footerText"
+            ></gom-lib-input>
+          </div>
+        </fieldset>
+
+        <fieldset class="settings-section">
+          <legend>Social Links</legend>
+          <div class="settings-grid settings-grid--3col">
+            <gom-lib-input
+              label="WhatsApp"
+              placeholder="+919876543210"
+              [formControl]="configForm.controls.whatsappSocial"
+            ></gom-lib-input>
+            <gom-lib-input
+              label="Instagram"
+              placeholder="https://instagram.com/store"
+              [formControl]="configForm.controls.instagramSocial"
+            ></gom-lib-input>
+            <gom-lib-input
+              label="Facebook"
+              placeholder="https://facebook.com/store"
+              [formControl]="configForm.controls.facebookSocial"
+            ></gom-lib-input>
+          </div>
+        </fieldset>
+      </gom-lib-tab-content>
+
+      <gom-lib-tab-content tabId="catalog" [activeTab]="activeTab()">
+        <fieldset class="settings-section">
+          <legend>Product Layout</legend>
+          <div class="settings-grid">
+            <gom-lib-select
+              label="Product listing layout"
+              [options]="layoutOptions"
+              [formControl]="configForm.controls.layoutMode"
+            ></gom-lib-select>
+
+            <gom-lib-checkbox
+              label="Show Packs & Combos section"
+              [formControl]="configForm.controls.showPacks"
+            ></gom-lib-checkbox>
+
+            <gom-lib-input
+              label="Buy X Get Y cards per row"
+              type="number"
+              [formControl]="configForm.controls.b1g1HomeCardsPerRow"
+              hint="Controls how many BXGY cards are visible in one row (1 to 8). Default is 3."
+            ></gom-lib-input>
+          </div>
+        </fieldset>
+
+        <fieldset class="settings-section">
+          <legend>Banner Images</legend>
+          <p class="section-hint">Add banner images for the home page carousel. Upload images or paste a URL.</p>
+          <div class="banner-specs-card">
+            <p class="banner-specs-card__title">Recommended mobile banner spec</p>
+            <ul class="banner-specs-list">
+              <li>Ideal: 1500 × 600 px (5:2 ratio)</li>
+              <li>Minimum: 1000 × 400 px</li>
+              <li>Preferred: WebP under 500 KB (JPG/PNG accepted)</li>
+              <li>Keep important text/logo in center area for safer crop</li>
+            </ul>
+            <p class="banner-specs-card__note">Non-ideal sizes are accepted. The system warns for quality risks but blocks only very small images.</p>
+          </div>
+
+          @for (banner of banners.controls; track $index; let i = $index) {
+            <div class="banner-row" [formGroup]="$any(banner)">
+              <div class="banner-image-col">
+                <input
+                  #bannerFileInput
+                  type="file"
+                  class="logo-file-input"
+                  accept="image/jpeg,image/png,image/webp"
+                  (change)="onBannerInputChange($event, i)"
+                />
+
+                @if ($any(banner).value.url) {
+                  <div class="banner-current-card">
+                    <div class="banner-current-card__thumb-wrap">
+                      <img [src]="$any(banner).value.url" alt="Banner preview" class="banner-thumb" />
+                      @if (uploadingBanner() === i) {
+                        <output class="banner-thumb-overlay" aria-live="polite">
+                          <i class="ri-loader-4-line" aria-hidden="true"></i>
+                          <span>Uploading...</span>
+                        </output>
+                      }
+                    </div>
+                    <div class="banner-current-card__meta">
+                      <p class="banner-current-card__title">Current banner</p>
+                      <p class="banner-current-card__caption">Recommended 5:2 ratio for the cleanest mobile look.</p>
+                    </div>
+                    <gom-lib-button
+                      type="button"
+                      variant="secondary"
+                      [gomDisableIfNoCapability]="'tenant-admin'"
+                      [disabled]="uploadingBanner() === i || !canWrite()"
+                      (buttonClick)="bannerFileInput.click()"
+                    >
+                      Replace image
+                    </gom-lib-button>
+                  </div>
+                } @else {
+                  <div class="banner-empty-card">
+                    <i class="ri-image-add-line" aria-hidden="true"></i>
+                    <div>
+                      <p class="banner-empty-card__title">No banner image uploaded</p>
+                      <p class="banner-empty-card__caption">Upload a banner and we will apply size recommendations automatically.</p>
+                    </div>
+                    <gom-lib-button
+                      type="button"
+                      variant="secondary"
+                      [gomDisableIfNoCapability]="'tenant-admin'"
+                      [disabled]="uploadingBanner() === i || !canWrite()"
+                      (buttonClick)="bannerFileInput.click()"
+                    >
+                      Upload image
+                    </gom-lib-button>
+                  </div>
+                }
+
+                @if (uploadingBanner() === i && !$any(banner).value.url) {
+                  <span class="upload-status">Uploading...</span>
+                }
+                @if (bannerWarnings()[i]) {
+                  <p class="banner-warning">{{ bannerWarnings()[i] }}</p>
+                }
+              </div>
+              <div class="banner-text-col">
+                <gom-lib-input
+                  label="Overlay Text"
+                  placeholder="Optional text on banner"
+                  formControlName="text"
+                ></gom-lib-input>
+              </div>
+              <button
+                type="button"
+                class="btn-icon-danger"
+                [gomDisableIfNoCapability]="'tenant-admin'"
+                [disabled]="!canWrite()"
+                (click)="removeBanner(i)"
+                title="Remove banner">
+                ✕
+              </button>
+            </div>
+          }
+
+          <gom-lib-button
+            type="button"
+            variant="secondary"
+            [gomDisableIfNoCapability]="'tenant-admin'"
+            [disabled]="!canWrite()"
+            (buttonClick)="addBanner()">
+            + Add Banner
+          </gom-lib-button>
+        </fieldset>
+      </gom-lib-tab-content>
+
+      <gom-lib-tab-content tabId="commerce" [activeTab]="activeTab()">
+        <fieldset class="settings-section">
+          <legend>Delivery Settings</legend>
+          <div class="settings-grid">
+            <gom-lib-input
+              label="Delivery Charge"
+              type="number"
+              [formControl]="configForm.controls.deliveryCharge"
+            ></gom-lib-input>
+            <gom-lib-input
+              label="Delivery Charge Note"
+              placeholder="Free delivery on orders above 500"
+              [formControl]="configForm.controls.deliveryChargeNote"
+            ></gom-lib-input>
+            <gom-lib-input
+              label="Estimated Delivery Days"
+              type="number"
+              [formControl]="configForm.controls.estimatedDeliveryDays"
+              hint="Set to 0 to hide delivery estimate from customers. Per-order estimates can be set at dispatch."
+            ></gom-lib-input>
+            <gom-lib-input
+              label="Minimum Order Value"
+              type="number"
+              [formControl]="configForm.controls.minimumOrderValue"
+            ></gom-lib-input>
+            <gom-lib-input
+              label="WhatsApp Support Number"
+              placeholder="+919876543210"
+              [formControl]="configForm.controls.whatsappNumber"
+            ></gom-lib-input>
+          </div>
+        </fieldset>
+
+        <fieldset class="settings-section">
+          <legend>Payment Methods</legend>
+          <div class="settings-grid settings-grid--2col">
+            @for (pm of paymentOptions; track pm.value) {
+              <gom-lib-checkbox
+                [label]="pm.label"
+                [formControl]="$any(configForm.get('payment' + pm.value))"
+              ></gom-lib-checkbox>
+            }
+          </div>
+        </fieldset>
+      </gom-lib-tab-content>
+    </gom-lib-tabs>
+
+    <!-- ─── Actions ──────────────────────────────── -->
+    <div class="settings-page__actions">
+      <gom-lib-button
+        type="submit"
+        variant="primary"
+        [gomDisableIfNoCapability]="'tenant-admin'"
+        [disabled]="loading() || saving() || !canWrite()">
+        {{ saving() ? 'Saving...' : 'Save Storefront Settings' }}
+      </gom-lib-button>
+    </div>
+  </form>
+</section>

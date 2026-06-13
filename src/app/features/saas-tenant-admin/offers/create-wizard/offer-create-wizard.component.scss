@@ -1,0 +1,327 @@
+.offer-wizard-container {
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  max-width: 900px;
+  margin: 0 auto;
+
+  .wizard-header {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--color-border-subtle);
+
+    .wizard-title {
+
+      .back-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        background: none;
+        border: none;
+        padding: 0;
+        cursor: pointer;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--color-text-secondary);
+        margin-bottom: 0.75rem;
+
+        &:hover {
+          color: var(--color-primary);
+        }
+
+        i {
+          font-size: 1rem;
+        }
+      }
+
+      h1 {
+        margin: 0 0 0.25rem 0;
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: var(--color-text-primary);
+      }
+
+      p {
+        margin: 0;
+        font-size: 0.875rem;
+        color: var(--color-text-secondary);
+      }
+    }
+
+    .wizard-tabs {
+      display: flex;
+      gap: 1rem;
+      border-bottom: 1px solid var(--color-border-subtle);
+
+      .wizard-tab {
+        background: transparent;
+        border: 0;
+        border-bottom: 2px solid transparent;
+        color: var(--color-text-secondary);
+        font-size: 0.875rem;
+        font-weight: 600;
+        padding: 0.5rem 0.25rem;
+        cursor: pointer;
+
+        &--active {
+          color: var(--color-primary);
+          border-bottom-color: var(--color-primary);
+        }
+      }
+    }
+  }
+
+  .alert {
+    padding: 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+
+    &.alert-error {
+      background-color: var(--color-error-light);
+      color: var(--color-error-dark);
+      border: 1px solid var(--color-error);
+    }
+  }
+
+  .wizard-content {
+    flex: 1;
+
+    .tab-panel {
+      h2 {
+        margin: 0 0 1.5rem 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--color-text-primary);
+      }
+
+      .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+
+        .form-group {
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+
+          label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--color-text-primary);
+          }
+
+          .field-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--color-text-primary);
+          }
+
+          .native-input-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+          }
+
+          .required-marker {
+            color: #b42318;
+            font-weight: 700;
+          }
+
+          .native-date-input {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--color-border-subtle);
+            border-radius: 0.375rem;
+            font-size: 0.9375rem;
+            font-family: inherit;
+            color: var(--color-text-primary);
+            background: var(--color-bg-primary, #fff);
+            transition: all 0.2s ease;
+
+            &:hover:not(:disabled) {
+              border-color: var(--color-border-standard);
+            }
+
+            &:focus {
+              outline: none;
+              border-color: var(--color-primary);
+              box-shadow: 0 0 0 3px var(--color-primary-light);
+            }
+
+            &:disabled {
+              background-color: var(--color-bg-secondary, #f5f5f5);
+              color: var(--color-text-disabled);
+              cursor: not-allowed;
+              border-color: var(--color-border-disabled);
+            }
+
+            // Webkit calendar picker icon styling (Chrome, Edge, Safari)
+            &::-webkit-calendar-picker-indicator {
+              cursor: pointer;
+              border-radius: 0.25rem;
+              margin-right: 0.25rem;
+              opacity: 1;
+              filter: invert(35%) sepia(80%) saturate(500%) hue-rotate(190deg) brightness(90%);
+              transition: filter 0.2s ease, opacity 0.2s ease;
+
+              &:hover {
+                filter: invert(25%) sepia(100%) saturate(600%) hue-rotate(195deg) brightness(85%);
+              }
+            }
+
+            // Webkit datetime picker input styling
+            &::-webkit-datetime-edit {
+              padding: 0.25rem;
+            }
+
+            &::-webkit-datetime-edit-fields-wrapper {
+              padding: 0.25rem 0;
+            }
+
+            &::-webkit-datetime-edit-text {
+              color: var(--color-text-primary);
+              padding: 0 0.1rem;
+            }
+
+            &::-webkit-datetime-edit-month-field,
+            &::-webkit-datetime-edit-day-field,
+            &::-webkit-datetime-edit-year-field,
+            &::-webkit-datetime-edit-hour-field,
+            &::-webkit-datetime-edit-minute-field,
+            &::-webkit-datetime-edit-second-field,
+            &::-webkit-datetime-edit-millisecond-field {
+              color: var(--color-text-primary);
+              padding: 0.1rem 0.2rem;
+
+              &:focus {
+                background-color: var(--color-primary);
+                color: white;
+                outline: none;
+              }
+            }
+
+            &::-webkit-datetime-edit-am-pm-field {
+              color: var(--color-text-primary);
+              margin-left: 0.5rem;
+              padding: 0.1rem 0.2rem;
+
+              &:focus {
+                background-color: var(--color-primary);
+                color: white;
+                outline: none;
+              }
+            }
+          }
+
+          &.full-width {
+            grid-column: 1 / -1;
+          }
+
+          .textarea {
+            padding: 0.75rem;
+            border: 1px solid var(--color-border-subtle);
+            border-radius: 0.375rem;
+            font-family: inherit;
+            font-size: 0.875rem;
+            color: var(--color-text-primary);
+
+            &:focus {
+              outline: none;
+              border-color: var(--color-primary);
+              box-shadow: 0 0 0 3px var(--color-primary-light);
+            }
+          }
+
+          .input-date {
+            padding: 0.75rem;
+            border: 1px solid var(--color-border-subtle);
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            color: var(--color-text-primary);
+
+            &:focus {
+              outline: none;
+              border-color: var(--color-primary);
+              box-shadow: 0 0 0 3px var(--color-primary-light);
+            }
+          }
+
+          .info-banner {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+            padding: 0.875rem 1rem;
+            background-color: var(--color-info-light, #eff6ff);
+            border: 1px solid var(--color-info, #3b82f6);
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            color: var(--color-info-dark, #1d4ed8);
+
+            i {
+              font-size: 1rem;
+              flex-shrink: 0;
+              margin-top: 0.1rem;
+            }
+          }
+
+          .hint {
+            margin: 0;
+            font-size: 0.75rem;
+            color: var(--color-text-secondary);
+            font-style: italic;
+          }
+
+          .error-hint {
+            color: #b42318;
+          }
+        }
+      }
+    }
+  }
+
+  .wizard-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--color-border-subtle);
+
+    button {
+      min-width: 6rem;
+    }
+
+    @media (max-width: 768px) {
+      flex-direction: column-reverse;
+
+      button {
+        width: 100%;
+      }
+    }
+  }
+}
+
+.delivery-pin-mode-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.delivery-pin-mode-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.875rem;
+  color: var(--color-text-primary);
+  cursor: pointer;
+}
+
+.delivery-pin-mode-option input[type='radio'] {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}

@@ -33,6 +33,16 @@ export class UnitsComponent implements OnInit {
   readonly canCreateUnit = computed(() => this.authSession.hasFeature('unit.create'));
   readonly canEditUnit = computed(() => this.authSession.hasFeature('unit.edit'));
   readonly canDeleteUnit = computed(() => this.authSession.hasFeature('unit.delete'));
+  readonly unitCreateLimit = computed(() => this.authSession.getFeatureConfigNumber('unit.create', 'max_count'));
+  readonly unitCreateUsed = computed(() => this.units().length);
+  readonly unitCreateRemaining = computed(() => {
+    const limit = this.unitCreateLimit();
+    if (limit === null) {
+      return null;
+    }
+
+    return Math.max(limit - this.unitCreateUsed(), 0);
+  });
   readonly formOpen = signal(false);
   readonly selectedUnit = signal<Unit | null>(null);
   readonly viewOpen = signal(false);
@@ -59,7 +69,11 @@ export class UnitsComponent implements OnInit {
   readonly unitAssignOptions = computed<UnitAssignOption[]>(() =>
     this.units()
       .filter((unit) => unit.status !== 'INACTIVE')
-      .map((unit) => ({ id: unit._id || '', name: `${unit.name} (${unit.symbol})` }))
+      .map((unit) => ({
+        id: unit._id || '',
+        name: `${unit.name} (${unit.symbol})`,
+        categoryIds: unit.categoryIds ? [...unit.categoryIds] : [],
+      }))
       .filter((unit) => !!unit.id)
   );
 

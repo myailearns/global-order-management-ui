@@ -15,11 +15,12 @@
           {{ 'saas.admin.roles.btn_open_platform_roles' | translate }}
         </gom-lib-button>
       }
-      @if (canWrite()) {
-      <gom-lib-button (buttonClick)="createRole()" [disabled]="platformMode() && !selectedTenantId()">
+      <gom-lib-button
+        [gomDisableIfNoCapability]="'tenant-admin'"
+        (buttonClick)="createRole()"
+        [disabled]="loading() || !canWrite() || (platformMode() && !selectedTenantId())">
         {{ 'saas.admin.roles.btn_create' | translate }}
       </gom-lib-button>
-      }
     </div>
   </header>
 

@@ -1,0 +1,221 @@
+<div class="browse-templates">
+  <div class="page-header">
+    <h2>{{ 'categoryTemplates.pageTitle' | translate }}</h2>
+    <p class="page-description">{{ 'categoryTemplates.pageDescription' | translate }}</p>
+  </div>
+
+  <gom-lib-tabs [tabs]="tabs" [activeTab]="activeTab()" (tabChange)="switchTab($event)">
+
+    <!-- Business Types Tab -->
+    <gom-lib-tab-content tabId="business" [activeTab]="activeTab()">
+      <div class="tab-content">
+        <p class="tab-hint">{{ 'categoryTemplates.businessHint' | translate }}</p>
+        <div class="bt-grid">
+          @for (bt of businessTemplates(); track bt._id) {
+            <div class="bt-card">
+              <div class="bt-card__icon">
+                <i [class]="bt.icon" aria-hidden="true"></i>
+              </div>
+              <div class="bt-card__body">
+                <h4>{{ bt.name }}</h4>
+                <p class="bt-card__desc">{{ bt.description || ('categoryTemplates.noDescription' | translate) }}</p>
+                <span class="bt-card__count">
+                  <i class="ri-folder-3-line" aria-hidden="true"></i>
+                  {{ bt.categoryIds.length }} {{ 'categoryTemplates.categories' | translate }}
+                </span>
+              </div>
+              <div class="bt-card__actions">
+                <gom-lib-button variant="secondary" (buttonClick)="openBtPreview(bt)">
+                  <i class="ri-eye-line" aria-hidden="true"></i> {{ 'categoryTemplates.view' | translate }}
+                </gom-lib-button>
+                <gom-lib-button
+                  variant="primary"
+                  [disabled]="subscribingId() === bt._id"
+                  (buttonClick)="subscribeToBusinessTemplate(bt)"
+                >
+                  @if (subscribingId() === bt._id) {
+                    <i class="ri-loader-4-line spin" aria-hidden="true"></i> {{ 'categoryTemplates.subscribing' | translate }}
+                  } @else {
+                    <i class="ri-add-circle-line" aria-hidden="true"></i> {{ 'categoryTemplates.subscribeAll' | translate }}
+                  }
+                </gom-lib-button>
+              </div>
+            </div>
+          } @empty {
+            <div class="empty-state">
+              <i class="ri-inbox-line" aria-hidden="true"></i>
+              <p>{{ 'categoryTemplates.noBusinessTemplates' | translate }}</p>
+            </div>
+          }
+        </div>
+      </div>
+    </gom-lib-tab-content>
+
+    <!-- Browse Tab -->
+    <gom-lib-tab-content tabId="browse" [activeTab]="activeTab()">
+      <div class="tab-content">
+        <div class="template-grid">
+          @for (tpl of available(); track tpl._id) {
+            <gom-lib-card class="template-card">
+              <div class="card-icon">
+                <i class="ri-folder-3-line" aria-hidden="true"></i>
+              </div>
+              <div class="card-body">
+                <h4>{{ tpl.name }}</h4>
+                <p>{{ tpl.description || ('categoryTemplates.noDescription' | translate) }}</p>
+              </div>
+              <div class="card-footer">
+                <gom-lib-button
+                  variant="secondary"
+                  (buttonClick)="openPreview(tpl)"
+                >
+                  <i class="ri-eye-line" aria-hidden="true"></i> {{ 'categoryTemplates.view' | translate }}
+                </gom-lib-button>
+                @if (tpl.subscriptionStatus === 'ACTIVE') {
+                  <span class="badge badge--subscribed">
+                    <i class="ri-checkbox-circle-fill" aria-hidden="true"></i> {{ 'categoryTemplates.subscribed' | translate }}
+                  </span>
+                } @else {
+                  <gom-lib-button
+                    variant="primary"
+                    [disabled]="subscribingId() === tpl._id"
+                    (buttonClick)="subscribe(tpl)"
+                  >
+                    @if (subscribingId() === tpl._id) {
+                      <i class="ri-loader-4-line spin" aria-hidden="true"></i> {{ 'categoryTemplates.subscribing' | translate }}
+                    } @else {
+                      <i class="ri-add-circle-line" aria-hidden="true"></i> {{ 'categoryTemplates.subscribe' | translate }}
+                    }
+                  </gom-lib-button>
+                }
+              </div>
+            </gom-lib-card>
+          } @empty {
+            <div class="empty-state">
+              @if (loading()) {
+                <i class="ri-loader-4-line spin" aria-hidden="true"></i>
+                <p>{{ 'categoryTemplates.loadingTemplates' | translate }}</p>
+              } @else {
+                <i class="ri-inbox-line" aria-hidden="true"></i>
+                <p>{{ 'categoryTemplates.noTemplatesAvailable' | translate }}</p>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    </gom-lib-tab-content>
+
+    <!-- Subscriptions Tab -->
+    <gom-lib-tab-content tabId="subscribed" [activeTab]="activeTab()">
+      <div class="tab-content">
+        <div class="subscriptions-list">
+          @for (sub of subscriptions(); track sub._id) {
+            <gom-lib-card class="subscription-item">
+              <div class="subscription-item__layout">
+                <div class="subscription-item__info">
+                  <h4>{{ sub.platformCategoryId.name }}</h4>
+                  <p class="subscription-item__meta">
+                    {{ 'categoryTemplates.subscribedOn' | translate }} {{ sub.subscribedAt | date:'mediumDate' }}
+                    @if (sub.clonedCategoryId) {
+                      · {{ 'categoryTemplates.clonedAs' | translate }} "{{ sub.clonedCategoryId.name }}"
+                    }
+                  </p>
+                </div>
+                <gom-lib-button
+                  variant="danger"
+                  [disabled]="subscribingId() === sub.platformCategoryId._id"
+                  (buttonClick)="unsubscribe(sub)"
+                >
+                  <i class="ri-close-circle-line" aria-hidden="true"></i> {{ 'categoryTemplates.unsubscribe' | translate }}
+                </gom-lib-button>
+              </div>
+            </gom-lib-card>
+          } @empty {
+            <div class="empty-state">
+              <i class="ri-inbox-line" aria-hidden="true"></i>
+              <p>{{ 'categoryTemplates.noSubscriptions' | translate }}</p>
+            </div>
+          }
+        </div>
+      </div>
+    </gom-lib-tab-content>
+
+  </gom-lib-tabs>
+</div>
+
+<!-- Preview Modal -->
+<gom-template-preview-modal
+  [show]="showPreview()"
+  [preview]="previewData()"
+  [loading]="previewLoading()"
+  (showChange)="showPreview.set($event)"
+  (closed)="closePreview()"
+  (subscribeClicked)="subscribe({ _id: $event, name: '', status: '', subscriptionStatus: null, subscribedAt: null })"
+></gom-template-preview-modal>
+
+<!-- Business Template Preview Modal -->
+<gom-lib-modal
+  [title]="'categoryTemplates.btPreviewTitle' | translate"
+  [(show)]="showBtPreview"
+  (closed)="closeBtPreview()"
+  size="large"
+>
+  @if (btPreviewLoading()) {
+    <div class="bt-preview__loading">
+      <i class="ri-loader-4-line spin" aria-hidden="true"></i>
+      {{ 'categoryTemplates.loadingTemplates' | translate }}
+    </div>
+  } @else if (btPreviewData()) {
+    <div class="bt-preview">
+      <div class="bt-preview__summary">
+        <div class="bt-preview__stat">
+          <span class="bt-preview__stat-value">{{ btPreviewData()!.summary.categoryCount }}</span>
+          <span class="bt-preview__stat-label">{{ 'categoryTemplates.categories' | translate }}</span>
+        </div>
+        <div class="bt-preview__stat">
+          <span class="bt-preview__stat-value">{{ btPreviewData()!.summary.fieldGroupCount }}</span>
+          <span class="bt-preview__stat-label">{{ 'categoryTemplates.fieldGroups' | translate }}</span>
+        </div>
+        <div class="bt-preview__stat">
+          <span class="bt-preview__stat-value">{{ btPreviewData()!.summary.unitCount }}</span>
+          <span class="bt-preview__stat-label">{{ 'categoryTemplates.units' | translate }}</span>
+        </div>
+        <div class="bt-preview__stat">
+          <span class="bt-preview__stat-value">{{ btPreviewData()!.summary.taxProfileCount }}</span>
+          <span class="bt-preview__stat-label">{{ 'categoryTemplates.taxProfiles' | translate }}</span>
+        </div>
+      </div>
+
+      <div class="bt-preview__section">
+        <h4><i class="ri-folder-3-line" aria-hidden="true"></i> {{ 'categoryTemplates.includedCategories' | translate }}</h4>
+        <div class="bt-preview__tags">
+          @for (cat of btPreviewData()!.categories; track cat._id) {
+            <span class="bt-preview__tag">{{ cat.name }}</span>
+          }
+        </div>
+      </div>
+
+      @if (btPreviewData()!.units.length > 0) {
+        <div class="bt-preview__section">
+          <h4><i class="ri-ruler-line" aria-hidden="true"></i> {{ 'categoryTemplates.includedUnits' | translate }}</h4>
+          <div class="bt-preview__tags">
+            @for (u of btPreviewData()!.units; track u._id) {
+              <span class="bt-preview__tag">{{ u.name }} ({{ u.symbol }})</span>
+            }
+          </div>
+        </div>
+      }
+
+      @if (btPreviewData()!.taxProfiles.length > 0) {
+        <div class="bt-preview__section">
+          <h4><i class="ri-percent-line" aria-hidden="true"></i> {{ 'categoryTemplates.includedTaxProfiles' | translate }}</h4>
+          <div class="bt-preview__tags">
+            @for (t of btPreviewData()!.taxProfiles; track t._id) {
+              <span class="bt-preview__tag">{{ t.name }} ({{ t.rate }}%)</span>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+</gom-lib-modal>

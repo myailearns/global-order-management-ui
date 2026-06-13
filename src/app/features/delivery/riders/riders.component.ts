@@ -4,12 +4,19 @@ import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { catchError, combineLatest, debounceTime, of, startWith, switchMap } from 'rxjs';
 
-import { GomAlertToastService } from '@gomlibs/ui';
-import { FormControlsModule, GomButtonComponent } from '@gomlibs/ui';
-import { GomConfirmationModalComponent, GomModalComponent } from '@gomlibs/ui';
-import { GomTableColumn, GomTableComponent, GomTableRow } from '@gomlibs/ui';
+import {
+  FormControlsModule,
+  GomAlertToastService,
+  GomButtonComponent,
+  GomConfirmationModalComponent,
+  GomModalComponent,
+  GomTableColumn,
+  GomTableComponent,
+  GomTableRow,
+} from '@gomlibs/ui';
 import { DeliveryService, EmployeeCodePreview, Rider, RiderPayload, RiderStatus } from '../delivery.service';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
+import { DisableIfNoFeatureDirective } from '../../../shared/directives/disable-if-no-feature.directive';
 
 interface RiderRow extends GomTableRow {
   _id: string;
@@ -30,6 +37,7 @@ interface RiderRow extends GomTableRow {
     CommonModule,
     ReactiveFormsModule,
     FormControlsModule,
+    DisableIfNoFeatureDirective,
     GomButtonComponent,
     GomTableComponent,
     GomModalComponent,
@@ -46,7 +54,19 @@ export class RidersComponent implements OnInit {
   private readonly authSession = inject(AuthSessionService);
 
   readonly loading = signal(false);
-  readonly canWrite = computed(() => this.authSession.canWrite('delivery'));
+  readonly canCreateRider = computed(() => this.authSession.hasFeature('rider.create') && (this.riderCreateRemaining() ?? Infinity) > 0);
+  readonly canUpdateRider = computed(() => this.authSession.hasFeature('rider.update'));
+  readonly canDeleteRider = computed(() => this.authSession.hasFeature('rider.delete'));
+  readonly riderCreateLimit = computed(() => this.authSession.getFeatureConfigNumber('rider.create', 'max_count'));
+  readonly riderCreateUsed = computed(() => this.riders().length);
+  readonly riderCreateRemaining = computed(() => {
+    const limit = this.riderCreateLimit();
+    if (limit === null) {
+      return null;
+    }
+
+    return Math.max(limit - this.riderCreateUsed(), 0);
+  });
   readonly saving = signal(false);
   readonly errorMessage = signal<string | null>(null);
   readonly riders = signal<Rider[]>([]);
@@ -247,9 +267,6 @@ export class RidersComponent implements OnInit {
   }
 
   onRowAction(event: { actionKey: string; row: GomTableRow }): void {
-    if (!this.canWrite()) {
-      return;
-    }
     const id = typeof event.row['_id'] === 'string' ? event.row['_id'] : '';
     const rider = this.riders().find((item) => item._id === id);
     if (!rider) {
@@ -257,6 +274,9 @@ export class RidersComponent implements OnInit {
     }
 
     if (event.actionKey === 'edit') {
+      if (!this.canUpdateRider()) {
+        return;
+      }
       this.editingId.set(rider._id);
       this.riderForm.reset({
         name: rider.name,
@@ -287,6 +307,9 @@ export class RidersComponent implements OnInit {
     }
 
     if (event.actionKey === 'mark-on-leave') {
+      if (!this.canUpdateRider()) {
+        return;
+      }
       if (rider.status === 'ACTIVE') {
         this.statusTarget.set({
           riderId: rider._id,
@@ -302,6 +325,9 @@ export class RidersComponent implements OnInit {
     }
 
     if (event.actionKey === 'deactivate') {
+      if (!this.canUpdateRider()) {
+        return;
+      }
       this.statusTarget.set({
         riderId: rider._id,
         riderName: rider.name,
@@ -313,6 +339,9 @@ export class RidersComponent implements OnInit {
     }
 
     if (event.actionKey === 'return-from-leave') {
+      if (!this.canUpdateRider()) {
+        return;
+      }
       this.statusTarget.set({
         riderId: rider._id,
         riderName: rider.name,
@@ -326,6 +355,9 @@ export class RidersComponent implements OnInit {
     }
 
     if (event.actionKey === 'activate') {
+      if (!this.canUpdateRider()) {
+        return;
+      }
       this.statusTarget.set({
         riderId: rider._id,
         riderName: rider.name,
@@ -337,6 +369,9 @@ export class RidersComponent implements OnInit {
     }
 
     if (event.actionKey === 'delete') {
+      if (!this.canDeleteRider()) {
+        return;
+      }
       this.statusTarget.set({
         riderId: rider._id,
         riderName: rider.name,
@@ -352,6 +387,10 @@ export class RidersComponent implements OnInit {
   }
 
   confirmLeave(): void {
+    if (!this.canUpdateRider()) {
+      return;
+    }
+
     this.leaveDatesForm.markAllAsTouched();
     if (this.leaveDatesForm.invalid) return;
 
@@ -383,6 +422,16 @@ export class RidersComponent implements OnInit {
   confirmStatusChange(): void {
     const target = this.statusTarget();
     if (!target) {
+      this.closeStatusConfirm();
+      return;
+    }
+
+    if (target.action === 'delete' && !this.canDeleteRider()) {
+      this.closeStatusConfirm();
+      return;
+    }
+
+    if (target.action !== 'delete' && !this.canUpdateRider()) {
       this.closeStatusConfirm();
       return;
     }
@@ -463,6 +512,15 @@ export class RidersComponent implements OnInit {
   }
 
   saveRider(): void {
+    const isEditing = Boolean(this.editingId());
+    if (isEditing && !this.canUpdateRider()) {
+      return;
+    }
+
+    if (!isEditing && !this.canCreateRider()) {
+      return;
+    }
+
     this.riderForm.markAllAsTouched();
     if (this.riderForm.invalid) {
       return;
@@ -505,7 +563,9 @@ export class RidersComponent implements OnInit {
   }
 
   isSaveDisabled(): boolean {
-    return this.saving() || this.riderForm.invalid;
+    const isEditing = Boolean(this.editingId());
+    const hasPermission = isEditing ? this.canUpdateRider() : this.canCreateRider();
+    return this.saving() || this.riderForm.invalid || !hasPermission;
   }
 
   private extractApiMessage(error: unknown): string {

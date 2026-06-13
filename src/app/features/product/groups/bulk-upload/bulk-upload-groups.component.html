@@ -1,0 +1,380 @@
+<section class="bulk-page">
+  <header class="bulk-page__header">
+    <div class="bulk-page__title-row">
+      <button type="button" class="bulk-page__back" (click)="goBack()" [attr.aria-label]="'bulkUpload.createPage.backAria' | translate">
+        <i class="ri-arrow-left-line" aria-hidden="true"></i>
+      </button>
+      <div>
+        <h2>{{ 'bulkUpload.createPage.headerTitle' | translate }}</h2>
+        <p class="bulk-page__subtitle">
+          {{ 'bulkUpload.createPage.headerSubtitle' | translate }}
+        </p>
+      </div>
+    </div>
+    <div class="bulk-page__header-actions">
+    </div>
+  </header>
+
+  @if (recoverableDraft(); as draft) {
+    <output class="bulk-page__draft-banner" aria-live="polite">
+      <span class="bulk-page__draft-banner-content">
+        <strong>{{ 'bulkUpload.createPage.draftRecoveredTitle' | translate }}</strong>
+        {{ 'bulkUpload.createPage.draftRecoveredPrefix' | translate:{ rows: draft.rows.length } }}
+        {{ draft.lastSavedAt | date:'medium' }}.
+      </span>
+      <span class="bulk-page__draft-banner-actions">
+        <gom-lib-button type="button" variant="secondary" (buttonClick)="discardSavedDraft()">{{ 'bulkUpload.createPage.discard' | translate }}</gom-lib-button>
+        <gom-lib-button type="button" variant="primary" (buttonClick)="restoreSavedDraft()">{{ 'bulkUpload.createPage.restoreDraft' | translate }}</gom-lib-button>
+      </span>
+    </output>
+  }
+
+  @if (loading()) {
+    <div class="bulk-page__loading">{{ 'bulkUpload.createPage.loadingLookups' | translate }}</div>
+  } @else {
+    <!-- Field Group selector -->
+    <div class="bulk-page__setup-bar">
+      <div class="bulk-page__field-group-select">
+        <gom-lib-select
+          [formControl]="fieldGroupControl"
+          [label]="'bulkUpload.createPage.fieldGroupLabel' | translate"
+          [placeholder]="'bulkUpload.createPage.fieldGroupPlaceholder' | translate"
+          [options]="fieldGroupOptions()"
+          [searchable]="fieldGroupOptions().length >= 10"
+        ></gom-lib-select>
+      </div>
+      @if (selectedFieldGroupId() && selectedFieldGroupFields().length > 0) {
+        <div class="bulk-page__field-selection">
+          <div class="bulk-page__field-selection-panel">
+            <h4>Field Group Fields</h4>
+            <div class="bulk-page__field-selection-grid">
+              @for (f of selectedFieldGroupFields(); track f.fieldId) {
+                <label class="bulk-page__field-selection-item" [class.bulk-page__field-selection-item--required]="f.isRequired">
+                  <input
+                    type="checkbox"
+                    [checked]="isFieldVisible(f.key)"
+                    [disabled]="f.isRequired"
+                    (change)="toggleFieldVisibility(f.key, $any($event.target).checked)"
+                  />
+                  <span>{{ f.name }} ({{ f.key }})</span>
+                  @if (f.isRequired) {
+                    <span class="bulk-page__field-toggle__required-mark">*</span>
+                  }
+                </label>
+              }
+            </div>
+          </div>
+
+          <div class="bulk-page__field-selection-panel">
+            <h4>Optional Extra Fields</h4>
+            @if (availableExtraFields().length > 0) {
+              <div class="bulk-page__field-selection-grid">
+                @for (field of availableExtraFields(); track field.fieldId) {
+                  <label class="bulk-page__field-selection-item">
+                    <input
+                      type="checkbox"
+                      [checked]="isExtraFieldSelected(field.fieldId)"
+                      (change)="toggleExtraField(field.fieldId, $any($event.target).checked)"
+                    />
+                    <span>{{ field.name }} ({{ field.key }})</span>
+                  </label>
+                }
+              </div>
+            } @else {
+              <p class="bulk-page__helper">No optional extra fields available.</p>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+    <section class="bulk-page__defaults">
+      <h3>{{ 'bulkUpload.createPage.commonDefaultsTitle' | translate }}</h3>
+      <p>{{ 'bulkUpload.createPage.commonDefaultsSubtitle' | translate }}</p>
+      <div class="bulk-page__defaults-grid">
+        <gom-lib-select
+          [formControl]="defaultCategoryControl"
+          [label]="'bulkUpload.createPage.categoryRequired' | translate"
+          [placeholder]="'bulkUpload.createPage.categoryPlaceholder' | translate"
+          [options]="categoryOptions()"
+          [searchable]="categoryOptions().length >= 10"
+        ></gom-lib-select>
+
+        <gom-lib-select
+          [formControl]="defaultBaseUnitControl"
+          [label]="'bulkUpload.createPage.baseUnitRequired' | translate"
+          [placeholder]="'bulkUpload.createPage.baseUnitPlaceholder' | translate"
+          [options]="unitOptions()"
+          [searchable]="unitOptions().length >= 10"
+        ></gom-lib-select>
+
+        <gom-lib-select
+          [formControl]="defaultTaxProfileControl"
+          [label]="'bulkUpload.createPage.taxProfile' | translate"
+          [placeholder]="'bulkUpload.createPage.taxProfilePlaceholder' | translate"
+          [options]="taxOptions()"
+          [searchable]="taxOptions().length >= 10"
+        ></gom-lib-select>
+
+        <gom-lib-select
+          [label]="'bulkUpload.createPage.baseCostField' | translate"
+          [placeholder]="'bulkUpload.createPage.baseCostFieldPlaceholder' | translate"
+          [formControl]="simpleBaseCostControl"
+          [options]="simpleBaseCostOptions()"
+        ></gom-lib-select>
+
+        <gom-lib-input
+          [formControl]="simpleMarginPercentControl"
+          [label]="'bulkUpload.createPage.sellingMargin' | translate"
+          type="number"
+        ></gom-lib-input>
+
+        <gom-lib-input
+          [formControl]="simpleAnchorPercentControl"
+          [label]="'bulkUpload.createPage.anchorUplift' | translate"
+          type="number"
+        ></gom-lib-input>
+      </div>
+
+      <div class="bulk-page__pricing-extras">
+        <h4>{{ 'bulkUpload.createPage.allowedOtherUnits' | translate }}</h4>
+        @if (unitOptions().length > 0) {
+          <div class="bulk-page__checkbox-grid">
+            @for (unit of unitOptions(); track unit.value) {
+              @if (unit.value !== defaultBaseUnitControl.value) {
+                <label class="bulk-page__checkbox-item">
+                  <input
+                    type="checkbox"
+                    [checked]="isDefaultAllowedOtherUnitSelected(unit.value)"
+                    (change)="toggleDefaultAllowedOtherUnit(unit.value, $any($event.target).checked)"
+                  />
+                  <span>{{ unit.label }}</span>
+                </label>
+              }
+            }
+          </div>
+        } @else {
+          <p class="bulk-page__helper">{{ 'bulkUpload.createPage.allowedUnitsHelper' | translate }}</p>
+        }
+      </div>
+
+      <div class="bulk-page__pricing-extras">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+          <h4>{{ 'bulkUpload.createPage.includeExtraCostFields' | translate }}</h4>
+          @if (simpleActualExtraOptions().length > 0) {
+            <button
+              type="button"
+              class="select-all-btn"
+              (click)="toggleAllSimpleActualExtraKeys(!isAllSimpleActualExtraSelected())"
+            >
+              {{ isAllSimpleActualExtraSelected() ? 'Deselect All' : 'Select All' }}
+            </button>
+          }
+        </div>
+        @if (simpleActualExtraOptions().length > 0) {
+          <div class="bulk-page__checkbox-grid">
+            @for (field of simpleActualExtraOptions(); track field.key) {
+              <label class="bulk-page__checkbox-item">
+                <input
+                  type="checkbox"
+                  [checked]="isSimpleActualExtraSelected(field.key)"
+                  (change)="toggleSimpleActualExtraKey(field.key, $any($event.target).checked)"
+                />
+                <span>{{ field.name }} ({{ field.key }})</span>
+              </label>
+            }
+          </div>
+        } @else {
+          <p class="bulk-page__helper">{{ 'bulkUpload.createPage.extraCostHelper' | translate }}</p>
+        }
+      </div>
+
+      <div class="bulk-page__pricing-summary">
+        <h4>{{ 'bulkUpload.createPage.generatedPricingLogic' | translate }}</h4>
+        <p><strong>{{ 'bulkUpload.createPage.actualPrice' | translate }}</strong>: {{ simpleGeneratedFormulas().actualPrice }}</p>
+        <p><strong>{{ 'bulkUpload.createPage.sellingPrice' | translate }}</strong>: {{ simpleGeneratedFormulas().sellingPrice }}</p>
+        <p><strong>{{ 'bulkUpload.createPage.anchorPrice' | translate }}</strong>: {{ simpleGeneratedFormulas().anchorPrice }}</p>
+      </div>
+    </section>
+
+    <!-- Info bar -->
+    <div class="bulk-page__info-bar">
+      @if (groupCreateLimit() !== null) {
+        <span class="bulk-page__chip">
+          {{ 'bulkUpload.createPage.quota' | translate:{ used: groupCreateUsed(), limit: groupCreateLimit(), remaining: groupCreateRemaining() } }}
+        </span>
+      }
+
+      @if (bulkValidation().errorCount > 0) {
+        <gom-lib-button
+          type="button"
+          variant="secondary"
+          [class.bulk-page__error-button]="true"
+          (buttonClick)="showValidationErrorsModal.set(true)"
+        >
+          <i class="ri-error-warning-line" aria-hidden="true"></i>
+          {{ 'bulkUpload.createPage.validationErrors' | translate:{ count: bulkValidation().errorCount } }}
+        </gom-lib-button>
+      }
+
+      <span class="bulk-page__info-bar-actions">
+        @if (draftSaveState() !== 'idle') {
+          <span class="bulk-page__autosave-status" [class.bulk-page__autosave-status--error]="draftSaveState() === 'error'">
+            @if (draftSaveState() === 'saving') {
+              {{ 'bulkUpload.createPage.savingDraft' | translate }}
+            } @else if (draftSaveState() === 'saved' && lastDraftSavedAt()) {
+              {{ 'bulkUpload.createPage.savedAt' | translate:{ time: (lastDraftSavedAt() | date:'shortTime') } }}
+            } @else if (draftSaveState() === 'error') {
+              {{ 'bulkUpload.createPage.draftSaveFailed' | translate }}
+            }
+          </span>
+        }
+        <gom-lib-button
+          type="button"
+          variant="primary"
+          [disabled]="saving() || bulkRows().length === 0 || !canCreate()"
+          (buttonClick)="submitBatch()"
+        >
+          <i class="ri-upload-2-line" aria-hidden="true"></i>
+          {{ 'bulkUpload.createPage.submitGroups' | translate:{ count: validRowCount() } }}
+        </gom-lib-button>
+      </span>
+    </div>
+
+    <!-- Bulk grid -->
+    <div class="bulk-page__grid-container">
+      <app-bulk-grid
+        [columns]="columns()"
+        [enableColumnPresets]="true"
+        [allowOptionalColumnsToggle]="false"
+        [enableBulkAddInput]="true"
+        [mode]="'create'"
+        [maxRows]="maxRows()"
+        [frozenColumnCount]="0"
+        rowSecondaryActionIcon="ri-add-line"
+        [rowSecondaryActionTooltip]="'bulkUpload.createPage.addMoreDetails' | translate"
+        rowTertiaryActionIcon="ri-stack-line"
+        [rowTertiaryActionTooltip]="'bulkUpload.createPage.manageVariants' | translate"
+        [advancedColumnsLabel]="'bulkUpload.createPage.fieldValues' | translate"
+        [addButtonLabel]="'bulkUpload.createPage.addRow' | translate"
+        [clearButtonLabel]="'bulkUpload.createPage.clearAll' | translate"
+        [emptyMessage]="'bulkUpload.createPage.emptyRows' | translate"
+        (rowSecondaryAction)="openGroupDetails($event)"
+        (rowTertiaryAction)="openVariantEditor($event)"
+        (rowPublishAction)="publishRow($event)"
+        (rowsChange)="onBulkRowsChange($event)"
+        (validationChange)="onBulkValidationChange($event)"
+      ></app-bulk-grid>
+    </div>
+
+    @if (showVariantEditor()) {
+      <div class="bulk-page__modal-overlay" (click)="closeVariantEditor()" (keydown.escape)="closeVariantEditor()">
+        <div class="bulk-page__modal bulk-page__variant-modal" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+          <div class="bulk-page__modal-header">
+            <h3>{{ 'bulkUpload.createPage.variantsTitle' | translate }} · {{ variantEditorRowName() }}</h3>
+            <button type="button" class="bulk-page__modal-close" (click)="closeVariantEditor()" [attr.aria-label]="'bulkUpload.createPage.closeModal' | translate">
+              <i class="ri-close-line" aria-hidden="true"></i>
+            </button>
+          </div>
+
+          <div class="bulk-page__modal-body">
+            <div class="bulk-page__variant-suggestions">
+              <span>{{ 'bulkUpload.createPage.quickAdd' | translate }}</span>
+              @for (suggestion of variantQuickSuggestions(); track suggestion.label + '-' + suggestion.unitId) {
+                <button type="button" class="bulk-page__variant-chip" (click)="quickAddVariantSuggestion(suggestion)">{{ suggestion.label }}</button>
+              }
+            </div>
+
+            <div class="bulk-page__variant-form-grid">
+              <gom-lib-input [label]="'bulkUpload.createPage.skuRequired' | translate" [formControl]="variantSkuControl" [placeholder]="'bulkUpload.createPage.skuPlaceholder' | translate"></gom-lib-input>
+              <gom-lib-input [label]="'bulkUpload.createPage.quantityRequired' | translate" type="number" [formControl]="variantQuantityControl"></gom-lib-input>
+              <gom-lib-select
+                [label]="'bulkUpload.createPage.unitRequired' | translate"
+                [formControl]="variantUnitIdControl"
+                [options]="unitOptions()"
+                [searchable]="unitOptions().length >= 10"
+                [placeholder]="'bulkUpload.createPage.unitPlaceholder' | translate"
+              ></gom-lib-select>
+              <gom-lib-select
+                [label]="'bulkUpload.createPage.itemType' | translate"
+                [formControl]="variantItemTypeControl"
+                [options]="[{ label: ('bulkUpload.createPage.itemTypeIndividual' | translate), value: 'INDIVIDUAL' }, { label: ('bulkUpload.createPage.itemTypePack' | translate), value: 'PACK' }]"
+              ></gom-lib-select>
+              <gom-lib-input [label]="'bulkUpload.createPage.additionalPrice' | translate" type="number" [formControl]="variantAdditionalPriceControl"></gom-lib-input>
+              <gom-lib-select
+                [label]="'bulkUpload.createPage.discountType' | translate"
+                [formControl]="variantDiscountTypeControl"
+                [options]="[{ label: ('bulkUpload.createPage.discountTypePercent' | translate), value: 'PERCENT' }, { label: ('bulkUpload.createPage.discountTypeAmount' | translate), value: 'AMOUNT' }]"
+              ></gom-lib-select>
+              <gom-lib-input [label]="'bulkUpload.createPage.discountValue' | translate" type="number" [formControl]="variantDiscountValueControl"></gom-lib-input>
+            </div>
+
+            <div class="bulk-page__variant-form-actions">
+              <gom-lib-button type="button" variant="primary" (buttonClick)="addVariantDraft()">{{ 'bulkUpload.createPage.addVariant' | translate }}</gom-lib-button>
+            </div>
+
+            <div class="bulk-page__variant-list">
+              @if (variantDrafts().length === 0) {
+                <p class="bulk-page__helper">{{ 'bulkUpload.createPage.noVariantsYet' | translate }}</p>
+              } @else {
+                @for (variant of variantDrafts(); track $index; let i = $index) {
+                  <div class="bulk-page__variant-item">
+                    <span><strong>{{ variant.sku }}</strong> · {{ variant.quantity }} {{ resolveUnitLabel(variant.unitId) }}</span>
+                    <span>+{{ variant.additionalPrice }} @if (variant.discountValue > 0) { · {{ variant.discountValue }} {{ variant.discountType === 'PERCENT' ? '%' : '' }} discount }</span>
+                    <button type="button" class="bulk-page__variant-delete" (click)="removeVariantDraft(i)" [attr.aria-label]="'bulkUpload.createPage.removeVariantAria' | translate">
+                      <i class="ri-delete-bin-line" aria-hidden="true"></i>
+                    </button>
+                  </div>
+                }
+              }
+            </div>
+          </div>
+
+          <div class="bulk-page__modal-footer">
+            <gom-lib-button type="button" variant="secondary" (buttonClick)="closeVariantEditor()">{{ 'bulkUpload.createPage.done' | translate }}</gom-lib-button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Validation Errors Modal -->
+    @if (showValidationErrorsModal()) {
+      <div class="bulk-page__modal-overlay" (click)="showValidationErrorsModal.set(false)" (keydown.escape)="showValidationErrorsModal.set(false)">
+        <div class="bulk-page__modal" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+          <div class="bulk-page__modal-header">
+            <h3 id="error-modal-title">{{ 'bulkUpload.createPage.validationErrorsTitle' | translate }}</h3>
+            <button type="button" class="bulk-page__modal-close" (click)="showValidationErrorsModal.set(false)" [attr.aria-label]="'bulkUpload.createPage.closeModal' | translate">
+              <i class="ri-close-line" aria-hidden="true"></i>
+            </button>
+          </div>
+          <div class="bulk-page__modal-body">
+            @if (bulkGrid) {
+              @for (row of bulkRows(); track $index; let rowIndex = $index) {
+                @if (bulkGrid.rowHasErrors(rowIndex)) {
+                  <div class="bulk-page__error-item">
+                    <div class="bulk-page__error-row-label">
+                      <strong>{{ 'bulkUpload.createPage.rowLabel' | translate:{ index: rowIndex + 1 } }}</strong>
+                      <span class="bulk-page__error-fields">{{ bulkGrid.getRowErrorFields(rowIndex).join(', ') }}</span>
+                    </div>
+                  </div>
+                }
+              }
+            }
+          </div>
+          <div class="bulk-page__modal-footer">
+            <gom-lib-button
+              type="button"
+              variant="secondary"
+              (buttonClick)="showValidationErrorsModal.set(false)"
+            >{{ 'common.actions.close' | translate }}</gom-lib-button>
+          </div>
+        </div>
+      </div>
+    }
+  }
+</section>
+
+<app-create-group-wizard
+  (groupSaved)="onWizardGroupSaved()"
+  (rowUpdated)="onWizardRowUpdated($event)"
+></app-create-group-wizard>

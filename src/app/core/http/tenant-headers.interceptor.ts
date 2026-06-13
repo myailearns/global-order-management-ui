@@ -25,8 +25,9 @@ const TENANT_ROUTE_PREFIXES = [
   '/courier-partners',
   '/tenant-config',
   '/tenant-access',
+  '/tenant/templates',
+  '/media',
 ] as const;
-
 function isTenantApiRequest(url: string): boolean {
   const baseUrl = String(environment.apiBaseUrl || '').trim();
   if (!baseUrl || !url.startsWith(baseUrl)) {
@@ -34,7 +35,10 @@ function isTenantApiRequest(url: string): boolean {
   }
 
   const path = url.slice(baseUrl.length);
-  return TENANT_ROUTE_PREFIXES.some((prefix) => path.startsWith(prefix));
+  return (
+    TENANT_ROUTE_PREFIXES.some((prefix) => path.startsWith(prefix)) ||
+    path.startsWith('/notifications')
+  );
 }
 
 export const tenantHeadersInterceptor: HttpInterceptorFn = (request, next) => {

@@ -11,6 +11,16 @@
     </div>
   }
 
+  @if (canCreateUnit()) {
+    <div class="quota-banner">
+      @if (unitCreateLimit() !== null) {
+        <p>Unit quota: {{ unitCreateUsed() }} / {{ unitCreateLimit() }} used ({{ unitCreateRemaining() }} remaining)</p>
+      } @else {
+        <p>Unit quota: {{ unitCreateUsed() }} used (unlimited)</p>
+      }
+    </div>
+  }
+
   <gom-units-list
     [units]="units()"
     [baseUnitNameById]="baseUnitNameById()"

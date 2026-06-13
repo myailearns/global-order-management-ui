@@ -1,11 +1,14 @@
 <div class="categories-list">
   <header class="categories-list__header">
     <h2><i class="ri-tags-line" aria-hidden="true"></i> {{ text.pageTitle | translate }}</h2>
-      @if (canCreate) {
-        <gom-lib-button class="btn-add" (buttonClick)="onAddNew()" [disabled]="loading">
-          <i class="ri-add-line" aria-hidden="true"></i> {{ text.addCategory | translate }}
-        </gom-lib-button>
-      }
+      <gom-lib-button
+        class="btn-add"
+        (buttonClick)="onAddNew()"
+        gomDisableIfNoFeature="category.create"
+        [disabled]="loading || !canCreate"
+      >
+        <i class="ri-add-line" aria-hidden="true"></i> {{ text.addCategory | translate }}
+      </gom-lib-button>
   </header>
 
   <section class="categories-list__table-shell">

@@ -11,6 +11,16 @@
     </div>
   }
 
+  @if (canCreateField()) {
+    <div class="quota-banner">
+      @if (fieldCreateLimit() !== null) {
+        <p>Field quota: {{ fieldCreateUsed() }} / {{ fieldCreateLimit() }} used ({{ fieldCreateRemaining() }} remaining)</p>
+      } @else {
+        <p>Field quota: {{ fieldCreateUsed() }} used (unlimited)</p>
+      }
+    </div>
+  }
+
   <gom-fields-list
     [fields]="fields()"
     [fieldGroupUsageByFieldId]="fieldGroupUsageByFieldId()"
@@ -24,9 +34,9 @@
 
   <gom-fields-form
     [isOpen]="formOpen()"
-    [initialData]="getSelectedFieldFormData()"
+    [initialData]="selectedFieldFormData()"
     [fieldGroupOptions]="fieldGroupAssignOptions()"
-    [initialAssignedFieldGroupIds]="getSelectedFieldAssignedFieldGroupIds()"
+    [initialAssignedFieldGroupIds]="selectedFieldAssignedFieldGroupIds()"
     (formSubmit)="onFormSubmit($event)"
     (formCancel)="onFormCancel()"
   ></gom-fields-form>
@@ -34,7 +44,7 @@
   <gom-fields-view
     [isOpen]="viewOpen()"
     [field]="viewingField()"
-    [usedInFieldGroups]="getViewingFieldGroupUsage()"
+    [usedInFieldGroups]="viewingFieldGroupUsage()"
     [busy]="loading()"
     [canEdit]="canEditField()"
     [canDelete]="canDeleteField()"

@@ -1,9 +1,23 @@
 <section class="master-page">
   <header class="master-page__header">
     <h2><i class="ri-folder-line" aria-hidden="true"></i> Group Creation</h2>
-    @if (canWrite()) {
-    <gom-lib-button type="button" variant="primary" (buttonClick)="openCreateWizard()"><i class="ri-add-line" aria-hidden="true"></i> Create Group</gom-lib-button>
-    }
+    <div class="master-page__header-actions">
+      <gom-lib-button
+        type="button"
+        variant="secondary"
+        (buttonClick)="openBulkUpload()"
+        gomDisableIfNoFeature="group.create"
+        [disabled]="saving() || !canCreateGroup()"
+      ><i class="ri-upload-2-line" aria-hidden="true"></i> Bulk Upload</gom-lib-button>
+
+      <gom-lib-button
+        type="button"
+        variant="primary"
+        (buttonClick)="openCreateWizard()"
+        gomDisableIfNoFeature="group.create"
+        [disabled]="saving() || !canCreateGroup() || (groupCreateRemaining() ?? 1) <= 0"
+      ><i class="ri-add-line" aria-hidden="true"></i> Create Group</gom-lib-button>
+    </div>
   </header>
 
   @if (errorMessage()) {
@@ -15,7 +29,42 @@
     </div>
   }
 
+  @if (canCreateGroup()) {
+    <div class="quota-banner">
+      @if (groupCreateLimit() !== null) {
+        <p>Group quota: {{ groupCreateUsed() }} / {{ groupCreateLimit() }} used ({{ groupCreateRemaining() }} remaining)</p>
+      } @else {
+        <p>Group quota: {{ groupCreateUsed() }} used (unlimited)</p>
+      }
+    </div>
+  }
+
   <article class="master-page__table-shell">
+    @if (selectedGroupRows().length > 0) {
+      <div class="bulk-selection-actions">
+        <span class="bulk-selection-count">
+          {{ selectedGroupRows().length }} group{{ selectedGroupRows().length !== 1 ? 's' : '' }} selected
+        </span>
+        <div class="bulk-selection-buttons">
+          <gom-lib-button
+            type="button"
+            variant="secondary"
+            (buttonClick)="applyStatusToSelectedGroups('ACTIVE')"
+            [disabled]="saving()"
+          >
+            <i class="ri-check-line" aria-hidden="true"></i> Activate Selected
+          </gom-lib-button>
+          <gom-lib-button
+            type="button"
+            variant="secondary"
+            (buttonClick)="applyStatusToSelectedGroups('INACTIVE')"
+            [disabled]="saving()"
+          >
+            <i class="ri-close-line" aria-hidden="true"></i> Deactivate Selected
+          </gom-lib-button>
+        </div>
+      </div>
+    }
     <gom-lib-table
       [columns]="columns"
       [rows]="rows()"
@@ -25,7 +74,9 @@
       searchPlaceholder="Search groups"
       emptyMessage="No groups found."
       [mobileCardView]="true"
+      [enableRowSelection]="true"
       (rowAction)="onRowAction($event)"
+      (selectedRowsChange)="onSelectedGroupsChange($event)"
     ></gom-lib-table>
   </article>
 </section>
@@ -68,6 +119,17 @@
             [formControl]="basicForm.controls.taxProfileId"
           ></gom-lib-select>
         </div>
+
+        <div class="form-grid" style="margin-top: 1rem;">
+          <div class="quill-wrapper">
+            <app-rich-text-editor
+              #descEditor
+              label="Description (Optional)"
+              placeholder="Add product description — health benefits, usage tips, ingredients etc."
+              (valueChange)="onDescriptionChanged($event)"
+            ></app-rich-text-editor>
+          </div>
+        </div>
       </section>
     </gom-lib-tab-content>
 
@@ -86,13 +148,22 @@
         </div>
 
         <div class="wizard__panel">
-          <h4>Preview Fields</h4>
+          <h4>Field Group Fields</h4>
           @if (groupFields().length > 0) {
-            <ul>
+            <div class="checkbox-grid field-selection-grid">
               @for (field of groupFields(); track field.fieldId) {
-                <li>{{ field.name }} ({{ field.key }})</li>
+                <div class="checkbox-grid__item field-selection-grid__item" [class.field-selection-grid__item--required]="field.isRequired">
+                  <gom-lib-checkbox
+                    [label]="field.name + ' (' + field.key + ')'"
+                    [formControl]="getGroupFieldToggleControl(field)"
+                    (checkedChange)="toggleGroupFieldSelection(field.key, $event)"
+                  ></gom-lib-checkbox>
+                  @if (field.isRequired) {
+                    <span class="field-selection-grid__required-mark">*</span>
+                  }
+                </div>
               }
-            </ul>
+            </div>
           } @else {
             <p>Select a field group to preview included fields.</p>
           }
@@ -127,7 +198,7 @@
             <gom-lib-input
               [label]="field.name + ' (' + field.key + ')'"
               type="number"
-              [placeholder]="'Enter ' + field.name"
+              [placeholder]="getFieldPlaceholder(field)"
               [formControl]="getValueControl(field.key)"
               [hint]="getFieldHint(field)"
               [error]="getValueControl(field.key).touched && getValueControl(field.key).invalid ? 'Value is required' : ''"
@@ -140,29 +211,115 @@
     <gom-lib-tab-content [tabId]="4" [activeTab]="currentStep()">
       <section class="wizard__body">
         <div class="wizard__panel">
-          <h4>Formula Builder Tokens</h4>
+          <h4>Simple Pricing Builder</h4>
+          <p>Set 3 business inputs. Formulas are generated automatically.</p>
+          <div class="form-grid form-grid--two">
+            <gom-lib-select
+              label="Base Cost Field"
+              placeholder="Select base cost"
+              [options]="simpleBaseCostOptions()"
+              (valueChange)="onSimpleBaseCostChange($event)"
+            ></gom-lib-select>
+
+            <gom-lib-input
+              label="Selling Margin %"
+              type="number"
+              placeholder="20"
+              (valueChange)="onSimpleMarginPercentChange($event)"
+            ></gom-lib-input>
+
+            <gom-lib-input
+              label="Anchor Uplift %"
+              type="number"
+              placeholder="5"
+              (valueChange)="onSimpleAnchorPercentChange($event)"
+            ></gom-lib-input>
+          </div>
+
+          <div class="wizard__panel" style="margin-top: 0.75rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+              <h4>Include Extra Cost Fields In Actual Price</h4>
+              @if (simpleActualExtraOptions().length > 0) {
+                <button
+                  type="button"
+                  class="select-all-btn"
+                  (click)="toggleAllSimpleActualExtraKeys(!isAllSimpleActualExtraSelected())"
+                >
+                  {{ isAllSimpleActualExtraSelected() ? 'Deselect All' : 'Select All' }}
+                </button>
+              }
+            </div>
+            @if (simpleActualExtraOptions().length > 0) {
+              <div class="checkbox-grid">
+                @for (field of simpleActualExtraOptions(); track field.key) {
+                  <label class="checkbox-grid__item">
+                    <input
+                      type="checkbox"
+                      [checked]="isSimpleActualExtraSelected(field.key)"
+                      (change)="toggleSimpleActualExtraKey(field.key, $any($event.target).checked)"
+                    />
+                    <span>{{ field.name }} ({{ field.key }})</span>
+                  </label>
+                }
+              </div>
+            } @else {
+              <p>No extra numeric cost fields available.</p>
+            }
+          </div>
+
+          <div class="wizard__panel pricing-summary-panel" style="margin-top: 0.75rem;">
+            <h4>Generated Pricing Logic</h4>
+            <p><strong>Actual Price</strong>: {{ simpleGeneratedFormulas().actualPrice }}</p>
+            <p><strong>Selling Price</strong>: {{ simpleGeneratedFormulas().sellingPrice }}</p>
+            <p><strong>Anchor Price</strong>: {{ simpleGeneratedFormulas().anchorPrice }}</p>
+
+            @if (!formulaPreview().error) {
+              <div class="pricing-summary-panel__values">
+                <p><strong>Preview Actual Value</strong>: {{ formulaPreview().actualPrice ?? '-' }}</p>
+                <p><strong>Preview Selling Value</strong>: {{ formulaPreview().sellingPrice ?? '-' }}</p>
+                <p><strong>Preview Anchor Value</strong>: {{ formulaPreview().anchorPrice ?? '-' }}</p>
+              </div>
+            }
+
+            @if (formulaPreview().error) {
+              <p class="preview__error">{{ formulaPreview().error }}</p>
+            }
+          </div>
+
           <div class="token-list">
+            <gom-lib-button type="button" variant="secondary" (buttonClick)="toggleAdvancedFormulaTools()">
+              {{ showAdvancedFormulaTools() ? 'Hide Manual Formula Edit' : 'Need Manual Formula Edit?' }}
+            </gom-lib-button>
+          </div>
+        </div>
+
+        @if (showAdvancedFormulaTools()) {
+        <div class="wizard__panel">
+          <h4>Insert Into</h4>
+          <div class="token-list">
+            <gom-lib-button type="button" [variant]="formulaTarget() === 'sellingPrice' ? 'primary' : 'secondary'" (buttonClick)="setFormulaTarget('sellingPrice')">Selling Price</gom-lib-button>
+            <gom-lib-button type="button" [variant]="formulaTarget() === 'anchorPrice' ? 'primary' : 'secondary'" (buttonClick)="setFormulaTarget('anchorPrice')">Anchor Price</gom-lib-button>
+            <gom-lib-button type="button" [variant]="formulaTarget() === 'actualPrice' ? 'primary' : 'secondary'" (buttonClick)="setFormulaTarget('actualPrice')">Actual Price</gom-lib-button>
+          </div>
+
+          <div class="token-list formula-token-list">
             <gom-lib-button type="button" variant="secondary" (buttonClick)="insertToken('(')">(</gom-lib-button>
             <gom-lib-button type="button" variant="secondary" (buttonClick)="insertToken(')')">)</gom-lib-button>
             <gom-lib-button type="button" variant="secondary" (buttonClick)="insertToken('+')">+</gom-lib-button>
             <gom-lib-button type="button" variant="secondary" (buttonClick)="insertToken('-')">-</gom-lib-button>
             <gom-lib-button type="button" variant="secondary" (buttonClick)="insertToken('*')">*</gom-lib-button>
             <gom-lib-button type="button" variant="secondary" (buttonClick)="insertToken('/')">/</gom-lib-button>
-            <gom-lib-button type="button" variant="secondary" (buttonClick)="insertToken('%')">%</gom-lib-button>
             <gom-lib-button type="button" variant="secondary" (buttonClick)="insertToken('10%')">10%</gom-lib-button>
-            @for (field of wizardFields(); track field.key) {
-              <gom-lib-button
-                type="button"
-                variant="secondary"
-                (buttonClick)="insertToken(field.key)"
-              >
-                {{ field.key }}
-              </gom-lib-button>
+            <gom-lib-button type="button" variant="secondary" (buttonClick)="insertToken('20%')">20%</gom-lib-button>
+            <gom-lib-button type="button" variant="secondary" (buttonClick)="insertToken('25%')">25%</gom-lib-button>
+            @for (fieldKey of formulaTokenFields(); track fieldKey) {
+              <gom-lib-button type="button" variant="secondary" (buttonClick)="insertToken(fieldKey)">{{ fieldKey }}</gom-lib-button>
             }
+            <gom-lib-button type="button" variant="secondary" (buttonClick)="insertToken('actualPrice')">actualPrice</gom-lib-button>
             <gom-lib-button type="button" variant="secondary" (buttonClick)="insertToken('sellingPrice')">sellingPrice</gom-lib-button>
+            <gom-lib-button type="button" variant="secondary" (buttonClick)="insertToken('anchorPrice')">anchorPrice</gom-lib-button>
           </div>
         </div>
-
         <div class="form-grid">
           <gom-lib-textarea
             label="Selling Price Formula"
@@ -173,6 +330,9 @@
             [error]="formulaForm.controls.sellingPrice.touched && formulaForm.controls.sellingPrice.invalid ? 'Selling price formula is required' : ''"
             (focus)="setFormulaTarget('sellingPrice')"
           ></gom-lib-textarea>
+          <div class="formula-actions">
+            <gom-lib-button type="button" variant="secondary" (buttonClick)="clearFormula('sellingPrice')">Clear Selling Formula</gom-lib-button>
+          </div>
 
           <gom-lib-textarea
             label="Anchor Price Formula"
@@ -183,7 +343,24 @@
             [error]="formulaForm.controls.anchorPrice.touched && formulaForm.controls.anchorPrice.invalid ? 'Anchor price formula is required' : ''"
             (focus)="setFormulaTarget('anchorPrice')"
           ></gom-lib-textarea>
+          <div class="formula-actions">
+            <gom-lib-button type="button" variant="secondary" (buttonClick)="clearFormula('anchorPrice')">Clear Anchor Formula</gom-lib-button>
+          </div>
+
+          <gom-lib-textarea
+            label="Actual Price Formula"
+            [rows]="3"
+            placeholder="Example: rawMaterialCost + laborCost"
+            [formControl]="formulaForm.controls.actualPrice"
+            [hint]="getActualFormulaHint()"
+            [error]="formulaForm.controls.actualPrice.touched && formulaForm.controls.actualPrice.invalid ? 'Actual price formula is required' : ''"
+            (focus)="setFormulaTarget('actualPrice')"
+          ></gom-lib-textarea>
+          <div class="formula-actions">
+            <gom-lib-button type="button" variant="secondary" (buttonClick)="clearFormula('actualPrice')">Clear Actual Formula</gom-lib-button>
+          </div>
         </div>
+        }
       </section>
     </gom-lib-tab-content>
 
@@ -222,6 +399,53 @@
       </section>
     </gom-lib-tab-content>
 
+    <gom-lib-tab-content [tabId]="6" [activeTab]="currentStep()">
+      <section class="wizard__body">
+        <div class="images-section">
+          <div class="images-section__header">
+            <h4>Group Images/Videos ({{ imageCount() }}/{{ groupImageLimit() }})</h4>
+            <div class="images-section__actions">
+              <gom-lib-button type="button" variant="secondary" (buttonClick)="openPicker()" [disabled]="imageCount() >= groupImageLimit()">
+                <i class="ri-folder-video-line" aria-hidden="true"></i> Add Media
+              </gom-lib-button>
+            </div>
+          </div>
+
+          @if (groupImages().length === 0) {
+            <div class="images-section__empty">
+              <i class="ri-gallery-line" aria-hidden="true"></i>
+              <p>No media added yet. Use the buttons above to add images/videos.</p>
+            </div>
+          } @else {
+            <div class="images-section__grid">
+              @for (img of groupImages(); track img.mediaAssetId._id) {
+                <div class="images-section__card">
+                  <div class="images-section__card-img-wrapper">
+                    @if (img.mediaAssetId.mediaType === 'VIDEO') {
+                      <video [src]="img.mediaAssetId.url" class="images-section__card-img" controls preload="metadata">
+                        <track kind="captions" srclang="en" label="English" [src]="previewCaptionTrack" />
+                      </video>
+                    } @else {
+                      <img [src]="img.mediaAssetId.url" [alt]="img.mediaAssetId.name" class="images-section__card-img" loading="lazy" />
+                    }
+                    <span class="images-section__card-badge" [class.images-section__card-badge--platform]="img.source === 'PLATFORM'">
+                      {{ img.source === 'PLATFORM' ? 'Platform' : 'Own' }}
+                    </span>
+                  </div>
+                  <div class="images-section__card-footer">
+                    <span class="images-section__card-name" [title]="img.mediaAssetId.name">{{ img.mediaAssetId.name }}</span>
+                    <gom-lib-button type="button" variant="secondary" (buttonClick)="removeImage(img)">
+                      <i class="ri-close-line" aria-hidden="true"></i>
+                    </gom-lib-button>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </section>
+    </gom-lib-tab-content>
+
   </gom-lib-tabs>
 
   <footer class="wizard__footer gom-modal__action-layout groups-wizard__actions" gom-modal-actions>
@@ -246,7 +470,7 @@
         </gom-lib-button>
       }
 
-      @if (currentStep() < 5) {
+      @if (currentStep() < 6) {
         <gom-lib-button
           class="groups-wizard__action"
           type="button"
@@ -266,7 +490,7 @@
         </gom-lib-button>
       }
 
-      @if (currentStep() === 5) {
+      @if (currentStep() === 6) {
         <gom-lib-button
           class="groups-wizard__action"
           type="button"
@@ -288,3 +512,14 @@
     </div>
   </footer>
 </gom-lib-modal>
+
+<!-- Image Picker -->
+<gom-image-picker
+  [(show)]="pickerOpen"
+  [existingImageIds]="existingImageIds()"
+  [canUpload]="canUploadOwn()"
+  [maxImages]="groupImageLimit()"
+  [maxVideos]="groupVideoLimit()"
+  [existingVideoCount]="videoCount()"
+  (imagesSelected)="onImagesSelected($event)"
+></gom-image-picker>

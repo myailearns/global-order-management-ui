@@ -1,0 +1,118 @@
+@use "theme" as theme;
+
+.mode-selector {
+  display: grid;
+  gap: theme.get-gap(md);
+  padding: theme.get-spacing(md);
+  border: theme.get-border-size(hairline) solid theme.get-border(standard);
+  border-radius: theme.get-radius(md);
+  background: theme.get-background(standard);
+}
+
+.mode-selector__header {
+  display: grid;
+  gap: theme.get-gap(xxs);
+}
+
+.mode-selector__title {
+  margin: 0;
+  @include theme.typography-heading(md);
+}
+
+.mode-selector__subtitle {
+  margin: 0;
+  color: theme.get-text(default-light);
+  font-size: 0.9375rem;
+}
+
+.mode-selector__options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: theme.get-gap(sm);
+}
+
+.mode-selector__option {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: theme.get-gap(sm);
+  padding: theme.get-spacing(md);
+  border: theme.get-border-size(thick) solid theme.get-border(standard);
+  border-radius: theme.get-radius(md);
+  background: theme.get-background(standard);
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+
+  &:hover {
+    border-color: theme.get-border(info);
+    background: theme.get-background(info-light);
+    transform: translateY(-1px);
+  }
+
+  &.mode-selector__option--selected {
+    border-color: theme.get-border(primary);
+    background: theme.get-background(primary-light);
+    box-shadow: 0 0 0 1px theme.get-border(primary);
+
+    .mode-selector__icon {
+      background: theme.get-background(primary);
+      color: theme.get-text(on-primary);
+    }
+  }
+}
+
+.mode-selector__radio {
+  margin: 0.35rem 0 0;
+  cursor: pointer;
+  accent-color: theme.get-text(primary);
+}
+
+.mode-selector__option-content {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: theme.get-gap(sm);
+  align-items: start;
+}
+
+.mode-selector__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: theme.get-radius(sm);
+  background: theme.get-background(secondary);
+  color: theme.get-text(info);
+
+  i {
+    font-size: 1.1rem;
+  }
+}
+
+.mode-selector__text {
+  display: grid;
+  gap: theme.get-gap(xxs);
+}
+
+.mode-selector__option-label {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: theme.get-text(default);
+}
+
+.mode-selector__option-description {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: theme.get-text(default-light);
+}
+
+@media (max-width: 768px) {
+  .mode-selector__options {
+    grid-template-columns: 1fr;
+  }
+}

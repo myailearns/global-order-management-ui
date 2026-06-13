@@ -1,0 +1,352 @@
+@use "theme" as theme;
+
+.bt-page {
+  padding: theme.get-spacing(md);
+  display: flex;
+  flex-direction: column;
+  gap: theme.get-gap(lg);
+
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+
+    h1 {
+      @include theme.typography-heading(lg);
+      margin: 0;
+      color: theme.get-text(default);
+    }
+
+    p {
+      margin: theme.get-spacing(xxs) 0 0;
+      color: theme.get-text(hint);
+      font-size: theme.get-font-size(sm);
+    }
+  }
+
+  &__loading,
+  &__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: theme.get-gap(sm);
+    padding: theme.get-spacing(xl) 0;
+    color: theme.get-text(hint);
+    font-size: theme.get-font-size(sm);
+
+    i { font-size: 2.5rem; }
+  }
+}
+
+.bt-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+  gap: theme.get-gap(md);
+}
+
+.bt-card {
+  border: theme.get-border-size(hairline) solid theme.get-border(light);
+  border-radius: theme.get-radius(md);
+  background: theme.get-background(white);
+  overflow: hidden;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+
+  &:hover {
+    border-color: theme.get-border(standard);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  }
+
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: theme.get-spacing(sm);
+    background: theme.get-background(secondary);
+  }
+
+  &__icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: theme.get-radius(sm);
+    background: theme.get-background(primary-light);
+    color: theme.get-text(primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+  }
+
+  &__status {
+    font-size: theme.get-font-size(xs);
+    font-weight: theme.get-font-weight(semibold);
+    padding: 2px theme.get-spacing(xxs);
+    border-radius: theme.get-radius(xs);
+    background: theme.get-background(danger-light);
+    color: theme.get-text(danger);
+
+    &--active {
+      background: theme.get-background(success-light);
+      color: theme.get-text(success);
+    }
+  }
+
+  &__body {
+    padding: theme.get-spacing(sm);
+    display: flex;
+    flex-direction: column;
+    gap: theme.get-gap(xxs);
+  }
+
+  &__name {
+    margin: 0;
+    font-size: theme.get-font-size(body-lg);
+    font-weight: theme.get-font-weight(semibold);
+    color: theme.get-text(default);
+  }
+
+  &__code {
+    margin: 0;
+    font-size: theme.get-font-size(xs);
+    color: theme.get-text(hint);
+    font-family: monospace;
+  }
+
+  &__desc {
+    margin: 0;
+    font-size: theme.get-font-size(sm);
+    color: theme.get-text(default-light);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  &__categories {
+    display: flex;
+    align-items: center;
+    gap: theme.get-gap(xxs);
+    font-size: theme.get-font-size(sm);
+    color: theme.get-text(primary);
+    margin-top: theme.get-spacing(xxs);
+
+    i { font-size: 1rem; }
+  }
+
+  &__actions {
+    display: flex;
+    gap: theme.get-gap(xs);
+    padding: theme.get-spacing(xs) theme.get-spacing(sm);
+    border-top: theme.get-border-size(hairline) solid theme.get-border(light);
+  }
+}
+
+// Form
+
+.bt-form {
+  display: flex;
+  flex-direction: column;
+  gap: theme.get-gap(md);
+
+  &__row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: theme.get-gap(md);
+  }
+
+  &__field {
+    display: flex;
+    flex-direction: column;
+    gap: theme.get-gap(xxs);
+  }
+
+  &__label {
+    font-size: theme.get-font-size(sm);
+    font-weight: theme.get-font-weight(medium);
+    color: theme.get-text(default);
+  }
+
+  &__hint {
+    margin: 0;
+    font-size: theme.get-font-size(xs);
+    color: theme.get-text(hint);
+  }
+
+  &__icon-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: theme.get-gap(xs);
+  }
+
+  &__icon-btn {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: theme.get-radius(sm);
+    border: theme.get-border-size(hairline) solid theme.get-border(light);
+    background: theme.get-background(white);
+    cursor: pointer;
+    font-size: 1.25rem;
+    color: theme.get-text(hint);
+    transition: all 0.15s ease;
+
+    &:hover { border-color: theme.get-border(primary); color: theme.get-text(primary); }
+
+    &--selected {
+      border-color: theme.get-border(primary);
+      background: theme.get-background(primary-light);
+      color: theme.get-text(primary);
+    }
+  }
+
+  &__cat-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: theme.get-gap(xs);
+  }
+
+  &__cat-chip {
+    display: flex;
+    align-items: center;
+    gap: theme.get-gap(xxs);
+    padding: theme.get-spacing(xxs) theme.get-spacing(xs);
+    border-radius: theme.get-radius(sm);
+    border: theme.get-border-size(hairline) solid theme.get-border(light);
+    background: theme.get-background(white);
+    font-size: theme.get-font-size(sm);
+    color: theme.get-text(default);
+    cursor: pointer;
+    transition: all 0.15s ease;
+
+    i { font-size: 1rem; color: theme.get-text(hint); }
+
+    &:hover { border-color: theme.get-border(primary); }
+
+    &--selected {
+      border-color: theme.get-border(primary);
+      background: theme.get-background(primary-light);
+      color: theme.get-text(primary);
+
+      i { color: theme.get-text(primary); }
+    }
+  }
+
+  &__no-cats {
+    margin: 0;
+    font-size: theme.get-font-size(sm);
+    color: theme.get-text(hint);
+    font-style: italic;
+  }
+
+  &__footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: theme.get-gap(xs);
+    padding-top: theme.get-spacing(sm);
+    border-top: theme.get-border-size(hairline) solid theme.get-border(light);
+  }
+}
+
+// Preview
+
+.bt-preview {
+  display: flex;
+  flex-direction: column;
+  gap: theme.get-gap(lg);
+
+  &__loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: theme.get-gap(xs);
+    padding: theme.get-spacing(xl) 0;
+    color: theme.get-text(hint);
+    font-size: theme.get-font-size(sm);
+  }
+
+  &__summary {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: theme.get-gap(sm);
+  }
+
+  &__stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: theme.get-spacing(sm);
+    background: theme.get-background(secondary);
+    border-radius: theme.get-radius(sm);
+  }
+
+  &__stat-value {
+    font-size: theme.get-font-size(heading-sm);
+    font-weight: theme.get-font-weight(bold);
+    color: theme.get-text(primary);
+  }
+
+  &__stat-label {
+    font-size: theme.get-font-size(xs);
+    color: theme.get-text(hint);
+  }
+
+  &__section {
+    display: flex;
+    flex-direction: column;
+    gap: theme.get-gap(sm);
+
+    h4 {
+      margin: 0;
+      font-size: theme.get-font-size(sm);
+      font-weight: theme.get-font-weight(semibold);
+      color: theme.get-text(default);
+      display: flex;
+      align-items: center;
+      gap: theme.get-gap(xxs);
+
+      i { color: theme.get-text(hint); }
+    }
+  }
+
+  &__fg {
+    display: flex;
+    flex-direction: column;
+    gap: theme.get-gap(xxs);
+    padding: theme.get-spacing(xs);
+    background: theme.get-background(secondary);
+    border-radius: theme.get-radius(xs);
+
+    strong { font-size: theme.get-font-size(sm); color: theme.get-text(default); }
+  }
+
+  &__tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: theme.get-gap(xxs);
+  }
+
+  &__tag {
+    padding: 2px theme.get-spacing(xs);
+    font-size: theme.get-font-size(xs);
+    border-radius: theme.get-radius(xs);
+    background: theme.get-background(primary-light);
+    color: theme.get-text(primary);
+    font-weight: theme.get-font-weight(medium);
+
+    &--field {
+      background: theme.get-background(secondary);
+      color: theme.get-text(default);
+    }
+  }
+}
+
+// Spin
+
+@keyframes ri-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.ri-spin {
+  display: inline-block;
+  animation: ri-spin 1s linear infinite;
+}

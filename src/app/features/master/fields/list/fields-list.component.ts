@@ -2,19 +2,21 @@ import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, injec
 import { CommonModule } from '@angular/common';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
-import { GomButtonComponent } from '@gomlibs/ui';
-import { GomTableColumn, GomTableComponent, GomTableRow } from '@gomlibs/ui';
+import { GomButtonComponent, GomTableColumn, GomTableComponent, GomTableRow } from '@gomlibs/ui';
 import {
   FIELD_DEFAULT_STATUS,
   FIELD_UI_TEXT,
 } from '../fields.constants';
 import { Field } from '../fields.service';
+import { DisableIfNoFeatureDirective } from '../../../../shared/directives/disable-if-no-feature.directive';
 
 interface FieldTableRow extends GomTableRow {
   _id?: string;
   name: string;
   key: string;
   type: string;
+  valueFormat: string;
+  currencyCode: string;
   defaultValue: string;
   isRequired: string;
   usedInFieldGroups: string;
@@ -29,7 +31,7 @@ export interface FieldAction {
 @Component({
   selector: 'gom-fields-list',
   standalone: true,
-  imports: [CommonModule, TranslateModule, GomTableComponent, GomButtonComponent],
+  imports: [CommonModule, TranslateModule, GomTableComponent, GomButtonComponent, DisableIfNoFeatureDirective],
   templateUrl: './fields-list.component.html',
   styleUrl: './fields-list.component.scss'
 })
@@ -87,6 +89,8 @@ export class FieldsListComponent implements OnChanges {
       name: field.name,
       key: field.key,
       type: field.type,
+      valueFormat: field.valueFormat ?? 'NUMBER',
+      currencyCode: field.currencyCode ?? '',
       defaultValue: String(field.defaultValue ?? 0),
       isRequired: field.isRequired ? 'true' : 'false',
       usedInFieldGroups: this.getUsageText(field._id),
@@ -122,8 +126,15 @@ export class FieldsListComponent implements OnChanges {
 
   private mapRowToField(row: GomTableRow): Field {
     const type = this.mapType(row['type']);
+    const rowId = typeof row['_id'] === 'string' ? row['_id'] : undefined;
+    const rowValueFormat = typeof row['valueFormat'] === 'string' ? row['valueFormat'].trim().toUpperCase() : '';
+    const rowCurrencyCode = typeof row['currencyCode'] === 'string' ? row['currencyCode'].trim().toUpperCase() : '';
+    const valueFormat = rowValueFormat === 'CURRENCY' ? 'CURRENCY' : 'NUMBER';
+    const currencyCode = valueFormat === 'CURRENCY'
+      ? (rowCurrencyCode === 'INR' ? 'INR' : 'INR')
+      : null;
     return {
-      _id: typeof row['_id'] === 'string' ? row['_id'] : undefined,
+      _id: rowId,
       name: typeof row['name'] === 'string' ? row['name'] : '',
       key: typeof row['key'] === 'string' ? row['key'] : '',
       type,
@@ -131,6 +142,8 @@ export class FieldsListComponent implements OnChanges {
       defaultValue: this.mapDefaultValue(row['defaultValue'], type),
       isRequired: row['isRequired'] === 'true',
       status: row['status'] === 'INACTIVE' ? 'INACTIVE' : 'ACTIVE',
+      valueFormat,
+      currencyCode,
     };
   }
 
@@ -138,7 +151,7 @@ export class FieldsListComponent implements OnChanges {
     this.columns[0].header = this.translate.instant(this.text.nameLabel);
     this.columns[1].header = this.translate.instant(this.text.keyLabel);
     this.columns[2].header = this.translate.instant(this.text.typeLabel);
-    this.columns[2].format = (value) => this.getTranslatedTypeLabel(value);
+    this.columns[2].format = (value, row) => this.getTranslatedTypeLabel(value, row);
     this.columns[3].header = this.translate.instant(this.text.defaultValueLabel);
     this.columns[4].header = this.translate.instant(this.text.isRequiredLabel);
     this.columns[4].format = (value) =>
@@ -158,9 +171,41 @@ export class FieldsListComponent implements OnChanges {
         { label: this.translate.instant(this.text.editAction), actionKey: 'edit', variant: 'secondary' as const },
       ] : []),
       ...(this.canDelete ? [
-        { label: this.translate.instant(this.text.deleteAction), actionKey: 'delete', variant: 'secondary' as const },
+        ({
+          label: this.translate.instant(this.text.deleteAction),
+          actionKey: 'delete',
+          variant: 'secondary' as const,
+          disabled: (row: FieldTableRow) => this.isDeleteBlocked(row),
+          disabledTooltip: (row: FieldTableRow) => this.getDeleteBlockedTooltip(row),
+        } as any),
       ] : []),
     ];
+  }
+
+  private isDeleteBlocked(row: FieldTableRow): boolean {
+    const fieldId = typeof row._id === 'string' ? row._id : '';
+    if (!fieldId) {
+      return false;
+    }
+
+    const names = this.fieldGroupUsageByFieldId[fieldId] || [];
+    return names.length > 0;
+  }
+
+  private getDeleteBlockedTooltip(row: FieldTableRow): string {
+    const fieldId = typeof row._id === 'string' ? row._id : '';
+    if (!fieldId) {
+      return this.translate.instant(this.text.deleteAction);
+    }
+
+    const names = this.fieldGroupUsageByFieldId[fieldId] || [];
+    if (!names.length) {
+      return this.translate.instant(this.text.deleteAction);
+    }
+
+    return this.translate.instant('fields.deleteBlockedInUse', {
+      groups: names.join(', '),
+    });
   }
 
   private getUsageText(fieldId?: string): string {
@@ -193,7 +238,7 @@ export class FieldsListComponent implements OnChanges {
     return Number.isFinite(parsed) ? parsed : 0;
   }
 
-  private getTranslatedTypeLabel(value: unknown): string {
+  private getTranslatedTypeLabel(value: unknown, row?: GomTableRow): string {
     if (value === 'PERCENTAGE') {
       return this.translate.instant('fields.types.percentage');
     }
@@ -204,6 +249,10 @@ export class FieldsListComponent implements OnChanges {
 
     if (value === 'LONG_TEXT') {
       return this.translate.instant('fields.types.longText');
+    }
+
+    if (value === 'NUMBER' && row?.['valueFormat'] === 'CURRENCY') {
+      return this.translate.instant('fields.valueFormat.currency');
     }
 
     return this.translate.instant('fields.types.number');

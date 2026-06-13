@@ -646,5 +646,12 @@
     "planAvailability": ["STARTER", "GROWTH", "SCALE"],
     "dependencies": [],
     "actions": ["view"]
-  }
-]
+  },
+  {
+    "featureKey": "media.upload",
+    "displayName": "Custom Image Upload",
+    "module": "media",
+    "description": "Upload custom product images. Without this feature tenants can only use platform-shared images.",
+    "planAvailability": ["GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["upload", "delete", "list"]

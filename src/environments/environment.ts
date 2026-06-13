@@ -1,4 +1,4 @@
 export const environment = {
   production: false,
-  apiBaseUrl: 'http://localhost:4000/api/v1'
+  apiBaseUrl: 'https://global-order-management-api.onrender.com/api/v1'
 };

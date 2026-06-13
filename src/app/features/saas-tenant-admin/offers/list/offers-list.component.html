@@ -1,0 +1,67 @@
+<div class="offers-list-container">
+  <div class="offers-header">
+    <div class="offers-title">
+      <h1>{{ 'gom.offers.title' | translate }}</h1>
+      <p>{{ 'gom.offers.subtitle' | translate }}</p>
+    </div>
+    <div class="offers-actions">
+      <gom-lib-button
+        variant="primary"
+        [disabled]="!canWrite()"
+        (buttonClick)="onCreate()"
+      >
+        {{ 'gom.offers.btn_create' | translate }}
+      </gom-lib-button>
+      <gom-lib-button
+        variant="secondary"
+        [disabled]="!canWrite()"
+        (buttonClick)="onSettings()"
+      >
+        {{ 'gom.offers.btn_settings' | translate }}
+      </gom-lib-button>
+    </div>
+  </div>
+
+  <!-- Error Message -->
+  @if (errorMessage()) {
+    <div class="alert alert-error">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  <section class="offers-table-shell">
+    <!-- Table -->
+    <div class="offers-table">
+      @if (loading()) {
+        <div class="loading">{{ 'gom.common.loading' | translate }}</div>
+      }
+      @if (!loading() && filteredOffers().length === 0) {
+        <div class="empty-state">
+          <p>{{ 'gom.offers.no_offers' | translate }}</p>
+        </div>
+      }
+      @if (!loading() && filteredOffers().length > 0) {
+        <gom-lib-table
+          [columns]="columns()"
+          [rows]="filteredOffers()"
+          [loading]="loading()"
+          [searchPlaceholder]="'gom.offers.search_placeholder' | translate"
+          [emptyMessage]="'gom.offers.no_offers' | translate"
+          (rowAction)="onTableAction($event)"
+        ></gom-lib-table>
+      }
+    </div>
+  </section>
+
+  <gom-lib-confirmation-modal
+    [(show)]="deleteModalOpen"
+    [title]="'gom.offers.confirm_delete_title' | translate"
+    [message]="'gom.offers.confirm_delete_message' | translate"
+    [confirmText]="'common.btn_delete' | translate"
+    [cancelText]="'common.btn_cancel' | translate"
+    [confirmVariant]="'danger'"
+    [busy]="loading()"
+    (confirmed)="onConfirmDelete()"
+    (cancelled)="onCancelDelete()"
+  ></gom-lib-confirmation-modal>
+</div>

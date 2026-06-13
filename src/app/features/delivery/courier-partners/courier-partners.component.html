@@ -1,16 +1,30 @@
 <section class="master-page">
   <header class="master-page__header">
     <h2><i class="ri-truck-line" aria-hidden="true"></i> Courier Partners</h2>
-    @if (canWrite()) {
-    <gom-lib-button type="button" variant="primary" (buttonClick)="openCreate()">
+    <gom-lib-button
+      type="button"
+      variant="primary"
+      (buttonClick)="openCreate()"
+      [gomDisableIfNoFeature]="'courierPartner.create'"
+      [disabled]="saving() || !canCreatePartner() || (courierPartnerCreateRemaining() ?? 1) <= 0"
+    >
       <i class="ri-add-line" aria-hidden="true"></i> Add Courier Partner
     </gom-lib-button>
-    }
   </header>
 
   @if (errorMessage()) {
     <div class="master-page__error">
       {{ errorMessage() }}
+    </div>
+  }
+
+  @if (canCreatePartner()) {
+    <div class="quota-banner">
+      @if (courierPartnerCreateLimit() !== null) {
+        <p>Courier partner quota: {{ courierPartnerCreateUsed() }} / {{ courierPartnerCreateLimit() }} used ({{ courierPartnerCreateRemaining() }} remaining)</p>
+      } @else {
+        <p>Courier partner quota: {{ courierPartnerCreateUsed() }} used (unlimited)</p>
+      }
     </div>
   }
 

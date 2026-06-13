@@ -1,10 +1,12 @@
-import { Routes } from '@angular/router';
+import { inject } from '@angular/core';
+import { ActivatedRouteSnapshot, Router, Routes } from '@angular/router';
 import { CategoriesComponent } from './features/master/categories';
 import { FieldsComponent } from './features/master/fields';
 import { FieldGroupsComponent } from './features/master/field-groups';
 import { UnitsComponent } from './features/master/units';
 import { TaxProfilesComponent } from './features/master/tax-profiles';
 import { GroupsComponent } from './features/product/groups/groups.component';
+import { BulkUploadGroupsComponent } from './features/product/groups/bulk-upload/bulk-upload-groups.component';
 import { StockComponent } from './features/product/stock';
 import { VariantsComponent } from './features/product/variants';
 import { PacksComponent } from './features/product/packs';
@@ -14,6 +16,9 @@ import { RidersComponent } from './features/delivery/riders';
 import { CourierPartnersComponent } from './features/delivery/courier-partners';
 import { EmployeeCodeConfigComponent } from './features/settings/employee-code-config';
 import { ServiceablePincodesConfigComponent } from './features/settings/serviceable-pincodes-config';
+import { StorefrontConfigComponent } from './features/settings/storefront-config';
+import { ReturnPolicyConfigComponent } from './features/settings/return-policy-config';
+import { PushNotificationsComponent } from './features/settings/push-notifications/push-notifications.component';
 import { CustomersComponent } from './features/customer/customers';
 import { CustomerGroupsComponent } from './features/customer/customer-groups';
 import { SaasAccountsComponent } from './features/saas-platform/accounts/saas-accounts.component';
@@ -22,6 +27,10 @@ import { PackagePlansComponent } from './features/saas-platform/entitlements/pac
 import { TenantEntitlementsComponent } from './features/saas-platform/entitlements/tenant-entitlements.component';
 import { RolesListComponent } from './features/saas-tenant-admin/roles/list/roles-list.component';
 import { RoleMatrixComponent } from './features/saas-tenant-admin/roles/matrix';
+import { PlatformTemplatesComponent } from './features/saas-platform/templates/platform-templates.component';
+import { BusinessTemplatesComponent } from './features/saas-platform/business-templates/business-templates.component';
+import { MediaLibraryComponent } from './shared/components/media-library/media-library.component';
+import { BrowseTemplatesComponent } from './features/templates/browse-templates.component';
 import { AccessDeniedComponent } from './features/auth/access-denied/access-denied.component';
 import { AuthEntryComponent } from './features/auth/auth-entry/auth-entry.component';
 import { AuthLandingComponent } from './features/auth/auth-landing/auth-landing.component';
@@ -30,6 +39,16 @@ import { TenantLoginComponent } from './features/auth/tenant-login/tenant-login.
 import { guestOnlyGuard, protectedRouteGuard } from './core/auth/auth.guards';
 
 export const routes: Routes = [
+	{
+		path: 'login/:tenantCode',
+		canActivate: [
+			(route: ActivatedRouteSnapshot) => {
+				const tenantCode = route.paramMap.get('tenantCode') || '';
+				return inject(Router).createUrlTree(['/auth/tenant-login'], { queryParams: { tenantCode } });
+			},
+		],
+		component: AuthEntryComponent,
+	},
 	{
 		path: 'auth',
 		children: [
@@ -122,6 +141,11 @@ export const routes: Routes = [
 				data: { actor: 'tenant', capability: 'product' },
 			},
 			{
+				path: 'product/groups/bulk-upload',
+				component: BulkUploadGroupsComponent,
+				data: { actor: 'tenant', capability: 'product' },
+			},
+			{
 				path: 'product/stock',
 				component: StockComponent,
 				data: { actor: 'tenant', capability: 'product' },
@@ -135,6 +159,11 @@ export const routes: Routes = [
 				path: 'product/packs',
 				component: PacksComponent,
 				data: { actor: 'tenant', capability: 'product' },
+			},
+			{
+				path: 'product/media',
+				component: MediaLibraryComponent,
+				data: { actor: 'tenant', capability: 'product', mode: 'tenant' },
 			},
 			{
 				path: 'orders/list',
@@ -205,7 +234,7 @@ export const routes: Routes = [
 				component: EmployeeCodeConfigComponent,
 				data: {
 					actor: 'tenant',
-					capability: 'settings-core',
+					capability: 'tenant-admin',
 					title: 'Employee Code Config',
 					description: 'Configure how employee codes are generated for riders.',
 				},
@@ -215,9 +244,40 @@ export const routes: Routes = [
 				component: ServiceablePincodesConfigComponent,
 				data: {
 					actor: 'tenant',
-					capability: 'settings-core',
+					capability: 'tenant-admin',
 					title: 'Serviceable Pincodes',
 					description: 'Configure home-delivery serviceable pincodes and fallback suggestions.',
+				},
+			},
+			{
+				path: 'settings/storefront',
+				component: StorefrontConfigComponent,
+				data: {
+					actor: 'tenant',
+					capability: 'tenant-admin',
+					title: 'Customer Storefront',
+					description: 'Configure your public-facing online store — branding, layout, banners, and payment methods.',
+				},
+			},
+			{
+				path: 'settings/return-policy',
+				component: ReturnPolicyConfigComponent,
+				data: {
+					actor: 'tenant',
+					capability: 'tenant-admin',
+					title: 'Return & Exchange Policy',
+					description: 'Configure whether your store accepts returns, refunds, and exchanges.',
+				},
+			},
+			{
+				path: 'settings/push-notifications',
+				component: PushNotificationsComponent,
+				data: {
+					actor: 'tenant',
+					capability: 'tenant-admin',
+					featureKeys: ['order.list', 'order.create', 'order.update'],
+					title: 'Push Notifications',
+					description: 'Broadcast offers and announcements to all subscribed customers.',
 				},
 			},
 			{
@@ -278,6 +338,47 @@ export const routes: Routes = [
 					capability: 'platform-admin',
 					title: 'saas.admin.roles.title',
 					platformMode: true,
+				},
+			},
+			{
+				path: 'settings/platform-templates',
+				component: PlatformTemplatesComponent,
+				data: {
+					actor: 'platform',
+					capability: 'platform-admin',
+					title: 'Platform Templates',
+					description: 'Manage template categories, fields, units, and tax profiles for tenant subscription.',
+				},
+			},
+			{
+				path: 'settings/business-templates',
+				component: BusinessTemplatesComponent,
+				data: {
+					actor: 'platform',
+					capability: 'platform-admin',
+					title: 'Business Templates',
+					description: 'Create business type bundles like Grocery, Restaurant, Services for one-click tenant onboarding.',
+				},
+			},
+			{
+				path: 'settings/platform-media',
+				component: MediaLibraryComponent,
+				data: {
+					actor: 'platform',
+					capability: 'platform-admin',
+					title: 'Platform Media',
+					description: 'Manage shared platform images available to all tenants.',
+					mode: 'platform',
+				},
+			},
+			{
+				path: 'templates/browse',
+				component: BrowseTemplatesComponent,
+				data: {
+					actor: 'tenant',
+					capability: 'masters',
+					title: 'Category Templates',
+					description: 'Browse and subscribe to platform category templates.',
 				},
 			},
 			{

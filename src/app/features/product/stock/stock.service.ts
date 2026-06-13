@@ -21,11 +21,19 @@ export interface ApiSuccess<T> {
   data: T;
 }
 
+export interface GroupResolvedField {
+  fieldId: string;
+  key: string;
+  type: 'NUMBER' | 'PERCENTAGE';
+  value: number;
+}
+
 export interface Group {
   _id: string;
   name: string;
   baseUnitId: string;
   allowedUnitIds: string[];
+  resolvedFields: GroupResolvedField[];
   status: 'ACTIVE' | 'INACTIVE';
 }
 
@@ -33,6 +41,7 @@ export interface Unit {
   _id: string;
   name: string;
   symbol: string;
+  conversionFactor?: number;
   status: 'ACTIVE' | 'INACTIVE';
 }
 
@@ -125,5 +134,12 @@ export class StockService {
 
   updateReorderLevel(groupId: string, reorderLevel: number): Observable<ApiSuccess<unknown>> {
     return this.http.patch<ApiSuccess<unknown>>(`${this.stockUrl}/${groupId}/reorder-level`, { reorderLevel });
+  }
+
+  updateGroupResolvedFields(groupId: string, fields: Array<{ fieldId: string; value: number }>): Observable<ApiSuccess<unknown>> {
+    const payload = {
+      customFields: fields,
+    };
+    return this.http.put<ApiSuccess<unknown>>(`${this.groupsUrl}/${groupId}`, payload);
   }
 }

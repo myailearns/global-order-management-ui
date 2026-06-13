@@ -1,0 +1,78 @@
+<section class="settings-page">
+  <header class="settings-page__header">
+    <h2>Push Notifications</h2>
+    <p>Send push notifications to all subscribed customers — for offers, new products, or announcements.</p>
+  </header>
+
+  <!-- Subscriber count -->
+  <div class="pn-stat-card">
+    <i class="ri-notification-3-line pn-stat-icon"></i>
+    <div>
+      <p class="pn-stat-label">Active Subscribers</p>
+      @if (loading()) {
+        <p class="pn-stat-value">—</p>
+      } @else {
+        <p class="pn-stat-value">{{ subscriberCount() ?? 0 }}</p>
+      }
+    </div>
+  </div>
+
+  <!-- Broadcast form -->
+  <form class="settings-card" [formGroup]="broadcastForm" (ngSubmit)="sendBroadcast()">
+    <fieldset class="settings-section">
+      <legend>Send Broadcast Notification</legend>
+      <div class="settings-grid">
+
+        <gom-lib-input
+          label="Notification Title"
+          placeholder="e.g. Weekend Offer!"
+          formControlName="title"
+          hint="Max 80 characters. This is the bold heading users see."
+        ></gom-lib-input>
+
+        <div class="pn-field-wrap">
+          <label class="pn-field-label">Message</label>
+          <textarea
+            class="pn-textarea"
+            placeholder="e.g. Get 20% off on all fresh vegetables this weekend only."
+            formControlName="message"
+            rows="3"
+          ></textarea>
+          <span class="pn-field-hint">Max 200 characters.</span>
+        </div>
+
+      </div>
+    </fieldset>
+
+    @if (lastResult(); as r) {
+      <div class="pn-result" [class.pn-result--warn]="r.failed > 0">
+        <i class="ri-mail-send-line mr-1"></i>
+        Delivered to <strong>{{ r.sent }}</strong> subscriber{{ r.sent !== 1 ? 's' : '' }}
+        @if (r.failed > 0) {
+          &nbsp; · &nbsp; <span class="pn-result__failed">{{ r.failed }} failed</span>
+        }
+      </div>
+    }
+
+    <footer class="settings-card__footer">
+      <gom-lib-button
+        type="submit"
+        variant="primary"
+        [gomDisableIfNoCapability]="'tenant-admin'"
+        [disabled]="broadcastForm.invalid || sending() || (subscriberCount() === 0) || !canWrite()"
+      >
+        <i class="ri-send-plane-line mr-2"></i>
+        Send to All Subscribers
+      </gom-lib-button>
+    </footer>
+  </form>
+
+  <!-- Info panel: auto-notifications -->
+  <div class="settings-card pn-info-card">
+    <p class="pn-info-title"><i class="ri-robot-line mr-1"></i> Automatic Notifications</p>
+    <ul class="pn-info-list">
+      <li><i class="ri-checkbox-circle-line"></i> <strong>New product published</strong> — sent automatically when a product status changes to Active.</li>
+      <li><i class="ri-checkbox-circle-line"></i> <strong>Order status updates</strong> — sent to the individual customer when their order is confirmed, packed, dispatched, or delivered.</li>
+    </ul>
+  </div>
+</section>

@@ -7,12 +7,16 @@ import { environment } from '../../../../environments/environment';
 export type FieldType = 'NUMBER' | 'PERCENTAGE' | 'TEXT' | 'LONG_TEXT';
 export type FieldKind = 'PRICING' | 'METADATA';
 export type FieldStatus = 'ACTIVE' | 'INACTIVE';
+export type FieldValueFormat = 'NUMBER' | 'CURRENCY';
+export type FieldCurrencyCode = 'INR';
 
 export interface Field {
   _id?: string;
   name: string;
   key: string;
   type: FieldType;
+  valueFormat?: FieldValueFormat;
+  currencyCode?: FieldCurrencyCode | null;
   fieldKind?: FieldKind;
   defaultValue: number | string;
   isRequired: boolean;
@@ -25,6 +29,8 @@ export interface FieldPayload {
   name: string;
   key: string;
   type: FieldType;
+  valueFormat?: FieldValueFormat;
+  currencyCode?: FieldCurrencyCode | null;
   fieldKind?: FieldKind;
   defaultValue: number | string;
   isRequired: boolean;
@@ -94,7 +100,7 @@ export class FieldsService {
     return this.http.put<ApiSuccess<Field>>(`${this.apiUrl}/${id}`, payload);
   }
 
-  deleteField(id: string, hardDelete = false): Observable<ApiSuccess<null>> {
+  deleteField(id: string, hardDelete = true): Observable<ApiSuccess<null>> {
     const suffix = hardDelete ? '?hardDelete=true' : '';
     return this.http.delete<ApiSuccess<null>>(`${this.apiUrl}/${id}${suffix}`);
   }

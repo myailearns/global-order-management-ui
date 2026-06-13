@@ -15,6 +15,11 @@ export interface PaginatedResponse<T> {
   };
 }
 
+export interface FeatureConfigOverride {
+  key: string;
+  value: string | number | boolean | null;
+}
+
 export interface PackagePlan {
   _id: string;
   planId: string;
@@ -23,6 +28,7 @@ export interface PackagePlan {
   tier: 'STARTER' | 'GROWTH' | 'SCALE' | 'CUSTOM';
   status: 'ACTIVE' | 'INACTIVE';
   featureKeys: string[];
+  featureConfigs: Record<string, FeatureConfigOverride[]>;
   limits: Record<string, number | null>;
 }
 
@@ -32,6 +38,10 @@ export interface FeatureCatalogItem {
   displayName: string;
   module: string;
   dependencyKeys: string[];
+  filters?: Array<{
+    key: string;
+    defaultValue: string | number | boolean | null;
+  }>;
   planAvailability: string[];
   isBeta: boolean;
   uiVisibilityPolicy: 'always' | 'entitled-only' | 'hidden';
@@ -56,12 +66,15 @@ export interface TenantEntitlement {
   cacheVersion: number;
 }
 
+export type FeatureConfigValue = string | number | boolean | null;
+
 export interface EffectiveFeaturesResult {
   tenantId: string;
   accountStatus: string;
   reasonCode: string | null;
-  source: 'FULL_APP_TRIAL' | 'ENTITLEMENT' | string;
+  source: string;
   effectiveFeatures: string[];
+  effectiveFeatureConfigs?: Record<string, Record<string, FeatureConfigValue>>;
   cacheVersion: number;
   packagePlanId?: string;
 }

@@ -1,0 +1,73 @@
+<gom-lib-modal
+  [title]="'media.picker.title' | translate"
+  [(show)]="show"
+  (closed)="onModalClosed()"
+  size="large"
+>
+  <div class="picker">
+    <div class="picker__toolbar">
+      <gom-lib-input
+        [placeholder]="'media.picker.searchPlaceholder' | translate"
+        (valueChange)="onSearchChange($event)"
+      ></gom-lib-input>
+    </div>
+
+    @if (loading()) {
+      <div class="picker__loading">
+        <i class="ri-loader-4-line ri-spin" aria-hidden="true"></i>
+        {{ 'media.loading' | translate }}
+      </div>
+    } @else if (assets().length === 0) {
+      <div class="picker__empty">
+        <i class="ri-image-line" aria-hidden="true"></i>
+        <p>{{ 'media.picker.empty' | translate }}</p>
+      </div>
+    } @else {
+      <div class="picker__grid">
+        @for (asset of assets(); track asset._id) {
+          <div
+            class="picker__card"
+            [class.picker__card--selected]="isSelected(asset._id)"
+            (click)="toggleSelect(asset)"
+          >
+            <div class="picker__card-img-wrapper">
+              <img [src]="asset.url" [alt]="asset.name" class="picker__card-img" loading="lazy" />
+              @if (isSelected(asset._id)) {
+                <div class="picker__card-check">
+                  <i class="ri-checkbox-circle-fill" aria-hidden="true"></i>
+                </div>
+              }
+            </div>
+            <span class="picker__card-name" [title]="asset.name">{{ asset.name }}</span>
+          </div>
+        }
+      </div>
+
+      @if (totalPages() > 1) {
+        <div class="picker__pagination">
+          <gom-lib-button type="button" variant="secondary" [disabled]="page() <= 1" (buttonClick)="onPageChange(page() - 1)">
+            <i class="ri-arrow-left-s-line" aria-hidden="true"></i>
+          </gom-lib-button>
+          <span class="picker__pagination-info">{{ page() }} / {{ totalPages() }}</span>
+          <gom-lib-button type="button" variant="secondary" [disabled]="page() >= totalPages()" (buttonClick)="onPageChange(page() + 1)">
+            <i class="ri-arrow-right-s-line" aria-hidden="true"></i>
+          </gom-lib-button>
+        </div>
+      }
+    }
+
+    <div class="picker__actions">
+      <gom-lib-button type="button" variant="secondary" (buttonClick)="close()">
+        {{ 'media.actions.cancel' | translate }}
+      </gom-lib-button>
+      <gom-lib-button
+        type="button"
+        variant="primary"
+        [disabled]="selectedIds().size === 0"
+        (buttonClick)="confirmSelection()"
+      >
+        {{ 'media.picker.select' | translate }} ({{ selectedIds().size }})
+      </gom-lib-button>
+    </div>
+  </div>
+</gom-lib-modal>

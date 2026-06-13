@@ -4,14 +4,14 @@
       <h1>{{ translationKeys.TITLE_USERS | translate }}</h1>
       <p class="gom-users-list__subtitle">{{ 'saas.admin.users.subtitle' | translate }}</p>
     </div>
-    @if (canWrite()) {
     <gom-lib-button
       variant="primary"
       (buttonClick)="onInviteUser()"
+      [gomDisableIfNoCapability]="'tenant-admin'"
+      [disabled]="loading() || !canWrite()"
       aria-label="Invite new user">
       {{ translationKeys.BTN_INVITE_USER | translate }}
     </gom-lib-button>
-    }
   </div>
 
   <!-- Search and Filters -->

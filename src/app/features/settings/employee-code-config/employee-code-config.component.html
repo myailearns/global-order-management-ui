@@ -96,7 +96,8 @@
             label="Save Configuration"
             variant="primary"
             type="submit"
-            [disabled]="saving()"
+            [gomDisableIfNoCapability]="'tenant-admin'"
+            [disabled]="saving() || !canWrite()"
             (buttonClick)="save()"
           ></gom-lib-button>
         </div>

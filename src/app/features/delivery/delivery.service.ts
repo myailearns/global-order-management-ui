@@ -36,8 +36,11 @@ export interface EmployeeCodeConfig {
 
 export type NonServiceableSuggestion = 'CALL_COURIER' | 'CALL_PICKUP';
 
+export type PincodeMode = 'DISABLED' | 'SERVE_ALL' | 'RESTRICTED';
+
 export interface DeliveryPincodeConfig {
   enabled: boolean;
+  pincodeMode: PincodeMode;
   serviceablePincodes: string[];
   nonServiceableSuggestion: NonServiceableSuggestion;
 }
@@ -46,6 +49,53 @@ export interface TenantConfig {
   tenantId: string;
   employeeCodeConfig: EmployeeCodeConfig;
   deliveryPincodeConfig?: DeliveryPincodeConfig;
+  storefrontConfig?: StorefrontConfig;
+  returnPolicy?: ReturnPolicy;
+}
+
+export type LayoutMode = 'GRID' | 'GRID3' | 'LIST';
+export type PaymentMethod = 'COD' | 'UPI' | 'CARD' | 'NET_BANKING';
+
+export interface ReturnPolicy {
+  returnsEnabled: boolean;
+  allowRefund: boolean;
+  allowExchange: boolean;
+  returnWindowDays: number;
+}
+
+export interface BannerImage {
+  url: string;
+  text: string;
+  sortOrder: number;
+}
+
+export interface SocialLinks {
+  whatsapp?: string;
+  instagram?: string;
+  facebook?: string;
+}
+
+export interface StorefrontConfig {
+  enabled: boolean;
+  logoUrl?: string;
+  storeDisplayName?: string;
+  storeSlug: string;
+  primaryColor: string;
+  secondaryColor: string;
+  accentColor: string;
+  layoutMode: LayoutMode;
+  b1g1HomeCardsPerRow?: number;
+  bannerImages: BannerImage[];
+  welcomeMessage: string;
+  footerText: string;
+  socialLinks: SocialLinks;
+  showPacks: boolean;
+  deliveryCharge?: number;
+  deliveryChargeNote: string;
+  estimatedDeliveryDays: number;
+  minimumOrderValue: number;
+  whatsappNumber: string;
+  paymentMethods: PaymentMethod[];
 }
 
 export interface EmployeeCodePreview {
@@ -154,6 +204,14 @@ export class DeliveryService {
 
   updateDeliveryPincodeConfig(cfg: Partial<DeliveryPincodeConfig>): Observable<ApiSuccess<TenantConfig>> {
     return this.http.patch<ApiSuccess<TenantConfig>>(this.tenantConfigUrl, { deliveryPincodeConfig: cfg });
+  }
+
+  updateStorefrontConfig(cfg: Partial<StorefrontConfig>): Observable<ApiSuccess<TenantConfig>> {
+    return this.http.patch<ApiSuccess<TenantConfig>>(this.tenantConfigUrl, { storefrontConfig: cfg });
+  }
+
+  updateReturnPolicy(policy: Partial<ReturnPolicy>): Observable<ApiSuccess<TenantConfig>> {
+    return this.http.patch<ApiSuccess<TenantConfig>>(this.tenantConfigUrl, { returnPolicy: policy });
   }
 
   listCourierPartners(page = 1, limit = 200): Observable<ApiPaginated<CourierPartner>> {

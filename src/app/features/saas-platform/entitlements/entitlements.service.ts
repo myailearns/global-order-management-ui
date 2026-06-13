@@ -1,6 +1,6 @@
 import * as ngHttp from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { map, Observable } from 'rxjs';
+import { EMPTY, expand, map, Observable, reduce } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
@@ -43,10 +43,23 @@ export class EntitlementsService {
   }
 
   listFeatures(page = 1, limit = 100): Observable<FeatureCatalogItem[]> {
-    const params = new ngHttp.HttpParams().set('page', String(page)).set('limit', String(limit));
-    return this.http
-      .get<PaginatedResponse<FeatureCatalogItem>>(`${this.baseUrl}/features`, { params, headers: this.platformHeaders })
-      .pipe(map((res) => res.data));
+    const boundedLimit = Math.min(Math.max(limit || 100, 1), 100);
+    const requestPage = (targetPage: number) => {
+      const params = new ngHttp.HttpParams().set('page', String(targetPage)).set('limit', String(boundedLimit));
+      return this.http.get<PaginatedResponse<FeatureCatalogItem>>(`${this.baseUrl}/features`, { params, headers: this.platformHeaders });
+    };
+
+    return requestPage(Math.max(page, 1)).pipe(
+      expand((res) => {
+        const currentPage = Number(res.meta?.page || 1);
+        const totalPages = Number(res.meta?.totalPages || 1);
+        if (currentPage >= totalPages) {
+          return EMPTY;
+        }
+        return requestPage(currentPage + 1);
+      }),
+      reduce((all, res) => all.concat(res.data ?? []), [] as FeatureCatalogItem[]),
+    );
   }
 
   createFeature(payload: Partial<FeatureCatalogItem> & Pick<FeatureCatalogItem, 'featureKey' | 'displayName' | 'module'>): Observable<FeatureCatalogItem> {

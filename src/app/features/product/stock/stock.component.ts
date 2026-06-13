@@ -1,23 +1,24 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
 import {
   FormControlsModule,
+  GomAlertToastService,
   GomButtonComponent,
-  GomSelectOption,
-} from '@gomlibs/ui';
-import {
   GomButtonContentMode,
+  GomConfirmationModalComponent,
+  GomModalComponent,
+  GomSelectOption,
+  GomTableColumn,
+  GomTableComponent,
+  GomTableRow,
   getButtonContentMode,
   showButtonIcon,
   showButtonText,
 } from '@gomlibs/ui';
-import { GomTableColumn, GomTableComponent, GomTableRow } from '@gomlibs/ui';
-import { GomConfirmationModalComponent, GomModalComponent } from '@gomlibs/ui';
-import { GomAlertToastService } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import {
   Group,
@@ -26,6 +27,8 @@ import {
   StockSummary,
   Unit,
 } from './stock.service';
+import { LocalDateTimePipe } from '../../../shared/pipes/local-date-time.pipe';
+import { DisableIfNoFeatureDirective } from '../../../shared/directives/disable-if-no-feature.directive';
 
 interface StockHistoryRow extends GomTableRow {
   _id: string;
@@ -44,6 +47,7 @@ interface StockHistoryRow extends GomTableRow {
     CommonModule,
     ReactiveFormsModule,
     FormControlsModule,
+    DisableIfNoFeatureDirective,
     GomButtonComponent,
     GomTableComponent,
     GomModalComponent,
@@ -58,9 +62,22 @@ export class StockComponent implements OnInit {
   private readonly toast = inject(GomAlertToastService);
   private readonly route = inject(ActivatedRoute);
   private readonly authSession = inject(AuthSessionService);
+  private readonly localDateTimePipe = new LocalDateTimePipe();
 
   readonly loading = signal(false);
-  readonly canWrite = computed(() => this.authSession.canWrite('product'));
+  readonly canCreateStock = computed(() => this.authSession.hasFeature('stock.create') && (this.stockCreateRemaining() ?? Infinity) > 0);
+  readonly canUpdateStock = computed(() => this.authSession.hasFeature('stock.edit') || this.authSession.hasFeature('stock.update'));
+  readonly canDeleteStock = computed(() => this.authSession.hasFeature('stock.delete'));
+  readonly stockCreateLimit = computed(() => this.authSession.getFeatureConfigNumber('stock.create', 'max_count'));
+  readonly stockCreateUsed = signal(0);
+  readonly stockCreateRemaining = computed(() => {
+    const limit = this.stockCreateLimit();
+    if (limit === null) {
+      return null;
+    }
+
+    return Math.max(limit - this.stockCreateUsed(), 0);
+  });
   readonly saving = signal(false);
   readonly errorMessage = signal<string | null>(null);
 
@@ -69,6 +86,8 @@ export class StockComponent implements OnInit {
   readonly selectedGroupId = signal<string>('');
   readonly summary = signal<StockSummary | null>(null);
   readonly history = signal<StockHistoryEntry[]>([]);
+  readonly currentGroupPricingFields = signal<Array<{ fieldId: string; key: string; type: 'NUMBER' | 'PERCENTAGE'; value: number }>>([]);
+  readonly pricingForm = this.fb.record<FormControl<number | null>>({});
 
   readonly addStockOpen = signal(false);
   readonly editStockOpen = signal(false);
@@ -88,9 +107,18 @@ export class StockComponent implements OnInit {
   });
 
   readonly addStockForm = this.fb.group({
-    quantity: [null as number | null, [Validators.required, Validators.min(0.000001)]],
-    unitId: ['', [Validators.required]],
+    baseQuantity: [null as number | null, [Validators.min(0)]],
+    baseUnit: [{ value: '', disabled: true }],
+    subQuantity: [null as number | null, [Validators.min(0)]],
+    subUnit: [''],
     notes: [''],
+  });
+
+  readonly subUnitOptions = computed<GomSelectOption[]>(() => {
+    const baseId = this.baseUnitId();
+    const allOptions = this.filteredUnitOptions();
+    // Exclude the base unit from subunit dropdown
+    return allOptions.filter((opt) => opt.value !== baseId);
   });
 
   readonly editStockForm = this.fb.group({
@@ -110,8 +138,18 @@ export class StockComponent implements OnInit {
       header: 'Actions',
       width: '10rem',
       actionButtons: [
-        { label: 'Edit', actionKey: 'edit', variant: 'secondary' },
-        { label: 'Delete', actionKey: 'delete', variant: 'secondary' },
+        {
+          label: () => this.canUpdateStock() ? 'Edit' : 'No permission to edit stock entries',
+          actionKey: 'edit',
+          variant: 'secondary',
+          disabled: () => !this.canUpdateStock(),
+        },
+        {
+          label: () => this.canDeleteStock() ? 'Delete' : 'No permission to delete stock entries',
+          actionKey: 'delete',
+          variant: 'secondary',
+          disabled: () => !this.canDeleteStock(),
+        },
       ],
     },
   ];
@@ -123,6 +161,11 @@ export class StockComponent implements OnInit {
     }))
   );
 
+  readonly baseUnitId = computed<string>(() => {
+    const selectedGroup = this.groups().find((item) => item._id === this.selectedGroupId());
+    return selectedGroup?.baseUnitId || '';
+  });
+
   readonly filteredUnitOptions = computed<GomSelectOption[]>(() => {
     const selectedGroup = this.groups().find((item) => item._id === this.selectedGroupId());
     if (!selectedGroup) {
@@ -133,7 +176,10 @@ export class StockComponent implements OnInit {
 
     return this.units()
       .filter((unit) => allowed.has(unit._id))
-      .map((unit) => ({ value: unit._id, label: `${unit.name} (${unit.symbol})` }));
+      .map((unit) => {
+        const isBase = unit._id === selectedGroup.baseUnitId;
+        return { value: unit._id, label: `${unit.name} (${unit.symbol})${isBase ? ' [Base]' : ''}` };
+      });
   });
 
   readonly rows = computed<StockHistoryRow[]>(() =>
@@ -143,7 +189,7 @@ export class StockComponent implements OnInit {
       quantity: `${this.formatNumber(item.quantity)} ${item.unitId?.symbol || ''}`.trim(),
       baseQuantity: this.formatNumber(item.convertedQuantityInBase),
       notes: item.notes || '-',
-      createdAt: new Date(item.createdAt).toLocaleString(),
+      createdAt: this.localDateTimePipe.transform(item.createdAt),
       actions: 'Actions',
     }))
   );
@@ -200,6 +246,7 @@ export class StockComponent implements OnInit {
     if (!groupId) {
       this.summary.set(null);
       this.history.set([]);
+      this.stockCreateUsed.set(0);
       return;
     }
 
@@ -217,12 +264,13 @@ export class StockComponent implements OnInit {
       next: ({ summary, history }) => {
         this.summary.set(summary.data);
         this.history.set(history.data || []);
+        this.stockCreateUsed.set(Number(history.meta?.total || 0));
 
         this.reorderForm.patchValue({
           reorderLevel: summary.data.reorderLevel,
         });
-
-        this.setDefaultUnitIfNeeded();
+        // Mark form as pristine to enable dirty detection
+        this.reorderForm.markAsPristine();
         this.loading.set(false);
       },
       error: () => {
@@ -233,9 +281,23 @@ export class StockComponent implements OnInit {
   }
 
   openAddStock(): void {
+    if (!this.canCreateStock()) {
+      return;
+    }
+
     if (!this.selectedGroupId()) {
       this.toast.warning('Please select a group first.');
       return;
+    }
+
+    // Load pricing fields from selected group
+    const selectedGroup = this.groups().find((g) => g._id === this.selectedGroupId());
+    if (selectedGroup?.resolvedFields?.length) {
+      this.currentGroupPricingFields.set(selectedGroup.resolvedFields);
+      this.syncPricingForm(selectedGroup.resolvedFields);
+    } else {
+      this.currentGroupPricingFields.set([]);
+      this.syncPricingForm([]);
     }
 
     this.setDefaultUnitIfNeeded();
@@ -244,30 +306,83 @@ export class StockComponent implements OnInit {
 
   closeAddStock(): void {
     this.addStockOpen.set(false);
+    this.currentGroupPricingFields.set([]);
+    this.syncPricingForm([]);
+    
     this.addStockForm.reset({
-      quantity: null,
-      unitId: this.filteredUnitOptions()[0]?.value || '',
+      baseQuantity: null,
+      baseUnit: this.baseUnitId() || '',
+      subQuantity: null,
+      subUnit: '',
       notes: '',
+    }, { emitEvent: true });
+    // Re-enable baseUnit in case it was disabled
+    this.addStockForm.controls.baseUnit.disable();
+  }
+
+  private syncPricingForm(fields: Array<{ fieldId: string; key: string; type: 'NUMBER' | 'PERCENTAGE'; value: number }>): void {
+    Object.keys(this.pricingForm.controls).forEach((key) => this.pricingForm.removeControl(key));
+
+    fields.forEach((field) => {
+      this.pricingForm.addControl(
+        field.key,
+        this.fb.control<number | null>(Number(field.value), [Validators.required, Validators.min(0)])
+      );
     });
   }
 
   saveAddStock(): void {
+    if (!this.canCreateStock()) {
+      return;
+    }
+
     this.addStockForm.markAllAsTouched();
-    if (this.addStockForm.invalid || !this.selectedGroupId()) {
+    this.pricingForm.markAllAsTouched();
+    if (this.addStockForm.invalid || this.pricingForm.invalid || !this.selectedGroupId()) {
+      return;
+    }
+
+    const validationError = this.getAddStockValidationError();
+    if (validationError) {
+      this.toast.error(validationError);
+      return;
+    }
+
+    const finalQty = this.getFinalConvertedQuantity();
+    if (finalQty === null || !Number.isFinite(finalQty) || finalQty <= 0) {
+      this.toast.error('Invalid quantity. Please check your entries.');
+      return;
+    }
+
+    const baseId = this.baseUnitId();
+    if (!baseId) {
+      this.toast.error('Base unit not found for this group.');
       return;
     }
 
     const formValue = this.addStockForm.getRawValue();
     this.saving.set(true);
 
-    this.stockService
-      .addStock({
-        groupId: this.selectedGroupId(),
-        quantity: Number(formValue.quantity),
-        unitId: formValue.unitId || '',
-        notes: formValue.notes?.trim() || undefined,
-      })
-      .subscribe({
+    const pricingFieldValues = this.pricingForm.getRawValue();
+    const changedPricingFields = this.currentGroupPricingFields()
+      .map((field) => ({
+        fieldId: field.fieldId,
+        previousValue: Number(field.value),
+        value: Number(pricingFieldValues[field.key]),
+      }))
+      .filter((field) => Number.isFinite(field.value))
+      .filter((field) => field.value !== field.previousValue)
+      .map((field) => ({ fieldId: field.fieldId, value: field.value }));
+
+    const stockRequest = this.stockService.addStock({
+      groupId: this.selectedGroupId(),
+      quantity: finalQty,
+      unitId: baseId,
+      notes: formValue.notes?.trim() || undefined,
+    });
+
+    if (changedPricingFields.length === 0) {
+      stockRequest.subscribe({
         next: () => {
           this.toast.success('Stock added successfully.');
           this.closeAddStock();
@@ -279,6 +394,24 @@ export class StockComponent implements OnInit {
           this.saving.set(false);
         },
       });
+      return;
+    }
+
+    forkJoin({
+      stock: stockRequest,
+      pricing: this.stockService.updateGroupResolvedFields(this.selectedGroupId(), changedPricingFields),
+    }).subscribe({
+      next: () => {
+        this.toast.success('Stock added and pricing updated successfully.');
+        this.closeAddStock();
+        this.loadStockData(this.selectedGroupId());
+        this.saving.set(false);
+      },
+      error: () => {
+        this.toast.error('Failed to add stock. Pricing fields may not have been updated.');
+        this.saving.set(false);
+      },
+    });
   }
 
   saveReorderLevel(): void {
@@ -293,6 +426,7 @@ export class StockComponent implements OnInit {
     this.stockService.updateReorderLevel(this.selectedGroupId(), reorderLevel).subscribe({
       next: () => {
         this.toast.success('Reorder level updated.');
+        this.reorderForm.markAsPristine();
         this.loadStockData(this.selectedGroupId());
         this.saving.set(false);
       },
@@ -304,9 +438,6 @@ export class StockComponent implements OnInit {
   }
 
   onRowAction(event: { actionKey: string; row: GomTableRow }): void {
-    if (!this.canWrite()) {
-      return;
-    }
     const id = typeof event.row['_id'] === 'string' ? event.row['_id'] : '';
     const entry = this.history().find((item) => item._id === id);
     if (!entry) {
@@ -314,11 +445,17 @@ export class StockComponent implements OnInit {
     }
 
     if (event.actionKey === 'edit') {
+      if (!this.canUpdateStock()) {
+        return;
+      }
       this.openEditStock(entry);
       return;
     }
 
     if (event.actionKey === 'delete') {
+      if (!this.canDeleteStock()) {
+        return;
+      }
       this.selectedHistoryEntryId.set(entry._id);
       this.deleteStockConfirmOpen.set(true);
     }
@@ -340,6 +477,10 @@ export class StockComponent implements OnInit {
   }
 
   saveEditStock(): void {
+    if (!this.canUpdateStock()) {
+      return;
+    }
+
     this.editStockForm.markAllAsTouched();
     const entryId = this.selectedHistoryEntryId();
 
@@ -374,6 +515,10 @@ export class StockComponent implements OnInit {
   }
 
   confirmDeleteStock(): void {
+    if (!this.canDeleteStock()) {
+      return;
+    }
+
     const entryId = this.selectedHistoryEntryId();
     if (!entryId) {
       return;
@@ -401,11 +546,11 @@ export class StockComponent implements OnInit {
   }
 
   isAddStockSaveDisabled(): boolean {
-    return this.saving() || this.addStockForm.invalid || !this.selectedGroupId();
+    return this.saving() || this.addStockForm.invalid || this.pricingForm.invalid || !this.selectedGroupId() || !!this.getAddStockValidationError();
   }
 
   isEditStockSaveDisabled(): boolean {
-    return this.saving() || this.editStockForm.invalid || !this.selectedHistoryEntryId();
+    return this.saving() || !this.canUpdateStock() || this.editStockForm.invalid || !this.selectedHistoryEntryId();
   }
 
   shouldShowIcon(mode: GomButtonContentMode): boolean {
@@ -422,13 +567,77 @@ export class StockComponent implements OnInit {
   }
 
   private setDefaultUnitIfNeeded(): void {
-    const currentUnitId = this.addStockForm.controls.unitId.value;
-    const options = this.filteredUnitOptions();
-    const hasCurrent = options.some((item) => item.value === currentUnitId);
+    const baseId = this.baseUnitId();
+    this.addStockForm.patchValue({ baseUnit: baseId || '' }, { emitEvent: false });
 
-    if (!hasCurrent) {
-      this.addStockForm.patchValue({ unitId: options[0]?.value || '' });
+    const subUnit = String(this.addStockForm.controls.subUnit.value || '').trim();
+    const validSubUnit = this.subUnitOptions().some((item) => item.value === subUnit);
+    if (!validSubUnit) {
+      this.addStockForm.patchValue({ subUnit: '' }, { emitEvent: false });
     }
+  }
+
+  getBaseUnitSymbol(): string {
+    const baseId = this.baseUnitId();
+    if (!baseId) {
+      return '';
+    }
+
+    return this.units().find((unit) => unit._id === baseId)?.symbol || '';
+  }
+
+  getFinalConvertedQuantity(): number | null {
+    const safeBase = this.getPositiveNumber(this.addStockForm.controls.baseQuantity.value);
+    const safeSub = this.getPositiveNumber(this.addStockForm.controls.subQuantity.value);
+    const subUnitId = String(this.addStockForm.controls.subUnit.value || '').trim();
+
+    const convertedSub = this.convertSubQuantityToBase(safeSub, subUnitId);
+    const total = safeBase + convertedSub;
+    return total > 0 ? total : null;
+  }
+
+  private getAddStockValidationError(): string | null {
+    const baseValue = this.addStockForm.controls.baseQuantity.value;
+    const subValue = this.addStockForm.controls.subQuantity.value;
+    const subUnitId = String(this.addStockForm.controls.subUnit.value || '').trim();
+
+    const baseQty = Number(baseValue ?? 0);
+    const subQty = Number(subValue ?? 0);
+    const hasBase = Number.isFinite(baseQty) && baseQty > 0;
+    const hasSubQty = Number.isFinite(subQty) && subQty > 0;
+
+    if (!hasBase && !hasSubQty) {
+      return 'Enter base quantity or additional quantity.';
+    }
+
+    if (hasSubQty && !subUnitId) {
+      return 'Please select a unit for additional quantity.';
+    }
+
+    return null;
+  }
+
+  private getPositiveNumber(value: unknown): number {
+    const parsed = Number(value ?? 0);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+  }
+
+  private convertSubQuantityToBase(subQuantity: number, subUnitId: string): number {
+    if (subQuantity <= 0 || !subUnitId) {
+      return 0;
+    }
+
+    const subUnit = this.units().find((u) => u._id === subUnitId);
+    if (!subUnit) {
+      return 0;
+    }
+
+    const factor = Number(subUnit.conversionFactor ?? 0);
+    if (!Number.isFinite(factor) || factor <= 0) {
+      return 0;
+    }
+
+    return factor >= 1 ? subQuantity / factor : subQuantity * factor;
   }
 
   private formatNumber(value: number): string {

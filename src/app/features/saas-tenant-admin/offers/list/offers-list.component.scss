@@ -1,0 +1,126 @@
+.offers-list-container {
+  padding: 1rem;
+  display: grid;
+  gap: 1rem;
+
+  .offers-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+
+    .offers-title {
+      flex: 1;
+
+      h1 {
+        margin: 0 0 0.25rem 0;
+        font-size: 2rem;
+        font-weight: 600;
+        color: var(--color-text-primary);
+      }
+
+      p {
+        margin: 0;
+        font-size: 0.875rem;
+        color: var(--color-text-secondary);
+      }
+    }
+
+    .offers-actions {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+
+      button {
+        white-space: nowrap;
+      }
+    }
+  }
+
+  .offers-table-shell {
+    padding: 1rem;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 0.75rem;
+    background: var(--color-bg-primary, #fff);
+    display: grid;
+    gap: 1rem;
+  }
+
+
+
+  .alert {
+    padding: 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+
+    &.alert-error {
+      background-color: var(--color-error-light);
+      color: var(--color-error-dark);
+      border: 1px solid var(--color-error);
+    }
+
+    &.alert-warning {
+      background-color: var(--color-warning-light);
+      color: var(--color-warning-dark);
+      border: 1px solid var(--color-warning);
+    }
+
+    &.alert-success {
+      background-color: var(--color-success-light);
+      color: var(--color-success-dark);
+      border: 1px solid var(--color-success);
+    }
+  }
+
+  .offers-table {
+    border-radius: 0.5rem;
+
+    ::ng-deep .gom-table-shell {
+      gap: 0.5rem;
+    }
+
+    ::ng-deep .gom-table-wrap {
+      border-radius: 0.5rem;
+    }
+
+    .loading {
+      padding: 2rem;
+      text-align: center;
+      color: var(--color-text-secondary);
+    }
+
+    .empty-state {
+      padding: 3rem 2rem;
+      text-align: center;
+      color: var(--color-text-secondary);
+
+      p {
+        margin: 0;
+        font-size: 0.875rem;
+      }
+    }
+  }
+
+  .modal-content {
+    padding: 1.5rem;
+
+    p {
+      margin: 0;
+      color: var(--color-text-primary);
+    }
+  }
+
+  .modal-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    padding: 1.5rem;
+    border-top: 1px solid var(--color-border-subtle);
+
+    button {
+      min-width: 6rem;
+    }
+  }
+}

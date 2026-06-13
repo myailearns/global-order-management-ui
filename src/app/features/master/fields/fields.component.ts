@@ -34,6 +34,16 @@ export class FieldsComponent implements OnInit {
   readonly canEditField = computed(() => this.authSession.hasFeature('field.edit'));
   readonly canDeleteField = computed(() => this.authSession.hasFeature('field.delete'));
   readonly canViewFieldGroups = computed(() => this.authSession.hasFeature('fieldGroup.list'));
+  readonly fieldCreateLimit = computed(() => this.authSession.getFeatureConfigNumber('field.create', 'max_count'));
+  readonly fieldCreateUsed = computed(() => this.fields().length);
+  readonly fieldCreateRemaining = computed(() => {
+    const limit = this.fieldCreateLimit();
+    if (limit === null) {
+      return null;
+    }
+
+    return Math.max(limit - this.fieldCreateUsed(), 0);
+  });
 
   fields = signal<Field[]>([]);
   fieldGroups = signal<FieldGroupUsage[]>([]);
@@ -70,6 +80,41 @@ export class FieldsComponent implements OnInit {
       .filter((group) => group.status !== 'INACTIVE')
       .map((group) => ({ id: group._id, name: group.name }))
   );
+  readonly selectedFieldFormData = computed<FieldFormData | null>(() => {
+    const field = this.selectedField();
+    if (!field) {
+      return null;
+    }
+
+    return {
+      name: field.name,
+      key: field.key,
+      type: field.type || this.defaultType,
+      valueFormat: field.valueFormat ?? 'NUMBER',
+      currencyCode: field.currencyCode ?? null,
+      defaultValue: field.defaultValue ?? '',
+      isRequired: field.isRequired ?? false,
+      status: field.status || this.defaultStatus,
+    };
+  });
+  readonly selectedFieldAssignedFieldGroupIds = computed<string[]>(() => {
+    const fieldId = this.selectedField()?._id;
+    if (!fieldId) {
+      return [];
+    }
+
+    return this.fieldGroups()
+      .filter((group) => (group.fields || []).some((item) => String(item.fieldId) === String(fieldId)))
+      .map((group) => group._id);
+  });
+  readonly viewingFieldGroupUsage = computed<string[]>(() => {
+    const fieldId = this.viewingField()?._id;
+    if (!fieldId) {
+      return [];
+    }
+
+    return this.fieldGroupUsageByFieldId()[fieldId] || [];
+  });
 
   ngOnInit(): void {
     this.loadFields();
@@ -125,7 +170,8 @@ export class FieldsComponent implements OnInit {
         return;
       }
       this.onViewClose();
-      this.selectedField.set(action.field);
+      const canonicalField = this.resolveFieldById(action.field);
+      this.selectedField.set(canonicalField);
       this.formOpen.set(true);
       return;
     }
@@ -154,7 +200,8 @@ export class FieldsComponent implements OnInit {
       return;
     }
     this.onViewClose();
-    this.selectedField.set(field);
+    const canonicalField = this.resolveFieldById(field);
+    this.selectedField.set(canonicalField);
     this.formOpen.set(true);
   }
 
@@ -192,7 +239,7 @@ export class FieldsComponent implements OnInit {
     this.loading.set(true);
     this.errorMessage.set(null);
 
-    this.fieldsService.inactivateField(field._id).subscribe({
+    this.fieldsService.deleteField(field._id).subscribe({
       next: () => {
         this.pendingDeleteField.set(null);
         this.toast.success(this.translate.instant(this.text.successDelete));
@@ -268,30 +315,11 @@ export class FieldsComponent implements OnInit {
   }
 
   getSelectedFieldFormData(): FieldFormData | null {
-    const field = this.selectedField();
-    if (!field) {
-      return null;
-    }
-
-    return {
-      name: field.name,
-      key: field.key,
-      type: field.type || this.defaultType,
-      defaultValue: field.defaultValue ?? '',
-      isRequired: field.isRequired ?? false,
-      status: field.status || this.defaultStatus,
-    };
+    return this.selectedFieldFormData();
   }
 
   getSelectedFieldAssignedFieldGroupIds(): string[] {
-    const fieldId = this.selectedField()?._id;
-    if (!fieldId) {
-      return [];
-    }
-
-    return this.fieldGroups()
-      .filter((group) => (group.fields || []).some((item) => String(item.fieldId) === String(fieldId)))
-      .map((group) => group._id);
+    return this.selectedFieldAssignedFieldGroupIds();
   }
 
   onFormCancel(): void {
@@ -304,12 +332,7 @@ export class FieldsComponent implements OnInit {
   }
 
   getViewingFieldGroupUsage(): string[] {
-    const fieldId = this.viewingField()?._id;
-    if (!fieldId) {
-      return [];
-    }
-
-    return this.fieldGroupUsageByFieldId()[fieldId] || [];
+    return this.viewingFieldGroupUsage();
   }
 
   private syncFieldGroupAssignments(fieldId: string, selectedFieldGroupIds: string[]) {
@@ -375,6 +398,16 @@ export class FieldsComponent implements OnInit {
     }
 
     return forkJoin(updateRequests).pipe(switchMap(() => of(null)));
+  }
+
+  private resolveFieldById(field: Field): Field {
+    const fieldId = String(field._id || '').trim();
+    if (!fieldId) {
+      return field;
+    }
+
+    const canonical = this.fields().find((item) => String(item._id) === fieldId);
+    return canonical || field;
   }
 
   private extractApiMessage(error: unknown): string {

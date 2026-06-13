@@ -7,13 +7,13 @@ import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { CategoriesListComponent, CategoryAction } from './list/categories-list.component';
 import { CategoriesFormComponent, CategoryFormData } from './form/categories-form.component';
 import { CategoriesViewComponent } from './view/categories-view.component';
-import { GomConfirmationModalComponent } from '@gomlibs/ui';
-import { GomAlertToastService } from '@gomlibs/ui';
+import { CategoryAssociationsModalComponent } from './associations/category-associations-modal.component';
+import { GomAlertToastService, GomConfirmationModalComponent } from '@gomlibs/ui';
 
 @Component({
   selector: 'gom-categories',
   standalone: true,
-  imports: [CommonModule, TranslateModule, CategoriesListComponent, CategoriesFormComponent, CategoriesViewComponent, GomConfirmationModalComponent],
+  imports: [CommonModule, TranslateModule, CategoriesListComponent, CategoriesFormComponent, CategoriesViewComponent, CategoryAssociationsModalComponent, GomConfirmationModalComponent],
   templateUrl: './categories.component.html',
   styleUrl: './categories.component.scss'
 })
@@ -29,6 +29,30 @@ export class CategoriesComponent implements OnInit {
   readonly canCreateCategory = computed(() => this.authSession.hasFeature('category.create'));
   readonly canEditCategory = computed(() => this.authSession.hasFeature('category.edit'));
   readonly canDeleteCategory = computed(() => this.authSession.hasFeature('category.delete'));
+  readonly categoryCreateLimit = computed(() => this.authSession.getFeatureConfigNumber('category.create', 'max_count'));
+  readonly categoryCreateUsed = computed(() => this.categories().length);
+  readonly categoryCreateRemaining = computed(() => {
+    const limit = this.categoryCreateLimit();
+    if (limit === null) {
+      return null;
+    }
+
+    return Math.max(limit - this.categoryCreateUsed(), 0);
+  });
+  readonly selectedCategoryFormData = computed<CategoryFormData | null>(() => {
+    const category = this.selectedCategory();
+    if (!category) {
+      return null;
+    }
+
+    return {
+      name: category.name,
+      description: category.description || '',
+      imageAssetId: category.imageAssetId ?? null,
+      imageUrl: category.imageUrl || '',
+      status: category.status || this.defaultStatus,
+    };
+  });
 
   categories = signal<Category[]>([]);
   loading = signal(false);
@@ -39,6 +63,8 @@ export class CategoriesComponent implements OnInit {
   pendingDeleteCategory = signal<Category | null>(null);
   deleteConfirmOpen = signal(false);
   errorMessage = signal<string | null>(null);
+  associationsOpen = signal(false);
+  associationsCategory = signal<Category | null>(null);
 
   ngOnInit() {
     this.loadCategories();
@@ -97,6 +123,11 @@ export class CategoriesComponent implements OnInit {
         return;
       }
       this.requestDeleteCategory(action.category);
+    }
+
+    if (action.action === 'manage') {
+      this.associationsCategory.set(action.category);
+      this.associationsOpen.set(true);
     }
   }
 
@@ -163,8 +194,9 @@ export class CategoriesComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error deleting category:', error);
-        this.errorMessage.set(this.translate.instant(this.text.errorDelete));
-        this.toast.error(this.translate.instant(this.text.errorDelete));
+        const msg = error?.error?.message || this.translate.instant(this.text.errorDelete);
+        this.errorMessage.set(msg);
+        this.toast.error(msg);
         this.pendingDeleteCategory.set(null);
         this.loading.set(false);
       },
@@ -195,24 +227,12 @@ export class CategoriesComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error saving category:', error);
-        this.errorMessage.set(this.translate.instant(this.text.errorSave));
-        this.toast.error(this.translate.instant(this.text.errorSave));
+        const msg = String(error?.error?.message || this.translate.instant(this.text.errorSave));
+        this.errorMessage.set(msg);
+        this.toast.error(msg);
         this.loading.set(false);
       }
     });
-  }
-
-  getSelectedCategoryFormData(): CategoryFormData | null {
-    const category = this.selectedCategory();
-    if (!category) {
-      return null;
-    }
-
-    return {
-      name: category.name,
-      description: category.description || '',
-      status: category.status || this.defaultStatus,
-    };
   }
 
   getDeleteMessage(): string {
@@ -222,5 +242,10 @@ export class CategoriesComponent implements OnInit {
   onFormCancel() {
     this.formOpen.set(false);
     this.selectedCategory.set(null);
+  }
+
+  onAssociationsClosed(): void {
+    this.associationsOpen.set(false);
+    this.associationsCategory.set(null);
   }
 }
