@@ -3,13 +3,23 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
-import { GomButtonComponent, GomInputComponent, GomSelectComponent, GomSelectOption } from '@gomlibs/ui';
-import { GomConfirmationModalComponent, GomModalComponent } from '@gomlibs/ui';
-import { GomChipTone, GomChipComponent } from '@gomlibs/ui';
-import { GomTableColumn, GomTableComponent, GomTableRow } from '@gomlibs/ui';
-import { GomAlertToastService } from '@gomlibs/ui';
+import {
+  GomAlertToastService,
+  GomButtonComponent,
+  GomChipComponent,
+  GomChipTone,
+  GomConfirmationModalComponent,
+  GomInputComponent,
+  GomModalComponent,
+  GomSelectComponent,
+  GomSelectOption,
+  GomTableColumn,
+  GomTableComponent,
+  GomTableRow,
+} from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
-import { CourierPartner, Order, OrderItem, OrdersService, Rider, UpdateOrderEditableFieldsPayload, Variant } from './orders.service';
+import { DisableIfNoFeatureDirective } from '../../../shared/directives/disable-if-no-feature.directive';
+import { CourierPartner, Order, OrderItem, OrderRating, OrdersService, ReturnRequest, Rider, UpdateOrderEditableFieldsPayload, Variant } from './orders.service';
 import { environment } from '../../../../environments/environment';
 
 interface OrderRow extends GomTableRow {
@@ -22,6 +32,9 @@ interface OrderRow extends GomTableRow {
   orderType: string;
   status: string;
   paymentStatus: string;
+  discount: string;
+  couponsUsed: string;
+  profit: string;
   total: string;
   createdAt: string;
   assignedRiderName: string;
@@ -34,6 +47,7 @@ interface OrderRow extends GomTableRow {
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    DisableIfNoFeatureDirective,
     GomButtonComponent,
     GomInputComponent,
     GomSelectComponent,
@@ -52,7 +66,9 @@ export class OrdersComponent implements OnInit {
   private readonly authSession = inject(AuthSessionService);
 
   readonly loading = signal(false);
-  readonly canWrite = computed(() => this.authSession.canWrite('orders'));
+  readonly canCreateOrder = computed(() => this.authSession.hasFeature('order.create'));
+  readonly canUpdateOrder = computed(() => this.authSession.hasFeature('order.update'));
+  readonly canDeleteOrder = computed(() => this.authSession.hasFeature('order.delete'));
   readonly deleting = signal(false);
   readonly purgeAllBusy = signal(false);
   readonly errorMessage = signal<string | null>(null);
@@ -84,6 +100,10 @@ export class OrdersComponent implements OnInit {
   readonly viewOrderModalOpen = signal(false);
   readonly viewOrderLoading = signal(false);
   readonly viewOrderTarget = signal<Order | null>(null);
+  readonly viewOrderRating = signal<OrderRating | null>(null);
+  readonly viewOrderRatingLoading = signal(false);
+  readonly viewOrderReturnRequest = signal<ReturnRequest | null>(null);
+  readonly viewOrderReturnLoading = signal(false);
   readonly statusHistoryModalOpen = signal(false);
   readonly statusHistoryLoading = signal(false);
   readonly statusHistoryTarget = signal<Order | null>(null);
@@ -181,6 +201,22 @@ export class OrdersComponent implements OnInit {
       filterable: true,
       width: '9rem',
       chipTone: (value) => this.getPaymentChipTone(String(value || '')),
+    },
+    { key: 'discount', header: 'Discount', sortable: true, width: '8rem' },
+    {
+      key: 'couponsUsed',
+      header: 'Coupons Used',
+      sortable: true,
+      filterable: true,
+      width: '14rem',
+      tooltip: (_, row) => String(row.couponsUsed || '-'),
+    },
+    {
+      key: 'profit',
+      header: 'Profit',
+      sortable: true,
+      width: '10rem',
+      tooltip: (_, row) => this.getProfitTooltip(String(row._id || '')),
     },
     { key: 'total', header: 'Total', sortable: true, width: '8rem' },
     { key: 'createdAt', header: 'Created', sortable: true, width: '10rem' },
@@ -333,6 +369,9 @@ export class OrdersComponent implements OnInit {
 
   readonly rows = computed<OrderRow[]>(() =>
     this.orders().map((item) => ({
+      discount: `Rs ${Number(item.pricingSnapshot?.discount || 0).toLocaleString()}`,
+      couponsUsed: this.getCouponsUsedLabel(item),
+      profit: this.getProfitLabel(item),
       customerName: typeof item.customerId === 'object' ? item.customerId?.name || '-' : '-',
       _id: item._id,
       orderNo: item.orderNo,
@@ -348,6 +387,47 @@ export class OrdersComponent implements OnInit {
       actions: 'Actions',
     }))
   );
+
+  getCouponsUsedLabel(order: Order): string {
+    const rawCodes = [
+      ...(order?.promotionSnapshot?.coupon?.codes || []),
+      ...(order?.promotionSnapshot?.coupon?.coupons || []).map((coupon) => String(coupon?.code || '')),
+      String(order?.promotionSnapshot?.coupon?.code || ''),
+    ];
+
+    const dedupedCodes = [...new Set(rawCodes.map((code) => String(code || '').trim()).filter(Boolean))];
+    return dedupedCodes.length ? dedupedCodes.join(', ') : '-';
+  }
+
+  getProfitLabel(order: Order): string {
+    const grossProfit = Number(order?.profitabilitySnapshot?.grossProfit);
+    if (!Number.isFinite(grossProfit)) {
+      return '-';
+    }
+
+    return `Rs ${grossProfit.toLocaleString()}`;
+  }
+
+  private getProfitTooltip(orderId: string): string {
+    const order = this.orders().find((item) => item._id === orderId);
+    if (!order?.profitabilitySnapshot || !Number.isFinite(Number(order.profitabilitySnapshot.grossProfit))) {
+      return 'Profit snapshot is not available for this order.';
+    }
+
+    const marginPct = Number(order.profitabilitySnapshot.grossMarginPct);
+    const cogsTotal = Number(order.profitabilitySnapshot.cogsTotal || 0);
+    const marginLabel = Number.isFinite(marginPct) ? `${marginPct.toFixed(2)}%` : 'N/A';
+    return `COGS: Rs ${cogsTotal.toLocaleString()} | Margin: ${marginLabel}`;
+  }
+
+  getOrderMarginLabel(order: Order): string {
+    const marginPct = Number(order?.profitabilitySnapshot?.grossMarginPct);
+    return Number.isFinite(marginPct) ? `${marginPct.toFixed(2)}%` : '-';
+  }
+
+  getItemDiscountValue(item: OrderItem): number {
+    return Math.max(0, Number(item?.priceSnapshot?.discount || 0));
+  }
 
   ngOnInit(): void {
     this.loadInitialData();
@@ -371,12 +451,15 @@ export class OrdersComponent implements OnInit {
   }
 
   openCreate(): void {
+    if (!this.canCreateOrder()) {
+      return;
+    }
+
     this.router.navigate(['/orders/create']);
   }
 
   onRowAction(event: { actionKey: string; row: GomTableRow }): void {
-    const readOnlyActions = ['view', 'status-history', 'share-bill-whatsapp', 'share-bill-mail', 'print-bill'];
-    if (!this.canWrite() && !readOnlyActions.includes(event.actionKey)) {
+    if (!this.hasActionPermission(event.actionKey)) {
       return;
     }
     const orderId = typeof event.row['_id'] === 'string' ? event.row['_id'] : '';
@@ -561,6 +644,10 @@ export class OrdersComponent implements OnInit {
   }
 
   addOrderItemFromModal(): void {
+    if (!this.canUpdateOrder()) {
+      return;
+    }
+
     const order = this.editItemsTarget();
     if (!order?._id) {
       return;
@@ -593,6 +680,10 @@ export class OrdersComponent implements OnInit {
   }
 
   saveOrderItemQuantity(item: OrderItem, quantityInput: unknown): void {
+    if (!this.canUpdateOrder()) {
+      return;
+    }
+
     const order = this.editItemsTarget();
     if (!order?._id || !item?._id) {
       return;
@@ -619,6 +710,10 @@ export class OrdersComponent implements OnInit {
   }
 
   cancelOrderItemFromModal(item: OrderItem): void {
+    if (!this.canUpdateOrder()) {
+      return;
+    }
+
     const order = this.editItemsTarget();
     if (!order?._id || !item?._id) {
       return;
@@ -698,6 +793,10 @@ export class OrdersComponent implements OnInit {
   }
 
   saveEditedOrderDetails(): void {
+    if (!this.canUpdateOrder()) {
+      return;
+    }
+
     const target = this.editOrderTarget();
     if (!target?._id) {
       this.closeEditOrderModal();
@@ -774,6 +873,10 @@ export class OrdersComponent implements OnInit {
   }
 
   get canSaveEditedOrderDetails(): boolean {
+    if (!this.canUpdateOrder()) {
+      return false;
+    }
+
     return Object.values(this.editOrderForm.controls).some((control) => !control.disabled);
   }
 
@@ -831,11 +934,23 @@ export class OrdersComponent implements OnInit {
     this.viewOrderTarget.set(order);
     this.viewOrderModalOpen.set(true);
     this.viewOrderLoading.set(true);
+    this.viewOrderRating.set(null);
+    this.viewOrderReturnRequest.set(null);
+    this.viewOrderReturnLoading.set(false);
 
     this.service.getOrderById(order._id).subscribe({
       next: (response) => {
         this.viewOrderTarget.set(response.data || order);
         this.viewOrderLoading.set(false);
+
+        const loadedOrder = response.data || order;
+        if (['RETURN_REQUESTED', 'RETURN_IN_TRANSIT', 'RETURNED', 'REFUNDED'].includes(String(loadedOrder.status || '').toUpperCase())) {
+          this.loadViewOrderReturnRequest(order._id);
+        }
+
+        if (response.data?.status === 'DELIVERED') {
+          this.loadViewOrderRating(order._id);
+        }
       },
       error: (error) => {
         const message = String(error?.error?.message || 'Failed to load order details.');
@@ -845,10 +960,49 @@ export class OrdersComponent implements OnInit {
     });
   }
 
+  private loadViewOrderRating(orderId: string): void {
+    this.viewOrderRatingLoading.set(true);
+    this.service.getOrderRating(orderId).subscribe({
+      next: (response) => {
+        this.viewOrderRating.set(response.data ?? null);
+        this.viewOrderRatingLoading.set(false);
+      },
+      error: () => {
+        this.viewOrderRatingLoading.set(false);
+      },
+    });
+  }
+
+  private loadViewOrderReturnRequest(orderId: string): void {
+    this.viewOrderReturnLoading.set(true);
+    this.service.listReturns(orderId).subscribe({
+      next: (response) => {
+        this.viewOrderReturnRequest.set((response.data || [])[0] || null);
+        this.viewOrderReturnLoading.set(false);
+      },
+      error: () => {
+        this.viewOrderReturnLoading.set(false);
+      },
+    });
+  }
+
+  get viewOrderReturnReason(): string {
+    const request = this.viewOrderReturnRequest();
+    if (!request?.items?.length) {
+      return '-';
+    }
+
+    const reason = request.items.find((item) => Boolean(String(item.reason || '').trim()))?.reason;
+    return String(reason || '-').trim() || '-';
+  }
+
   closeViewOrderModal(): void {
     this.viewOrderModalOpen.set(false);
     this.viewOrderLoading.set(false);
     this.viewOrderTarget.set(null);
+    this.viewOrderRating.set(null);
+    this.viewOrderReturnRequest.set(null);
+    this.viewOrderReturnLoading.set(false);
   }
 
   openStatusHistoryModal(order: Order): void {
@@ -890,6 +1044,10 @@ export class OrdersComponent implements OnInit {
   }
 
   confirmAssignRider(): void {
+    if (!this.canUpdateOrder()) {
+      return;
+    }
+
     const order = this.assignRiderOrderTarget();
     if (!order) {
       this.closeAssignRiderModal();
@@ -1082,6 +1240,11 @@ export class OrdersComponent implements OnInit {
   }
 
   confirmTransition(): void {
+    if (!this.canUpdateOrder()) {
+      this.closeTransitionModal();
+      return;
+    }
+
     const target = this.transitionTarget();
     if (!target) {
       this.closeTransitionModal();
@@ -1140,6 +1303,10 @@ export class OrdersComponent implements OnInit {
   }
 
   openPurgeAllModal(): void {
+    if (!this.canDeleteOrder()) {
+      return;
+    }
+
     this.purgeAllModalOpen.set(true);
   }
 
@@ -1152,6 +1319,11 @@ export class OrdersComponent implements OnInit {
   }
 
   confirmPurgeAllOrders(): void {
+    if (!this.canDeleteOrder()) {
+      this.closePurgeAllModal();
+      return;
+    }
+
     this.purgeAllBusy.set(true);
     this.service.purgeAllOrdersDev().subscribe({
       next: (response) => {
@@ -1170,6 +1342,11 @@ export class OrdersComponent implements OnInit {
   }
 
   confirmDeleteOrder(): void {
+    if (!this.canDeleteOrder()) {
+      this.closeDeleteModal();
+      return;
+    }
+
     const target = this.deleteTarget();
     if (!target?._id) {
       this.closeDeleteModal();
@@ -1290,6 +1467,11 @@ export class OrdersComponent implements OnInit {
   }
 
   confirmDispatch(): void {
+    if (!this.canUpdateOrder()) {
+      this.closeDispatchModal();
+      return;
+    }
+
     const order = this.dispatchOrderTarget();
     if (!order) {
       this.closeDispatchModal();
@@ -1366,6 +1548,38 @@ export class OrdersComponent implements OnInit {
         this.variants.set([]);
       },
     });
+  }
+
+  private hasActionPermission(actionKey: string): boolean {
+    const readOnlyActions = ['view', 'status-history', 'share-bill-whatsapp', 'share-bill-mail', 'print-bill'];
+    if (readOnlyActions.includes(actionKey)) {
+      return true;
+    }
+
+    if (actionKey === 'delete') {
+      return this.canDeleteOrder();
+    }
+
+    const updateActions = [
+      'next',
+      'assign-rider',
+      'edit-order-details',
+      'edit-order-items',
+      'mark-payment-received',
+      'attempt-failed',
+      'cancel',
+      'request-return',
+      'courier-return-to-warehouse',
+      'mark-return-in-transit',
+      'mark-return-received',
+      'mark-money-refunded',
+    ];
+
+    if (updateActions.includes(actionKey)) {
+      return this.canUpdateOrder();
+    }
+
+    return this.canUpdateOrder();
   }
 
   private withOrderDetails(order: Order, callback: (fullOrder: Order) => void): void {

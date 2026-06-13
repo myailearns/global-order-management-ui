@@ -50,6 +50,8 @@ export interface PricingField {
   name: string;
   key: string;
   type: 'NUMBER' | 'PERCENTAGE' | 'TEXT' | 'LONG_TEXT';
+  valueFormat?: 'NUMBER' | 'CURRENCY';
+  currencyCode?: 'INR' | null;
   fieldKind?: 'PRICING' | 'METADATA';
   defaultValue: number | string;
   status: 'ACTIVE' | 'INACTIVE';

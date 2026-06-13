@@ -1,0 +1,51 @@
+<!-- Mode Selection Card -->
+<section class="mode-selector">
+  <div class="mode-selector__header">
+    <h2 class="mode-selector__title">{{ 'bulkUpload.modeSelection.title' | translate }}</h2>
+    <p class="mode-selector__subtitle">{{ 'bulkUpload.modeSelection.subtitle' | translate }}</p>
+  </div>
+
+  <div class="mode-selector__options">
+    <label class="mode-selector__option" [class.mode-selector__option--selected]="isModeSelected('create')">
+      <input
+        type="radio"
+        name="bulk-upload-mode"
+        value="create"
+        [checked]="isModeSelected('create')"
+        (change)="onModeSelect('create')"
+        class="mode-selector__radio"
+        [attr.aria-label]="'bulkUpload.modeSelection.create.label' | translate"
+      />
+      <div class="mode-selector__option-content">
+        <div class="mode-selector__icon" aria-hidden="true">
+          <i class="ri-add-circle-line"></i>
+        </div>
+        <div class="mode-selector__text">
+          <h3 class="mode-selector__option-label">{{ 'bulkUpload.modeSelection.create.label' | translate }}</h3>
+          <p class="mode-selector__option-description">{{ 'bulkUpload.modeSelection.create.description' | translate }}</p>
+        </div>
+      </div>
+    </label>
+
+    <label class="mode-selector__option" [class.mode-selector__option--selected]="isModeSelected('update')">
+      <input
+        type="radio"
+        name="bulk-upload-mode"
+        value="update"
+        [checked]="isModeSelected('update')"
+        (change)="onModeSelect('update')"
+        class="mode-selector__radio"
+        [attr.aria-label]="'bulkUpload.modeSelection.update.label' | translate"
+      />
+      <div class="mode-selector__option-content">
+        <div class="mode-selector__icon" aria-hidden="true">
+          <i class="ri-edit-2-line"></i>
+        </div>
+        <div class="mode-selector__text">
+          <h3 class="mode-selector__option-label">{{ 'bulkUpload.modeSelection.update.label' | translate }}</h3>
+          <p class="mode-selector__option-description">{{ 'bulkUpload.modeSelection.update.description' | translate }}</p>
+        </div>
+      </div>
+    </label>
+  </div>
+</section>

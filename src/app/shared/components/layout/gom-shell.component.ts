@@ -86,8 +86,11 @@ export class GomShellComponent {
     { label: 'Customer Groups', route: '/customers/groups', icon: 'ri-team-line', translationKey: 'app.navigation.customerGroups', section: 'Order Management', actor: 'tenant', capability: 'customer-groups' },
     { label: 'Riders', route: '/delivery/riders', icon: 'ri-bike-line', translationKey: 'app.navigation.riders', section: 'Order Management', actor: 'tenant', capability: 'delivery' },
     { label: 'Courier Partners', route: '/delivery/courier-partners', icon: 'ri-truck-line', translationKey: 'app.navigation.courierPartners', section: 'Order Management', actor: 'tenant', capability: 'delivery' },
-    { label: 'Employee Code', route: '/settings/employee-code', icon: 'ri-settings-3-line', translationKey: 'app.navigation.employeeCode', section: 'Settings', actor: 'tenant', capability: 'settings-core' },
-    { label: 'Serviceable Pincodes', route: '/settings/serviceable-pincodes', icon: 'ri-map-pin-range-line', translationKey: 'app.navigation.serviceablePincodes', section: 'Settings', actor: 'tenant', capability: 'settings-core' },
+    { label: 'Employee Code', route: '/settings/employee-code', icon: 'ri-settings-3-line', translationKey: 'app.navigation.employeeCode', section: 'Settings', actor: 'tenant', capability: 'tenant-admin' },
+    { label: 'Serviceable Pincodes', route: '/settings/serviceable-pincodes', icon: 'ri-map-pin-range-line', translationKey: 'app.navigation.serviceablePincodes', section: 'Settings', actor: 'tenant', capability: 'tenant-admin' },
+    { label: 'Customer Storefront', route: '/settings/storefront', icon: 'ri-store-line', translationKey: 'app.navigation.storefrontConfig', section: 'Settings', actor: 'tenant', capability: 'tenant-admin' },
+    { label: 'Return & Exchange Policy', route: '/settings/return-policy', icon: 'ri-arrow-go-back-line', translationKey: 'app.navigation.returnPolicy', section: 'Settings', actor: 'tenant', capability: 'tenant-admin' },
+    { label: 'Push Notifications', route: '/settings/push-notifications', icon: 'ri-notification-3-line', translationKey: 'app.navigation.pushNotifications', section: 'Settings', actor: 'tenant', capability: 'tenant-admin', featureKeys: ['order.list', 'order.create', 'order.update'] },
     { label: 'SaaS Accounts', route: '/settings/saas-accounts', icon: 'ri-building-2-line', translationKey: 'app.navigation.saasAccounts', section: 'Settings', actor: 'platform', capability: 'platform-admin' },
     { label: 'SaaS Packages', route: '/settings/saas-packages', icon: 'ri-stack-line', translationKey: 'app.navigation.saasPackages', section: 'Settings', actor: 'platform', capability: 'platform-admin' },
     { label: 'SaaS Features', route: '/settings/saas-features', icon: 'ri-function-line', translationKey: 'app.navigation.saasFeatures', section: 'Settings', actor: 'platform', capability: 'platform-admin' },
@@ -98,7 +101,8 @@ export class GomShellComponent {
     { label: 'Platform Media', route: '/settings/platform-media', icon: 'ri-image-line', translationKey: 'app.navigation.platformMedia', section: 'Settings', actor: 'platform', capability: 'platform-admin' },
     { label: 'Tenant Dashboard', route: '/saas-admin/dashboard', icon: 'ri-dashboard-line', translationKey: 'app.navigation.tenantDashboard', section: 'Settings', actor: 'tenant', capability: 'tenant-admin' },
     { label: 'Tenant Users', route: '/saas-admin/users', icon: 'ri-user-settings-line', translationKey: 'app.navigation.tenantUsers', section: 'Settings', actor: 'tenant', capability: 'tenant-admin' },
-    { label: 'Tenant Employees', route: '/saas-admin/employees', icon: 'ri-id-card-line', translationKey: 'app.navigation.tenantEmployees', section: 'Settings', actor: 'tenant', capability: 'tenant-admin' },
+    { label: 'Offers', route: '/saas-admin/offers', icon: 'ri-coupon-2-line', translationKey: 'gom.offers.title', section: 'Settings', actor: 'tenant', capability: 'tenant-admin' },
+    { label: 'Tenant Employees', route: '/saas-admin/employees', icon: 'ri-id-card-line', translationKey: 'app.navigation.tenantEmployees', section: 'Settings', actor: 'tenant', capability: 'tenant-admin', featureKeys: ['rider.list', 'rider.create', 'rider.update', 'rider.delete'] },
     { label: 'Tenant Roles', route: '/saas-admin/roles', icon: 'ri-shield-check-line', translationKey: 'app.navigation.tenantRoles', section: 'Settings', actor: 'tenant', capability: 'tenant-admin' },
   ];
 

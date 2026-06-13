@@ -1,11 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, input, output, signal, viewChild } from '@angular/core';
+import { Component, computed, ElementRef, input, output, signal, viewChild } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { GomButtonComponent } from '@gomlibs/ui';
 
 export interface UploadPreview {
   file: File;
   dataUrl: string;
+  mediaType: 'IMAGE' | 'VIDEO';
 }
 
 @Component({
@@ -20,6 +21,10 @@ export class ImageUploadComponent {
   readonly maxSizeMb = input<number>(5);
   readonly maxFiles = input<number>(1);
   readonly disabled = input<boolean>(false);
+  readonly dragOrClickLabel = input<string>('media.upload.dragOrClick');
+  readonly hintLabel = input<string>('media.upload.hint');
+  readonly hintMultiLabel = input<string>('media.upload.hintMulti');
+  readonly hintMultiVideoLabel = input<string>('media.upload.hintMultiVideo');
 
   /** Emitted in single mode (maxFiles=1). */
   readonly fileSelected = output<File>();
@@ -30,8 +35,17 @@ export class ImageUploadComponent {
   readonly dragging = signal(false);
   readonly error = signal<string | null>(null);
   readonly preview = signal<string | null>(null);
+  readonly previewMediaType = signal<'IMAGE' | 'VIDEO'>('IMAGE');
   readonly selectedFile = signal<File | null>(null);
   readonly previews = signal<UploadPreview[]>([]);
+
+  readonly isVideoMode = computed(() => this.accept().includes('video'));
+  readonly hintLabelResolved = computed(() => {
+    if (this.isMultiple) {
+      return this.isVideoMode() ? this.hintMultiVideoLabel() : this.hintMultiLabel();
+    }
+    return this.hintLabel();
+  });
 
   get isMultiple(): boolean {
     return this.maxFiles() > 1;
@@ -80,8 +94,16 @@ export class ImageUploadComponent {
     }
   }
 
+  onDropzoneKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      this.openFilePicker();
+    }
+  }
+
   clearSelection(): void {
     this.preview.set(null);
+    this.previewMediaType.set('IMAGE');
     this.selectedFile.set(null);
     this.error.set(null);
     this.previews.set([]);
@@ -110,12 +132,12 @@ export class ImageUploadComponent {
     }
 
     const toProcess = files.slice(0, remaining);
-    const allowedTypes = this.accept().split(',').map((t) => t.trim());
+    const allowedTypes = new Set(this.accept().split(',').map((t) => t.trim()));
     const maxBytes = this.maxSizeMb() * 1024 * 1024;
 
     const valid: File[] = [];
     for (const file of toProcess) {
-      if (!allowedTypes.includes(file.type)) {
+      if (!allowedTypes.has(file.type)) {
         this.error.set('media.upload.errorInvalidType');
         continue;
       }
@@ -134,7 +156,11 @@ export class ImageUploadComponent {
     for (const file of valid) {
       const reader = new FileReader();
       reader.onload = () => {
-        newPreviews.push({ file, dataUrl: reader.result as string });
+        newPreviews.push({
+          file,
+          dataUrl: reader.result as string,
+          mediaType: String(file.type || '').startsWith('video/') ? 'VIDEO' : 'IMAGE',
+        });
         loaded++;
         if (loaded === valid.length) {
           this.previews.update((list) => [...list, ...newPreviews]);
@@ -147,8 +173,8 @@ export class ImageUploadComponent {
   private processFile(file: File): void {
     this.error.set(null);
 
-    const allowedTypes = this.accept().split(',').map((t) => t.trim());
-    if (!allowedTypes.includes(file.type)) {
+    const allowedTypes = new Set(this.accept().split(',').map((t) => t.trim()));
+    if (!allowedTypes.has(file.type)) {
       this.error.set('media.upload.errorInvalidType');
       return;
     }
@@ -162,6 +188,7 @@ export class ImageUploadComponent {
     const reader = new FileReader();
     reader.onload = () => {
       this.preview.set(reader.result as string);
+      this.previewMediaType.set(String(file.type || '').startsWith('video/') ? 'VIDEO' : 'IMAGE');
       this.selectedFile.set(file);
       this.fileSelected.emit(file);
     };

@@ -3,13 +3,18 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { forkJoin } from 'rxjs';
 
-import { GomAlertToastService } from '@gomlibs/ui';
+import {
+  GomAlertToastService,
+  GomButtonComponent,
+  GomConfirmationModalComponent,
+  GomTableColumn,
+  GomTableComponent,
+  GomTableRow,
+} from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
-import { GomButtonComponent } from '@gomlibs/ui';
-import { GomConfirmationModalComponent } from '@gomlibs/ui';
-import { GomTableColumn, GomTableComponent, GomTableRow } from '@gomlibs/ui';
 import { CategoryOption, FieldGroup, FieldGroupPayload, FieldGroupsService, PricingField, ProductGroupUsage } from './field-groups.service';
 import { FieldGroupsFormComponent } from './form/field-groups-form.component';
+import { DisableIfNoFeatureDirective } from '../../../shared/directives/disable-if-no-feature.directive';
 
 interface FieldGroupRow extends GomTableRow {
   _id: string;
@@ -26,6 +31,7 @@ interface FieldGroupRow extends GomTableRow {
   imports: [
     CommonModule,
     TranslateModule,
+    DisableIfNoFeatureDirective,
     GomButtonComponent,
     GomTableComponent,
     GomConfirmationModalComponent,
@@ -58,6 +64,16 @@ export class FieldGroupsComponent implements OnInit {
   readonly canCreateFieldGroup = computed(() => this.authSession.hasFeature('fieldGroup.create'));
   readonly canEditFieldGroup = computed(() => this.authSession.hasFeature('fieldGroup.edit'));
   readonly canDeleteFieldGroup = computed(() => this.authSession.hasFeature('fieldGroup.delete'));
+  readonly fieldGroupCreateLimit = computed(() => this.authSession.getFeatureConfigNumber('fieldGroup.create', 'max_count'));
+  readonly fieldGroupCreateUsed = computed(() => this.fieldGroups().length);
+  readonly fieldGroupCreateRemaining = computed(() => {
+    const limit = this.fieldGroupCreateLimit();
+    if (limit === null) {
+      return null;
+    }
+
+    return Math.max(limit - this.fieldGroupCreateUsed(), 0);
+  });
   readonly formOpen = signal(false);
   readonly deleteConfirmOpen = signal(false);
   readonly selectedFieldGroup = signal<FieldGroup | null>(null);

@@ -1,0 +1,67 @@
+<section class="settings-page">
+  <header class="settings-page__header">
+    <h2>Return &amp; Exchange Policy</h2>
+    <p>Configure whether your store accepts returns, which request types are allowed, and how long customers have to initiate a return.</p>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="settings-page__error">{{ errorMessage() }}</div>
+  }
+
+  <form class="settings-card" [formGroup]="policyForm" (ngSubmit)="save()">
+
+    <!-- ─── Return Switch ──────────────────────────── -->
+    <fieldset class="settings-section">
+      <legend>Return Requests</legend>
+      <div class="settings-grid settings-grid--2col">
+        <gom-lib-checkbox
+          label="Enable return requests"
+          hint="When disabled, customers will not see a return option after delivery."
+          [formControl]="policyForm.controls.returnsEnabled"
+        ></gom-lib-checkbox>
+      </div>
+    </fieldset>
+
+    <!-- ─── Allowed Types ─────────────────────────── -->
+    <fieldset class="settings-section">
+      <legend>Allowed Request Types</legend>
+      <p class="settings-section__hint">Select which return types your store supports. At least one option (Refund or Exchange) must be enabled when returns are enabled.</p>
+      <div class="settings-grid settings-grid--2col">
+        <gom-lib-checkbox
+          label="Allow Refund requests"
+          hint="Customers can request a monetary refund."
+          [formControl]="policyForm.controls.allowRefund"
+        ></gom-lib-checkbox>
+        <gom-lib-checkbox
+          label="Allow Exchange requests"
+          hint="Customers can request a product exchange."
+          [formControl]="policyForm.controls.allowExchange"
+        ></gom-lib-checkbox>
+      </div>
+    </fieldset>
+
+    <!-- ─── Return Window ─────────────────────────── -->
+    <fieldset class="settings-section">
+      <legend>Return Window</legend>
+      <div class="settings-grid">
+        <gom-lib-input
+          label="Return window (days)"
+          type="number"
+          [formControl]="policyForm.controls.returnWindowDays"
+          hint="Number of days after delivery within which a customer can raise a return. Set to 0 for no time limit."
+        ></gom-lib-input>
+      </div>
+    </fieldset>
+
+    <!-- ─── Actions ───────────────────────────────── -->
+    <div class="settings-page__actions">
+      <gom-lib-button
+        type="submit"
+        variant="primary"
+        [gomDisableIfNoCapability]="'tenant-admin'"
+        [disabled]="loading() || saving() || !canWrite()">
+        {{ saving() ? 'Saving...' : 'Save Return Policy' }}
+      </gom-lib-button>
+    </div>
+  </form>
+</section>

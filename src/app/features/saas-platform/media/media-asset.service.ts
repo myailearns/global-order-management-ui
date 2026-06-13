@@ -14,6 +14,7 @@ import {
   GroupImage,
   GroupImageEntry,
   GroupImagesResponse,
+  MediaType,
 } from './media-asset.model';
 
 @Injectable({ providedIn: 'root' })
@@ -39,10 +40,13 @@ export class MediaAssetService {
       .pipe(map((res) => res.data));
   }
 
-  listPlatformMedia(page = 1, limit = 20, search = ''): Observable<{ items: MediaAsset[]; meta: MediaAssetListResponse['meta'] }> {
+  listPlatformMedia(page = 1, limit = 20, search = '', mediaType?: MediaType): Observable<{ items: MediaAsset[]; meta: MediaAssetListResponse['meta'] }> {
     let params = new HttpParams().set('page', String(page)).set('limit', String(limit));
     if (search) {
       params = params.set('search', search);
+    }
+    if (mediaType) {
+      params = params.set('mediaType', mediaType);
     }
     return this.http
       .get<MediaAssetListResponse>(this.platformBaseUrl, { headers: this.platformHeaders, params })
@@ -84,10 +88,13 @@ export class MediaAssetService {
       .pipe(map((res) => res.data));
   }
 
-  listTenantMedia(page = 1, limit = 20, search = ''): Observable<{ items: MediaAsset[]; meta: MediaAssetListResponse['meta'] }> {
+  listTenantMedia(page = 1, limit = 20, search = '', mediaType?: MediaType): Observable<{ items: MediaAsset[]; meta: MediaAssetListResponse['meta'] }> {
     let params = new HttpParams().set('page', String(page)).set('limit', String(limit));
     if (search) {
       params = params.set('search', search);
+    }
+    if (mediaType) {
+      params = params.set('mediaType', mediaType);
     }
     return this.http
       .get<MediaAssetListResponse>(this.tenantMediaUrl, { params })
@@ -102,10 +109,13 @@ export class MediaAssetService {
 
   // --- Tenant: Platform Images Picker ---
 
-  listPlatformImages(page = 1, limit = 20, search = ''): Observable<{ items: MediaAsset[]; meta: MediaAssetListResponse['meta'] }> {
+  listPlatformImages(page = 1, limit = 20, search = '', mediaType?: MediaType): Observable<{ items: MediaAsset[]; meta: MediaAssetListResponse['meta'] }> {
     let params = new HttpParams().set('page', String(page)).set('limit', String(limit));
     if (search) {
       params = params.set('search', search);
+    }
+    if (mediaType) {
+      params = params.set('mediaType', mediaType);
     }
     return this.http
       .get<MediaAssetListResponse>(this.tenantMediaUrl + '/platform', { params })

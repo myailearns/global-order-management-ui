@@ -38,6 +38,26 @@
         <p>{{ field.defaultValue }}</p>
       </div>
 
+      @if (field.type === 'NUMBER') {
+        <div class="fields-view__row">
+          <h4>{{ 'fields.labels.valueFormat' | translate }}</h4>
+          <p>
+            {{
+              field.valueFormat === 'CURRENCY'
+                ? ('fields.valueFormat.currency' | translate)
+                : ('fields.valueFormat.number' | translate)
+            }}
+          </p>
+        </div>
+
+        @if (field.valueFormat === 'CURRENCY') {
+          <div class="fields-view__row">
+            <h4>{{ 'fields.labels.currencyCode' | translate }}</h4>
+            <p>{{ 'fields.currencies.inr' | translate }}</p>
+          </div>
+        }
+      }
+
       <div class="fields-view__row">
         <h4>{{ text.isRequiredLabel | translate }}</h4>
         <p>{{ field.isRequired ? (text.yes | translate) : (text.no | translate) }}</p>

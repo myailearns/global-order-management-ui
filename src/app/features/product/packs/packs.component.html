@@ -1,11 +1,15 @@
 <section class="master-page">
   <header class="master-page__header">
     <h2><i class="ri-box-3-line" aria-hidden="true"></i> Product Packs</h2>
-    @if (canWrite()) {
-    <gom-lib-button type="button" variant="primary" (buttonClick)="openCreatePack()">
+    <gom-lib-button
+      type="button"
+      variant="primary"
+      (buttonClick)="openCreatePack()"
+      [gomDisableIfNoFeature]="'pack.create'"
+      [disabled]="saving() || !canCreatePack() || (packCreateRemaining() ?? 1) <= 0"
+    >
       <i class="ri-add-line" aria-hidden="true"></i> Add Pack
     </gom-lib-button>
-    }
   </header>
 
   @if (errorMessage()) {
@@ -14,6 +18,16 @@
         <i class="ri-alert-fill" style="font-size: 1.25rem; flex-shrink: 0;" aria-hidden="true"></i>
         <span>{{ errorMessage() }}</span>
       </div>
+    </div>
+  }
+
+  @if (canCreatePack()) {
+    <div class="quota-banner">
+      @if (packCreateLimit() !== null) {
+        <p>Pack quota: {{ packCreateUsed() }} / {{ packCreateLimit() }} used ({{ packCreateRemaining() }} remaining)</p>
+      } @else {
+        <p>Pack quota: {{ packCreateUsed() }} used (unlimited)</p>
+      }
     </div>
   }
 
@@ -54,6 +68,43 @@
       [formControl]="packForm.controls.status"
     ></gom-lib-select>
 
+    <gom-lib-input
+      label="Description"
+      type="text"
+      placeholder="Optional short description"
+      [formControl]="packForm.controls.description"
+    ></gom-lib-input>
+
+    <gom-lib-select
+      label="Allow out-of-stock items"
+      placeholder="Select option"
+      [options]="[{ value: 'false', label: 'No (any missing item makes pack out of stock)' }, { value: 'true', label: 'Yes (threshold-based)' }]"
+      [formControl]="packForm.controls.allowOutOfStockItems"
+    ></gom-lib-select>
+
+    <gom-lib-input
+      label="Out-of-stock threshold"
+      type="number"
+      placeholder="1"
+      [formControl]="packForm.controls.outOfStockThreshold"
+      hint="If allowed, pack is out of stock when this many items in the pack are out of stock"
+    ></gom-lib-input>
+
+    <gom-lib-input
+      label="Discount %"
+      type="number"
+      placeholder="0"
+      [formControl]="packForm.controls.discountPercentage"
+      hint="Uniform discount applied to entire pack and each item equally"
+    ></gom-lib-input>
+
+    <gom-lib-input
+      label="Discount Label"
+      type="text"
+      placeholder="e.g. Festival Offer"
+      [formControl]="packForm.controls.discountDescription"
+    ></gom-lib-input>
+
     <div class="items-header">
       <h3>Pack Items</h3>
       <gom-lib-button type="button" variant="secondary" (buttonClick)="addItemRow()">
@@ -67,7 +118,8 @@
           <gom-lib-select
             label="Variant"
             placeholder="Select variant"
-            [options]="variantOptions()"
+            [options]="getVariantOptionsForRow($index)"
+            [searchable]="true"
             [formControl]="$any(group).controls.variantId"
           ></gom-lib-select>
 
@@ -78,8 +130,75 @@
             [formControl]="$any(group).controls.quantity"
           ></gom-lib-input>
 
-          <gom-lib-button type="button" variant="danger" (buttonClick)="removeItemRow($index)" [disabled]="itemControls.length <= 1">
-            Remove
+          <gom-lib-button
+            type="button"
+            variant="danger"
+            [size]="rowDeleteMode === 'icon-only' ? 'icon' : 'default'"
+            (buttonClick)="removeItemRow($index)"
+            [disabled]="itemControls.length <= 1"
+          >
+            @if (shouldShowIcon(rowDeleteMode)) {
+              <i class="ri-delete-bin-line" aria-hidden="true"></i>
+            }
+            @if (shouldShowText(rowDeleteMode)) {
+              Delete
+            } @else {
+              <span class="sr-only">Delete item</span>
+            }
+          </gom-lib-button>
+        </div>
+      }
+    </div>
+
+    <div class="items-header">
+      <h3>Pack Badges</h3>
+      <gom-lib-button type="button" variant="secondary" (buttonClick)="addBadgeRow()">
+        <i class="ri-price-tag-3-line" aria-hidden="true"></i> Add Badge
+      </gom-lib-button>
+    </div>
+
+    <div class="item-list" formArrayName="badges">
+      @if (badgeControls.length === 0) {
+        <p class="packs-muted-note">No badges yet. Add one to highlight this pack in customer app.</p>
+      }
+
+      @for (group of badgeControls.controls; track $index) {
+        <div class="badge-row" [formGroupName]="$index">
+          <gom-lib-input
+            label="Badge Label"
+            type="text"
+            placeholder="e.g. Best Seller"
+            [formControl]="$any(group).controls.label"
+          ></gom-lib-input>
+
+          <gom-lib-select
+            label="Badge Color"
+            placeholder="Select color"
+            [options]="[
+              { value: 'primary', label: 'Primary' },
+              { value: 'success', label: 'Success' },
+              { value: 'warning', label: 'Warning' },
+              { value: 'danger', label: 'Danger' },
+              { value: 'info', label: 'Info' },
+              { value: 'dark', label: 'Dark' }
+            ]"
+            [formControl]="$any(group).controls.color"
+          ></gom-lib-select>
+
+          <gom-lib-button
+            type="button"
+            variant="danger"
+            [size]="rowDeleteMode === 'icon-only' ? 'icon' : 'default'"
+            (buttonClick)="removeBadgeRow($index)"
+          >
+            @if (shouldShowIcon(rowDeleteMode)) {
+              <i class="ri-delete-bin-line" aria-hidden="true"></i>
+            }
+            @if (shouldShowText(rowDeleteMode)) {
+              Delete
+            } @else {
+              <span class="sr-only">Delete badge</span>
+            }
           </gom-lib-button>
         </div>
       }
@@ -93,6 +212,121 @@
     <div class="price-preview">
       <span class="price-preview__label">Pack Anchor Price</span>
       <span class="price-preview__value">{{ formPricePreview().anchorPrice | number:'1.2-2' }}</span>
+    </div>
+
+    <div class="price-preview">
+      <span class="price-preview__label">Computed Actual Price (from items)</span>
+      <span class="price-preview__value">{{ formPricePreview().computedActualPrice | number:'1.2-2' }}</span>
+    </div>
+
+    <div class="price-preview">
+      <span class="price-preview__label">Discounted Pack Price</span>
+      <span class="price-preview__value price-preview__value--accent">{{ formPricePreview().discountedPrice | number:'1.2-2' }}</span>
+    </div>
+
+    <div class="price-preview">
+      <span class="price-preview__label">Customer Savings</span>
+      <span class="price-preview__value price-preview__value--success">{{ formPricePreview().savings | number:'1.2-2' }}</span>
+    </div>
+
+    @if (formPricePreview().isBelowActual) {
+      <div class="price-warning">
+        <i class="ri-error-warning-line" aria-hidden="true"></i>
+        <span>Discounted pack price is below derived actual price from selected variants. Reduce discount.</span>
+      </div>
+    }
+
+    <h4 class="profit-impact-heading" style="margin-bottom: 0.5rem; margin-top: 1.5rem; font-weight: 700; color: #0a5d8b;">Pack Level Profit Calculation</h4>
+    <div class="profit-impact-summary">
+      <div class="price-preview">
+        <span class="price-preview__label">Profit if sold individually (before discount)</span>
+        <span class="price-preview__value">
+          {{ formPricePreview().individualProfit | number:'1.2-2' }}
+          ({{ formPricePreview().individualProfitMarginPercent | number:'1.2-2' }}%)
+        </span>
+      </div>
+      <div class="price-preview">
+        <span class="price-preview__label">Overall pack profit (after discount)</span>
+        <span class="price-preview__value price-preview__value--success">
+          {{ formPricePreview().discountedProfit | number:'1.2-2' }}
+          ({{ formPricePreview().discountedProfitMarginPercent | number:'1.2-2' }}%)
+        </span>
+      </div>
+      <div class="price-preview">
+        <span class="price-preview__label">Profit reduced by</span>
+        <span class="price-preview__value price-preview__value--danger">
+          {{ formPricePreview().profitDrop | number:'1.2-2' }} ({{ formPricePreview().profitDropPercent | number:'1.2-2' }}%)
+        </span>
+      </div>
+    </div>
+
+    <div class="breakdown-section">
+      <h3>Item Contribution and Discount Impact</h3>
+      @if (formPricePreview().breakdown.length === 0) {
+        <p class="packs-muted-note">Add valid items to see item-wise contribution.</p>
+      } @else {
+        <div class="breakdown-table">
+          <div class="breakdown-table__head">Item</div>
+          <div class="breakdown-table__head">Qty</div>
+          <div class="breakdown-table__head">% of Total</div>
+          <div class="breakdown-table__head">Actual Price/Unit</div>
+          <div class="breakdown-table__head">Selling Price/Unit</div>
+          <div class="breakdown-table__head">Actual Total</div>
+          <div class="breakdown-table__head">Selling Total</div>
+          <div class="breakdown-table__head">Discounted</div>
+          <div class="breakdown-table__head">Profit Loss</div>
+
+          @for (row of formPricePreview().breakdown; track row.variantName + '-' + $index) {
+            <div class="breakdown-table__cell">{{ row.variantName }}</div>
+            <div class="breakdown-table__cell">{{ row.quantity }}</div>
+            <div class="breakdown-table__cell">{{ row.percentOfTotal | number:'1.2-2' }}%</div>
+            <div class="breakdown-table__cell">{{ (row.actualPrice / row.quantity) | number:'1.2-2' }}</div>
+            <div class="breakdown-table__cell">{{ (row.sellingPrice / row.quantity) | number:'1.2-2' }}</div>
+            <div class="breakdown-table__cell">{{ row.actualPrice | number:'1.2-2' }}</div>
+            <div class="breakdown-table__cell">{{ row.sellingPrice | number:'1.2-2' }}</div>
+            <div class="breakdown-table__cell">{{ row.discountedPrice | number:'1.2-2' }}</div>
+            <div class="breakdown-table__cell">{{ row.profitDrop | number:'1.2-2' }}</div>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="images-section">
+      <div class="images-section__header">
+        <h3>Pack Images/Videos ({{ imageCount() }}/{{ packImageLimit() }})</h3>
+        <gom-lib-button type="button" variant="secondary" (buttonClick)="openPicker()" [disabled]="imageCount() >= packImageLimit()">
+          <i class="ri-folder-video-line" aria-hidden="true"></i> Add Media
+        </gom-lib-button>
+      </div>
+
+      @if (selectedPackImages().length === 0) {
+        <div class="images-section__empty">
+          <i class="ri-gallery-line" aria-hidden="true"></i>
+          <p>No media selected yet.</p>
+        </div>
+      } @else {
+        <div class="images-section__grid">
+          @for (img of selectedPackImages(); track img._id) {
+            <div class="images-section__card">
+              <div class="images-section__card-img-wrapper">
+                @if (img.mediaType === 'VIDEO') {
+                  <video [src]="img.url" class="images-section__card-img" controls preload="metadata">
+                    <track kind="captions" srclang="en" label="English" [src]="previewCaptionTrack" />
+                  </video>
+                } @else {
+                  <img [src]="img.url" alt="Pack media" class="images-section__card-img" loading="lazy" />
+                }
+              </div>
+              <div class="images-section__card-footer">
+                <span class="images-section__card-name" [title]="img.url">{{ img.mediaType || 'IMAGE' }}</span>
+                <gom-lib-button type="button" variant="secondary" (buttonClick)="removeSelectedImage(img._id)">
+                  <i class="ri-close-line" aria-hidden="true"></i>
+                </gom-lib-button>
+              </div>
+            </div>
+          }
+        </div>
+      }
     </div>
   </section>
 
@@ -146,3 +380,13 @@
   (confirmed)="confirmDelete()"
   (cancelled)="cancelDelete()"
 ></gom-lib-confirmation-modal>
+
+<gom-image-picker
+  [(show)]="pickerOpen"
+  [existingImageIds]="existingImageIds()"
+  [canUpload]="canUploadOwn()"
+  [maxImages]="packImageLimit()"
+  [maxVideos]="packVideoLimit()"
+  [existingVideoCount]="videoCount()"
+  (imagesSelected)="onImagesSelected($event)"
+></gom-image-picker>

@@ -45,6 +45,34 @@
     flex-wrap: wrap;
   }
 
+  &__type-tabs {
+    display: inline-flex;
+    align-items: center;
+    gap: theme.get-gap(xxs);
+    padding: theme.get-spacing(xxs);
+    border: theme.get-border-size(hairline) solid theme.get-border(light);
+    border-radius: theme.get-radius(sm);
+    background: theme.get-background(white);
+  }
+
+  &__type-tab {
+    border: 0;
+    background: transparent;
+    color: theme.get-text(hint);
+    padding: theme.get-spacing(xxs) theme.get-spacing(sm);
+    border-radius: theme.get-radius(xs);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: theme.get-gap(xxs);
+
+    &--active {
+      color: theme.get-text(default);
+      background: theme.get-background(secondary);
+      font-weight: theme.get-font-weight(semibold);
+    }
+  }
+
   &__search {
     position: relative;
     width: 100%;
@@ -213,6 +241,10 @@
     transition: transform 0.25s ease;
   }
 
+  &__video {
+    background: #000;
+  }
+
   &:hover &__img { transform: scale(1.03); }
 
   &__usage-badge {
@@ -223,6 +255,20 @@
     font-size: theme.get-font-size(xs);
     font-weight: theme.get-font-weight(semibold);
     background: rgba(0, 0, 0, 0.65);
+    color: #fff;
+    border-radius: theme.get-radius(xs);
+    line-height: 1.4;
+    pointer-events: none;
+  }
+
+  &__shared-badge {
+    position: absolute;
+    top: theme.get-spacing(xxs);
+    left: theme.get-spacing(xxs);
+    padding: 2px theme.get-spacing(xxs);
+    font-size: theme.get-font-size(xs);
+    font-weight: theme.get-font-weight(semibold);
+    background: rgba(12, 93, 155, 0.9);
     color: #fff;
     border-radius: theme.get-radius(xs);
     line-height: 1.4;
@@ -327,6 +373,11 @@
       border-color: theme.get-border(primary);
       background: theme.get-background(primary-light);
     }
+
+    &:focus-visible {
+      outline: 2px solid theme.get-border(primary);
+      outline-offset: 2px;
+    }
   }
 
   &__drop-icon { font-size: 2rem; color: theme.get-text(hint); }
@@ -362,6 +413,10 @@
     object-fit: cover;
     border-radius: theme.get-radius(xs);
     flex-shrink: 0;
+  }
+
+  &__video {
+    background: #000;
   }
 
   &__name-field { flex: 1; min-width: 0; }
@@ -466,6 +521,13 @@
       object-fit: contain;
       border-radius: theme.get-radius(xs);
     }
+  }
+
+  &__video {
+    width: 100%;
+    max-height: 18rem;
+    border-radius: theme.get-radius(xs);
+    background: #000;
   }
 
   &__details {

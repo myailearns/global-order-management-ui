@@ -44,18 +44,20 @@ export const DEFAULT_FIELDS_FORM_CONFIG: GomDynamicFormConfig = {
       optionsSource: 'fieldTypeOptions',
     },
     {
+      key: 'valueFormat',
+      control: 'select',
+      labelKey: 'fields.labels.valueFormat',
+      placeholderKey: 'fields.placeholders.valueFormat',
+      defaultValue: 'CURRENCY',
+      optionsSource: 'fieldValueFormatOptions',
+    },
+    {
       key: 'defaultValue',
       control: 'input',
       inputType: 'text',
       labelKey: 'fields.labels.defaultValue',
       placeholderKey: 'fields.placeholders.defaultValue',
       defaultValue: '',
-      validators: {
-        required: true,
-      },
-      validationMessages: {
-        required: 'fields.validation.defaultValueRequired',
-      },
     },
     {
       key: 'isRequired',

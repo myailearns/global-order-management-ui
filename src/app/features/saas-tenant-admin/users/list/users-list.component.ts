@@ -4,15 +4,21 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
-import { GomAlertToastService } from '@gomlibs/ui';
+import {
+  GomAlertToastService,
+  GomButtonComponent,
+  GomChipTone,
+  GomModalComponent,
+  GomTableColumn,
+  GomTableComponent,
+  GomTableRow,
+} from '@gomlibs/ui';
 import { AuthSessionService } from '../../../../core/auth/auth-session.service';
-import { GomButtonComponent } from '@gomlibs/ui';
-import { GomChipTone, GomTableColumn, GomTableComponent, GomTableRow } from '@gomlibs/ui';
-import { GomModalComponent } from '@gomlibs/ui';
 
 import { TenantAccessService } from '../../services';
 import { RoleWithPermissions, UserRoleAssignment, UserWithRoles, UserStatus } from '../../models';
 import { TRANSLATION_KEYS, UI_CONFIG, PERMISSION_KEYS } from '../../constants';
+import { DisableIfNoFeatureDirective } from '../../../../shared/directives/disable-if-no-feature.directive';
 
 interface UserRow extends GomTableRow {
   userId: string;
@@ -36,6 +42,7 @@ interface UserRow extends GomTableRow {
     FormsModule,
     ReactiveFormsModule,
     TranslateModule,
+    DisableIfNoFeatureDirective,
     GomButtonComponent,
     GomTableComponent,
     GomModalComponent,

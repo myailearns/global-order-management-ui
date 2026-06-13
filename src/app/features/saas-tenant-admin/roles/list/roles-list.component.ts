@@ -4,13 +4,20 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 
-import { GomAlertToastService } from '@gomlibs/ui';
+import {
+  GomAlertToastService,
+  GomButtonComponent,
+  GomSelectComponent,
+  GomSelectOption,
+  GomTableColumn,
+  GomTableComponent,
+  GomTableRow,
+} from '@gomlibs/ui';
 import { AuthSessionService } from '../../../../core/auth/auth-session.service';
-import { GomButtonComponent, GomSelectComponent, GomSelectOption } from '@gomlibs/ui';
-import { GomTableColumn, GomTableComponent, GomTableRow } from '@gomlibs/ui';
 import { TenantAccessService } from '../../services';
 import { RoleStatus, RoleWithPermissions } from '../../models';
 import { SaasAccountService } from '../../../saas-platform/accounts/saas-account.service';
+import { DisableIfNoFeatureDirective } from '../../../../shared/directives/disable-if-no-feature.directive';
 
 interface RoleRow extends GomTableRow {
   roleId: string;
@@ -24,7 +31,15 @@ interface RoleRow extends GomTableRow {
 @Component({
   selector: 'gom-roles-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule, GomButtonComponent, GomSelectComponent, GomTableComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    TranslateModule,
+    DisableIfNoFeatureDirective,
+    GomButtonComponent,
+    GomSelectComponent,
+    GomTableComponent,
+  ],
   templateUrl: './roles-list.component.html',
   styleUrl: './roles-list.component.scss',
 })

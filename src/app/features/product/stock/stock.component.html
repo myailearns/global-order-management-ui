@@ -2,14 +2,23 @@
   <header class="master-page__header">
     <h2><i class="ri-stock-line" aria-hidden="true"></i> Stock</h2>
     <div class="master-page__header-actions">
-      @if (canWrite()) {
-      <gom-lib-button type="button" variant="secondary" (buttonClick)="saveReorderLevel()" [disabled]="saving()">
-        <i class="ri-alarm-warning-line" aria-hidden="true"></i> Save Reorder Level
+      <gom-lib-button
+        type="button"
+        variant="secondary"
+        (buttonClick)="saveReorderLevel()"
+        [disabled]="saving() || reorderForm.invalid || !selectedGroupId() || !reorderForm.dirty"
+      >
+        <i class="ri-alarm-warning-line" aria-hidden="true"></i> Save Alert Threshold
       </gom-lib-button>
-      <gom-lib-button type="button" variant="primary" (buttonClick)="openAddStock()">
+      <gom-lib-button
+        type="button"
+        variant="primary"
+        (buttonClick)="openAddStock()"
+        gomDisableIfNoFeature="stock.create"
+        [disabled]="saving() || !canCreateStock() || (stockCreateRemaining() ?? 1) <= 0"
+      >
         <i class="ri-add-line" aria-hidden="true"></i> Add Stock
       </gom-lib-button>
-      }
     </div>
   </header>
 
@@ -22,22 +31,46 @@
     </div>
   }
 
-  <section class="stock-controls">
-    <gom-lib-select
-      label="Group"
-      placeholder="Select group"
-      [options]="groupOptions()"
-      [formControl]="filtersForm.controls.groupId"
-      (valueChange)="onGroupSelectionChange($event)"
-    ></gom-lib-select>
+  @if (canCreateStock()) {
+    <div class="quota-banner">
+      @if (stockCreateLimit() !== null) {
+        <p>Stock movement quota: {{ stockCreateUsed() }} / {{ stockCreateLimit() }} used ({{ stockCreateRemaining() }} remaining)</p>
+      } @else {
+        <p>Stock movement quota: {{ stockCreateUsed() }} used (unlimited)</p>
+      }
+    </div>
+  }
 
-    <gom-lib-input
-      label="Reorder Level"
-      type="number"
-      placeholder="Enter reorder level"
-      [formControl]="reorderForm.controls.reorderLevel"
-      [error]="reorderForm.controls.reorderLevel.touched && reorderForm.controls.reorderLevel.invalid ? 'Reorder level must be >= 0' : ''"
-    ></gom-lib-input>
+  <section class="stock-controls">
+    <div style="display: grid; grid-template-columns: 1fr; gap: 1.5rem;">
+      <!-- Row 1: Group Selection -->
+      <gom-lib-select
+        label="Group"
+        placeholder="Select group"
+        [options]="groupOptions()"
+        [formControl]="filtersForm.controls.groupId"
+        (valueChange)="onGroupSelectionChange($event)"
+      ></gom-lib-select>
+
+      <!-- Row 2: Threshold Input + Save Button -->
+      <div style="display: grid; grid-template-columns: 1fr auto; gap: 1rem; align-items: flex-end;">
+        <gom-lib-input
+          label="Low Stock Alert Threshold"
+          type="number"
+          placeholder="e.g. 20 (alert when stock drops below this)"
+          [formControl]="reorderForm.controls.reorderLevel"
+          [error]="reorderForm.controls.reorderLevel.touched && reorderForm.controls.reorderLevel.invalid ? 'Threshold must be >= 0' : ''"
+        ></gom-lib-input>
+        <gom-lib-button
+          type="button"
+          variant="secondary"
+          (buttonClick)="saveReorderLevel()"
+          [disabled]="saving() || reorderForm.invalid || !selectedGroupId() || !reorderForm.dirty"
+        >
+          Save Threshold
+        </gom-lib-button>
+      </div>
+    </div>
   </section>
 
   @if (summary()) {
@@ -64,7 +97,7 @@
       <div class="stock-alert">
         <i class="ri-error-warning-fill" aria-hidden="true"></i>
         <span>
-          Low stock alert: Available ({{ summary()!.available }}) is below or equal to reorder level ({{ summary()!.reorderLevel }}).
+          ⚠ Stock is low! Available ({{ summary()!.available }}) has fallen at or below your alert threshold ({{ summary()!.reorderLevel }}). Consider restocking.
         </span>
       </div>
     }
@@ -97,21 +130,90 @@
   size="medium"
 >
   <section class="form-grid">
-    <gom-lib-input
-      label="Quantity"
-      type="number"
-      placeholder="Enter quantity"
-      [formControl]="addStockForm.controls.quantity"
-      [error]="addStockForm.controls.quantity.touched && addStockForm.controls.quantity.invalid ? 'Quantity is required' : ''"
-    ></gom-lib-input>
+    <!-- Base Unit Input (Always Base Unit) -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+      <div>
+        <gom-lib-input
+          id="base-qty"
+          label="Base Quantity *"
+          type="number"
+          placeholder="e.g., 100"
+          [formControl]="addStockForm.controls.baseQuantity"
+          [error]="addStockForm.controls.baseQuantity.touched && addStockForm.controls.baseQuantity.invalid ? 'Must be 0 or more' : ''"
+        ></gom-lib-input>
+      </div>
+      <div>
+        <div style="display: flex; flex-direction: column; height: 100%;">
+          <div style="font-weight: 500; font-size: 0.875rem; margin-bottom: 0.5rem; color: #333;">Base Unit</div>
+          <div style="padding: 0.5rem 0.75rem; border: 1px solid #ccc; border-radius: 4px; background-color: #f5f5f5; color: #666; flex-grow: 1; display: flex; align-items: center;" aria-label="Base Unit Selection">
+            @if (baseUnitId(); as baseId) {
+              @for (unit of units(); track unit._id) {
+                @if (unit._id === baseId) {
+                  <span>{{ unit.name }} ({{ unit.symbol }}) [Base]</span>
+                }
+              }
+            } @else {
+              <span>–</span>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
 
-    <gom-lib-select
-      label="Unit"
-      placeholder="Select unit"
-      [options]="filteredUnitOptions()"
-      [formControl]="addStockForm.controls.unitId"
-      [error]="addStockForm.controls.unitId.touched && addStockForm.controls.unitId.invalid ? 'Unit is required' : ''"
-    ></gom-lib-select>
+    <!-- Sub-Unit Input (Optional) -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 1rem;">
+      <div>
+        <gom-lib-input
+          id="sub-qty"
+          label="Additional Quantity (Optional)"
+          type="number"
+          placeholder="e.g., 130"
+          [formControl]="addStockForm.controls.subQuantity"
+          [error]="addStockForm.controls.subQuantity.touched && addStockForm.controls.subQuantity.invalid ? 'Must be ≥ 0' : ''"
+        ></gom-lib-input>
+      </div>
+      <div>
+        <gom-lib-select
+          id="sub-unit"
+          label="in Unit"
+          placeholder="Select unit"
+          [options]="subUnitOptions()"
+          [formControl]="addStockForm.controls.subUnit"
+        ></gom-lib-select>
+      </div>
+    </div>
+
+    <!-- Conversion Preview -->
+    <div style="margin-top: 1rem; padding: 0.75rem; background-color: #e3f2fd; border-left: 4px solid #1976d2; border-radius: 4px;">
+      <p style="margin: 0; font-size: 0.875rem; color: #1565c0;">
+        <strong>Total converts to:</strong>
+        @if (getFinalConvertedQuantity(); as total) {
+          {{ total | number: '1.4-4' }}
+          <span> {{ getBaseUnitSymbol() }}</span>
+        } @else {
+          <span>–</span>
+        }
+      </p>
+    </div>
+
+    <!-- Pricing Fields (Optional) -->
+    @if (currentGroupPricingFields().length > 0) {
+      <div style="margin-top: 1.5rem; padding: 0.75rem; background-color: #f9f9f9; border-left: 4px solid #ff9800; border-radius: 4px;">
+        <h4 style="margin: 0 0 0.75rem 0; font-size: 0.875rem; color: #333;">Update Pricing (Optional)</h4>
+        <div class="form-grid form-grid--two">
+          @for (field of currentGroupPricingFields(); track field.key) {
+            <gom-lib-input
+              [label]="field.key"
+              type="number"
+              step="0.01"
+              placeholder="0"
+              [formControl]="pricingForm.controls[field.key]"
+            ></gom-lib-input>
+          }
+        </div>
+        <p style="margin: 0.5rem 0 0 0; font-size: 0.75rem; color: #666;">These values will update for all variants in this group.</p>
+      </div>
+    }
 
     <gom-lib-textarea
       label="Notes"
@@ -219,6 +321,7 @@
         aria-label="Update Stock"
         title="Update Stock"
         (buttonClick)="saveEditStock()"
+        [gomDisableIfNoFeature]="['stock.edit', 'stock.update']"
         [disabled]="isEditStockSaveDisabled()"
       >
         @if (shouldShowIcon(submitMode)) {

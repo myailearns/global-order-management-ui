@@ -1,0 +1,573 @@
+@use "theme" as theme;
+
+.bulk-page {
+  display: grid;
+  gap: theme.get-gap(sm);
+  height: 100%;
+}
+
+.bulk-page__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: theme.get-gap(md);
+  flex-wrap: wrap;
+
+  h2 {
+    margin: 0;
+    @include theme.typography-heading(xl);
+  }
+}
+
+.bulk-page__title-row {
+  display: flex;
+  align-items: center;
+  gap: theme.get-gap(sm);
+}
+
+.bulk-page__back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: theme.get-border-size(hairline) solid theme.get-border(standard);
+  border-radius: theme.get-radius(sm);
+  background: theme.get-background(standard);
+  color: theme.get-text(default);
+  cursor: pointer;
+  flex-shrink: 0;
+
+  &:hover {
+    background: theme.get-background(secondary);
+  }
+
+  i {
+    font-size: 1.1rem;
+  }
+}
+
+.bulk-page__subtitle {
+  margin: 0.25rem 0 0;
+  color: theme.get-text(default-light);
+  font-size: 0.875rem;
+}
+
+.bulk-page__header-actions {
+  display: flex;
+  align-items: center;
+  gap: theme.get-gap(xs);
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.bulk-page__autosave-status {
+  font-size: 0.75rem;
+  color: theme.get-text(default-light);
+  margin-right: theme.get-gap(xxs);
+}
+
+.bulk-page__publish-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: theme.get-text(default);
+  margin-right: theme.get-gap(xxs);
+
+  input {
+    margin: 0;
+  }
+}
+
+.bulk-page__autosave-status--error {
+  color: theme.get-text(danger);
+}
+
+.bulk-page__loading {
+  padding: theme.get-spacing(lg);
+  text-align: center;
+  color: theme.get-text(default-light);
+}
+
+.bulk-page__defaults {
+  display: grid;
+  gap: theme.get-gap(xs);
+  padding: theme.get-spacing(sm) theme.get-spacing(md);
+  border: theme.get-border-size(hairline) solid theme.get-border(standard);
+  border-radius: theme.get-radius(md);
+  background: theme.get-background(secondary);
+
+  h3 {
+    margin: 0;
+    @include theme.typography-heading(sm);
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.8rem;
+    color: theme.get-text(default-light);
+  }
+}
+
+.bulk-page__defaults-grid {
+  display: grid;
+  gap: theme.get-gap(sm);
+  grid-template-columns: repeat(3, minmax(12rem, 1fr));
+}
+
+.bulk-page__pricing-extras,
+.bulk-page__pricing-summary {
+  border: theme.get-border-size(hairline) solid theme.get-border(standard);
+  border-radius: theme.get-radius(md);
+  background: theme.get-background(standard);
+  padding: theme.get-spacing(sm);
+
+  h4 {
+    margin: 0 0 theme.get-gap(xxs);
+    @include theme.typography-heading(sm);
+  }
+
+  p {
+    margin: 0.25rem 0;
+    font-size: 0.85rem;
+  }
+}
+
+.bulk-page__checkbox-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(12rem, 1fr));
+  gap: theme.get-gap(xxs) theme.get-gap(sm);
+}
+
+.bulk-page__checkbox-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+}
+
+.select-all-btn {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+  border: theme.get-border-size(hairline) solid theme.get-border(standard);
+  border-radius: theme.get-radius(xs);
+  background: theme.get-background(white);
+  color: theme.get-text(primary);
+  cursor: pointer;
+  transition: all 200ms ease;
+
+  &:hover {
+    background: theme.get-background(standard);
+    border-color: theme.get-border(standard);
+    color: theme.get-text(primary-hover);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.bulk-page__helper {
+  color: theme.get-text(default-light);
+}
+
+.bulk-page__info-bar {
+  display: flex;
+  align-items: center;
+  gap: theme.get-gap(xs);
+  flex-wrap: wrap;
+}
+
+.bulk-page__info-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: theme.get-gap(xs);
+  margin-left: auto;
+}
+
+.bulk-page__chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.625rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: theme.get-background(secondary);
+  color: theme.get-text(default);
+}
+
+.bulk-page__chip--stat {
+  background: theme.get-background(info-light);
+  color: theme.get-text(info);
+}
+
+.bulk-page__chip--error {
+  background: theme.get-background(danger-light);
+  color: theme.get-text(danger);
+}
+
+.bulk-page__chip--success {
+  background: theme.get-background(success-light);
+  color: theme.get-text(success);
+}
+
+.bulk-page__chip--field {
+  background: theme.get-background(info-light);
+  color: theme.get-text(info);
+}
+
+.bulk-page__field-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid theme.get-border(standard);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: theme.get-background(secondary);
+  color: theme.get-text(default);
+  user-select: none;
+
+  input[type='checkbox'] {
+    cursor: pointer;
+  }
+
+  &--required {
+    opacity: 0.75;
+    cursor: not-allowed;
+
+    input[type='checkbox'] {
+      cursor: not-allowed;
+    }
+  }
+
+  &__required-mark {
+    color: theme.get-text(danger);
+    font-size: 0.8rem;
+  }
+}
+
+.bulk-page__chip--mode {
+  background: theme.get-background(primary-light);
+  color: theme.get-text(primary);
+  font-weight: 700;
+}
+
+.bulk-page__chip--publish {
+  background: theme.get-background(warning-light);
+  color: theme.get-text(warning);
+}
+
+.bulk-page__draft-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: theme.get-gap(md);
+  flex-wrap: wrap;
+  padding: theme.get-spacing(sm) theme.get-spacing(md);
+  border: theme.get-border-size(hairline) solid theme.get-border(info);
+  border-radius: theme.get-radius(md);
+  background: theme.get-background(info-light);
+  width: 100%;
+}
+
+.bulk-page__draft-banner-content {
+  font-size: 0.8rem;
+  color: theme.get-text(default);
+
+  strong {
+    color: theme.get-text(info);
+    margin-right: 0.25rem;
+  }
+}
+
+.bulk-page__draft-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: theme.get-gap(xs);
+}
+
+.bulk-page__setup-bar {
+  display: flex;
+  align-items: flex-start;
+  gap: theme.get-gap(md);
+  flex-wrap: wrap;
+  padding: theme.get-spacing(sm) theme.get-spacing(md);
+  border: theme.get-border-size(hairline) solid theme.get-border(standard);
+  border-radius: theme.get-radius(md);
+  background: theme.get-background(standard);
+}
+
+.bulk-page__field-group-select {
+  min-width: 20rem;
+  max-width: 24rem;
+}
+
+.bulk-page__field-preview {
+  display: flex;
+  align-items: center;
+  gap: theme.get-gap(xxs);
+  flex-wrap: wrap;
+}
+
+.bulk-page__field-selection {
+  display: grid;
+  gap: theme.get-gap(sm);
+  width: min(56rem, 100%);
+}
+
+.bulk-page__field-selection-panel {
+  border: theme.get-border-size(hairline) solid theme.get-border(standard);
+  border-radius: theme.get-radius(md);
+  background: theme.get-background(secondary);
+  padding: theme.get-spacing(sm);
+
+  h4 {
+    margin: 0 0 theme.get-gap(xxs);
+    @include theme.typography-heading(sm);
+  }
+}
+
+.bulk-page__field-selection-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(14rem, 1fr));
+  gap: theme.get-gap(xxs) theme.get-gap(sm);
+}
+
+.bulk-page__field-selection-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+
+  input[type='checkbox'] {
+    margin: 0;
+  }
+
+  &--required {
+    opacity: 0.85;
+  }
+}
+
+.bulk-page__field-preview-label {
+  font-size: 0.8rem;
+  color: theme.get-text(default-light);
+  margin-right: theme.get-gap(xxs);
+}
+
+.bulk-page__empty-prompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: theme.get-gap(sm);
+  padding: theme.get-spacing(xl);
+  border: theme.get-border-size(hairline) dashed theme.get-border(standard);
+  border-radius: theme.get-radius(md);
+  color: theme.get-text(default-light);
+  text-align: center;
+
+  i {
+    font-size: 2rem;
+  }
+
+  p {
+    margin: 0;
+    max-width: 28rem;
+  }
+}
+
+.bulk-page__grid-container {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  border: theme.get-border-size(hairline) solid theme.get-border(standard);
+  border-radius: theme.get-radius(md);
+  background: theme.get-background(standard);
+  padding: theme.get-spacing(sm);
+}
+
+.bulk-page__row-modal-body {
+  display: grid;
+  gap: theme.get-gap(sm);
+}
+
+.bulk-page__row-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: theme.get-gap(xs);
+}
+
+.bulk-page__error-button {
+  color: theme.get-text(danger);
+  border-color: theme.get-border(danger);
+}
+
+.bulk-page__modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.bulk-page__modal {
+  background: theme.get-background(standard);
+  border-radius: theme.get-radius(md);
+  max-width: 600px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.bulk-page__variant-modal {
+  max-width: 920px;
+  width: min(92vw, 920px);
+}
+
+.bulk-page__modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: theme.get-spacing(md);
+  border-bottom: theme.get-border-size(hairline) solid theme.get-border(standard);
+
+  h3 {
+    margin: 0;
+    @include theme.typography-heading(md);
+  }
+}
+
+.bulk-page__modal-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  background: transparent;
+  color: theme.get-text(default);
+  cursor: pointer;
+  font-size: 1.2rem;
+
+  &:hover {
+    background: theme.get-background(secondary);
+    border-radius: theme.get-radius(sm);
+  }
+}
+
+.bulk-page__modal-body {
+  flex: 1;
+  overflow: auto;
+  padding: theme.get-spacing(md);
+  display: grid;
+  gap: theme.get-gap(md);
+}
+
+.bulk-page__error-item {
+  padding: theme.get-spacing(sm);
+  background: rgba(theme.get-text(danger), 0.05);
+  border-left: 3px solid theme.get-text(danger);
+  border-radius: theme.get-radius(sm);
+}
+
+.bulk-page__error-row-label {
+  display: flex;
+  align-items: center;
+  gap: theme.get-gap(sm);
+}
+
+.bulk-page__error-fields {
+  color: theme.get-text(danger);
+  font-weight: 500;
+}
+
+.bulk-page__modal-footer {
+  padding: theme.get-spacing(md);
+  border-top: theme.get-border-size(hairline) solid theme.get-border(standard);
+  display: flex;
+  justify-content: flex-end;
+  gap: theme.get-gap(xs);
+}
+
+.bulk-page__variant-suggestions {
+  display: flex;
+  align-items: center;
+  gap: theme.get-gap(xs);
+  flex-wrap: wrap;
+}
+
+.bulk-page__variant-chip {
+  border: theme.get-border-size(hairline) solid theme.get-border(standard);
+  background: theme.get-background(standard);
+  color: theme.get-text(default);
+  border-radius: theme.get-radius(sm);
+  padding: 0.25rem 0.6rem;
+  cursor: pointer;
+
+  &:hover {
+    border-color: theme.get-border(primary);
+  }
+}
+
+.bulk-page__variant-form-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(10rem, 1fr));
+  gap: theme.get-gap(sm);
+}
+
+.bulk-page__variant-form-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.bulk-page__variant-list {
+  display: grid;
+  gap: theme.get-gap(xs);
+}
+
+.bulk-page__variant-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: theme.get-gap(sm);
+  border: theme.get-border-size(hairline) solid theme.get-border(standard);
+  border-radius: theme.get-radius(sm);
+  padding: theme.get-spacing(xs) theme.get-spacing(sm);
+}
+
+.bulk-page__variant-delete {
+  border: none;
+  background: transparent;
+  color: theme.get-text(danger);
+  cursor: pointer;
+}
+
+@media (max-width: 1024px) {
+  .bulk-page__defaults-grid {
+    grid-template-columns: repeat(2, minmax(12rem, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .bulk-page__defaults-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .bulk-page__checkbox-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .bulk-page__variant-form-grid {
+    grid-template-columns: 1fr;
+  }
+}

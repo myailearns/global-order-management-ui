@@ -1,15 +1,21 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DestroyRef } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { TranslateModule } from '@ngx-translate/core';
 
-import { GomAlertToastService } from '@gomlibs/ui';
-import { GomButtonComponent, GomInputComponent, GomSelectComponent, GomSelectOption, GomSwitchComponent } from '@gomlibs/ui';
-import { GomModalComponent } from '@gomlibs/ui';
-import { GomTableColumn, GomTableComponent, GomTableRow } from '@gomlibs/ui';
+import {
+  GomAlertToastService,
+  GomButtonComponent,
+  GomInputComponent,
+  GomModalComponent,
+  GomSelectComponent,
+  GomSelectOption,
+  GomSwitchComponent,
+  GomTableColumn,
+  GomTableComponent,
+  GomTableRow,
+} from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { EntitlementsService } from './entitlements.service';
 import { FeatureCatalogItem } from './entitlements.model';
@@ -21,6 +27,86 @@ interface FeatureTemplate {
   dependencies: string[];
 }
 
+// Feature templates embedded directly to avoid HTTP/file loading issues
+const FEATURE_TEMPLATES: FeatureTemplate[] = [
+  { featureKey: 'category.list', displayName: 'View Categories', module: 'masters', dependencies: [] },
+  { featureKey: 'category.create', displayName: 'Create Category', module: 'masters', dependencies: [] },
+  { featureKey: 'category.edit', displayName: 'Edit Category', module: 'masters', dependencies: ['category.list'] },
+  { featureKey: 'category.delete', displayName: 'Delete Category', module: 'masters', dependencies: ['category.list'] },
+  { featureKey: 'field.list', displayName: 'View Fields', module: 'masters', dependencies: [] },
+  { featureKey: 'field.create', displayName: 'Create Field', module: 'masters', dependencies: [] },
+  { featureKey: 'field.edit', displayName: 'Edit Field', module: 'masters', dependencies: ['field.list'] },
+  { featureKey: 'field.delete', displayName: 'Delete Field', module: 'masters', dependencies: ['field.list'] },
+  { featureKey: 'field.bulk_create', displayName: 'Bulk Create Fields', module: 'masters', dependencies: ['field.create'] },
+  { featureKey: 'fieldGroup.list', displayName: 'View Field Groups', module: 'masters', dependencies: [] },
+  { featureKey: 'fieldGroup.create', displayName: 'Create Field Group', module: 'masters', dependencies: [] },
+  { featureKey: 'fieldGroup.edit', displayName: 'Edit Field Group', module: 'masters', dependencies: ['fieldGroup.list'] },
+  { featureKey: 'fieldGroup.delete', displayName: 'Delete Field Group', module: 'masters', dependencies: ['fieldGroup.list'] },
+  { featureKey: 'unit.list', displayName: 'View Units', module: 'masters', dependencies: [] },
+  { featureKey: 'unit.create', displayName: 'Create Unit', module: 'masters', dependencies: [] },
+  { featureKey: 'unit.edit', displayName: 'Edit Unit', module: 'masters', dependencies: ['unit.list'] },
+  { featureKey: 'unit.delete', displayName: 'Delete Unit', module: 'masters', dependencies: ['unit.list'] },
+  { featureKey: 'taxProfile.list', displayName: 'View Tax Profiles', module: 'masters', dependencies: [] },
+  { featureKey: 'taxProfile.create', displayName: 'Create Tax Profile', module: 'masters', dependencies: [] },
+  { featureKey: 'taxProfile.edit', displayName: 'Edit Tax Profile', module: 'masters', dependencies: ['taxProfile.list'] },
+  { featureKey: 'taxProfile.delete', displayName: 'Delete Tax Profile', module: 'masters', dependencies: ['taxProfile.list'] },
+  { featureKey: 'group.list', displayName: 'View Product Groups', module: 'product', dependencies: [] },
+  { featureKey: 'group.create', displayName: 'Create Product Group', module: 'product', dependencies: [] },
+  { featureKey: 'group.edit', displayName: 'Edit Product Group', module: 'product', dependencies: ['group.list'] },
+  { featureKey: 'group.delete', displayName: 'Delete Product Group', module: 'product', dependencies: ['group.list'] },
+  { featureKey: 'group.bulk_create', displayName: 'Bulk Create Product Groups', module: 'product', dependencies: ['group.create'] },
+  { featureKey: 'group.bulk_update', displayName: 'Bulk Update Product Groups', module: 'product', dependencies: ['group.edit', 'group.list'] },
+  { featureKey: 'variant.list', displayName: 'View Product Variants', module: 'product', dependencies: [] },
+  { featureKey: 'variant.create', displayName: 'Create Product Variant', module: 'product', dependencies: [] },
+  { featureKey: 'variant.edit', displayName: 'Edit Product Variant', module: 'product', dependencies: ['variant.list'] },
+  { featureKey: 'variant.delete', displayName: 'Delete Product Variant', module: 'product', dependencies: ['variant.list'] },
+  { featureKey: 'variant.bulk_create', displayName: 'Bulk Create Product Variants', module: 'product', dependencies: ['variant.create'] },
+  { featureKey: 'variant.bulk_update', displayName: 'Bulk Update Product Variants', module: 'product', dependencies: ['variant.edit', 'variant.list'] },
+  { featureKey: 'pack.list', displayName: 'View Product Packs', module: 'product', dependencies: [] },
+  { featureKey: 'pack.create', displayName: 'Create Product Pack', module: 'product', dependencies: [] },
+  { featureKey: 'pack.edit', displayName: 'Edit Product Pack', module: 'product', dependencies: ['pack.list'] },
+  { featureKey: 'pack.delete', displayName: 'Delete Product Pack', module: 'product', dependencies: ['pack.list'] },
+  { featureKey: 'stock.list', displayName: 'View Stock', module: 'product', dependencies: [] },
+  { featureKey: 'stock.create', displayName: 'Create Stock Entry', module: 'product', dependencies: [] },
+  { featureKey: 'stock.edit', displayName: 'Edit Stock', module: 'product', dependencies: ['stock.list'] },
+  { featureKey: 'stock.delete', displayName: 'Delete Stock Entry', module: 'product', dependencies: ['stock.list'] },
+  { featureKey: 'stock.bulk_create', displayName: 'Bulk Create Stock Entries', module: 'product', dependencies: ['stock.create'] },
+  { featureKey: 'stock.bulk_update', displayName: 'Bulk Update Stock', module: 'product', dependencies: ['stock.edit', 'stock.list'] },
+  { featureKey: 'order.list', displayName: 'View Orders', module: 'orders', dependencies: [] },
+  { featureKey: 'order.create', displayName: 'Create Order', module: 'orders', dependencies: [] },
+  { featureKey: 'order.edit', displayName: 'Edit Order', module: 'orders', dependencies: ['order.list'] },
+  { featureKey: 'order.delete', displayName: 'Delete Order', module: 'orders', dependencies: ['order.list'] },
+  { featureKey: 'customer.list', displayName: 'View Customers', module: 'customers', dependencies: [] },
+  { featureKey: 'customer.create', displayName: 'Create Customer', module: 'customers', dependencies: [] },
+  { featureKey: 'customer.edit', displayName: 'Edit Customer', module: 'customers', dependencies: ['customer.list'] },
+  { featureKey: 'customer.delete', displayName: 'Delete Customer', module: 'customers', dependencies: ['customer.list'] },
+  { featureKey: 'customerGroup.list', displayName: 'View Customer Groups', module: 'customers', dependencies: [] },
+  { featureKey: 'customerGroup.create', displayName: 'Create Customer Group', module: 'customers', dependencies: [] },
+  { featureKey: 'customerGroup.edit', displayName: 'Edit Customer Group', module: 'customers', dependencies: ['customerGroup.list'] },
+  { featureKey: 'customerGroup.delete', displayName: 'Delete Customer Group', module: 'customers', dependencies: ['customerGroup.list'] },
+  { featureKey: 'rider.list', displayName: 'View Riders', module: 'delivery', dependencies: [] },
+  { featureKey: 'rider.create', displayName: 'Create Rider', module: 'delivery', dependencies: [] },
+  { featureKey: 'rider.edit', displayName: 'Edit Rider', module: 'delivery', dependencies: ['rider.list'] },
+  { featureKey: 'rider.delete', displayName: 'Delete Rider', module: 'delivery', dependencies: ['rider.list'] },
+  { featureKey: 'courierPartner.list', displayName: 'View Courier Partners', module: 'delivery', dependencies: [] },
+  { featureKey: 'courierPartner.create', displayName: 'Create Courier Partner', module: 'delivery', dependencies: [] },
+  { featureKey: 'courierPartner.edit', displayName: 'Edit Courier Partner', module: 'delivery', dependencies: ['courierPartner.list'] },
+  { featureKey: 'courierPartner.delete', displayName: 'Delete Courier Partner', module: 'delivery', dependencies: ['courierPartner.list'] },
+  { featureKey: 'employee.list', displayName: 'View Employees', module: 'tenant-admin', dependencies: [] },
+  { featureKey: 'employee.create', displayName: 'Create Employee', module: 'tenant-admin', dependencies: [] },
+  { featureKey: 'employee.edit', displayName: 'Edit Employee', module: 'tenant-admin', dependencies: ['employee.list'] },
+  { featureKey: 'employee.delete', displayName: 'Delete Employee', module: 'tenant-admin', dependencies: ['employee.list'] },
+  { featureKey: 'user.list', displayName: 'View Users', module: 'tenant-admin', dependencies: [] },
+  { featureKey: 'user.create', displayName: 'Create User', module: 'tenant-admin', dependencies: [] },
+  { featureKey: 'user.edit', displayName: 'Edit User', module: 'tenant-admin', dependencies: ['user.list'] },
+  { featureKey: 'user.delete', displayName: 'Delete User', module: 'tenant-admin', dependencies: ['user.list'] },
+  { featureKey: 'role.list', displayName: 'View Roles', module: 'tenant-admin', dependencies: [] },
+  { featureKey: 'role.create', displayName: 'Create Role', module: 'tenant-admin', dependencies: [] },
+  { featureKey: 'role.edit', displayName: 'Edit Role', module: 'tenant-admin', dependencies: ['role.list'] },
+  { featureKey: 'role.delete', displayName: 'Delete Role', module: 'tenant-admin', dependencies: ['role.list'] },
+  { featureKey: 'media.upload', displayName: 'Custom Image Upload', module: 'media', dependencies: [] },
+];
+
 interface FeatureRow extends GomTableRow {
   id: string;
   featureKey: string;
@@ -31,6 +117,10 @@ interface FeatureRow extends GomTableRow {
   beta: string;
   status: string;
 }
+
+const FILTER_KEY_PATTERN = /^[a-z0-9._-]{2,80}$/;
+const POSITIVE_INTEGER_PATTERN = /^[1-9]\d*$/;
+const OPTIONAL_POSITIVE_INTEGER_PATTERN = /^$|^[1-9]\d*$/;
 
 @Component({
   selector: 'gom-feature-catalog',
@@ -53,7 +143,6 @@ export class FeatureCatalogComponent implements OnInit {
   private readonly service = inject(EntitlementsService);
   private readonly toast = inject(GomAlertToastService);
   private readonly fb = inject(FormBuilder);
-  private readonly http = inject(HttpClient);
   private readonly authSession = inject(AuthSessionService);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -76,10 +165,15 @@ export class FeatureCatalogComponent implements OnInit {
     displayName: ['', [Validators.required]],
     module: ['', [Validators.required]],
     dependencyKeys: this.fb.control<string[]>([]),
+    filters: this.fb.array<FormGroup>([]),
     uiVisibilityPolicy: ['entitled-only', [Validators.required]],
     status: ['ACTIVE', [Validators.required]],
     isBeta: [false],
   });
+
+  get filtersArray(): FormArray<FormGroup> {
+    return this.form.controls.filters;
+  }
 
   readonly dependencyOptions = computed<GomSelectOption[]>(() => {
     return this.featureTemplates()
@@ -134,15 +228,10 @@ export class FeatureCatalogComponent implements OnInit {
   }
 
   private loadFeatureTemplates(): void {
-    this.http.get<FeatureTemplate[]>('/assets/data/features.json').subscribe({
-      next: (templates) => {
-        this.featureTemplates.set(templates || []);
-      },
-      error: () => {
-        // Silent fail; templates are optional
-        this.featureTemplates.set([]);
-      },
-    });
+    // Load from embedded constant - no HTTP needed
+    this.featureTemplates.set(FEATURE_TEMPLATES);
+    // eslint-disable-next-line no-console
+    console.log(`Loaded ${FEATURE_TEMPLATES.length} feature templates from embedded constant`);
   }
 
   onFeatureTemplateSelect(featureKey: string): void {
@@ -156,6 +245,34 @@ export class FeatureCatalogComponent implements OnInit {
       displayName: template.displayName,
       module: template.module,
       dependencyKeys: template.dependencies,
+    });
+
+    if (template.featureKey.endsWith('.create') && this.filtersArray.length === 0) {
+      this.addFilterRow({ key: 'max_count' });
+    }
+  }
+
+  addFilterRow(item?: { key?: string; defaultValue?: string | number | boolean | null }): void {
+    this.filtersArray.push(
+      this.fb.group({
+        key: [String(item?.key || '').trim().toLowerCase(), [Validators.required, Validators.pattern(FILTER_KEY_PATTERN)]],
+        // Optional: blank means no default limit; provided value must be a positive integer.
+        defaultValue: [String(item?.defaultValue ?? ''), [Validators.pattern(OPTIONAL_POSITIVE_INTEGER_PATTERN)]],
+      }),
+    );
+  }
+
+  removeFilterRow(index: number): void {
+    this.filtersArray.removeAt(index);
+  }
+
+  private setFilterRows(items: Array<{ key: string; defaultValue: string | number | boolean | null }>): void {
+    while (this.filtersArray.length > 0) {
+      this.filtersArray.removeAt(0);
+    }
+
+    items.forEach((item) => {
+      this.addFilterRow({ key: item.key, defaultValue: item.defaultValue });
     });
   }
 
@@ -180,10 +297,12 @@ export class FeatureCatalogComponent implements OnInit {
       displayName: '',
       module: '',
       dependencyKeys: [],
+      filters: [],
       uiVisibilityPolicy: 'entitled-only',
       status: 'ACTIVE',
       isBeta: false,
     });
+    this.setFilterRows([]);
     this.form.controls.featureKey.enable();
     this.modalOpen.set(true);
   }
@@ -207,10 +326,12 @@ export class FeatureCatalogComponent implements OnInit {
       displayName: item.displayName,
       module: item.module,
       dependencyKeys: item.dependencyKeys,
+      filters: [],
       uiVisibilityPolicy: item.uiVisibilityPolicy,
       status: item.status,
       isBeta: item.isBeta,
     });
+    this.setFilterRows(item.filters || []);
     this.form.controls.featureKey.disable();
     this.modalOpen.set(true);
   }
@@ -229,6 +350,12 @@ export class FeatureCatalogComponent implements OnInit {
       dependencyKeys: Array.isArray(raw.dependencyKeys)
         ? raw.dependencyKeys.map((value) => String(value).trim().toLowerCase()).filter(Boolean)
         : [],
+      filters: this.filtersArray.controls
+        .map((group) => ({
+          key: String(group.controls['key'].value || '').trim().toLowerCase(),
+          defaultValue: Number(group.controls['defaultValue'].value),
+        }))
+        .filter((item) => FILTER_KEY_PATTERN.test(item.key) && Number.isFinite(item.defaultValue) && item.defaultValue > 0),
       uiVisibilityPolicy: String(raw.uiVisibilityPolicy || 'entitled-only'),
       status: String(raw.status || 'ACTIVE').toUpperCase(),
       isBeta: !!raw.isBeta,

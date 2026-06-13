@@ -8,6 +8,25 @@
   <div class="picker">
     <!-- Toolbar: Search + Upload button -->
     <div class="picker__toolbar">
+      <div class="picker__type-tabs" role="tablist" aria-label="Media type">
+        <button
+          type="button"
+          class="picker__type-tab"
+          [class.picker__type-tab--active]="activeMediaType() === 'IMAGE'"
+          (click)="onMediaTypeChange('IMAGE')"
+        >
+          <i class="ri-image-line" aria-hidden="true"></i> Images
+        </button>
+        <button
+          type="button"
+          class="picker__type-tab"
+          [class.picker__type-tab--active]="activeMediaType() === 'VIDEO'"
+          (click)="onMediaTypeChange('VIDEO')"
+        >
+          <i class="ri-video-line" aria-hidden="true"></i> Videos
+        </button>
+      </div>
+
       <gom-lib-input
         class="picker__search"
         [placeholder]="'media.imagePicker.searchPlaceholder' | translate"
@@ -24,8 +43,13 @@
     @if (uploadPanelOpen()) {
       <div class="picker__upload-panel">
         <gom-image-upload
+          [accept]="uploadAccept()"
+          [maxSizeMb]="uploadMaxSizeMb()"
           [maxFiles]="maxUploadFiles()"
           [disabled]="uploading()"
+          [dragOrClickLabel]="dragOrClickLabel()"
+          [hintLabel]="hintLabel()"
+          (fileSelected)="onFileUploaded($event)"
           (filesSelected)="onFilesUploaded($event)"
         ></gom-image-upload>
         @if (uploading()) {
@@ -55,14 +79,21 @@
           } @else {
             <div class="picker__grid">
               @for (asset of tenantAssets(); track asset._id) {
-                <div
+                <button
+                  type="button"
                   class="picker__card"
                   [class.picker__card--selected]="isSelected(asset._id)"
                   [class.picker__card--added]="isAlreadyAdded(asset._id)"
                   (click)="toggleSelect(asset)"
                 >
                   <div class="picker__card-img-wrapper">
-                    <img [src]="asset.url" [alt]="asset.name" class="picker__card-img" loading="lazy" />
+                    @if (isVideo(asset)) {
+                      <video [src]="asset.url" class="picker__card-img" controls preload="metadata">
+                        <track kind="captions" srclang="en" label="English" [src]="previewCaptionTrack" />
+                      </video>
+                    } @else {
+                      <img [src]="asset.url" [alt]="asset.name" class="picker__card-img" loading="lazy" />
+                    }
                     @if (isAlreadyAdded(asset._id)) {
                       <div class="picker__card-added-badge">
                         {{ 'media.imagePicker.added' | translate }}
@@ -75,7 +106,7 @@
                     }
                   </div>
                   <span class="picker__card-name" [title]="asset.name">{{ asset.name }}</span>
-                </div>
+                </button>
               }
             </div>
 
@@ -109,14 +140,21 @@
         } @else {
           <div class="picker__grid">
             @for (asset of platformAssets(); track asset._id) {
-              <div
+              <button
+                type="button"
                 class="picker__card"
                 [class.picker__card--selected]="isSelected(asset._id)"
                 [class.picker__card--added]="isAlreadyAdded(asset._id)"
                 (click)="toggleSelect(asset)"
               >
                 <div class="picker__card-img-wrapper">
-                  <img [src]="asset.url" [alt]="asset.name" class="picker__card-img" loading="lazy" />
+                  @if (isVideo(asset)) {
+                    <video [src]="asset.url" class="picker__card-img" controls preload="metadata">
+                      <track kind="captions" srclang="en" label="English" [src]="previewCaptionTrack" />
+                    </video>
+                  } @else {
+                    <img [src]="asset.url" [alt]="asset.name" class="picker__card-img" loading="lazy" />
+                  }
                   @if (isAlreadyAdded(asset._id)) {
                     <div class="picker__card-added-badge">
                       {{ 'media.imagePicker.added' | translate }}
@@ -129,7 +167,7 @@
                   }
                 </div>
                 <span class="picker__card-name" [title]="asset.name">{{ asset.name }}</span>
-              </div>
+              </button>
             }
           </div>
 
@@ -159,7 +197,11 @@
         [disabled]="selectionCount() === 0"
         (buttonClick)="confirmSelection()"
       >
-        {{ 'media.imagePicker.addImages' | translate }} ({{ selectionCount() }})
+        @if (singleSelectMode()) {
+          {{ 'media.imagePicker.selectImage' | translate }}
+        } @else {
+          {{ 'media.imagePicker.addImages' | translate }} ({{ selectionCount() }})
+        }
       </gom-lib-button>
     </div>
   </div>

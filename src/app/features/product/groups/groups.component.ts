@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal, ViewChild } from '@angular/core';
 import {
   FormBuilder,
   FormControl,
@@ -7,27 +7,32 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
 import {
   FormControlsModule,
+  GomAlertToastService,
   GomButtonComponent,
-  GomSelectOption,
-} from '@gomlibs/ui';
-import {
   GomButtonContentMode,
+  GomModalComponent,
+  GomSelectOption,
+  GomTabContentComponent,
+  GomTableColumn,
+  GomTableComponent,
+  GomTableRow,
+  GomTabsComponent,
+  TabItem,
   getButtonContentMode,
   showButtonIcon,
   showButtonText,
 } from '@gomlibs/ui';
-import { GomTableColumn, GomTableComponent, GomTableRow } from '@gomlibs/ui';
-import { GomTabsComponent, GomTabContentComponent, TabItem } from '@gomlibs/ui';
-import { GomModalComponent, GomAlertToastService } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { MediaAssetService } from '../../saas-platform/media/media-asset.service';
 import { GroupImage, GroupImageEntry } from '../../saas-platform/media/media-asset.model';
 import { ImagePickerComponent, PickedImage } from '../../../shared/components/image-picker/image-picker.component';
+import { RichTextEditorComponent } from '../../../shared/components/rich-text-editor/rich-text-editor.component';
+import { DisableIfNoFeatureDirective } from '../../../shared/directives/disable-if-no-feature.directive';
 import {
   Category,
   Field,
@@ -59,9 +64,27 @@ interface GroupWizardField {
   type: 'NUMBER' | 'PERCENTAGE';
   isRequired: boolean;
   defaultValue: number;
+  valueFormat?: 'NUMBER' | 'CURRENCY';
+  currencyCode?: 'INR' | null;
 }
 
-type FormulaTarget = 'sellingPrice' | 'anchorPrice';
+type FormulaTarget = 'sellingPrice' | 'anchorPrice' | 'actualPrice';
+type SellingMarginBase = 'actual' | 'buy';
+
+interface BulkRowEditContext {
+  name: string;
+  description: string;
+  categoryId: string;
+  taxProfileId: string;
+  fieldGroupId: string;
+  fieldValues: Record<string, number>;
+  formula: {
+    actualPrice: string;
+    sellingPrice: string;
+    anchorPrice: string;
+  };
+  baseUnitId: string;
+}
 
 @Component({
   selector: 'gom-groups',
@@ -70,30 +93,50 @@ type FormulaTarget = 'sellingPrice' | 'anchorPrice';
     CommonModule,
     ReactiveFormsModule,
     FormControlsModule,
+    DisableIfNoFeatureDirective,
     GomButtonComponent,
     GomTableComponent,
     GomTabsComponent,
     GomTabContentComponent,
     GomModalComponent,
     ImagePickerComponent,
+    RichTextEditorComponent,
   ],
   templateUrl: './groups.component.html',
   styleUrl: './groups.component.scss',
 })
 export class GroupsComponent implements OnInit {
+  @ViewChild('descEditor') descEditor?: RichTextEditorComponent;
   private readonly groupsService = inject(GroupsService);
   private readonly mediaService = inject(MediaAssetService);
   private readonly toast = inject(GomAlertToastService);
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly authSession = inject(AuthSessionService);
+  private readonly bulkRowEditContextStorageKey = 'gom.bulk.row.edit.context';
+  private readonly groupFieldToggleControls = new Map<string, FormControl<boolean>>();
 
   readonly loading = signal(false);
-  readonly canWrite = computed(() => this.authSession.canWrite('product'));
+  readonly canCreateGroup = computed(() => this.authSession.hasFeature('group.create') && (this.groupCreateRemaining() ?? Infinity) > 0);
+  readonly canUpdateGroup = computed(() => this.authSession.hasFeature('group.edit') || this.authSession.hasFeature('group.update'));
+  readonly canCreateStock = computed(() => this.authSession.hasFeature('stock.create'));
+  readonly canCreateVariant = computed(() => this.authSession.hasFeature('variant.create'));
+  readonly groupCreateLimit = computed(() => this.authSession.getFeatureConfigNumber('group.create', 'max_count'));
+  readonly groupCreateUsed = computed(() => this.groups().length);
+  readonly groupCreateRemaining = computed(() => {
+    const limit = this.groupCreateLimit();
+    if (limit === null) {
+      return null;
+    }
+
+    return Math.max(limit - this.groupCreateUsed(), 0);
+  });
   readonly saving = signal(false);
   readonly errorMessage = signal<string | null>(null);
 
   readonly groups = signal<Group[]>([]);
+  readonly selectedGroupRows = signal<GroupRow[]>([]);
   readonly categories = signal<Category[]>([]);
   readonly fields = signal<Field[]>([]);
   readonly fieldGroups = signal<FieldGroup[]>([]);
@@ -105,14 +148,22 @@ export class GroupsComponent implements OnInit {
   readonly editingGroupId = signal<string | null>(null);
   readonly editingQuantity = signal(1);
   readonly selectedFieldGroupIds = signal<string[]>([]);
+  readonly hiddenGroupFieldKeys = signal<Set<string>>(new Set());
   readonly selectedExtraFieldIds = signal<string[]>([]);
   readonly formulaTarget = signal<FormulaTarget>('sellingPrice');
+  readonly showAdvancedFormulaTools = signal(false);
+  readonly simpleBaseCostKey = signal<string>('');
+  readonly simpleMarginPercent = signal<number>(20);
+  readonly simpleAnchorPercent = signal<number>(5);
+  readonly simpleSellingMarginBase = signal<SellingMarginBase>('buy');
+  readonly simpleActualExtraKeys = signal<string[]>([]);
   readonly submitMode: GomButtonContentMode = getButtonContentMode('primary-action');
   readonly cancelMode: GomButtonContentMode = getButtonContentMode('dismiss');
   readonly secondaryMode: GomButtonContentMode = getButtonContentMode('secondary-action');
 
   readonly basicForm = this.fb.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
+    description: [''],
     categoryId: ['', [Validators.required]],
     taxProfileId: [''],
   });
@@ -126,6 +177,7 @@ export class GroupsComponent implements OnInit {
   readonly formulaForm = this.fb.group({
     sellingPrice: ['', [Validators.required]],
     anchorPrice: ['', [Validators.required]],
+    actualPrice: ['', [Validators.required]],
   });
 
   readonly unitsForm = this.fb.group({
@@ -135,19 +187,25 @@ export class GroupsComponent implements OnInit {
   readonly allowedUnitIds = signal<string[]>([]);
 
   // --- Images ---
-  readonly MAX_IMAGES = 10;
+  readonly DEFAULT_MAX_IMAGES = 10;
+  readonly DEFAULT_MAX_VIDEOS = 1;
   readonly groupImages = signal<GroupImage[]>([]);
   readonly pickerOpen = signal(false);
   readonly canUploadOwn = computed(() => {
     const session = this.authSession.session();
-    if (!session || session.actorType !== 'tenant') return false;
+    if (session?.actorType !== 'tenant') return false;
     const keys = new Set(
       (session.featureKeys ?? []).map((k: string) => String(k || '').trim().toLowerCase()).filter(Boolean),
     );
     return keys.has('media.upload');
   });
   readonly imageCount = computed(() => this.groupImages().length);
+  readonly videoCount = computed(() => this.groupImages().filter((img) => img.mediaAssetId.mediaType === 'VIDEO').length);
+  readonly hasVideo = computed(() => this.videoCount() > 0);
   readonly existingImageIds = computed(() => new Set(this.groupImages().map((img) => img.mediaAssetId._id)));
+  readonly previewCaptionTrack = 'data:text/vtt;charset=utf-8,WEBVTT%0A';
+  readonly groupImageLimit = computed(() => this.authSession.getFeatureConfigNumber('group.create', 'max_images') ?? this.DEFAULT_MAX_IMAGES);
+  readonly groupVideoLimit = computed(() => this.authSession.getFeatureConfigNumber('group.create', 'max_videos') ?? this.DEFAULT_MAX_VIDEOS);
 
   readonly columns: GomTableColumn<GroupRow>[] = [
     { key: 'name', header: 'Group Name', sortable: true, filterable: true, width: '16rem' },
@@ -176,9 +234,34 @@ export class GroupsComponent implements OnInit {
       header: 'Actions',
       width: '20rem',
       actionButtons: [
-        { label: 'Edit', icon: 'ri-pencil-line', actionKey: 'edit', variant: 'secondary' },
-        { label: 'Add Stock', icon: 'ri-stock-line', actionKey: 'add-stock', variant: 'secondary' },
-        { label: 'Add Variant', icon: 'ri-price-tag-3-line', actionKey: 'add-variant', variant: 'secondary' },
+        {
+          label: () => this.canUpdateGroup() ? 'Edit' : 'No permission to edit groups',
+          icon: 'ri-pencil-line',
+          actionKey: 'edit',
+          variant: 'secondary',
+          disabled: () => !this.canUpdateGroup(),
+        },
+        {
+          label: () => this.canCreateStock() ? 'Add Stock' : 'No permission to add stock',
+          icon: 'ri-stock-line',
+          actionKey: 'add-stock',
+          variant: 'secondary',
+          disabled: () => !this.canCreateStock(),
+        },
+        {
+          label: () => this.canCreateVariant() ? 'Add Variant' : 'No permission to add variants',
+          icon: 'ri-price-tag-3-line',
+          actionKey: 'add-variant',
+          variant: 'secondary',
+          disabled: () => !this.canCreateVariant(),
+        },
+        {
+          label: (row: GroupRow) => row.status === 'INACTIVE' ? 'Publish' : 'Unpublish',
+          icon: (row: GroupRow) => row.status === 'INACTIVE' ? 'ri-toggle-fill' : 'ri-toggle-line',
+          actionKey: 'publish',
+          variant: 'primary',
+          disabled: () => !this.canUpdateGroup(),
+        },
       ],
     },
   ];
@@ -204,10 +287,13 @@ export class GroupsComponent implements OnInit {
   readonly taxProfileOptions = computed<GomSelectOption[]>(() =>
     this.taxProfiles()
       .filter((item) => item.status === 'ACTIVE')
-      .map((item) => ({
-        label: `${item.name} (${item.taxMode === 'GST' ? `${item.rate}% GST` : 'No Tax'})`,
-        value: item._id,
-      }))
+      .map((item) => {
+        const taxLabel = item.taxMode === 'GST' ? `${item.rate}% GST` : 'No Tax';
+        return {
+          label: `${item.name} (${taxLabel})`,
+          value: item._id,
+        };
+      })
   );
 
   readonly selectedFieldGroups = computed<FieldGroup[]>(() => {
@@ -258,11 +344,18 @@ export class GroupsComponent implements OnInit {
           type: field.type,
           isRequired: typeof item.requiredOverride === 'boolean' ? item.requiredOverride : field.isRequired,
           defaultValue: resolvedDefaultValue,
+          valueFormat: field.valueFormat ?? 'NUMBER',
+          currencyCode: field.currencyCode ?? null,
         });
       }
     }
 
     return [...merged.values()];
+  });
+
+  readonly visibleGroupFields = computed<GroupWizardField[]>(() => {
+    const hidden = this.hiddenGroupFieldKeys();
+    return this.groupFields().filter((item) => !hidden.has(item.key));
   });
 
   readonly availableExtraFields = computed<GroupWizardField[]>(() => {
@@ -278,14 +371,28 @@ export class GroupsComponent implements OnInit {
         type: item.type,
         isRequired: item.isRequired,
         defaultValue: typeof item.defaultValue === 'number' ? item.defaultValue : 0,
+        valueFormat: item.valueFormat ?? 'NUMBER',
+        currencyCode: item.currencyCode ?? null,
       }));
   });
 
   readonly wizardFields = computed<GroupWizardField[]>(() => {
     const extras = new Set(this.selectedExtraFieldIds());
     const extraFields = this.availableExtraFields().filter((item) => extras.has(item.fieldId));
-    return [...this.groupFields(), ...extraFields];
+    return [...this.visibleGroupFields(), ...extraFields];
   });
+
+  readonly formulaTokenFields = computed<string[]>(() => this.wizardFields().map((field) => field.key));
+  readonly simpleBaseCostOptions = computed<GomSelectOption[]>(() =>
+    this.wizardFields()
+      .filter((field) => field.type === 'NUMBER')
+      .map((field) => ({ value: field.key, label: `${field.name} (${field.key})` }))
+  );
+  readonly simpleActualExtraOptions = computed<GroupWizardField[]>(() => {
+    const base = this.simpleBaseCostKey();
+    return this.wizardFields().filter((field) => field.type === 'NUMBER' && field.key !== base);
+  });
+  readonly simpleGeneratedFormulas = computed(() => this.buildSimplePricingFormulas());
 
   readonly rows = computed<GroupRow[]>(() => {
     const categoriesById = new Map(this.categories().map((item) => [item._id, item.name]));
@@ -318,7 +425,7 @@ export class GroupsComponent implements OnInit {
     });
   });
 
-  formulaPreview(): { sellingPrice: number | null; anchorPrice: number | null; error: string | null } {
+  formulaPreview(): { sellingPrice: number | null; anchorPrice: number | null; actualPrice: number | null; error: string | null } {
     return this.calculateFormulaPreview();
   }
 
@@ -328,12 +435,15 @@ export class GroupsComponent implements OnInit {
     { id: 3, label: '3. Field Values' },
     { id: 4, label: '4. Pricing Formula' },
     { id: 5, label: '5. Units' },
-    { id: 6, label: '6. Images' },
+    { id: 6, label: '6. Images/Videos' },
   ]);
 
   ngOnInit(): void {
+    this.pendingBulkContextOpen = this.route.snapshot.queryParamMap.get('openBulkRowEdit') === '1';
     this.loadInitialData();
   }
+
+  private pendingBulkContextOpen = false;
 
   loadInitialData(): void {
     this.loading.set(true);
@@ -355,6 +465,11 @@ export class GroupsComponent implements OnInit {
         this.units.set(result.units.data ?? []);
         this.taxProfiles.set(result.taxProfiles.data ?? []);
         this.loading.set(false);
+
+        if (this.pendingBulkContextOpen) {
+          this.pendingBulkContextOpen = false;
+          this.openWizardFromBulkContext();
+        }
       },
       error: (error) => {
         console.error('Failed to load group setup data', error);
@@ -364,9 +479,148 @@ export class GroupsComponent implements OnInit {
     });
   }
 
+    private openWizardFromBulkContext(): void {
+      const raw = localStorage.getItem(this.bulkRowEditContextStorageKey);
+      if (!raw) {
+        return;
+      }
+
+      let context: BulkRowEditContext | null = null;
+      try {
+        context = JSON.parse(raw) as BulkRowEditContext;
+      } catch {
+        context = null;
+      }
+
+      if (!context) {
+        return;
+      }
+
+      this.resetWizard();
+
+      const categoryId = String(context.categoryId || '').trim();
+      const taxProfileId = String(context.taxProfileId || '').trim();
+      const fieldGroupId = String(context.fieldGroupId || '').trim();
+      const baseUnitId = String(context.baseUnitId || '').trim();
+
+      this.basicForm.patchValue({
+        name: String(context.name || '').trim(),
+        description: String(context.description || ''),
+        categoryId,
+        taxProfileId,
+      });
+
+      if (categoryId) {
+        this.onCategoryChange(categoryId);
+      }
+
+      if (fieldGroupId) {
+        this.selectedFieldGroupIds.set([fieldGroupId]);
+        this.hiddenGroupFieldKeys.set(new Set());
+        this.selectionForm.patchValue({ fieldGroupId });
+
+        const selectedGroup = this.fieldGroups().find((item) => item._id === fieldGroupId);
+        if (selectedGroup) {
+          const selectedKeys = new Set(Object.keys(context.fieldValues || {}));
+          const byId = new Map(this.fields().map((item) => [item._id, item]));
+          const hidden = new Set<string>();
+          for (const fieldRef of selectedGroup.fields) {
+            const resolved = byId.get(fieldRef.fieldId);
+            if (!resolved || !this.isPricingField(resolved)) {
+              continue;
+            }
+            const isRequired = typeof fieldRef.requiredOverride === 'boolean' ? fieldRef.requiredOverride : resolved.isRequired;
+            if (!isRequired && !selectedKeys.has(resolved.key)) {
+              hidden.add(resolved.key);
+            }
+          }
+          this.hiddenGroupFieldKeys.set(hidden);
+        }
+
+        this.syncDynamicFields();
+      }
+
+      Object.entries(context.fieldValues || {}).forEach(([key, value]) => {
+        const control = this.valuesForm.get(key) as FormControl<number | null> | null;
+        if (control) {
+          const parsed = Number(value);
+          control.setValue(Number.isFinite(parsed) ? parsed : null);
+        }
+      });
+
+      this.formulaForm.patchValue({
+        sellingPrice: String(context.formula?.sellingPrice || '').trim(),
+        anchorPrice: String(context.formula?.anchorPrice || '').trim(),
+        actualPrice: String(context.formula?.actualPrice || '').trim(),
+      });
+
+      this.unitsForm.patchValue({ baseUnitId });
+      this.allowedUnitIds.set(baseUnitId ? [baseUnitId] : []);
+
+      this.currentStep.set(1);
+      this.wizardOpen.set(true);
+
+      setTimeout(() => this.descEditor?.setContent(String(context?.description || '')), 0);
+
+      localStorage.removeItem(this.bulkRowEditContextStorageKey);
+      void this.router.navigate([], {
+        queryParams: { openBulkRowEdit: null },
+        queryParamsHandling: 'merge',
+        replaceUrl: true,
+      });
+    }
+
   openCreateWizard(): void {
     this.resetWizard();
     this.wizardOpen.set(true);
+  }
+
+  openBulkUpload(): void {
+    void this.router.navigate(['/product/groups/bulk-upload']);
+  }
+
+  onSelectedGroupsChange(rows: GomTableRow[]): void {
+    this.selectedGroupRows.set(rows.filter((row): row is GroupRow => typeof (row as GroupRow)._id === 'string'));
+  }
+
+  applyStatusToSelectedGroups(nextStatus: 'ACTIVE' | 'INACTIVE'): void {
+    if (!this.canUpdateGroup()) {
+      this.toast.warning('No permission to update group status.');
+      return;
+    }
+
+    const selectedRows = this.selectedGroupRows();
+    if (!selectedRows.length) {
+      return;
+    }
+
+    const rowsToUpdate = selectedRows.filter((row) => row.status !== nextStatus);
+    if (!rowsToUpdate.length) {
+      this.toast.info(`Selected groups are already ${nextStatus === 'ACTIVE' ? 'active' : 'inactive'}.`);
+      return;
+    }
+
+    this.saving.set(true);
+    forkJoin(rowsToUpdate.map((row) => this.groupsService.patchGroupStatus(row._id, nextStatus))).subscribe({
+      next: () => {
+        const actionLabel = nextStatus === 'ACTIVE' ? 'activated' : 'deactivated';
+        this.toast.success(`${rowsToUpdate.length} group${this.pluralSuffix(rowsToUpdate.length)} ${actionLabel} successfully.`);
+        this.groupsService.listGroups().subscribe({
+          next: (res) => {
+            this.groups.set(res.data ?? []);
+            this.selectedGroupRows.set([]);
+            this.saving.set(false);
+          },
+          error: () => {
+            this.saving.set(false);
+          },
+        });
+      },
+      error: () => {
+        this.toast.error(`Failed to ${nextStatus === 'ACTIVE' ? 'activate' : 'deactivate'} selected groups.`);
+        this.saving.set(false);
+      },
+    });
   }
 
   closeWizard(): void {
@@ -374,9 +628,6 @@ export class GroupsComponent implements OnInit {
   }
 
   onRowAction(event: { actionKey: string; row: GomTableRow }): void {
-    if (!this.canWrite()) {
-      return;
-    }
     const groupId = typeof event.row['_id'] === 'string' ? event.row['_id'] : '';
     const existing = this.groups().find((item) => item._id === groupId);
     if (!existing) {
@@ -384,6 +635,9 @@ export class GroupsComponent implements OnInit {
     }
 
     if (event.actionKey === 'add-stock') {
+      if (!this.canCreateStock()) {
+        return;
+      }
       void this.router.navigate(['/product/stock'], {
         queryParams: {
           groupId: existing._id,
@@ -394,10 +648,41 @@ export class GroupsComponent implements OnInit {
     }
 
     if (event.actionKey === 'add-variant') {
+      if (!this.canCreateVariant()) {
+        return;
+      }
       void this.router.navigate(['/product/variants'], {
         queryParams: {
           groupId: existing._id,
         },
+      });
+      return;
+    }
+
+    if (event.actionKey === 'publish') {
+      if (!this.canUpdateGroup()) {
+        this.toast.warning('No permission to publish groups.');
+        return;
+      }
+      const nextStatus: 'ACTIVE' | 'INACTIVE' = existing.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+      const actionLabel = nextStatus === 'ACTIVE' ? 'published' : 'unpublished';
+      this.saving.set(true);
+      this.groupsService.patchGroupStatus(existing._id, nextStatus).subscribe({
+        next: () => {
+          this.toast.success(`"${existing.name}" ${actionLabel} successfully.`);
+          this.groupsService.listGroups().subscribe({
+            next: (res) => {
+              this.groups.set(res.data ?? []);
+              this.saving.set(false);
+            },
+            error: () => this.saving.set(false),
+          });
+        },
+        error: () => {
+          this.toast.error(`Failed to ${nextStatus === 'ACTIVE' ? 'publish' : 'unpublish'} group.`);
+          this.saving.set(false);
+        },
+        complete: () => this.saving.set(false),
       });
       return;
     }
@@ -411,6 +696,7 @@ export class GroupsComponent implements OnInit {
 
     this.basicForm.patchValue({
       name: existing.name,
+      description: existing.description || '',
       categoryId: existing.categoryId,
       taxProfileId: existing.taxProfileId || '',
     });
@@ -421,6 +707,8 @@ export class GroupsComponent implements OnInit {
 
     const selectedGroup = this.fieldGroups().find((item) => item._id === existing.fieldGroupId);
     const baseIds = new Set((selectedGroup?.fields ?? []).map((item) => item.fieldId));
+    this.hiddenGroupFieldKeys.set(new Set(existing.excludedFieldKeys ?? []));
+
     const extraIds = existing.resolvedFields
       .filter((item) => !baseIds.has(item.fieldId))
       .map((item) => item.fieldId);
@@ -431,6 +719,7 @@ export class GroupsComponent implements OnInit {
     this.formulaForm.patchValue({
       sellingPrice: existing.formula.sellingPrice,
       anchorPrice: existing.formula.anchorPrice,
+      actualPrice: existing.formula.actualPrice || existing.formula.sellingPrice,
     });
 
     this.unitsForm.patchValue({ baseUnitId: existing.baseUnitId });
@@ -439,11 +728,23 @@ export class GroupsComponent implements OnInit {
     this.currentStep.set(1);
     this.wizardOpen.set(true);
     this.loadGroupImages(existing._id);
+
+    // Set editor content after wizard opens (need a tick for ViewChild to resolve)
+    setTimeout(() => this.descEditor?.setContent(existing.description || ''), 0);
+  }
+
+  private pluralSuffix(count: number): string {
+    return count === 1 ? '' : 's';
+  }
+
+  onDescriptionChanged(html: string): void {
+    this.basicForm.controls.description.setValue(html);
   }
 
   onFieldGroupSelectionChange(ids: string[]): void {
     const cleaned = [...new Set(ids.map((id) => String(id || '').trim()).filter((id) => !!id))];
     this.selectedFieldGroupIds.set(cleaned);
+    this.hiddenGroupFieldKeys.set(new Set());
     this.selectionForm.patchValue({ fieldGroupId: cleaned[0] || '' });
 
     this.selectedExtraFieldIds.set([]);
@@ -459,6 +760,7 @@ export class GroupsComponent implements OnInit {
     const filteredSelectedIds = this.selectedFieldGroupIds().filter((id) => allowedFieldGroupIds.has(id));
     if (filteredSelectedIds.length !== this.selectedFieldGroupIds().length) {
       this.selectedFieldGroupIds.set(filteredSelectedIds);
+      this.hiddenGroupFieldKeys.set(new Set());
       this.selectionForm.patchValue({ fieldGroupId: filteredSelectedIds[0] || '' });
       this.selectedExtraFieldIds.set([]);
       this.syncDynamicFields();
@@ -467,6 +769,7 @@ export class GroupsComponent implements OnInit {
     if (selectedFieldGroupId && !allowedFieldGroups.some((item) => item._id === selectedFieldGroupId)) {
       this.selectionForm.patchValue({ fieldGroupId: '' });
       this.selectedFieldGroupIds.set([]);
+      this.hiddenGroupFieldKeys.set(new Set());
       this.selectedExtraFieldIds.set([]);
       this.syncDynamicFields();
     }
@@ -502,6 +805,73 @@ export class GroupsComponent implements OnInit {
     this.syncDynamicFields();
   }
 
+  isGroupFieldSelected(fieldKey: string): boolean {
+    return !this.hiddenGroupFieldKeys().has(String(fieldKey || '').trim());
+  }
+
+  toggleGroupFieldSelection(fieldKey: string, checked: boolean): void {
+    const normalized = String(fieldKey || '').trim();
+    if (!normalized) {
+      return;
+    }
+
+    const field = this.groupFields().find((item) => item.key === normalized);
+    if (!field || field.isRequired) {
+      return;
+    }
+
+    const hidden = new Set(this.hiddenGroupFieldKeys());
+    if (checked) {
+      hidden.delete(normalized);
+    } else {
+      hidden.add(normalized);
+    }
+    this.hiddenGroupFieldKeys.set(hidden);
+
+    const visibleNumericKeys = new Set(
+      this.visibleGroupFields()
+        .filter((item) => item.type === 'NUMBER')
+        .map((item) => item.key)
+    );
+
+    if (!visibleNumericKeys.has(this.simpleBaseCostKey())) {
+      const fallback = this.visibleGroupFields().find((item) => item.type === 'NUMBER')?.key || '';
+      this.simpleBaseCostKey.set(fallback);
+    }
+
+    this.simpleActualExtraKeys.update((keys) =>
+      keys.filter((key) => visibleNumericKeys.has(key) && key !== this.simpleBaseCostKey())
+    );
+
+    this.syncDynamicFields();
+    const control = this.groupFieldToggleControls.get(normalized);
+    if (control && control.value !== checked) {
+      control.setValue(checked, { emitEvent: false });
+    }
+  }
+
+  getGroupFieldToggleControl(field: GroupWizardField): FormControl<boolean> {
+    const key = String(field.key || '').trim();
+    let control = this.groupFieldToggleControls.get(key);
+    if (!control) {
+      control = new FormControl<boolean>(this.isGroupFieldSelected(key), { nonNullable: true });
+      this.groupFieldToggleControls.set(key, control);
+    }
+
+    const shouldBeChecked = this.isGroupFieldSelected(key);
+    if (control.value !== shouldBeChecked) {
+      control.setValue(shouldBeChecked, { emitEvent: false });
+    }
+
+    if (field.isRequired) {
+      control.disable({ emitEvent: false });
+    } else {
+      control.enable({ emitEvent: false });
+    }
+
+    return control;
+  }
+
   toggleAllowedUnit(unitId: string, checked: boolean): void {
     const current = new Set(this.allowedUnitIds());
     if (checked) {
@@ -529,30 +899,43 @@ export class GroupsComponent implements OnInit {
   }
 
   getFieldHint(field: GroupWizardField): string {
-    if (field.type !== 'PERCENTAGE') {
-      return '';
+    if (field.type === 'PERCENTAGE') {
+      const numberFields = this.wizardFields().filter((item) => item.type === 'NUMBER' && item.key !== field.key);
+      if (!numberFields.length) {
+        return 'Enter percentage value (without % sign).';
+      }
+
+      const percentage = Number(this.getValueControl(field.key).value);
+      if (!Number.isFinite(percentage)) {
+        return 'Enter percentage value (without % sign).';
+      }
+
+      const preferredBase = numberFields.find((item) => ['buyPrice', 'buy_price', 'basePrice', 'costPrice'].includes(item.key));
+      const baseField = preferredBase || numberFields[0];
+      const baseValue = Number(this.getValueControl(baseField.key).value);
+      if (!Number.isFinite(baseValue)) {
+        return 'Enter percentage value (without % sign).';
+      }
+
+      const calculated = (baseValue * percentage) / 100;
+      return `Enter percentage value (without % sign). Example amount = ${calculated.toFixed(2)}`;
     }
 
-    const percentage = Number(this.getValueControl(field.key).value);
-    if (!Number.isFinite(percentage)) {
-      return '';
+    return field.valueFormat === 'CURRENCY'
+      ? 'Amount in ₹ (INR). Example: 49.99'
+      : 'Enter numeric value.';
+  }
+
+  getFieldPlaceholder(field: GroupWizardField): string {
+    if (field.type === 'PERCENTAGE') {
+      return `Enter ${field.name} (%)`;
     }
 
-    const numberFields = this.wizardFields().filter((item) => item.type === 'NUMBER' && item.key !== field.key);
-    if (!numberFields.length) {
-      return '';
+    if (field.valueFormat === 'CURRENCY') {
+      return `Enter ${field.name} (₹)`;
     }
 
-    const preferredBase = numberFields.find((item) => ['buyPrice', 'buy_price', 'basePrice', 'costPrice'].includes(item.key));
-    const baseField = preferredBase || numberFields[0];
-    const baseValue = Number(this.getValueControl(baseField.key).value);
-
-    if (!Number.isFinite(baseValue)) {
-      return '';
-    }
-
-    const calculated = (baseValue * percentage) / 100;
-    return `= ${calculated.toFixed(2)}`;
+    return `Enter ${field.name}`;
   }
 
   getSellingFormulaHint(): string {
@@ -573,17 +956,148 @@ export class GroupsComponent implements OnInit {
     return `Calculated anchor price: ${preview.anchorPrice}`;
   }
 
+  getActualFormulaHint(): string {
+    const preview = this.formulaPreview();
+    if (preview.error || preview.actualPrice === null) {
+      return '';
+    }
+
+    return `Calculated actual price: ${preview.actualPrice}`;
+  }
+
   setFormulaTarget(target: FormulaTarget): void {
     this.formulaTarget.set(target);
   }
 
   insertToken(token: string): void {
     const target = this.formulaTarget();
+    this.insertTokenFor(target, token);
+  }
+
+  insertTokenFor(target: FormulaTarget, token: string): void {
     const control = this.formulaForm.controls[target];
     const current = control.value || '';
     const next = current.trim().length ? `${current} ${token}` : token;
     control.setValue(next);
     control.markAsDirty();
+    control.markAsTouched();
+    this.formulaTarget.set(target);
+  }
+
+  clearFormula(target: FormulaTarget): void {
+    const control = this.formulaForm.controls[target];
+    control.setValue('');
+    control.markAsDirty();
+    control.markAsTouched();
+    this.formulaTarget.set(target);
+  }
+
+  toggleAdvancedFormulaTools(): void {
+    this.showAdvancedFormulaTools.update((value) => !value);
+  }
+
+  onSimpleBaseCostChange(value: string): void {
+    const normalized = String(value || '').trim();
+    this.simpleBaseCostKey.set(normalized);
+    this.simpleActualExtraKeys.update((keys) => keys.filter((key) => key !== normalized));
+    this.autoApplySimplePricingBuilder();
+  }
+
+  onSimpleMarginPercentChange(value: string): void {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed) && parsed >= 0) {
+      this.simpleMarginPercent.set(parsed);
+      this.autoApplySimplePricingBuilder();
+    }
+  }
+
+  onSimpleAnchorPercentChange(value: string): void {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed) && parsed >= 0) {
+      this.simpleAnchorPercent.set(parsed);
+      this.autoApplySimplePricingBuilder();
+    }
+  }
+
+  onSimpleSellingMarginBaseChange(value: string): void {
+    const normalized = String(value || '').trim().toLowerCase();
+    this.simpleSellingMarginBase.set(normalized === 'actual' ? 'actual' : 'buy');
+    this.autoApplySimplePricingBuilder();
+  }
+
+  toggleSimpleActualExtraKey(fieldKey: string, checked: boolean): void {
+    const normalized = String(fieldKey || '').trim();
+    if (!normalized || normalized === this.simpleBaseCostKey()) {
+      return;
+    }
+    const current = new Set(this.simpleActualExtraKeys());
+    if (checked) {
+      current.add(normalized);
+    } else {
+      current.delete(normalized);
+    }
+    this.simpleActualExtraKeys.set([...current]);
+    this.autoApplySimplePricingBuilder();
+  }
+
+  isSimpleActualExtraSelected(fieldKey: string): boolean {
+    return this.simpleActualExtraKeys().includes(String(fieldKey || '').trim());
+  }
+
+  toggleAllSimpleActualExtraKeys(selectAll: boolean): void {
+    if (selectAll) {
+      const allKeys = this.simpleActualExtraOptions()
+        .map((field) => field.key)
+        .filter((key) => key !== this.simpleBaseCostKey());
+      this.simpleActualExtraKeys.set(allKeys);
+    } else {
+      this.simpleActualExtraKeys.set([]);
+    }
+    this.autoApplySimplePricingBuilder();
+  }
+
+  isAllSimpleActualExtraSelected(): boolean {
+    const options = this.simpleActualExtraOptions();
+    if (options.length === 0) return false;
+    return options.every((field) => this.isSimpleActualExtraSelected(field.key));
+  }
+
+  applySimplePricingBuilder(): void {
+    this.autoApplySimplePricingBuilder();
+  }
+
+  private autoApplySimplePricingBuilder(): void {
+    const formulas = this.simpleGeneratedFormulas();
+    this.formulaForm.patchValue({
+      actualPrice: formulas.actualPrice,
+      sellingPrice: formulas.sellingPrice,
+      anchorPrice: formulas.anchorPrice,
+    }, { emitEvent: false });
+    this.formulaForm.markAsDirty();
+    this.formulaTarget.set('sellingPrice');
+  }
+
+  private buildSimplePricingFormulas(): { actualPrice: string; sellingPrice: string; anchorPrice: string } {
+    const base = String(this.simpleBaseCostKey() || '').trim();
+    const numberTokenFallback = this.wizardFields().find((field) => field.type === 'NUMBER')?.key || 'buyPrice';
+    const baseToken = base || numberTokenFallback;
+    const extras = this.simpleActualExtraKeys().filter((key) => key && key !== baseToken);
+
+    const actualParts = [baseToken, ...extras];
+    const actualFormula = actualParts.join(' + ');
+
+    const marginPercent = Math.max(0, Number(this.simpleMarginPercent()) || 0);
+    const anchorPercent = Math.max(0, Number(this.simpleAnchorPercent()) || 0);
+    const marginBaseToken = 'actualPrice';
+    const sellingFormula = `actualPrice + (${marginBaseToken} * ${marginPercent}%)`;
+    const anchorMultiplier = (1 + (anchorPercent / 100)).toFixed(4).replace(/\.0+$/, '').replace(/(\.\d*?)0+$/, '$1');
+    const anchorFormula = anchorPercent > 0 ? `sellingPrice * ${anchorMultiplier}` : 'sellingPrice';
+
+    return {
+      actualPrice: actualFormula,
+      sellingPrice: sellingFormula,
+      anchorPrice: anchorFormula,
+    };
   }
 
   nextStep(): void {
@@ -667,7 +1181,7 @@ export class GroupsComponent implements OnInit {
               this.loadInitialData();
             },
             error: () => {
-              this.toast.error('Group saved but failed to attach images.');
+              this.toast.error('Group saved but failed to attach media.');
               this.saving.set(false);
               this.closeWizard();
               this.loadInitialData();
@@ -681,7 +1195,8 @@ export class GroupsComponent implements OnInit {
       },
       error: (error) => {
         console.error('Failed to save group', error);
-        this.errorMessage.set('Failed to save group. Please check formulas and required fields.');
+        const apiMessage = error?.error?.message || error?.message || 'Failed to save group. Please check formulas and required fields.';
+        this.errorMessage.set(String(apiMessage));
         this.saving.set(false);
       },
     });
@@ -694,6 +1209,21 @@ export class GroupsComponent implements OnInit {
   }
 
   onImagesSelected(picked: PickedImage[]): void {
+    const imageLimit = this.groupImageLimit();
+    const remainingImageSlots = Math.max(imageLimit - this.imageCount(), 0);
+    if (remainingImageSlots <= 0) {
+      this.toast.error(`Only ${imageLimit} media items are allowed per group.`);
+      return;
+    }
+
+    const videoLimit = this.groupVideoLimit();
+    const selectedVideos = picked.filter((p) => p.asset.mediaType === 'VIDEO').length;
+    const remainingVideoSlots = Math.max(videoLimit - this.videoCount(), 0);
+    if (selectedVideos > remainingVideoSlots) {
+      this.toast.error(`Only ${videoLimit} video${videoLimit === 1 ? '' : 's'} are allowed per group.`);
+      return;
+    }
+
     const editId = this.editingGroupId();
     if (!editId) {
       // New group — add locally, will attach after save
@@ -702,7 +1232,11 @@ export class GroupsComponent implements OnInit {
       const newImages: GroupImage[] = picked
         .filter((p) => !existingIds.has(p.asset._id))
         .map((p, i) => ({ mediaAssetId: p.asset, source: p.source, sortOrder: current.length + i }));
-      this.groupImages.set([...current, ...newImages].slice(0, this.MAX_IMAGES));
+      const next = [...current, ...newImages].slice(0, imageLimit);
+      this.groupImages.set(next);
+      if (next.length < current.length + newImages.length) {
+        this.toast.error(`Only ${imageLimit} media items are allowed per group.`);
+      }
       return;
     }
 
@@ -714,11 +1248,11 @@ export class GroupsComponent implements OnInit {
 
     this.mediaService.attachGroupImages(editId, entries).subscribe({
       next: () => {
-        this.toast.success('Images attached.');
+        this.toast.success('Media attached.');
         this.loadGroupImages(editId);
       },
       error: (err) => {
-        const msg = err?.error?.message || 'Failed to attach images.';
+        const msg = err?.error?.message || 'Failed to attach media.';
         this.toast.error(msg);
       },
     });
@@ -733,10 +1267,10 @@ export class GroupsComponent implements OnInit {
 
     this.mediaService.detachGroupImages(editId, [image.mediaAssetId._id]).subscribe({
       next: () => {
-        this.toast.success('Image removed.');
+        this.toast.success('Media removed.');
         this.loadGroupImages(editId);
       },
-      error: () => this.toast.error('Failed to remove image.'),
+      error: () => this.toast.error('Failed to remove media.'),
     });
   }
 
@@ -822,12 +1356,17 @@ export class GroupsComponent implements OnInit {
     const nextGroup = new FormRecord<FormControl<number | null>>({});
 
     const resolvedByKey = new Map((existing?.resolvedFields || []).map((item) => [item.key, item.value]));
+    const currentValues = this.valuesForm.getRawValue() as Record<string, number | null>;
 
     for (const field of this.wizardFields()) {
+      const currentValue = Object.prototype.hasOwnProperty.call(currentValues, field.key)
+        ? currentValues[field.key]
+        : null;
       const initialValue = resolvedByKey.has(field.key)
         ? resolvedByKey.get(field.key)
-        : field.defaultValue;
-      const normalizedValue = typeof initialValue === 'number' ? initialValue : field.defaultValue;
+        : currentValue;
+      const parsed = Number(initialValue);
+      const normalizedValue = Number.isFinite(parsed) ? parsed : field.defaultValue;
 
       nextGroup.addControl(
         field.key,
@@ -836,6 +1375,7 @@ export class GroupsComponent implements OnInit {
     }
 
     this.replaceValuesForm(nextGroup);
+    this.tryAutofillFormulas();
   }
 
   private replaceValuesForm(nextForm: FormRecord<FormControl<number | null>>): void {
@@ -853,13 +1393,22 @@ export class GroupsComponent implements OnInit {
     this.editingGroupId.set(null);
     this.editingQuantity.set(1);
     this.selectedFieldGroupIds.set([]);
+    this.hiddenGroupFieldKeys.set(new Set());
     this.selectedExtraFieldIds.set([]);
     this.allowedUnitIds.set([]);
     this.formulaTarget.set('sellingPrice');
+    this.showAdvancedFormulaTools.set(false);
+    this.simpleBaseCostKey.set('');
+    this.simpleMarginPercent.set(20);
+    this.simpleAnchorPercent.set(5);
+    this.simpleSellingMarginBase.set('buy');
+    this.simpleActualExtraKeys.set([]);
+    this.groupFieldToggleControls.clear();
 
-    this.basicForm.reset({ name: '', categoryId: '', taxProfileId: '' });
+    this.basicForm.reset({ name: '', description: '', categoryId: '', taxProfileId: '' });
+    this.descEditor?.clear();
     this.selectionForm.reset({ fieldGroupId: '' });
-    this.formulaForm.reset({ sellingPrice: '', anchorPrice: '' });
+    this.formulaForm.reset({ sellingPrice: '', anchorPrice: '', actualPrice: '' });
     this.unitsForm.reset({ baseUnitId: '' });
     this.replaceValuesForm(new FormRecord<FormControl<number | null>>({}));
     this.groupImages.set([]);
@@ -884,13 +1433,16 @@ export class GroupsComponent implements OnInit {
 
     return {
       name: String(this.basicForm.controls.name.value || '').trim(),
+      description: this.basicForm.controls.description.value || '',
       categoryId: String(this.basicForm.controls.categoryId.value || ''),
       quantity,
       fieldGroupId: String(this.selectionForm.controls.fieldGroupId.value || ''),
       customFields,
+        excludedFieldKeys: [...this.hiddenGroupFieldKeys()],
       formula: {
         sellingPrice: String(this.formulaForm.controls.sellingPrice.value || '').trim(),
         anchorPrice: String(this.formulaForm.controls.anchorPrice.value || '').trim(),
+        actualPrice: String(this.formulaForm.controls.actualPrice.value || '').trim(),
       },
       baseUnitId,
       allowedUnitIds: [...allowedUnitIds],
@@ -899,31 +1451,40 @@ export class GroupsComponent implements OnInit {
     };
   }
 
-  private calculateFormulaPreview(): { sellingPrice: number | null; anchorPrice: number | null; error: string | null } {
+  private calculateFormulaPreview(): { sellingPrice: number | null; anchorPrice: number | null; actualPrice: number | null; error: string | null } {
     const rawValues = this.valuesForm.getRawValue() as Record<string, number | null>;
     const context: Record<string, number> = {};
 
     for (const field of this.wizardFields()) {
       const value = Number(rawValues[field.key]);
       if (!Number.isFinite(value)) {
-        return { sellingPrice: null, anchorPrice: null, error: `${field.name} has invalid value.` };
+        return { sellingPrice: null, anchorPrice: null, actualPrice: null, error: `${field.name} has invalid value.` };
       }
       context[field.key] = value;
     }
 
     const sellingFormula = String(this.formulaForm.controls.sellingPrice.value || '').trim();
     const anchorFormula = String(this.formulaForm.controls.anchorPrice.value || '').trim();
+    const actualFormula = String(this.formulaForm.controls.actualPrice.value || '').trim();
 
-    if (!sellingFormula && !anchorFormula) {
-      return { sellingPrice: null, anchorPrice: null, error: null };
+    if (!sellingFormula && !anchorFormula && !actualFormula) {
+      return { sellingPrice: null, anchorPrice: null, actualPrice: null, error: null };
     }
 
     try {
       let selling: number | null = null;
       let anchor: number | null = null;
+      let actual: number | null = null;
+
+      if (actualFormula) {
+        actual = this.evaluateExpression(actualFormula, context);
+      }
 
       if (sellingFormula) {
-        selling = this.evaluateExpression(sellingFormula, context);
+        selling = this.evaluateExpression(sellingFormula, {
+          ...context,
+          actualPrice: Number(actual ?? 0),
+        });
       }
 
       if (anchorFormula) {
@@ -931,12 +1492,14 @@ export class GroupsComponent implements OnInit {
           return {
             sellingPrice: null,
             anchorPrice: null,
+            actualPrice: null,
             error: 'Selling price formula is required before anchor price formula.',
           };
         }
 
         anchor = this.evaluateExpression(anchorFormula, {
           ...context,
+          actualPrice: Number(actual ?? 0),
           sellingPrice: Number(selling),
         });
       }
@@ -944,12 +1507,14 @@ export class GroupsComponent implements OnInit {
       return {
         sellingPrice: Number.isFinite(selling) ? Number(Number(selling).toFixed(2)) : null,
         anchorPrice: Number.isFinite(anchor) ? Number(Number(anchor).toFixed(2)) : null,
+        actualPrice: Number.isFinite(actual) ? Number(Number(actual).toFixed(2)) : null,
         error: null,
       };
     } catch (error) {
       return {
         sellingPrice: null,
         anchorPrice: null,
+        actualPrice: null,
         error: error instanceof Error ? error.message : 'Invalid formula',
       };
     }
@@ -997,7 +1562,7 @@ export class GroupsComponent implements OnInit {
     }
 
     const keys = Object.keys(context).sort((a, b) => b.length - a.length);
-    let replaced = expression.replace(/(\d+(?:\.\d+)?)\s*%/g, '($1/100)');
+    let replaced = expression.replaceAll(/(\d+(?:\.\d+)?)\s*%/g, '($1/100)');
 
     for (const key of keys) {
       const value = context[key];
@@ -1024,5 +1589,39 @@ export class GroupsComponent implements OnInit {
       field.fieldKind !== 'METADATA'
       && (field.type === 'NUMBER' || field.type === 'PERCENTAGE')
     );
+  }
+
+  private getPreferredToken(candidates: string[]): string | null {
+    const available = new Set(this.wizardFields().map((field) => String(field.key || '').trim().toLowerCase()));
+    const found = candidates.find((key) => available.has(String(key || '').trim().toLowerCase()));
+    return found || null;
+  }
+
+  private tryAutofillFormulas(): void {
+    const selling = String(this.formulaForm.controls.sellingPrice.value || '').trim();
+    const anchor = String(this.formulaForm.controls.anchorPrice.value || '').trim();
+    const actual = String(this.formulaForm.controls.actualPrice.value || '').trim();
+    if (selling || anchor || actual) {
+      return;
+    }
+
+    this.initializeSimplePricingDefaults();
+  }
+
+  private initializeSimplePricingDefaults(): void {
+    const numberFields = this.wizardFields().filter((field) => field.type === 'NUMBER');
+    const preferredBase = this.getPreferredToken(['buyPrice', 'buyprice', 'costPrice', 'costprice', 'basePrice', 'baseprice']);
+    const fallbackBase = numberFields[0]?.key || 'buyPrice';
+    const base = preferredBase || fallbackBase;
+
+    this.simpleBaseCostKey.set(base);
+    this.simpleActualExtraKeys.set(
+      numberFields
+        .map((field) => field.key)
+        .filter((key) => key !== base)
+        .filter((key) => ['labourcost', 'laborcost', 'makingcharge', 'transport', 'wastage'].includes(key.toLowerCase()))
+    );
+
+    this.autoApplySimplePricingBuilder();
   }
 }

@@ -12,7 +12,7 @@ import { FieldsFormComponent, FieldFormSubmitData, FieldFormData, FieldGroupAssi
 import { UnitsFormComponent, UnitFormData, UnitPayload, UnitAssignOption } from '../../master/units';
 import { TaxProfilesFormComponent, TaxProfileFormData, TaxProfileFormPayload } from '../../master/tax-profiles';
 import { FieldGroupsFormComponent } from '../../master/field-groups';
-import { FieldGroup, FieldGroupPayload, PricingField, CategoryOption, ProductGroupUsage } from '../../master/field-groups/field-groups.service';
+import { FieldGroup, FieldGroupPayload, PricingField, CategoryOption } from '../../master/field-groups/field-groups.service';
 import { CategoryAssociationsModalComponent, CategoryAssociationsApiProvider } from '../../master/categories/associations/category-associations-modal.component';
 import { Category } from '../../master/categories/categories.service';
 import {
@@ -349,7 +349,13 @@ export class PlatformTemplatesComponent implements OnInit {
       next: (res) => {
         const unitList = res.data ?? [];
         this.units.set(unitList);
-        this.unitBaseOptions.set(unitList.map((u) => ({ id: u._id, name: u.name })));
+        this.unitBaseOptions.set(
+          unitList.map((u) => ({
+            id: u._id,
+            name: u.name,
+            categoryIds: u.categoryIds ?? [],
+          }))
+        );
       },
       error: () => this.toast.error('Failed to load template units'),
     });
@@ -464,7 +470,7 @@ export class PlatformTemplatesComponent implements OnInit {
     this.editingFieldGroupData.set(fg ? fg as unknown as FieldGroup : null);
     this.fieldGroupFields.set(this.fields() as unknown as PricingField[]);
     this.fieldGroupCategories.set(
-      this.categories().map((c) => ({ _id: c._id, name: c.name, status: c.status as 'ACTIVE' | 'INACTIVE' }))
+      this.categories().map((c) => ({ _id: c._id, name: c.name, status: c.status }))
     );
     this.fieldGroupFormOpen.set(true);
   }

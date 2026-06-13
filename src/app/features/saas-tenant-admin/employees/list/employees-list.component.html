@@ -1,14 +1,14 @@
 <div class="gom-employees-list">
   <div class="gom-employees-list__header">
     <h1>{{ translationKeys.TITLE_EMPLOYEES | translate }}</h1>
-    @if (canWrite()) {
     <gom-lib-button 
       variant="primary" 
       (buttonClick)="onCreateEmployee()"
+      [gomDisableIfNoCapability]="'tenant-admin'"
+      [disabled]="loading() || !canWrite()"
       aria-label="Create new employee">
       {{ translationKeys.BTN_CREATE_EMPLOYEE | translate }}
     </gom-lib-button>
-    }
   </div>
 
   <!-- Search -->

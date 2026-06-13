@@ -2,10 +2,10 @@ import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, injec
 import { CommonModule } from '@angular/common';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
-import { GomButtonComponent } from '@gomlibs/ui';
-import { GomTableColumn, GomTableComponent, GomTableRow } from '@gomlibs/ui';
+import { GomButtonComponent, GomTableColumn, GomTableComponent, GomTableRow } from '@gomlibs/ui';
 import { UNIT_DEFAULT_STATUS, UNIT_UI_TEXT } from '../units.constants';
 import { Unit } from '../units.service';
+import { DisableIfNoFeatureDirective } from '../../../../shared/directives/disable-if-no-feature.directive';
 
 interface UnitTableRow extends GomTableRow {
   _id?: string;
@@ -24,7 +24,7 @@ export interface UnitAction {
 @Component({
   selector: 'gom-units-list',
   standalone: true,
-  imports: [CommonModule, TranslateModule, GomTableComponent, GomButtonComponent],
+  imports: [CommonModule, TranslateModule, GomTableComponent, GomButtonComponent, DisableIfNoFeatureDirective],
   templateUrl: './units-list.component.html',
   styleUrl: './units-list.component.scss',
 })

@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, ElementRef, inject, OnInit, signal, viewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
+import { firstValueFrom } from 'rxjs';
 import {
   GomAlertToastService,
   GomButtonComponent,
@@ -10,7 +11,7 @@ import {
   GomModalComponent,
 } from '@gomlibs/ui';
 import { MediaAssetService } from '../../../features/saas-platform/media/media-asset.service';
-import { MediaAsset, MediaUsageDetail, StorageSummary } from '../../../features/saas-platform/media/media-asset.model';
+import { MediaAsset, MediaType, MediaUsageDetail, StorageSummary } from '../../../features/saas-platform/media/media-asset.model';
 
 export type MediaLibraryMode = 'platform' | 'tenant';
 
@@ -18,6 +19,7 @@ export interface QueueItem {
   id: number;
   file: File;
   dataUrl: string;
+  mediaType: MediaType;
   name: string;
   status: 'pending' | 'uploading' | 'done' | 'failed';
 }
@@ -37,6 +39,7 @@ export interface QueueItem {
   styleUrl: './media-library.component.scss',
 })
 export class MediaLibraryComponent implements OnInit {
+  private readonly platformTenantId = '__platform__';
   private readonly mediaService = inject(MediaAssetService);
   private readonly toast = inject(GomAlertToastService);
   private readonly route = inject(ActivatedRoute);
@@ -45,6 +48,7 @@ export class MediaLibraryComponent implements OnInit {
   readonly isPlatform = computed(() => this.mode() === 'platform');
 
   readonly loading = signal(false);
+  readonly activeMediaType = signal<MediaType>('IMAGE');
   readonly assets = signal<MediaAsset[]>([]);
   readonly page = signal(1);
   readonly limit = signal(20);
@@ -90,8 +94,57 @@ export class MediaLibraryComponent implements OnInit {
     return 'normal';
   });
 
-  private readonly ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-  private readonly MAX_SIZE = 5 * 1024 * 1024;
+  private readonly IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+  private readonly VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime'];
+  private readonly IMAGE_MAX_SIZE = 5 * 1024 * 1024;
+  private readonly VIDEO_MAX_SIZE = 50 * 1024 * 1024;
+
+  readonly uploadAccept = computed(() => (
+    this.activeMediaType() === 'VIDEO'
+      ? this.VIDEO_TYPES.join(',')
+      : this.IMAGE_TYPES.join(',')
+  ));
+
+  readonly maxSizeMb = computed(() => (this.activeMediaType() === 'VIDEO' ? 50 : 5));
+
+  // Dynamic labels based on active media type
+  readonly modalTitle = computed(() =>
+    this.activeMediaType() === 'VIDEO' ? 'media.uploadModal.titleVideo' : 'media.uploadModal.titleImage'
+  );
+
+  readonly uploadButtonLabel = computed(() =>
+    this.activeMediaType() === 'VIDEO' ? 'media.actions.uploadVideo' : 'media.actions.uploadImage'
+  );
+
+  readonly uploadCountLabel = computed(() =>
+    this.activeMediaType() === 'VIDEO' ? 'media.uploadQueue.uploadCountVideo' : 'media.uploadQueue.uploadCount'
+  );
+
+  readonly searchPlaceholderKey = computed(() =>
+    this.activeMediaType() === 'VIDEO' ? 'media.searchPlaceholderVideo' : 'media.searchPlaceholderImage'
+  );
+
+  readonly countLabelKey = computed(() =>
+    this.activeMediaType() === 'VIDEO' ? 'media.videoCount' : 'media.imageCount'
+  );
+
+  readonly infoModalTitleKey = computed(() => {
+    const mediaType = this.usageDetail()?.asset?.mediaType;
+    return mediaType === 'VIDEO' ? 'media.infoModal.videoTitle' : 'media.infoModal.title';
+  });
+
+  readonly dragOrClickLabel = computed(() =>
+    this.activeMediaType() === 'VIDEO'
+      ? 'media.upload.dragOrClickVideo'
+      : 'media.upload.dragOrClickImage'
+  );
+
+  readonly hintLabel = computed(() =>
+    this.activeMediaType() === 'VIDEO' ? 'media.upload.hintVideo' : 'media.upload.hint'
+  );
+
+  // Accessibility: provide a minimal captions track for preview players.
+  readonly previewCaptionTrack = 'data:text/vtt;charset=utf-8,WEBVTT%0A';
 
   ngOnInit(): void {
     const routeMode = this.route.snapshot.data['mode'];
@@ -109,8 +162,8 @@ export class MediaLibraryComponent implements OnInit {
   loadMedia(): void {
     this.loading.set(true);
     const list$ = this.isPlatform()
-      ? this.mediaService.listPlatformMedia(this.page(), this.limit(), this.search())
-      : this.mediaService.listTenantMedia(this.page(), this.limit(), this.search());
+      ? this.mediaService.listPlatformMedia(this.page(), this.limit(), this.search(), this.activeMediaType())
+      : this.mediaService.listTenantMedia(this.page(), this.limit(), this.search(), this.activeMediaType());
 
     list$.subscribe({
       next: (result) => {
@@ -149,6 +202,16 @@ export class MediaLibraryComponent implements OnInit {
   onPageChange(newPage: number): void {
     if (newPage < 1 || newPage > this.totalPages()) return;
     this.page.set(newPage);
+    this.loadMedia();
+  }
+
+  onMediaTypeChange(mediaType: MediaType): void {
+    if (this.activeMediaType() === mediaType) {
+      return;
+    }
+    this.activeMediaType.set(mediaType);
+    this.page.set(1);
+    this.search.set('');
     this.loadMedia();
   }
 
@@ -200,24 +263,54 @@ export class MediaLibraryComponent implements OnInit {
     }
   }
 
+  onDropzoneKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      this.openFilePicker();
+    }
+  }
+
   private addFiles(files: File[]): void {
-    let skipped = 0;
+    let invalidType = 0;
+    let tooLarge = 0;
+    const active = this.activeMediaType();
+    const allowedTypes = active === 'VIDEO' ? this.VIDEO_TYPES : this.IMAGE_TYPES;
+    const maxSize = active === 'VIDEO' ? this.VIDEO_MAX_SIZE : this.IMAGE_MAX_SIZE;
+    const maxSizeMb = Math.floor(maxSize / (1024 * 1024));
+
     for (const file of files) {
-      if (!this.ALLOWED_TYPES.includes(file.type)) { skipped++; continue; }
-      if (file.size > this.MAX_SIZE) { skipped++; continue; }
+      if (!allowedTypes.includes(file.type)) {
+        invalidType++;
+        continue;
+      }
+      if (file.size > maxSize) {
+        tooLarge++;
+        continue;
+      }
 
       const reader = new FileReader();
       const id = this.nextQueueId++;
       const name = file.name.replace(/\.[^/.]+$/, '');
 
       reader.onload = () => {
-        const item: QueueItem = { id, file, dataUrl: reader.result as string, name, status: 'pending' };
+        const item: QueueItem = {
+          id,
+          file,
+          dataUrl: reader.result as string,
+          mediaType: active,
+          name,
+          status: 'pending',
+        };
         this.uploadQueue.update((q) => [...q, item]);
       };
       reader.readAsDataURL(file);
     }
-    if (skipped > 0) {
-      this.toast.error(`${skipped} file(s) skipped (invalid type or too large).`);
+    if (invalidType > 0) {
+      this.toast.error(`${invalidType} file(s) skipped due to invalid format.`);
+    }
+    if (tooLarge > 0) {
+      const typeName = active === 'VIDEO' ? 'video' : 'image';
+      this.toast.error(`${tooLarge} ${typeName}(s) skipped. Max allowed size is ${maxSizeMb} MB.`);
     }
   }
 
@@ -243,28 +336,18 @@ export class MediaLibraryComponent implements OnInit {
     for (const item of pending) {
       current++;
       this.uploadProgress.set({ current, total });
-      this.uploadQueue.update((q) => q.map((qi) => (qi.id === item.id ? { ...qi, status: 'uploading' as const } : qi)));
+      this.setQueueItemStatus(item.id, 'uploading');
 
       const upload$ = this.isPlatform()
         ? this.mediaService.uploadPlatformMedia(item.file, item.name.trim())
         : this.mediaService.uploadTenantMedia(item.file, item.name.trim());
 
       try {
-        await new Promise<void>((resolve) => {
-          upload$.subscribe({
-            next: () => {
-              this.uploadQueue.update((q) => q.map((qi) => (qi.id === item.id ? { ...qi, status: 'done' as const } : qi)));
-              succeeded++;
-              resolve();
-            },
-            error: () => {
-              this.uploadQueue.update((q) => q.map((qi) => (qi.id === item.id ? { ...qi, status: 'failed' as const } : qi)));
-              failed++;
-              resolve();
-            },
-          });
-        });
+        await firstValueFrom(upload$);
+        this.setQueueItemStatus(item.id, 'done');
+        succeeded++;
       } catch {
+        this.setQueueItemStatus(item.id, 'failed');
         failed++;
       }
     }
@@ -272,7 +355,7 @@ export class MediaLibraryComponent implements OnInit {
     this.uploadProgress.set(null);
 
     if (failed === 0) {
-      this.toast.success(`${succeeded} image(s) uploaded successfully.`);
+      this.toast.success(`${succeeded} media file(s) uploaded successfully.`);
       this.uploadModalOpen.set(false);
     } else {
       this.toast.error(`${succeeded} uploaded, ${failed} failed.`);
@@ -287,6 +370,10 @@ export class MediaLibraryComponent implements OnInit {
   // --- Delete ---
 
   confirmDelete(asset: MediaAsset): void {
+    if (!this.canDeleteAsset(asset)) {
+      this.toast.info('Platform shared media is visible here, but only platform admins can delete it.');
+      return;
+    }
     if (this.isPlatform() && asset.usageCount && asset.usageCount > 0) {
       this.toast.error(`Cannot delete — image is used by ${asset.usageCount} group(s).`);
       return;
@@ -355,5 +442,21 @@ export class MediaLibraryComponent implements OnInit {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  private setQueueItemStatus(id: number, status: QueueItem['status']): void {
+    this.uploadQueue.update((q) => q.map((item) => (item.id === id ? { ...item, status } : item)));
+  }
+
+  isVideo(asset: MediaAsset | QueueItem): boolean {
+    return asset.mediaType === 'VIDEO';
+  }
+
+  isSharedAsset(asset: MediaAsset): boolean {
+    return asset.tenantId === this.platformTenantId;
+  }
+
+  canDeleteAsset(asset: MediaAsset): boolean {
+    return this.isPlatform() || !this.isSharedAsset(asset);
   }
 }

@@ -165,33 +165,7 @@ export class SaasAccountsComponent implements OnInit {
 
   readonly hasRows = computed(() => this.rows().length > 0);
 
-  readonly validationErrors = computed<string[]>(() => {
-    const errors: string[] = [];
-    const form = this.accountForm;
-    const controlMap: Array<{ key: keyof typeof form.controls; label: string }> = [
-      { key: 'accountName', label: 'Account Name' },
-      { key: 'legalBusinessName', label: 'Legal Business Name' },
-      { key: 'tenantCode', label: 'Tenant Code' },
-      { key: 'primaryContactName', label: 'Primary Contact Name' },
-      { key: 'primaryContactPhone', label: 'Primary Contact Phone' },
-      { key: 'primaryContactEmail', label: 'Primary Contact Email' },
-      { key: 'firstTenantAdminName', label: 'First Tenant Admin Name' },
-      { key: 'firstTenantAdminEmail', label: 'First Tenant Admin Email' },
-      { key: 'firstTenantAdminPassword', label: 'First Tenant Admin Password' },
-      { key: 'planId', label: 'Plan Id' },
-      { key: 'trialMode', label: 'Trial Mode' },
-      { key: 'trialDurationDays', label: 'Trial Duration' },
-    ];
-
-    controlMap.forEach((entry) => {
-      const control = form.get(entry.key);
-      if (control && control.invalid && (control.touched || control.dirty)) {
-        errors.push(`${entry.label} is invalid or missing.`);
-      }
-    });
-
-    return errors;
-  });
+  readonly validationErrors = computed<string[]>(() => this.getAccountFormErrors(false));
 
   readonly columns: GomTableColumn<AccountRow>[] = [
     { key: 'accountName', header: 'Account', sortable: true, width: '18rem' },
@@ -406,7 +380,8 @@ export class SaasAccountsComponent implements OnInit {
   saveAccount(): void {
     if (this.accountForm.invalid) {
       this.accountForm.markAllAsTouched();
-      this.toast.error('Please complete required fields');
+      const errors = this.getAccountFormErrors(true);
+      this.toast.error(errors[0] || 'Please complete required fields');
       return;
     }
 
@@ -564,6 +539,73 @@ export class SaasAccountsComponent implements OnInit {
 
   private clearDraft(): void {
     localStorage.removeItem(this.draftKey);
+  }
+
+  private getAccountFormErrors(includeUntouched: boolean): string[] {
+    const errors: string[] = [];
+    const form = this.accountForm;
+    const controlMap: Array<{ key: keyof typeof form.controls; label: string }> = [
+      { key: 'accountName', label: 'Account Name' },
+      { key: 'legalBusinessName', label: 'Legal Business Name' },
+      { key: 'tenantCode', label: 'Tenant Code' },
+      { key: 'primaryContactName', label: 'Primary Contact Name' },
+      { key: 'primaryContactPhone', label: 'Primary Contact Phone' },
+      { key: 'primaryContactEmail', label: 'Primary Contact Email' },
+      { key: 'firstTenantAdminName', label: 'First Tenant Admin Name' },
+      { key: 'firstTenantAdminEmail', label: 'First Tenant Admin Email' },
+      { key: 'firstTenantAdminPassword', label: 'First Tenant Admin Password' },
+      { key: 'countryCode', label: 'Country Code' },
+      { key: 'currency', label: 'Currency' },
+      { key: 'timezone', label: 'Timezone' },
+      { key: 'planId', label: 'Plan' },
+      { key: 'trialMode', label: 'Trial Mode' },
+      { key: 'trialDurationDays', label: 'Trial Duration' },
+    ];
+
+    controlMap.forEach((entry) => {
+      const control = form.controls[entry.key];
+      if (!control || control.disabled || !control.invalid) {
+        return;
+      }
+
+      if (!includeUntouched && !control.touched && !control.dirty) {
+        return;
+      }
+
+      if (control.hasError('required')) {
+        errors.push(`${entry.label} is required.`);
+        return;
+      }
+
+      if (control.hasError('email')) {
+        errors.push(`${entry.label} must be a valid email address.`);
+        return;
+      }
+
+      if (control.hasError('pattern') && entry.key === 'tenantCode') {
+        errors.push('Tenant Code can use only lowercase letters, numbers, and underscores.');
+        return;
+      }
+
+      if (control.hasError('minlength') && entry.key === 'firstTenantAdminPassword') {
+        errors.push('First Tenant Admin Password must be at least 8 characters.');
+        return;
+      }
+
+      if (control.hasError('min') && entry.key === 'trialDurationDays') {
+        errors.push('Trial Duration must be at least 1 day.');
+        return;
+      }
+
+      if (control.hasError('max') && entry.key === 'trialDurationDays') {
+        errors.push('Trial Duration cannot exceed 365 days.');
+        return;
+      }
+
+      errors.push(`${entry.label} is invalid.`);
+    });
+
+    return errors;
   }
 
   private setupTenantCodeAutoGeneration(): void {

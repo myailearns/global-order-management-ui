@@ -4,8 +4,9 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { catchError, debounceTime, of, startWith, switchMap } from 'rxjs';
 
-import { GomAlertToastService } from '@gomlibs/ui';
-import { FormControlsModule, GomButtonComponent } from '@gomlibs/ui';
+import { FormControlsModule, GomAlertToastService, GomButtonComponent } from '@gomlibs/ui';
+import { AuthSessionService } from '../../../core/auth/auth-session.service';
+import { DisableIfNoFeatureDirective } from '../../../shared/directives/disable-if-no-feature.directive';
 import {
   DeliveryService,
   EmployeeCodeConfig,
@@ -15,7 +16,7 @@ import {
 @Component({
   selector: 'gom-employee-code-config',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormControlsModule, GomButtonComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormControlsModule, GomButtonComponent, DisableIfNoFeatureDirective],
   templateUrl: './employee-code-config.component.html',
   styleUrl: './employee-code-config.component.scss',
 })
@@ -24,11 +25,13 @@ export class EmployeeCodeConfigComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly toast = inject(GomAlertToastService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly authSession = inject(AuthSessionService);
 
   readonly loading = signal(false);
   readonly saving = signal(false);
   readonly previewCode = signal<string>('');
   readonly errorMessage = signal<string | null>(null);
+  readonly canWrite = computed(() => this.authSession.canWrite('tenant-admin'));
 
   readonly strategyOptions = [
     { value: 'DEFAULT_FORMULA', label: 'Default Formula  (Initials + Last 4 of phone)' },
@@ -134,6 +137,10 @@ export class EmployeeCodeConfigComponent implements OnInit {
   }
 
   save(): void {
+    if (!this.canWrite()) {
+      return;
+    }
+
     this.configForm.markAllAsTouched();
     if (this.configForm.invalid) return;
 

@@ -8,7 +8,7 @@
       <p class="media-page__subtitle">{{ (isPlatform() ? 'media.description' : 'tenantMedia.description') | translate }}</p>
     </div>
     <gom-lib-button type="button" variant="primary" (buttonClick)="openUploadModal()">
-      <i class="ri-upload-2-line" aria-hidden="true"></i> {{ 'media.actions.upload' | translate }}
+      <i class="ri-upload-2-line" aria-hidden="true"></i> {{ (uploadButtonLabel() | translate) }}
     </gom-lib-button>
   </header>
 
@@ -43,15 +43,34 @@
   }
 
   <div class="media-page__toolbar">
+    <div class="media-page__type-tabs" role="tablist" aria-label="Media type">
+      <button
+        type="button"
+        class="media-page__type-tab"
+        [class.media-page__type-tab--active]="activeMediaType() === 'IMAGE'"
+        (click)="onMediaTypeChange('IMAGE')"
+      >
+        <i class="ri-image-line" aria-hidden="true"></i> Images
+      </button>
+      <button
+        type="button"
+        class="media-page__type-tab"
+        [class.media-page__type-tab--active]="activeMediaType() === 'VIDEO'"
+        (click)="onMediaTypeChange('VIDEO')"
+      >
+        <i class="ri-video-line" aria-hidden="true"></i> Videos
+      </button>
+    </div>
+
     <div class="media-page__search">
       <i class="ri-search-line media-page__search-icon" aria-hidden="true"></i>
       <gom-lib-input
-        [placeholder]="'media.searchPlaceholder' | translate"
+        [placeholder]="searchPlaceholderKey() | translate"
         (valueChange)="onSearchChange($event)"
       ></gom-lib-input>
     </div>
     @if (!loading() && total() > 0) {
-      <span class="media-page__count">{{ total() }} {{ 'media.imageCount' | translate }}</span>
+      <span class="media-page__count">{{ total() }} {{ countLabelKey() | translate }}</span>
     }
   </div>
 
@@ -70,7 +89,16 @@
       @for (asset of assets(); track asset._id) {
         <div class="media-card">
           <div class="media-card__visual">
-            <img [src]="asset.url" [alt]="asset.name" class="media-card__img" loading="lazy" />
+            @if (isVideo(asset)) {
+              <video [src]="asset.url" class="media-card__img media-card__video" controls preload="metadata">
+                <track kind="captions" srclang="en" label="English" [src]="previewCaptionTrack" />
+              </video>
+            } @else {
+              <img [src]="asset.url" [alt]="asset.name" class="media-card__img" loading="lazy" />
+            }
+            @if (!isPlatform() && isSharedAsset(asset)) {
+              <span class="media-card__shared-badge">Platform</span>
+            }
             @if (isPlatform() && asset.usageCount && asset.usageCount > 0) {
               <span class="media-card__usage-badge">{{ 'media.usedCount' | translate: { count: asset.usageCount } }}</span>
             }
@@ -83,10 +111,10 @@
               <button
                 class="media-card__action-btn media-card__action-btn--danger"
                 type="button"
-                [disabled]="isPlatform() && asset.usageCount !== undefined && asset.usageCount > 0"
+                [disabled]="(isPlatform() && asset.usageCount !== undefined && asset.usageCount > 0) || !canDeleteAsset(asset)"
                 (click)="confirmDelete(asset)"
                 [attr.aria-label]="'Delete ' + asset.name"
-                [title]="isPlatform() && asset.usageCount && asset.usageCount > 0 ? ('media.deleteDisabledHint' | translate: { count: asset.usageCount }) : ''"
+                [title]="isPlatform() && asset.usageCount && asset.usageCount > 0 ? ('media.deleteDisabledHint' | translate: { count: asset.usageCount }) : (!canDeleteAsset(asset) ? 'Only platform admins can delete shared media.' : '')"
               >
                 <i class="ri-delete-bin-line" aria-hidden="true"></i>
               </button>
@@ -116,7 +144,7 @@
 
 <!-- Upload Modal -->
 <gom-lib-modal
-  [title]="'media.uploadModal.title' | translate"
+  [title]="modalTitle() | translate"
   [(show)]="uploadModalOpen"
   (closed)="closeUploadModal()"
   size="large"
@@ -126,30 +154,38 @@
       <input
         #queueFileInput
         type="file"
-        accept="image/jpeg,image/png,image/webp,image/gif"
+        [accept]="uploadAccept()"
         multiple
         (change)="onFileInputChange($event)"
         class="upload-queue__file-input"
       />
-      <div
+      <button
+        type="button"
         class="upload-queue__dropzone"
         [class.upload-queue__dropzone--dragging]="dragging()"
         (click)="openFilePicker()"
+        (keydown)="onDropzoneKeydown($event)"
         (dragover)="onDragOver($event)"
         (dragleave)="onDragLeave($event)"
         (drop)="onDrop($event)"
       >
         <i class="ri-upload-cloud-2-line upload-queue__drop-icon" aria-hidden="true"></i>
-        <p class="upload-queue__drop-text">{{ 'media.upload.dragOrClick' | translate }}</p>
-        <p class="upload-queue__drop-hint">{{ 'media.upload.hint' | translate: { maxSize: 5 } }}</p>
-      </div>
+        <p class="upload-queue__drop-text">{{ (dragOrClickLabel() | translate) }}</p>
+        <p class="upload-queue__drop-hint">{{ (hintLabel() | translate: { maxSize: maxSizeMb() }) }}</p>
+      </button>
     }
 
     @if (uploadQueue().length > 0) {
       <div class="upload-queue__list">
         @for (item of uploadQueue(); track item.id) {
           <div class="upload-queue__row" [class.upload-queue__row--done]="item.status === 'done'" [class.upload-queue__row--failed]="item.status === 'failed'" [class.upload-queue__row--uploading]="item.status === 'uploading'">
-            <img [src]="item.dataUrl" [alt]="item.name" class="upload-queue__thumb" />
+            @if (isVideo(item)) {
+              <video [src]="item.dataUrl" class="upload-queue__thumb upload-queue__video" controls preload="metadata">
+                <track kind="captions" srclang="en" label="English" [src]="previewCaptionTrack" />
+              </video>
+            } @else {
+              <img [src]="item.dataUrl" [alt]="item.name" class="upload-queue__thumb" />
+            }
             <div class="upload-queue__name-field">
               @if (item.status === 'pending') {
                 <input
@@ -200,7 +236,7 @@
       @if (pendingCount() > 0 && !isUploading()) {
         <gom-lib-button type="button" variant="primary" [disabled]="hasInvalidNames()" (buttonClick)="uploadAll()">
           <i class="ri-upload-2-line" aria-hidden="true"></i>
-          {{ 'media.uploadQueue.uploadCount' | translate: { count: pendingCount() } }}
+          {{ (uploadCountLabel() | translate: { count: pendingCount() }) }}
         </gom-lib-button>
       }
     </div>
@@ -222,7 +258,7 @@
 <!-- Platform-only: Image Detail / Usage Modal -->
 @if (isPlatform()) {
   <gom-lib-modal
-    [title]="'media.infoModal.title' | translate"
+    [title]="infoModalTitleKey() | translate"
     [(show)]="infoModalOpen"
     (closed)="closeInfoModal()"
     size="medium"
@@ -235,7 +271,13 @@
     } @else if (usageDetail()) {
       <div class="info-modal">
         <div class="info-modal__preview">
-          <img [src]="usageDetail()!.asset.url" [alt]="usageDetail()!.asset.name" />
+          @if (usageDetail()!.asset.mediaType === 'VIDEO') {
+            <video [src]="usageDetail()!.asset.url" class="info-modal__video" controls preload="metadata">
+              <track kind="captions" srclang="en" label="English" [src]="previewCaptionTrack" />
+            </video>
+          } @else {
+            <img [src]="usageDetail()!.asset.url" [alt]="usageDetail()!.asset.name" />
+          }
         </div>
         <div class="info-modal__details">
           <h3 class="info-modal__name">{{ usageDetail()!.asset.name }}</h3>

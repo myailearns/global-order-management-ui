@@ -3,13 +3,15 @@ import { CommonModule } from '@angular/common';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { CATEGORY_DEFAULT_STATUS, CATEGORY_UI_TEXT } from '../categories.constants';
 import { Category } from '../categories.service';
-import { GomButtonComponent } from '@gomlibs/ui';
-import { GomTableColumn, GomTableComponent, GomTableRow } from '@gomlibs/ui';
+import { GomButtonComponent, GomTableColumn, GomTableComponent, GomTableRow } from '@gomlibs/ui';
+import { DisableIfNoFeatureDirective } from '../../../../shared/directives/disable-if-no-feature.directive';
 
 interface CategoryTableRow extends GomTableRow {
   _id?: string;
   name: string;
   description: string;
+  imageAssetId?: string | null;
+  imageUrl?: string;
   status: string;
 }
 
@@ -21,7 +23,7 @@ export interface CategoryAction {
 @Component({
   selector: 'gom-categories-list',
   standalone: true,
-  imports: [CommonModule, TranslateModule, GomTableComponent, GomButtonComponent],
+  imports: [CommonModule, TranslateModule, GomTableComponent, GomButtonComponent, DisableIfNoFeatureDirective],
   templateUrl: './categories-list.component.html',
   styleUrl: './categories-list.component.scss'
 })
@@ -73,6 +75,8 @@ export class CategoriesListComponent implements OnChanges {
       _id: category._id,
       ...category,
       description: category.description || CATEGORY_UI_TEXT.emptyValue,
+      imageAssetId: category.imageAssetId ?? null,
+      imageUrl: category.imageUrl || '',
       status: category.status || CATEGORY_DEFAULT_STATUS,
     }));
   }
@@ -118,6 +122,8 @@ export class CategoriesListComponent implements OnChanges {
       _id: typeof row['_id'] === 'string' ? row['_id'] : '',
       name: typeof row['name'] === 'string' ? row['name'] : '',
       description: typeof row['description'] === 'string' ? row['description'] : CATEGORY_UI_TEXT.emptyValue,
+      imageAssetId: typeof row['imageAssetId'] === 'string' ? row['imageAssetId'] : null,
+      imageUrl: typeof row['imageUrl'] === 'string' ? row['imageUrl'] : '',
       status: row['status'] === 'INACTIVE' ? 'INACTIVE' : CATEGORY_DEFAULT_STATUS,
     };
   }

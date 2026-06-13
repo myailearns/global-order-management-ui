@@ -1,11 +1,14 @@
 <div class="fields-list">
   <header class="fields-list__header">
     <h2><i class="ri-table-2" aria-hidden="true"></i> {{ text.pageTitle | translate }}</h2>
-      @if (canCreate) {
-        <gom-lib-button class="btn-add" (buttonClick)="onAddNew()" [disabled]="loading">
-          <i class="ri-add-line" aria-hidden="true"></i> {{ text.addField | translate }}
-        </gom-lib-button>
-      }
+      <gom-lib-button
+        class="btn-add"
+        (buttonClick)="onAddNew()"
+        gomDisableIfNoFeature="field.create"
+        [disabled]="loading || !canCreate"
+      >
+        <i class="ri-add-line" aria-hidden="true"></i> {{ text.addField | translate }}
+      </gom-lib-button>
   </header>
 
   <section class="fields-list__table-shell">

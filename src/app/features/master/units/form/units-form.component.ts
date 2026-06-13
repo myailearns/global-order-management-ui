@@ -13,6 +13,7 @@ import { UnitPayload, UnitStatus } from '../units.service';
 export interface UnitAssignOption {
   id: string;
   name: string;
+  categoryIds?: string[];
 }
 
 export interface UnitFormData {
@@ -57,6 +58,7 @@ export class UnitsFormComponent implements OnInit, OnChanges {
     symbol: ['', [Validators.required, Validators.minLength(1)]],
     baseUnitId: [''],
     conversionFactor: [{ value: '1', disabled: true }, [Validators.required]],
+    mappedCategories: this.fb.nonNullable.control<string[]>([], [Validators.required]),
     status: new FormControl<UnitStatus>(UNIT_DEFAULT_STATUS, {
       nonNullable: true,
       validators: [Validators.required],
@@ -74,6 +76,17 @@ export class UnitsFormComponent implements OnInit, OnChanges {
       .subscribe((baseUnitId) => {
         if (baseUnitId) {
           this.form.controls.conversionFactor.enable({ emitEvent: false });
+
+          const selectedBaseUnit = this.baseUnitOptions.find((option) => option.id === String(baseUnitId));
+          const inheritedCategoryIds = Array.isArray(selectedBaseUnit?.categoryIds)
+            ? selectedBaseUnit.categoryIds.map((id) => String(id || '').trim()).filter(Boolean)
+            : [];
+
+          if (inheritedCategoryIds.length > 0 && this.selectedCategoryIds.length === 0) {
+            this.selectedCategoryIds = [...new Set(inheritedCategoryIds)];
+            this.form.controls.mappedCategories.setValue([...this.selectedCategoryIds]);
+          }
+
           return;
         }
 
@@ -128,6 +141,7 @@ export class UnitsFormComponent implements OnInit, OnChanges {
   onSubmit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
+      this.form.controls.mappedCategories.markAsTouched();
       return;
     }
 
@@ -151,6 +165,8 @@ export class UnitsFormComponent implements OnInit, OnChanges {
 
   onMappedCategorySelectionChange(ids: string[]): void {
     this.selectedCategoryIds = [...ids];
+    this.form.controls.mappedCategories.setValue([...ids]);
+    this.form.controls.mappedCategories.markAsTouched();
   }
 
   onConversionFactorInput(value: string): void {
@@ -164,6 +180,7 @@ export class UnitsFormComponent implements OnInit, OnChanges {
       symbol: this.initialData?.symbol ?? '',
       baseUnitId: this.initialData?.baseUnitId ?? '',
       conversionFactor: String(this.initialData?.conversionFactor ?? 1),
+      mappedCategories: this.initialData?.categoryIds ?? [],
       status: this.initialData?.status ?? UNIT_DEFAULT_STATUS,
     });
 
@@ -179,6 +196,11 @@ export class UnitsFormComponent implements OnInit, OnChanges {
 
     this.form.markAsPristine();
     this.form.markAsUntouched();
+  }
+
+  get mappedCategoriesInvalid(): boolean {
+    const control = this.form.controls.mappedCategories;
+    return control.touched && control.invalid;
   }
 
   private rebuildStatusOptions(): void {

@@ -32,6 +32,8 @@ export interface Field {
   name: string;
   key: string;
   type: 'NUMBER' | 'PERCENTAGE' | 'TEXT' | 'LONG_TEXT';
+  valueFormat?: 'NUMBER' | 'CURRENCY';
+  currencyCode?: 'INR' | null;
   fieldKind?: 'PRICING' | 'METADATA';
   defaultValue: number | string;
   isRequired: boolean;
@@ -87,14 +89,17 @@ export interface GroupResolvedField {
 export interface Group {
   _id: string;
   name: string;
+  description?: string;
   categoryId: string;
   quantity: number;
   fieldGroupId: string;
   fieldGroupVersion: number;
   resolvedFields: GroupResolvedField[];
+    excludedFieldKeys: string[];
   formula: {
     sellingPrice: string;
     anchorPrice: string;
+    actualPrice: string;
   };
   baseUnitId: string;
   allowedUnitIds: string[];
@@ -111,13 +116,16 @@ export interface Group {
 
 export interface GroupPayload {
   name: string;
+  description?: string;
   categoryId: string;
   quantity: number;
   fieldGroupId: string;
   customFields: Array<{ fieldId: string; value: number }>;
+    excludedFieldKeys: string[];
   formula: {
     sellingPrice: string;
     anchorPrice: string;
+    actualPrice: string;
   };
   baseUnitId: string;
   allowedUnitIds: string[];
@@ -148,6 +156,10 @@ export class GroupsService {
 
   updateGroup(id: string, payload: GroupPayload): Observable<ApiSuccess<Group>> {
     return this.http.put<ApiSuccess<Group>>(`${this.groupsUrl}/${id}`, payload);
+  }
+
+  patchGroupStatus(id: string, status: 'ACTIVE' | 'INACTIVE'): Observable<ApiSuccess<Group>> {
+    return this.http.patch<ApiSuccess<Group>>(`${this.groupsUrl}/${id}/status`, { status });
   }
 
   listCategories(): Observable<ApiPaginated<Category>> {

@@ -13,22 +13,28 @@
     [multiple]="isMultiple"
     (change)="onFileChange($event)"
     class="image-upload__input"
-    aria-hidden="true"
   />
 
   @if (isMultiple) {
     <!-- Multi-file mode -->
-    <div class="image-upload__dropzone" (click)="openFilePicker()">
+    <button type="button" class="image-upload__dropzone" (click)="openFilePicker()" (keydown)="onDropzoneKeydown($event)">
       <i class="ri-upload-cloud-2-line image-upload__icon" aria-hidden="true"></i>
-      <p class="image-upload__text">{{ 'media.upload.dragOrClick' | translate }}</p>
-      <p class="image-upload__hint">{{ 'media.upload.hintMulti' | translate: { maxSize: maxSizeMb(), maxFiles: maxFiles() } }}</p>
-    </div>
+      <p class="image-upload__text">{{ (dragOrClickLabel() | translate) }}</p>
+      <p class="image-upload__hint">{{ (hintLabelResolved() | translate: { maxSize: maxSizeMb(), maxFiles: maxFiles() }) }}</p>
+    </button>
 
     @if (previews().length > 0) {
       <div class="image-upload__multi-previews">
         @for (item of previews(); track $index) {
           <div class="image-upload__multi-item">
-            <img [src]="item.dataUrl" [alt]="item.file.name" class="image-upload__multi-img" />
+            @if (item.mediaType === 'VIDEO') {
+              <div class="image-upload__multi-img image-upload__video-placeholder">
+                <i class="ri-video-line" aria-hidden="true"></i>
+                <span>{{ item.file.name }}</span>
+              </div>
+            } @else {
+              <img [src]="item.dataUrl" [alt]="item.file.name" class="image-upload__multi-img" />
+            }
             <gom-lib-button type="button" variant="secondary" (buttonClick)="removePreview($index)" [disabled]="disabled()">
               <i class="ri-close-line" aria-hidden="true"></i>
             </gom-lib-button>
@@ -49,7 +55,14 @@
     <!-- Single-file mode -->
     @if (preview()) {
       <div class="image-upload__preview">
-        <img [src]="preview()" alt="Preview" class="image-upload__preview-img" />
+        @if (previewMediaType() === 'VIDEO') {
+          <div class="image-upload__preview-img image-upload__video-placeholder">
+            <i class="ri-video-line" aria-hidden="true"></i>
+            <span>{{ selectedFile()?.name }}</span>
+          </div>
+        } @else {
+          <img [src]="preview()" alt="Preview" class="image-upload__preview-img" />
+        }
         <gom-lib-button
           type="button"
           variant="secondary"
@@ -61,11 +74,11 @@
         </gom-lib-button>
       </div>
     } @else {
-      <div class="image-upload__dropzone" (click)="openFilePicker()">
+      <button type="button" class="image-upload__dropzone" (click)="openFilePicker()" (keydown)="onDropzoneKeydown($event)">
         <i class="ri-upload-cloud-2-line image-upload__icon" aria-hidden="true"></i>
         <p class="image-upload__text">{{ 'media.upload.dragOrClick' | translate }}</p>
         <p class="image-upload__hint">{{ 'media.upload.hint' | translate: { maxSize: maxSizeMb() } }}</p>
-      </div>
+      </button>
     }
   }
 

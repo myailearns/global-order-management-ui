@@ -1,20 +1,22 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 
-import { GomAlertToastService } from '@gomlibs/ui';
-import { FormControlsModule, GomButtonComponent } from '@gomlibs/ui';
+import { FormControlsModule, GomAlertToastService, GomButtonComponent } from '@gomlibs/ui';
+import { AuthSessionService } from '../../../core/auth/auth-session.service';
+import { DisableIfNoFeatureDirective } from '../../../shared/directives/disable-if-no-feature.directive';
 import {
   DeliveryPincodeConfig,
   DeliveryService,
   NonServiceableSuggestion,
+  PincodeMode,
 } from '../../delivery/delivery.service';
 
 @Component({
   selector: 'gom-serviceable-pincodes-config',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormControlsModule, GomButtonComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormControlsModule, GomButtonComponent, DisableIfNoFeatureDirective],
   templateUrl: './serviceable-pincodes-config.component.html',
   styleUrl: './serviceable-pincodes-config.component.scss',
 })
@@ -23,10 +25,18 @@ export class ServiceablePincodesConfigComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly toast = inject(GomAlertToastService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly authSession = inject(AuthSessionService);
 
   readonly loading = signal(false);
   readonly saving = signal(false);
   readonly errorMessage = signal<string | null>(null);
+  readonly canWrite = computed(() => this.authSession.canWrite('tenant-admin'));
+
+  readonly pincodeModeOptions = [
+    { value: 'DISABLED', label: 'Disabled — No pincode check, delivery section hidden' },
+    { value: 'SERVE_ALL', label: 'Serve All — Accept every pincode, show delivery estimate' },
+    { value: 'RESTRICTED', label: 'Restricted — Only deliver to whitelisted pincodes' },
+  ];
 
   readonly suggestionOptions = [
     { value: 'CALL_COURIER', label: 'Suggest Call Courier' },
@@ -34,7 +44,7 @@ export class ServiceablePincodesConfigComponent implements OnInit {
   ];
 
   readonly configForm = this.fb.group({
-    enabled: [false],
+    pincodeMode: ['DISABLED' as PincodeMode],
     nonServiceableSuggestion: ['CALL_COURIER' as NonServiceableSuggestion],
     serviceablePincodesText: [''],
   });
@@ -51,8 +61,10 @@ export class ServiceablePincodesConfigComponent implements OnInit {
         next: (res) => {
           const cfg = res.data?.deliveryPincodeConfig;
           if (cfg) {
+            // Resolve legacy: if pincodeMode not set, derive from enabled boolean
+            const mode = cfg.pincodeMode || (cfg.enabled ? 'RESTRICTED' : 'DISABLED');
             this.configForm.patchValue({
-              enabled: Boolean(cfg.enabled),
+              pincodeMode: mode,
               nonServiceableSuggestion: cfg.nonServiceableSuggestion || 'CALL_COURIER',
               serviceablePincodesText: (cfg.serviceablePincodes || []).join('\n'),
             });
@@ -67,17 +79,23 @@ export class ServiceablePincodesConfigComponent implements OnInit {
   }
 
   save(): void {
+    if (!this.canWrite()) {
+      return;
+    }
+
     const raw = this.configForm.getRawValue();
     const parsedPincodes = this.parsePincodes(String(raw.serviceablePincodesText || ''));
 
-    const invalidPincodes = parsedPincodes.filter((code) => !/^\d{6}$/.test(code));
+    // Allow: 500032, 5000*, 500032:2, 5000*:3
+    const invalidPincodes = parsedPincodes.filter((code) => !/^\d{1,6}\*?(:\d{1,3})?$/.test(code));
     if (invalidPincodes.length) {
-      this.errorMessage.set('Only valid 6-digit pincodes are allowed.');
+      this.errorMessage.set('Invalid format. Use: 500032, 5000*, 500032:2, 5000*:3 (pattern:days)');
       return;
     }
 
     const payload: Partial<DeliveryPincodeConfig> = {
-      enabled: Boolean(raw.enabled),
+      pincodeMode: (raw.pincodeMode || 'DISABLED') as PincodeMode,
+      enabled: raw.pincodeMode === 'RESTRICTED', // keep legacy field in sync
       nonServiceableSuggestion: (raw.nonServiceableSuggestion || 'CALL_COURIER') as NonServiceableSuggestion,
       serviceablePincodes: [...new Set(parsedPincodes)],
     };

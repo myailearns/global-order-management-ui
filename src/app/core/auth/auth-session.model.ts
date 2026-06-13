@@ -11,6 +11,10 @@ export type AppCapability =
   | 'delivery'
   | 'settings-core';
 
+export type FeatureConfigValue = string | number | boolean | null;
+
+export type EffectiveFeatureConfigs = Record<string, Record<string, FeatureConfigValue>>;
+
 export interface AuthSession {
   actorType: UserActor;
   userId: string;
@@ -23,6 +27,7 @@ export interface AuthSession {
   roleKeys: string[];
   capabilities: AppCapability[];
   featureKeys?: string[];
+  effectiveFeatureConfigs?: EffectiveFeatureConfigs;
 }
 
 export interface PlatformLoginRequest {

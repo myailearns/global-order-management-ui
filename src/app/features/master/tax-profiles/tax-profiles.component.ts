@@ -1,12 +1,17 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 
-import { GomButtonComponent } from '@gomlibs/ui';
-import { GomTableColumn, GomTableComponent, GomTableRow } from '@gomlibs/ui';
-import { GomAlertToastService } from '@gomlibs/ui';
+import {
+  GomAlertToastService,
+  GomButtonComponent,
+  GomTableColumn,
+  GomTableComponent,
+  GomTableRow,
+} from '@gomlibs/ui';
 import { TaxProfile, TaxProfilesService } from './tax-profiles.service';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { TaxProfilesFormComponent, TaxProfileFormData, TaxProfileFormPayload } from './form/tax-profiles-form.component';
+import { DisableIfNoFeatureDirective } from '../../../shared/directives/disable-if-no-feature.directive';
 
 interface TaxProfileRow extends GomTableRow {
   _id: string;
@@ -25,6 +30,7 @@ interface TaxProfileRow extends GomTableRow {
   standalone: true,
   imports: [
     CommonModule,
+    DisableIfNoFeatureDirective,
     GomButtonComponent,
     GomTableComponent,
     TaxProfilesFormComponent,

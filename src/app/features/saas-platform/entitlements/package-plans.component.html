@@ -30,14 +30,81 @@
       { value: 'ACTIVE', label: 'ACTIVE' },
       { value: 'INACTIVE', label: 'INACTIVE' }
     ]"></gom-lib-select>
-    <gom-lib-select
-      formControlName="featureKeys"
-      [label]="'saas.platform.packages.lbl_features' | translate"
-      [placeholder]="'saas.platform.packages.ph_features' | translate"
-      [options]="featureOptions()"
-      [multiple]="true"
-      [hint]="'saas.platform.packages.hint_features' | translate"
-    ></gom-lib-select>
+    <section class="package-builder">
+      <div class="package-builder__toolbar">
+        <p class="package-builder__label">Modules</p>
+        <div class="package-builder__chips">
+          <button type="button" class="package-builder__chip" [class.package-builder__chip--active]="activeModule() === 'all'" (click)="selectModule('all')">All</button>
+          @for (module of moduleList(); track module) {
+          <button
+            type="button"
+            class="package-builder__chip"
+            [class.package-builder__chip--active]="activeModule() === module"
+            (click)="selectModule(module)"
+          >
+            {{ module }}
+          </button>
+          }
+        </div>
+
+        <label class="package-builder__search">
+          <span>Search Features</span>
+          <input
+            type="text"
+            [value]="featureSearch()"
+            (input)="setFeatureSearch($any($event.target).value)"
+            placeholder="Type feature name or key"
+          />
+        </label>
+
+      </div>
+
+      <!-- Features list -->
+      <div class="package-builder__list" aria-label="Package features list">
+        @if (!filteredFeatures().length) {
+        <p class="package-feature-configs__empty-note">No features found for current filter.</p>
+        }
+        @for (feature of filteredFeatures(); track feature.featureKey) {
+        <article class="package-builder__item">
+          <label class="package-feature-item__toggle">
+            <input
+              type="checkbox"
+              [checked]="isFeatureSelected(feature.featureKey)"
+              (change)="toggleFeature(feature.featureKey, $any($event.target).checked)"
+            />
+            <span>
+              {{ feature.displayName }}
+              <small>({{ feature.featureKey }})</small>
+            </span>
+          </label>
+        </article>
+        }
+      </div>
+
+      <!-- Feature Configurations -->
+      @if (selectedFeaturesResolved().length) {
+      <section class="package-config-editor">
+        <h3>Feature Configurations</h3>
+        @for (feature of selectedFeaturesResolved(); track feature.featureKey) {
+          @if (featureConfigKeys(feature).length) {
+          <article class="package-config-editor__feature">
+            <p class="package-config-editor__title">{{ feature.displayName }} <small>({{ feature.featureKey }})</small></p>
+            <div class="package-feature-item__configs">
+              @for (configKey of featureConfigKeys(feature); track configKey) {
+              <gom-lib-input
+                [formControl]="$any(getConfigControl(feature.featureKey, configKey))"
+                [label]="configLabel(feature, configKey)"
+                [required]="isMaxCountConfig(configKey)"
+                [placeholder]="'saas.platform.packages.ph_feature_config' | translate"
+              ></gom-lib-input>
+              }
+            </div>
+          </article>
+          }
+        }
+      </section>
+      }
+    </section>
   </form>
 
   <footer class="gom-modal__action-layout" gom-modal-actions>

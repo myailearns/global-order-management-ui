@@ -1,0 +1,202 @@
+.program-settings-container {
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 700px;
+
+  .settings-header {
+    border-bottom: 1px solid var(--color-border-subtle);
+    padding-bottom: 1.5rem;
+
+    h2 {
+      margin: 0 0 0.25rem 0;
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--color-text-primary);
+    }
+
+    p {
+      margin: 0;
+      font-size: 0.875rem;
+      color: var(--color-text-secondary);
+    }
+  }
+
+  .alert {
+    padding: 1rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+
+    &.alert-error {
+      background-color: var(--color-error-light);
+      color: var(--color-error-dark);
+      border: 1px solid var(--color-error);
+    }
+
+    &.alert-success {
+      background-color: var(--color-success-light);
+      color: var(--color-success-dark);
+      border: 1px solid var(--color-success);
+    }
+  }
+
+  .settings-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+
+    .settings-section {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+
+      .section-intro {
+        margin: -0.25rem 0 0.25rem 0;
+        font-size: 0.8125rem;
+        color: var(--color-text-secondary);
+      }
+
+      .settings-subheading {
+        margin: 0.5rem 0 0;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--color-text-primary);
+      }
+
+      .settings-note {
+        margin-top: -0.25rem;
+        padding: 0.75rem 0.875rem;
+        border: 1px solid var(--color-border-subtle);
+        background: var(--color-background-secondary);
+        color: var(--color-text-secondary);
+        border-radius: 0.5rem;
+        font-size: 0.8125rem;
+        line-height: 1.35;
+
+        strong {
+          color: var(--color-text-primary);
+        }
+      }
+
+      h3 {
+        margin: 0 0 0.5rem 0;
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--color-text-primary);
+      }
+
+      .setting-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem;
+        border-radius: 0.375rem;
+        background-color: var(--color-background-tertiary);
+
+        @media (max-width: 768px) {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 0.75rem;
+        }
+
+        .setting-label {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 0.25rem;
+
+          label {
+            margin: 0;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--color-text-primary);
+          }
+
+          .hint {
+            margin: 0;
+            font-size: 0.75rem;
+            color: var(--color-text-secondary);
+            font-style: italic;
+          }
+        }
+
+        gom-toggle,
+        gom-input {
+          flex-shrink: 0;
+        }
+
+        &.setting-row--mode-select {
+          align-items: flex-start;
+
+          .mode-options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            min-width: 260px;
+          }
+
+          .mode-option {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--color-text-primary);
+          }
+        }
+      }
+
+      .b1g1-prevention-alert {
+        margin-top: -0.25rem;
+        padding: 0.75rem 0.875rem;
+        border: 1px solid #f4d27a;
+        background: #fff8e6;
+        color: #7b4f00;
+        border-radius: 0.5rem;
+        font-size: 0.8125rem;
+        line-height: 1.35;
+
+        strong {
+          margin-right: 0.25rem;
+        }
+
+        em {
+          font-style: normal;
+          font-weight: 600;
+        }
+      }
+
+      .field-error {
+        margin: -0.5rem 0 0.25rem 0.75rem;
+        font-size: 0.75rem;
+        color: var(--color-error-dark);
+      }
+    }
+
+    .settings-divider {
+      height: 1px;
+      background-color: var(--color-border-subtle);
+      margin: 0.5rem 0;
+    }
+  }
+
+  .settings-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--color-border-subtle);
+
+    button {
+      min-width: 6rem;
+    }
+
+    @media (max-width: 768px) {
+      flex-direction: column-reverse;
+
+      button {
+        width: 100%;
+      }
+    }
+  }
+}

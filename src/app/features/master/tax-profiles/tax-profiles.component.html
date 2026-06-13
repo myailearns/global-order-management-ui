@@ -1,11 +1,15 @@
 <section class="master-page">
   <header class="master-page__header">
     <h2><i class="ri-percent-line" aria-hidden="true"></i> Tax Profiles</h2>
-    @if (canCreateTaxProfile()) {
-    <gom-lib-button type="button" variant="primary" (buttonClick)="openCreate()">
+    <gom-lib-button
+      type="button"
+      variant="primary"
+      (buttonClick)="openCreate()"
+      gomDisableIfNoFeature="taxProfile.create"
+      [disabled]="loading() || !canCreateTaxProfile()"
+    >
       <i class="ri-add-line" aria-hidden="true"></i> Add Tax Profile
     </gom-lib-button>
-    }
   </header>
 
   @if (errorMessage()) {

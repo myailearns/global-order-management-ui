@@ -8,6 +8,12 @@
 >
   @if (category) {
     <section class="category-view">
+      @if (category.imageUrl) {
+        <div class="category-view__image-shell">
+          <img class="category-view__image" [src]="category.imageUrl" [alt]="category.name" />
+        </div>
+      }
+
       <div class="category-view__row">
         <h4>{{ text.nameLabel | translate }}</h4>
         <p>{{ category.name }}</p>

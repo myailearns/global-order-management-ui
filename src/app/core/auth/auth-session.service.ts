@@ -3,7 +3,16 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, catchError, map, of, tap } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { AppCapability, AuthResult, AuthSession, PlatformLoginRequest, TenantLoginRequest, UserActor } from './auth-session.model';
+import {
+  AppCapability,
+  AuthResult,
+  AuthSession,
+  EffectiveFeatureConfigs,
+  FeatureConfigValue,
+  PlatformLoginRequest,
+  TenantLoginRequest,
+  UserActor,
+} from './auth-session.model';
 
 interface ApiResponse<TData> {
   success: boolean;
@@ -109,8 +118,13 @@ export class AuthSessionService {
     }
 
     const session = this.sessionState();
-    if (session?.actorType !== 'tenant') {
+    if (!session) {
       return false;
+    }
+
+    // Platform admins bypass all feature entitlement checks
+    if (session.actorType === 'platform') {
+      return true;
     }
 
     const keys = Array.isArray(session.featureKeys)
@@ -120,14 +134,36 @@ export class AuthSessionService {
     return keys.includes(normalized);
   }
 
+  getFeatureConfigNumber(featureKey: string, configKey: string): number | null {
+    const session = this.sessionState();
+    if (session?.actorType !== 'tenant') {
+      return null;
+    }
+
+    const normalizedFeatureKey = String(featureKey || '').trim().toLowerCase();
+    const normalizedConfigKey = String(configKey || '').trim().toLowerCase();
+    if (!normalizedFeatureKey || !normalizedConfigKey) {
+      return null;
+    }
+
+    const raw = session.effectiveFeatureConfigs?.[normalizedFeatureKey]?.[normalizedConfigKey];
+    if (raw === undefined || raw === null || raw === '') {
+      return null;
+    }
+
+    const parsed = Number(raw);
+    if (!Number.isFinite(parsed) || parsed < 0) {
+      return null;
+    }
+
+    return Math.floor(parsed);
+  }
+
   getTenantHeaders(): Record<string, string> {
     const session = this.sessionState();
     if (session?.actorType !== 'tenant' || !session.tenantId) {
-      return {
-        'x-tenant-id': 'sthala',
-        'x-user-id': 'bootstrap_saas_admin',
-        'x-actor-id': 'bootstrap_saas_admin',
-      };
+      // Do not send fallback tenant headers; this can leak data from a default tenant.
+      return {};
     }
 
     return {
@@ -155,12 +191,44 @@ export class AuthSessionService {
     nextSession.featureKeys = Array.isArray(session.featureKeys)
       ? [...new Set(session.featureKeys.map((item) => String(item || '').trim().toLowerCase()).filter(Boolean))]
       : [];
+    nextSession.effectiveFeatureConfigs = this.normalizeEffectiveFeatureConfigs(session.effectiveFeatureConfigs);
     if (session.actorType === 'tenant') {
       nextSession.tenantCode = String(session.tenantCode || '').trim().toUpperCase();
       nextSession.tenantId = String(session.tenantId || '').trim().toLowerCase();
     }
 
     return nextSession;
+  }
+
+  private normalizeEffectiveFeatureConfigs(configs: AuthSession['effectiveFeatureConfigs']): EffectiveFeatureConfigs {
+    if (!configs || typeof configs !== 'object') {
+      return {};
+    }
+
+    const normalized: EffectiveFeatureConfigs = {};
+
+    Object.entries(configs).forEach(([featureKey, value]) => {
+      const normalizedFeatureKey = String(featureKey || '').trim().toLowerCase();
+      if (!normalizedFeatureKey || !value || typeof value !== 'object') {
+        return;
+      }
+
+      const normalizedConfig: Record<string, FeatureConfigValue> = {};
+      Object.entries(value).forEach(([configKey, configValue]) => {
+        const normalizedConfigKey = String(configKey || '').trim().toLowerCase();
+        if (!normalizedConfigKey) {
+          return;
+        }
+
+        normalizedConfig[normalizedConfigKey] = configValue;
+      });
+
+      if (Object.keys(normalizedConfig).length > 0) {
+        normalized[normalizedFeatureKey] = normalizedConfig;
+      }
+    });
+
+    return normalized;
   }
 
   private readStoredSession(): AuthSession | null {

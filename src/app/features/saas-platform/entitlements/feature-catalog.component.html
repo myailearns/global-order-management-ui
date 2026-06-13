@@ -20,12 +20,14 @@
     @if (!selectedId()) {
       <div class="epic2-page__template-section">
         <p>{{ 'saas.platform.features.msg_pick_template' | translate }}</p>
-        <gom-lib-select
-          [label]="'saas.platform.features.lbl_template' | translate"
-          [placeholder]="'saas.platform.features.ph_select_template' | translate"
-          [options]="featureKeyOptions()"
-          (valueChange)="onFeatureTemplateSelect($event)"
-        ></gom-lib-select>
+          <gom-lib-select
+            [label]="'saas.platform.features.lbl_template' | translate"
+            [placeholder]="'saas.platform.features.ph_select_template' | translate"
+            [options]="featureKeyOptions()"
+            [searchable]="true"
+            [searchPlaceholder]="'saas.platform.features.ph_search' | translate"
+            (valueChange)="onFeatureTemplateSelect($event)"
+          ></gom-lib-select>
       </div>
     }
     <gom-lib-input formControlName="featureKey" [label]="'saas.platform.features.lbl_feature_key' | translate" [required]="true"></gom-lib-input>
@@ -39,6 +41,41 @@
       [multiple]="true"
       [hint]="'saas.platform.features.hint_dependencies' | translate"
     ></gom-lib-select>
+
+    <section class="feature-filters">
+      <div class="feature-filters__header">
+        <h3>{{ 'saas.platform.features.lbl_filters' | translate }}</h3>
+        <gom-lib-button type="button" variant="secondary" (buttonClick)="addFilterRow()">
+          Add Config Parameter
+        </gom-lib-button>
+      </div>
+      <p class="feature-filters__hint">Define parameter key and default value. Example: max_count=5, max_images=4.</p>
+
+      @if (filtersArray.controls.length === 0) {
+        <p class="feature-filters__empty">{{ 'saas.platform.features.msg_no_filters' | translate }}</p>
+      }
+
+      @for (filterGroup of filtersArray.controls; track $index) {
+        <div class="feature-filters__row">
+          <gom-lib-input
+            [formControl]="$any(filterGroup.get('key'))"
+            [label]="'Config Key'"
+            [placeholder]="'max_count'"
+            [required]="true"
+          ></gom-lib-input>
+          <gom-lib-input
+            [formControl]="$any(filterGroup.get('defaultValue'))"
+            [label]="'Default Value'"
+            [placeholder]="'5'"
+            [required]="false"
+          ></gom-lib-input>
+          <gom-lib-button type="button" variant="secondary" (buttonClick)="removeFilterRow($index)">
+            {{ 'common.actions.delete' | translate }}
+          </gom-lib-button>
+        </div>
+      }
+    </section>
+
     <gom-lib-select formControlName="uiVisibilityPolicy" [label]="'saas.platform.features.lbl_ui_visibility' | translate" [options]="[
       { value: 'always', label: 'saas.platform.features.opt_always' | translate },
       { value: 'entitled-only', label: 'saas.platform.features.opt_entitled_only' | translate },
@@ -49,7 +86,7 @@
       { value: 'INACTIVE', label: 'INACTIVE' }
     ]"></gom-lib-select>
     <div class="gom-switch__container">
-      <label>{{ 'saas.platform.features.lbl_beta' | translate }}</label>
+      <span>{{ 'saas.platform.features.lbl_beta' | translate }}</span>
       <gom-lib-switch [checked]="!!form.controls.isBeta.value" (checkedChange)="form.controls.isBeta.setValue($event)"></gom-lib-switch>
     </div>
   </form>

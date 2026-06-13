@@ -9,6 +9,35 @@
     display: flex;
     align-items: center;
     gap: theme.get-gap(sm);
+    flex-wrap: wrap;
+  }
+
+  &__type-tabs {
+    display: inline-flex;
+    align-items: center;
+    gap: theme.get-gap(xxs);
+    border: theme.get-border(standard);
+    border-radius: theme.get-radius(sm);
+    padding: theme.get-spacing(xxs);
+    background: theme.get-background(white);
+  }
+
+  &__type-tab {
+    border: 0;
+    background: transparent;
+    color: theme.get-text(hint);
+    padding: theme.get-spacing(xxs) theme.get-spacing(sm);
+    border-radius: theme.get-radius(xs);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: theme.get-gap(xxs);
+
+    &--active {
+      color: theme.get-text(default);
+      background: theme.get-background(secondary);
+      font-weight: theme.get-font-weight(semibold);
+    }
   }
 
   &__search {
@@ -117,6 +146,24 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+  }
+
+  &__video-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: theme.get-gap(xxs);
+    background: theme.get-background(secondary);
+    color: theme.get-text(hint);
+
+    i {
+      font-size: 1.25rem;
+    }
+
+    span {
+      font-size: theme.get-font-size(xs);
+    }
   }
 
   &__card-check {

@@ -1,11 +1,14 @@
 <div class="units-list">
   <header class="units-list__header">
     <h2><i class="ri-scales-3-line" aria-hidden="true"></i> {{ text.pageTitle | translate }}</h2>
-      @if (canCreate) {
-        <gom-lib-button class="btn-add" (buttonClick)="onAddNew()" [disabled]="loading">
-          <i class="ri-add-line" aria-hidden="true"></i> {{ text.addUnit | translate }}
-        </gom-lib-button>
-      }
+      <gom-lib-button
+        class="btn-add"
+        (buttonClick)="onAddNew()"
+        [gomDisableIfNoFeature]="'unit.create'"
+        [disabled]="loading || !canCreate"
+      >
+        <i class="ri-add-line" aria-hidden="true"></i> {{ text.addUnit | translate }}
+      </gom-lib-button>
   </header>
 
   <section class="units-list__table-shell">

@@ -8,7 +8,9 @@ export interface MediaAsset {
   size: number;
   width: number;
   height: number;
+  duration: number;
   format: string;
+  mediaType: 'IMAGE' | 'VIDEO';
   visibility: 'PUBLIC' | 'PRIVATE';
   uploadedBy: string;
   status: 'ACTIVE' | 'INACTIVE';
@@ -78,6 +80,8 @@ export interface GroupImage {
   source: 'PLATFORM' | 'TENANT';
   sortOrder: number;
 }
+
+export type MediaType = 'IMAGE' | 'VIDEO';
 
 export interface GroupImagesResponse {
   success: boolean;

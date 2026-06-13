@@ -102,6 +102,17 @@
   margin: 0.25rem 0 0.75rem;
 }
 
+.view-order-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.75rem 1rem;
+  margin: 0 0 1rem;
+  padding: 0.875rem;
+  border: 1px solid #d8dee5;
+  border-radius: 0.5rem;
+  background: #f8fafc;
+}
+
 .view-order-items-wrap {
   max-height: 20rem;
   overflow: auto;
@@ -131,6 +142,92 @@
 .view-order-empty {
   margin: 0;
   color: #5b6673;
+}
+
+.view-order-feedback {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid #d8dee5;
+  border-radius: 0.5rem;
+  background: #f8fafc;
+}
+
+.view-order-feedback-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.view-order-feedback-label {
+  font-weight: 600;
+  min-width: 9rem;
+  color: #374151;
+  font-size: 0.9rem;
+}
+
+.view-order-feedback-stars {
+  display: flex;
+  gap: 0.2rem;
+  font-size: 1.1rem;
+  color: #d1d5db;
+
+  .feedback-star--filled {
+    color: #f59e0b;
+  }
+}
+
+.view-order-feedback-comment {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+
+  p {
+    margin: 0;
+    font-style: italic;
+    color: #374151;
+  }
+}
+
+.view-order-feedback-date {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+.view-order-return {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid #d8dee5;
+  border-radius: 0.5rem;
+  background: #f8fafc;
+}
+
+.view-order-return-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+
+  p {
+    margin: 0;
+    font-style: italic;
+    color: #374151;
+  }
+}
+
+.view-order-return-label {
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.9rem;
+}
+
+.view-order-return-date {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #9ca3af;
 }
 
 .status-inline-link {

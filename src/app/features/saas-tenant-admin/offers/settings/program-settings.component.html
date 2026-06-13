@@ -1,0 +1,413 @@
+<div class="program-settings-container">
+  <div class="settings-header">
+    <h2>{{ 'gom.offers.settings_title' | translate }}</h2>
+    <p>{{ 'gom.offers.settings_subtitle' | translate }}</p>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="alert alert-error">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  @if (successMessage()) {
+    <div class="alert alert-success">
+      {{ successMessage() }}
+    </div>
+  }
+
+  <form [formGroup]="settingsForm" class="settings-form">
+    <div class="settings-section">
+      <h3>{{ 'gom.offers.section_program_activation' | translate }}</h3>
+      <p class="section-intro">{{ 'gom.offers.step_program_activation_intro' | translate }}</p>
+
+      <div class="setting-row">
+        <div class="setting-label">
+          <span class="setting-title">{{ 'gom.offers.setting_offer_program_enabled' | translate }}</span>
+          <p class="hint">{{ 'gom.offers.hint_offer_program_enabled' | translate }}</p>
+        </div>
+        <gom-lib-switch
+          [checked]="settingsForm.controls['offerProgramEnabled'].value ?? false"
+          [disabled]="loading()"
+          [leftText]="'common.status.inactive' | translate"
+          [rightText]="'common.status.active' | translate"
+          [ariaLabel]="'gom.offers.setting_offer_program_enabled' | translate"
+          (checkedChange)="settingsForm.controls['offerProgramEnabled'].setValue($event)"
+        ></gom-lib-switch>
+      </div>
+
+      @if (settingsForm.controls['offerProgramEnabled'].value) {
+        <h4 class="settings-subheading">{{ 'gom.offers.subheading_auto_triggers' | translate }}</h4>
+
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-title">{{ 'gom.offers.setting_auto_enable_b1g1' | translate }}</span>
+            <p class="hint">{{ 'gom.offers.hint_auto_enable_b1g1' | translate }}</p>
+          </div>
+          <gom-lib-switch
+            [checked]="settingsForm.controls['autoEnableB1G1'].value ?? false"
+            [disabled]="loading()"
+            [leftText]="'common.status.inactive' | translate"
+            [rightText]="'common.status.active' | translate"
+            [ariaLabel]="'gom.offers.setting_auto_enable_b1g1' | translate"
+            (checkedChange)="settingsForm.controls['autoEnableB1G1'].setValue($event)"
+          ></gom-lib-switch>
+        </div>
+
+        @if (showB1g1PreventionAlert()) {
+          <div class="b1g1-prevention-alert" role="alert" aria-live="polite">
+            {{ 'gom.offers.alert_b1g1_auto_enable_inactive' | translate:{ count: activeB1g1OfferCount() } }}
+          </div>
+        }
+
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-title">{{ 'gom.offers.setting_auto_enable_coupon' | translate }}</span>
+            <p class="hint">{{ 'gom.offers.hint_auto_enable_coupon' | translate }}</p>
+          </div>
+          <gom-lib-switch
+            [checked]="settingsForm.controls['autoEnableCoupon'].value ?? false"
+            [disabled]="loading()"
+            [leftText]="'common.status.inactive' | translate"
+            [rightText]="'common.status.active' | translate"
+            [ariaLabel]="'gom.offers.setting_auto_enable_coupon' | translate"
+            (checkedChange)="settingsForm.controls['autoEnableCoupon'].setValue($event)"
+          ></gom-lib-switch>
+        </div>
+      } @else {
+        <div class="settings-note" role="note" aria-live="polite">
+          {{ 'gom.offers.note_enable_program_first' | translate }}
+        </div>
+      }
+    </div>
+
+    <div class="settings-divider"></div>
+
+    @if (settingsForm.controls['offerProgramEnabled'].value) {
+    <div class="settings-section">
+      <h3>{{ 'gom.offers.section_loyalty_program' | translate }}</h3>
+      <p class="section-intro">{{ 'gom.offers.step_loyalty_intro' | translate }}</p>
+      <div class="setting-row">
+        <div class="setting-label">
+          <span class="setting-title">{{ 'gom.offers.setting_loyalty_program_enabled' | translate }}</span>
+          <p class="hint">{{ 'gom.offers.hint_loyalty_program_enabled' | translate }}</p>
+        </div>
+        <gom-lib-switch
+          [checked]="settingsForm.controls['loyaltyEnabled'].value ?? false"
+          [disabled]="loading()"
+          [leftText]="'common.status.inactive' | translate"
+          [rightText]="'common.status.active' | translate"
+          [ariaLabel]="'gom.offers.setting_loyalty_program_enabled' | translate"
+          (checkedChange)="settingsForm.controls['loyaltyEnabled'].setValue($event)"
+        ></gom-lib-switch>
+      </div>
+
+      @if (settingsForm.controls['loyaltyEnabled'].value) {
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-title">{{ 'gom.offers.setting_enable_points_with_discount' | translate }}</span>
+            <p class="hint">{{ 'gom.offers.hint_enable_points_with_discount' | translate }}</p>
+          </div>
+          <gom-lib-switch
+            [checked]="settingsForm.controls['enablePointsWithDiscount'].value ?? true"
+            [disabled]="loading()"
+            [leftText]="'common.status.no' | translate"
+            [rightText]="'common.status.yes' | translate"
+            [ariaLabel]="'gom.offers.setting_enable_points_with_discount' | translate"
+            (checkedChange)="settingsForm.controls['enablePointsWithDiscount'].setValue($event)"
+          ></gom-lib-switch>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-label">
+            <span class="setting-title">{{ 'gom.offers.setting_enable_coupon_with_loyalty' | translate }}</span>
+            <p class="hint">{{ 'gom.offers.hint_enable_coupon_with_loyalty' | translate }}</p>
+          </div>
+          <gom-lib-switch
+            [checked]="settingsForm.controls['enableCouponWithLoyalty'].value ?? true"
+            [disabled]="loading()"
+            [leftText]="'common.status.no' | translate"
+            [rightText]="'common.status.yes' | translate"
+            [ariaLabel]="'gom.offers.setting_enable_coupon_with_loyalty' | translate"
+            (checkedChange)="settingsForm.controls['enableCouponWithLoyalty'].setValue($event)"
+          ></gom-lib-switch>
+        </div>
+
+        <div class="settings-subsection">
+          <h4>{{ 'gom.offers.subsection_points_earning' | translate }}</h4>
+          <div class="setting-row">
+            <div class="setting-label">
+              <span class="setting-title">{{ 'gom.offers.setting_points_per_amount' | translate }}</span>
+              <p class="hint">{{ 'gom.offers.hint_points_per_amount' | translate }}</p>
+            </div>
+            <div class="conversion-inputs">
+              <gom-lib-input
+                formControlName="pointsConversionPoints"
+                type="number"
+                [placeholder]="'1'"
+                [label]="'gom.offers.label_points' | translate"
+              ></gom-lib-input>
+              <span class="conversion-separator">{{ 'gom.offers.label_per' | translate }}</span>
+              <gom-lib-input
+                formControlName="pointsConversionAmount"
+                type="number"
+                [placeholder]="'₹100'"
+                [label]="'gom.offers.label_amount' | translate"
+              ></gom-lib-input>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-subsection">
+          <h4>{{ 'gom.offers.subsection_redemption' | translate }}</h4>
+          <div class="setting-row">
+            <div class="setting-label">
+              <span class="setting-title">{{ 'gom.offers.setting_redemption_value' | translate }}</span>
+              <p class="hint">{{ 'gom.offers.hint_redemption_value' | translate }}</p>
+            </div>
+            <div class="conversion-inputs">
+              <gom-lib-input
+                formControlName="redemptionRatePoints"
+                type="number"
+                [placeholder]="'100'"
+                [label]="'gom.offers.label_points' | translate"
+              ></gom-lib-input>
+              <span class="conversion-separator">=</span>
+              <gom-lib-input
+                formControlName="redemptionRateAmount"
+                type="number"
+                [placeholder]="'₹50'"
+                [label]="'gom.offers.label_amount' | translate"
+              ></gom-lib-input>
+            </div>
+          </div>
+
+          <div class="setting-row">
+            <div class="setting-label">
+              <span class="setting-title">{{ 'gom.offers.setting_point_validity' | translate }}</span>
+              <p class="hint">{{ 'gom.offers.hint_point_validity' | translate }}</p>
+            </div>
+            <gom-lib-input
+              formControlName="pointValidity"
+              type="number"
+              [placeholder]="'365'"
+            ></gom-lib-input>
+          </div>
+        </div>
+      }
+    </div>
+    } @else {
+      <div class="settings-note" role="note" aria-live="polite">
+        {{ 'gom.offers.note_loyalty_hidden_until_program_enabled' | translate }}
+      </div>
+    }
+
+    <div class="settings-divider"></div>
+
+    @if (settingsForm.controls['offerProgramEnabled'].value) {
+    <div class="settings-section">
+      <h3>{{ 'gom.offers.section_stacking_rules' | translate }}</h3>
+      <p class="section-intro">{{ 'gom.offers.step_checkout_intro' | translate }}</p>
+
+      <h4 class="settings-subheading">{{ 'gom.offers.subheading_checkout_rules' | translate }}</h4>
+
+      <div class="setting-row setting-row--mode-select">
+        <div class="setting-label">
+          <span class="setting-title">{{ 'gom.offers.setting_auto_order_discount_application_mode' | translate }}</span>
+          <p class="hint">{{ 'gom.offers.hint_auto_order_discount_application_mode' | translate }}</p>
+        </div>
+        <div class="mode-options">
+          @for (option of autoOrderDiscountModeOptions; track option.value) {
+            <label class="mode-option">
+              <input type="radio" formControlName="autoOrderDiscountApplicationMode" [value]="option.value" [disabled]="loading()" />
+              <span>{{ option.label }}</span>
+            </label>
+          }
+        </div>
+      </div>
+
+      <div class="setting-row">
+        <div class="setting-label">
+          <span class="setting-title">{{ 'gom.offers.setting_coupon_stacking' | translate }}</span>
+          <p class="hint">{{ 'gom.offers.hint_coupon_stacking' | translate }}</p>
+        </div>
+        <gom-lib-switch
+          [checked]="settingsForm.controls['enableCouponStacking'].value ?? false"
+          [disabled]="loading()"
+          [leftText]="'common.status.inactive' | translate"
+          [rightText]="'common.status.active' | translate"
+          [ariaLabel]="'gom.offers.setting_coupon_stacking' | translate"
+          (checkedChange)="settingsForm.controls['enableCouponStacking'].setValue($event)"
+        ></gom-lib-switch>
+      </div>
+
+      <div class="setting-row">
+        <div class="setting-label">
+          <span class="setting-title">{{ 'gom.offers.setting_b1g1_stacking' | translate }}</span>
+          <p class="hint">{{ 'gom.offers.hint_b1g1_stacking' | translate }}</p>
+        </div>
+        <gom-lib-switch
+          [checked]="settingsForm.controls['enableB1G1Stacking'].value ?? false"
+          [disabled]="loading()"
+          [leftText]="'common.status.inactive' | translate"
+          [rightText]="'common.status.active' | translate"
+          [ariaLabel]="'gom.offers.setting_b1g1_stacking' | translate"
+          (checkedChange)="settingsForm.controls['enableB1G1Stacking'].setValue($event)"
+        ></gom-lib-switch>
+      </div>
+
+      <div class="setting-row">
+        <div class="setting-label">
+          <span class="setting-title">{{ 'gom.offers.setting_max_coupons_per_order' | translate }}</span>
+          <p class="hint">{{ 'gom.offers.hint_max_coupons' | translate }}</p>
+        </div>
+        <gom-lib-input
+          formControlName="maxCouponsPerOrder"
+          type="number"
+          [placeholder]="'1'"
+        ></gom-lib-input>
+      </div>
+      @if (settingsForm.controls['maxCouponsPerOrder'].invalid && settingsForm.controls['maxCouponsPerOrder'].touched) {
+        <p class="field-error">{{ 'gom.offers.error_max_coupons_min' | translate }}</p>
+      }
+
+      <div class="setting-row">
+        <div class="setting-label">
+          <span class="setting-title">{{ 'gom.offers.setting_include_b1g1_in_coupon_base' | translate }}</span>
+          <p class="hint">{{ 'gom.offers.hint_include_b1g1_in_coupon_base' | translate }}</p>
+        </div>
+        <gom-lib-switch
+          [checked]="settingsForm.controls['includeB1G1ItemsInCouponBase'].value ?? true"
+          [disabled]="loading()"
+          [leftText]="'common.status.no' | translate"
+          [rightText]="'common.status.yes' | translate"
+          [ariaLabel]="'gom.offers.setting_include_b1g1_in_coupon_base' | translate"
+          (checkedChange)="settingsForm.controls['includeB1G1ItemsInCouponBase'].setValue($event)"
+        ></gom-lib-switch>
+      </div>
+
+      <div class="setting-row">
+        <div class="setting-label">
+          <span class="setting-title">{{ 'gom.offers.setting_include_b1g1_in_auto_offer_base' | translate }}</span>
+          <p class="hint">{{ 'gom.offers.hint_include_b1g1_in_auto_offer_base' | translate }}</p>
+        </div>
+        <gom-lib-switch
+          [checked]="settingsForm.controls['includeB1G1ItemsInAutoOfferBase'].value ?? true"
+          [disabled]="loading()"
+          [leftText]="'common.status.no' | translate"
+          [rightText]="'common.status.yes' | translate"
+          [ariaLabel]="'gom.offers.setting_include_b1g1_in_auto_offer_base' | translate"
+          (checkedChange)="settingsForm.controls['includeB1G1ItemsInAutoOfferBase'].setValue($event)"
+        ></gom-lib-switch>
+      </div>
+
+      <h4 class="settings-subheading">{{ 'gom.offers.subheading_storefront_visibility_b1g1' | translate }}</h4>
+
+      <div class="setting-row">
+        <div class="setting-label">
+          <span class="setting-title">{{ 'gom.offers.setting_show_b1g1_badge_on_cards' | translate }}</span>
+          <p class="hint">{{ 'gom.offers.hint_show_b1g1_badge_on_cards' | translate }}</p>
+        </div>
+        <gom-lib-switch
+          [checked]="settingsForm.controls['showB1G1OnProductCards'].value ?? true"
+          [disabled]="loading()"
+          [leftText]="'common.status.inactive' | translate"
+          [rightText]="'common.status.active' | translate"
+          [ariaLabel]="'gom.offers.setting_show_b1g1_badge_on_cards' | translate"
+          (checkedChange)="settingsForm.controls['showB1G1OnProductCards'].setValue($event)"
+        ></gom-lib-switch>
+      </div>
+
+      <div class="setting-row">
+        <div class="setting-label">
+          <span class="setting-title">{{ 'gom.offers.setting_show_b1g1_home_section' | translate }}</span>
+          <p class="hint">{{ 'gom.offers.hint_show_b1g1_home_section' | translate }}</p>
+        </div>
+        <gom-lib-switch
+          [checked]="settingsForm.controls['showB1G1HomeSection'].value ?? true"
+          [disabled]="loading()"
+          [leftText]="'common.status.inactive' | translate"
+          [rightText]="'common.status.active' | translate"
+          [ariaLabel]="'gom.offers.setting_show_b1g1_home_section' | translate"
+          (checkedChange)="settingsForm.controls['showB1G1HomeSection'].setValue($event)"
+        ></gom-lib-switch>
+      </div>
+
+      <div class="setting-row">
+        <div class="setting-label">
+          <span class="setting-title">{{ 'gom.offers.setting_max_b1g1_home_items' | translate }}</span>
+          <p class="hint">{{ 'gom.offers.hint_max_b1g1_home_items' | translate }}</p>
+        </div>
+        <gom-lib-input
+          formControlName="maxB1G1HomeItems"
+          type="number"
+          [placeholder]="'gom.offers.placeholder_all_items' | translate"
+        ></gom-lib-input>
+      </div>
+      @if (settingsForm.controls['maxB1G1HomeItems'].invalid && settingsForm.controls['maxB1G1HomeItems'].touched) {
+        <p class="field-error">{{ 'gom.offers.error_b1g1_home_items_min' | translate }}</p>
+      }
+
+      <h4 class="settings-subheading">{{ 'gom.offers.subheading_delivery_stacking' | translate }}</h4>
+
+      <div class="setting-row">
+        <div class="setting-label">
+          <span class="setting-title">{{ 'gom.offers.setting_delivery_stacking_policy' | translate }}</span>
+          <p class="hint">{{ 'gom.offers.hint_delivery_stacking_policy' | translate }}</p>
+        </div>
+        <div class="stacking-options">
+          <label class="stacking-option">
+            <input
+              type="radio"
+              formControlName="deliveryStackingPolicy"
+              value="STACKABLE_WITH_AUTO"
+              [disabled]="loading()"
+            />
+            <span>{{ 'gom.offers.option_delivery_stack_with_auto' | translate }}</span>
+          </label>
+          <label class="stacking-option">
+            <input
+              type="radio"
+              formControlName="deliveryStackingPolicy"
+              value="STACKABLE_WITH_COUPON"
+              [disabled]="loading()"
+            />
+            <span>{{ 'gom.offers.option_delivery_stack_with_coupon' | translate }}</span>
+          </label>
+          <label class="stacking-option">
+            <input
+              type="radio"
+              formControlName="deliveryStackingPolicy"
+              value="STACKABLE_WITH_ALL"
+              [disabled]="loading()"
+            />
+            <span>{{ 'gom.offers.option_delivery_stack_with_all' | translate }}</span>
+          </label>
+          <label class="stacking-option">
+            <input
+              type="radio"
+              formControlName="deliveryStackingPolicy"
+              value="NON_STACKABLE"
+              [disabled]="loading()"
+            />
+            <span>{{ 'gom.offers.option_delivery_non_stackable' | translate }}</span>
+          </label>
+        </div>
+      </div>
+    </div>
+    } @else {
+      <div class="settings-note" role="note" aria-live="polite">
+        {{ 'gom.offers.note_checkout_hidden_until_program_enabled' | translate }}
+      </div>
+    }
+  </form>
+
+  <div class="settings-actions">
+    <gom-lib-button type="button" variant="secondary" (buttonClick)="reset()">
+      {{ 'common.btn_reset' | translate }}
+    </gom-lib-button>
+    <gom-lib-button type="button" variant="primary" [disabled]="loading()" (buttonClick)="save()">
+      {{ 'common.btn_save' | translate }}
+    </gom-lib-button>
+  </div>
+</div>

@@ -3,6 +3,7 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
+import { provideQuillConfig } from 'ngx-quill';
 
 import { routes } from './app.routes';
 import { ThemedModule } from '@gomlibs/ui';
@@ -22,5 +23,9 @@ export const appConfig: ApplicationConfig = {
       suffix: '.json',
     }),
     importProvidersFrom(ThemedModule),
+    provideQuillConfig({
+      theme: 'snow',
+      format: 'html',
+    }),
   ]
 };

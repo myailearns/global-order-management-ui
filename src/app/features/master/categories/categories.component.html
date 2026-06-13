@@ -11,6 +11,16 @@
     </div>
   }
 
+  @if (canCreateCategory()) {
+    <div class="quota-banner">
+      @if (categoryCreateLimit() !== null) {
+        <p>Category quota: {{ categoryCreateUsed() }} / {{ categoryCreateLimit() }} used ({{ categoryCreateRemaining() }} remaining)</p>
+      } @else {
+        <p>Category quota: {{ categoryCreateUsed() }} used (unlimited)</p>
+      }
+    </div>
+  }
+
   <gom-categories-list
     [categories]="categories()"
     [loading]="loading()"
@@ -23,7 +33,7 @@
 
   <gom-categories-form
     [isOpen]="formOpen()"
-    [initialData]="getSelectedCategoryFormData()"
+    [initialData]="selectedCategoryFormData()"
     (formSubmit)="onFormSubmit($event)"
     (formCancel)="onFormCancel()"
   ></gom-categories-form>
