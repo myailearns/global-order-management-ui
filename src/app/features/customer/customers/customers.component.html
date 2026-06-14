@@ -113,57 +113,7 @@
   <footer class="gom-modal__action-layout" gom-modal-actions>
     <div class="gom-modal__action-layout-start"></div>
     <div class="gom-modal__action-layout-end">
-      @if (isPinLocked()) {
-        <gom-lib-button
-          type="button"
-          variant="secondary"
-          [disabled]="!canUnlock()"
-          (buttonClick)="openUnlockDialog()"
-        >
-          Unlock PIN
-        </gom-lib-button>
-      }
       <gom-lib-button type="button" variant="primary" (buttonClick)="closeCustomerDetail()">Close</gom-lib-button>
-    </div>
-  </footer>
-</gom-lib-modal>
-
-<gom-lib-modal
-  [(show)]="unlockDialogOpen"
-  title="Unlock Customer PIN"
-  size="medium"
-  [closeOnBackdropClick]="true"
-  (closed)="closeUnlockDialog()"
->
-  <section [formGroup]="unlockForm" class="unlock-form">
-    <p class="unlock-form__copy">
-      You are unlocking PIN access for <strong>{{ selectedCustomer()?.customer?.name || '-' }}</strong>
-      ({{ selectedCustomer()?.customer?.phone || '-' }}).
-    </p>
-
-    <gom-lib-textarea
-      label="Reason"
-      placeholder="Enter reason for unlock"
-      [required]="true"
-      [formControl]="unlockForm.controls.reason"
-    ></gom-lib-textarea>
-
-    @if (unlockForm.controls.reason.touched && unlockForm.controls.reason.invalid) {
-      <div class="master-page__error">Reason is required (min 3 characters).</div>
-    }
-
-    @if (unlockError()) {
-      <div class="master-page__error">{{ unlockError() }}</div>
-    }
-  </section>
-
-  <footer class="gom-modal__action-layout" gom-modal-actions>
-    <div class="gom-modal__action-layout-start"></div>
-    <div class="gom-modal__action-layout-end">
-      <gom-lib-button type="button" variant="secondary" (buttonClick)="closeUnlockDialog()" [disabled]="unlockSaving()">Cancel</gom-lib-button>
-      <gom-lib-button type="button" variant="primary" (buttonClick)="confirmUnlock()" [disabled]="unlockSaving()">
-        {{ unlockSaving() ? 'Unlocking...' : 'Confirm Unlock' }}
-      </gom-lib-button>
     </div>
   </footer>
 </gom-lib-modal>

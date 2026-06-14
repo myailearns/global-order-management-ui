@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ReactiveFormsModule } from '@angular/forms';
 
 import { FormControlsModule, GomAlertToastService } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
@@ -45,12 +45,10 @@ interface CustomerRow extends GomTableRow {
 export class CustomersComponent implements OnInit {
   private readonly service = inject(CustomerEngagementService);
   private readonly toast = inject(GomAlertToastService);
-  private readonly fb = inject(FormBuilder);
 
   readonly loading = signal(false);
   private readonly authSession = inject(AuthSessionService);
   readonly canWrite = computed(() => this.authSession.canWrite('customers'));
-  readonly canUnlock = computed(() => this.authSession.canWrite('tenant-admin'));
 
   readonly detailLoading = signal(false);
   readonly errorMessage = signal<string | null>(null);
@@ -61,13 +59,6 @@ export class CustomersComponent implements OnInit {
   readonly selectedCustomer = signal<CustomerSummary | null>(null);
   readonly selectedCustomerDetail = signal<CustomerDetail | null>(null);
   readonly selectedCustomerOrders = signal<CustomerOrderHistoryItem[]>([]);
-  readonly unlockDialogOpen = signal(false);
-  readonly unlockSaving = signal(false);
-  readonly unlockError = signal<string | null>(null);
-
-  readonly unlockForm = this.fb.group({
-    reason: ['', [Validators.required, Validators.minLength(3)]],
-  });
 
   readonly columns: GomTableColumn<CustomerRow>[] = [
     { key: 'name', header: 'Customer', sortable: true, filterable: true, width: '14rem' },
@@ -148,7 +139,7 @@ export class CustomersComponent implements OnInit {
       return;
     }
 
-    const row = event.row as { customerId?: unknown };
+    const row = event.row as CustomerRow;
     const customerId = typeof row.customerId === 'string' ? row.customerId : '';
     if (!customerId) {
       return;
@@ -201,10 +192,6 @@ export class CustomersComponent implements OnInit {
     this.selectedCustomer.set(null);
     this.selectedCustomerDetail.set(null);
     this.selectedCustomerOrders.set([]);
-    this.unlockDialogOpen.set(false);
-    this.unlockSaving.set(false);
-    this.unlockError.set(null);
-    this.unlockForm.reset({ reason: '' });
   }
 
   isPinLocked(): boolean {
@@ -219,57 +206,5 @@ export class CustomersComponent implements OnInit {
     }
 
     return lockDate.getTime() > Date.now();
-  }
-
-  openUnlockDialog(): void {
-    if (!this.canUnlock() || !this.isPinLocked()) {
-      return;
-    }
-
-    this.unlockError.set(null);
-    this.unlockForm.reset({ reason: '' });
-    this.unlockDialogOpen.set(true);
-  }
-
-  closeUnlockDialog(): void {
-    this.unlockDialogOpen.set(false);
-    this.unlockSaving.set(false);
-    this.unlockError.set(null);
-    this.unlockForm.reset({ reason: '' });
-  }
-
-  confirmUnlock(): void {
-    if (!this.canUnlock()) {
-      return;
-    }
-
-    const customerId = this.selectedCustomer()?.customer?._id;
-    if (!customerId) {
-      return;
-    }
-
-    const reason = String(this.unlockForm.controls.reason.value || '').trim();
-    if (!reason) {
-      this.unlockError.set('Unlock reason is required.');
-      this.unlockForm.controls.reason.markAsTouched();
-      return;
-    }
-
-    this.unlockSaving.set(true);
-    this.unlockError.set(null);
-
-    this.service.unlockPin(customerId, reason).subscribe({
-      next: (response) => {
-        this.toast.success(response.message || 'Customer PIN unlocked successfully.');
-        this.unlockSaving.set(false);
-        this.closeUnlockDialog();
-        this.openCustomerDetail(customerId);
-        this.loadCustomers();
-      },
-      error: (error) => {
-        this.unlockSaving.set(false);
-        this.unlockError.set(String(error?.error?.message || 'Failed to unlock customer PIN.'));
-      },
-    });
   }
 }

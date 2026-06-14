@@ -228,7 +228,11 @@ export class DeliveryService {
   }
 
   updateAuthSecurityConfig(config: Partial<AuthSecurityConfig>): Observable<ApiSuccess<TenantConfig>> {
-    return this.http.patch<ApiSuccess<TenantConfig>>(this.tenantConfigUrl, { authSecurityConfig: config });
+    return this.http.patch<ApiSuccess<TenantConfig>>(this.tenantConfigUrl, {
+      authSecurityConfig: {
+        pinPolicy: config,
+      },
+    });
   }
 
   listCourierPartners(page = 1, limit = 200): Observable<ApiPaginated<CourierPartner>> {

@@ -26,6 +26,9 @@ export interface CustomerInsight {
   name: string;
   phone: string;
   email?: string;
+  pinAttempts?: number;
+  pinLockedUntil?: string | null;
+  pinLocked?: boolean;
   primaryPincode?: string;
   totalOrders: number;
   deliveredOrders: number;
@@ -100,6 +103,19 @@ export interface UnlockPinResult {
     phone: string;
     pinLocked: boolean;
     pinAttempts: number;
+    pinLockedUntil?: string | null;
+  };
+  message: string;
+}
+
+export interface LockPinResult {
+  status: string;
+  customer: {
+    id: string;
+    phone: string;
+    pinLocked: boolean;
+    pinAttempts: number;
+    pinLockedUntil?: string | null;
   };
   message: string;
 }
@@ -211,5 +227,9 @@ export class CustomerEngagementService {
 
   unlockPin(customerId: string, reason: string): Observable<ApiSuccess<UnlockPinResult>> {
     return this.http.post<ApiSuccess<UnlockPinResult>>(`${this.tenantAdminCustomersUrl}/${customerId}/unlock-pin`, { reason });
+  }
+
+  lockPin(customerId: string, reason: string): Observable<ApiSuccess<LockPinResult>> {
+    return this.http.post<ApiSuccess<LockPinResult>>(`${this.tenantAdminCustomersUrl}/${customerId}/lock-pin`, { reason });
   }
 }
