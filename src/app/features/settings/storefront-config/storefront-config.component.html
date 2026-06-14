@@ -100,6 +100,87 @@
           </div>
         </fieldset>
 
+        @if (hasStorefrontShareAccess() && storefrontShare()) {
+          <fieldset class="settings-section">
+            <legend>{{ 'storefrontConfig.shareCenter.title' | translate }}</legend>
+            <p class="section-hint">{{ 'storefrontConfig.shareCenter.hint' | translate }}</p>
+
+            <div class="share-center-card">
+              <div class="share-center-card__summary">
+                <div class="share-center-card__text">
+                  <span class="share-center-card__eyebrow">{{ 'storefrontConfig.shareCenter.eyebrow' | translate }}</span>
+                  <h3>{{ configForm.controls.storeDisplayName.value || tenantCode() || ('storefrontConfig.shareCenter.fallbackStoreName' | translate) }}</h3>
+                  <p>{{ storefrontShare()?.storefrontUrl }}</p>
+                </div>
+
+                <div class="share-center-card__actions">
+                  <gom-lib-button
+                    type="button"
+                    variant="secondary"
+                    [gomDisableIfNoFeature]="'storefront.share'"
+                    [disabled]="shareBusy() === 'copy'"
+                    (buttonClick)="copyStorefrontLink()">
+                    {{ (shareBusy() === 'copy' ? 'storefrontConfig.shareCenter.actions.copying' : 'storefrontConfig.shareCenter.actions.copy') | translate }}
+                  </gom-lib-button>
+
+                  <gom-lib-button
+                    type="button"
+                    variant="secondary"
+                    [gomDisableIfNoFeature]="'storefront.share'"
+                    [disabled]="shareBusy() === 'whatsapp'"
+                    (buttonClick)="shareOnWhatsApp()">
+                    {{ (shareBusy() === 'whatsapp' ? 'storefrontConfig.shareCenter.actions.opening' : 'storefrontConfig.shareCenter.actions.shareOnWhatsApp') | translate }}
+                  </gom-lib-button>
+
+                  <gom-lib-button
+                    type="button"
+                    variant="secondary"
+                    [gomDisableIfNoFeature]="'storefront.share'"
+                    [disabled]="shareBusy() === 'download'"
+                    (buttonClick)="downloadStorefrontQr()">
+                    {{ (shareBusy() === 'download' ? 'storefrontConfig.shareCenter.actions.preparing' : 'storefrontConfig.shareCenter.actions.downloadQr') | translate }}
+                  </gom-lib-button>
+                </div>
+              </div>
+
+              <div class="share-center-grid">
+                <div class="share-center-qr">
+                  <div class="share-center-qr__frame">
+                    <img [src]="storefrontShare()?.qrPngDataUrl" [alt]="'storefrontConfig.shareCenter.qrAlt' | translate" />
+                  </div>
+                  <p class="share-center-qr__caption">{{ 'storefrontConfig.shareCenter.qrCaption' | translate }}</p>
+                </div>
+
+                <div class="share-center-plan">
+                  <h4>{{ 'storefrontConfig.shareCenter.planSnapshot' | translate }}</h4>
+                  <dl class="share-center-plan__list">
+                    <div>
+                      <dt>{{ 'storefrontConfig.shareCenter.planLabels.plan' | translate }}</dt>
+                      <dd>{{ storefrontShare()?.planSummary?.planName }} ({{ storefrontShare()?.planSummary?.planId }})</dd>
+                    </div>
+                    <div>
+                      <dt>{{ 'storefrontConfig.shareCenter.planLabels.status' | translate }}</dt>
+                      <dd>{{ storefrontShare()?.planSummary?.subscriptionStatus }}</dd>
+                    </div>
+                    <div>
+                      <dt>{{ 'storefrontConfig.shareCenter.planLabels.planStart' | translate }}</dt>
+                      <dd>{{ formatPlanDate(storefrontShare()?.planSummary?.planStartAt) }}</dd>
+                    </div>
+                    <div>
+                      <dt>{{ 'storefrontConfig.shareCenter.planLabels.planExpiry' | translate }}</dt>
+                      <dd>{{ formatPlanDate(storefrontShare()?.planSummary?.planExpiresAt) }}</dd>
+                    </div>
+                    <div>
+                      <dt>{{ 'storefrontConfig.shareCenter.planLabels.trialEnd' | translate }}</dt>
+                      <dd>{{ formatPlanDate(storefrontShare()?.planSummary?.trialEndsAt) }}</dd>
+                    </div>
+                  </dl>
+                </div>
+              </div>
+            </div>
+          </fieldset>
+        }
+
         <fieldset class="settings-section">
           <legend>Branding Colors</legend>
           <p class="section-hint">Defaults come from GOM theme tokens. Switch to custom only if this tenant needs a branded override.</p>

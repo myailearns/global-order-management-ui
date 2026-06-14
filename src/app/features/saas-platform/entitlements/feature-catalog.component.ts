@@ -104,6 +104,7 @@ const FEATURE_TEMPLATES: FeatureTemplate[] = [
   { featureKey: 'role.create', displayName: 'Create Role', module: 'tenant-admin', dependencies: [] },
   { featureKey: 'role.edit', displayName: 'Edit Role', module: 'tenant-admin', dependencies: ['role.list'] },
   { featureKey: 'role.delete', displayName: 'Delete Role', module: 'tenant-admin', dependencies: ['role.list'] },
+  { featureKey: 'storefront.share', displayName: 'Share Storefront', module: 'tenant-admin', dependencies: [] },
   { featureKey: 'media.upload', displayName: 'Custom Image Upload', module: 'media', dependencies: [] },
 ];
 
