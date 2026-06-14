@@ -19,6 +19,7 @@ import { ServiceablePincodesConfigComponent } from './features/settings/servicea
 import { StorefrontConfigComponent } from './features/settings/storefront-config';
 import { ReturnPolicyConfigComponent } from './features/settings/return-policy-config';
 import { PushNotificationsComponent } from './features/settings/push-notifications/push-notifications.component';
+import { PinSecurityConfigComponent } from './features/settings/pin-security-config';
 import { CustomersComponent } from './features/customer/customers';
 import { CustomerGroupsComponent } from './features/customer/customer-groups';
 import { SaasAccountsComponent } from './features/saas-platform/accounts/saas-accounts.component';
@@ -267,6 +268,16 @@ export const routes: Routes = [
 					capability: 'tenant-admin',
 					title: 'Return & Exchange Policy',
 					description: 'Configure whether your store accepts returns, refunds, and exchanges.',
+				},
+			},
+			{
+				path: 'settings/pin-security',
+				component: PinSecurityConfigComponent,
+				data: {
+					actor: 'tenant',
+					capability: 'tenant-admin',
+					title: 'PIN Security Policy',
+					description: 'Configure authentication attempts, lockout duration, and unlock policies for PIN-based customer access.',
 				},
 			},
 			{

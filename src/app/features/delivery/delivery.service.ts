@@ -45,12 +45,21 @@ export interface DeliveryPincodeConfig {
   nonServiceableSuggestion: NonServiceableSuggestion;
 }
 
+export interface AuthSecurityConfig {
+  maxAttempts: number;
+  lockoutMinutes: number;
+  allowUnlimitedAttempts: boolean;
+  enableAutoUnlock: boolean;
+  unlockWindowMinutes: number;
+}
+
 export interface TenantConfig {
   tenantId: string;
   employeeCodeConfig: EmployeeCodeConfig;
   deliveryPincodeConfig?: DeliveryPincodeConfig;
   storefrontConfig?: StorefrontConfig;
   returnPolicy?: ReturnPolicy;
+  authSecurityConfig?: AuthSecurityConfig;
 }
 
 export type LayoutMode = 'GRID' | 'GRID3' | 'LIST';
@@ -212,6 +221,14 @@ export class DeliveryService {
 
   updateReturnPolicy(policy: Partial<ReturnPolicy>): Observable<ApiSuccess<TenantConfig>> {
     return this.http.patch<ApiSuccess<TenantConfig>>(this.tenantConfigUrl, { returnPolicy: policy });
+  }
+
+  getAuthSecurityConfig(): Observable<ApiSuccess<AuthSecurityConfig>> {
+    return this.http.get<ApiSuccess<AuthSecurityConfig>>(`${this.tenantConfigUrl}/auth-security`);
+  }
+
+  updateAuthSecurityConfig(config: Partial<AuthSecurityConfig>): Observable<ApiSuccess<TenantConfig>> {
+    return this.http.patch<ApiSuccess<TenantConfig>>(this.tenantConfigUrl, { authSecurityConfig: config });
   }
 
   listCourierPartners(page = 1, limit = 200): Observable<ApiPaginated<CourierPartner>> {

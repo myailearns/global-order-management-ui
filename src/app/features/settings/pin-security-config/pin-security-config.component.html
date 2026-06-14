@@ -1,0 +1,73 @@
+<section class="settings-page">
+  <header class="settings-page__header">
+    <h2>PIN Security Policy</h2>
+    <p>Configure authentication attempts, lockout duration, and unlock policies for PIN-based customer access.</p>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="settings-page__error">{{ errorMessage() }}</div>
+  }
+
+  <form class="settings-card" [formGroup]="configForm" (ngSubmit)="save()">
+    <div class="settings-grid">
+      <gom-lib-input
+        type="number"
+        label="Maximum PIN Attempts"
+        placeholder="1-10"
+        [formControl]="configForm.controls.maxAttempts"
+        [required]="true"
+        min="1"
+        max="10"
+        description="Number of incorrect attempts before account lockout."
+      ></gom-lib-input>
+
+      <gom-lib-input
+        type="number"
+        label="Lockout Duration (minutes)"
+        placeholder="5-120"
+        [formControl]="configForm.controls.lockoutMinutes"
+        [required]="true"
+        min="5"
+        max="120"
+        description="Minutes to wait before attempting PIN verification again."
+      ></gom-lib-input>
+    </div>
+
+    <div class="settings-grid">
+      <gom-lib-checkbox
+        label="Allow Unlimited Attempts"
+        description="When enabled, PIN attempts are not limited (lockout still applies)."
+        [formControl]="configForm.controls.allowUnlimitedAttempts"
+      ></gom-lib-checkbox>
+
+      <gom-lib-checkbox
+        label="Enable Auto-Unlock"
+        description="Automatically unlock customer PIN after unlock window expires."
+        [formControl]="configForm.controls.enableAutoUnlock"
+      ></gom-lib-checkbox>
+    </div>
+
+    @if (configForm.controls.enableAutoUnlock.value) {
+      <gom-lib-input
+        type="number"
+        label="Auto-Unlock Window (minutes)"
+        placeholder="5-240"
+        [formControl]="configForm.controls.unlockWindowMinutes"
+        [required]="true"
+        min="5"
+        max="240"
+        description="Minutes after which a locked account automatically unlocks."
+      ></gom-lib-input>
+    }
+
+    <div class="settings-page__actions">
+      <gom-lib-button
+        type="submit"
+        variant="primary"
+        [gomDisableIfNoCapability]="'tenant-admin'"
+        [disabled]="loading() || saving() || !canWrite()">
+        {{ saving() ? 'Saving...' : 'Save PIN Security Policy' }}
+      </gom-lib-button>
+    </div>
+  </form>
+</section>
