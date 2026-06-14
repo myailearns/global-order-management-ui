@@ -100,6 +100,45 @@
                                     "closeErrorBanner":  "Close error banner"
                                 }
                },
+                    "storefrontConfig": {
+                                           "shareCenter": {
+                                                               "title": "Storefront Share Center",
+                                                               "hint": "Use this section to share your customer storefront link and QR code with customers on WhatsApp, print media, or in-store displays.",
+                                                               "eyebrow": "Customer Storefront",
+                                                               "fallbackStoreName": "Storefront",
+                                                               "qrAlt": "Customer storefront QR code",
+                                                               "qrCaption": "Customers can scan this QR code to open your storefront directly.",
+                                                               "planSnapshot": "Plan Snapshot",
+                                                               "notSet": "Not set",
+                                                               "actions": {
+                                                                              "copy": "Copy Link",
+                                                                              "copying": "Copying...",
+                                                                              "shareOnWhatsApp": "Share on WhatsApp",
+                                                                              "opening": "Opening...",
+                                                                              "downloadQr": "Download QR",
+                                                                              "preparing": "Preparing..."
+                                                                          },
+                                                               "planLabels": {
+                                                                                 "plan": "Plan",
+                                                                                 "status": "Status",
+                                                                                 "planStart": "Plan Start",
+                                                                                 "planExpiry": "Plan Expiry",
+                                                                                 "trialEnd": "Trial End"
+                                                                             },
+                                                               "messages": {
+                                                                               "loadError": "Failed to load storefront config.",
+                                                                               "validationError": "Please fix validation errors before saving.",
+                                                                               "saveSuccess": "Storefront configuration saved.",
+                                                                               "saveError": "Failed to save storefront configuration.",
+                                                                               "copySuccess": "Customer storefront link copied.",
+                                                                               "copyFallback": "Clipboard access is unavailable. Copy the storefront link from the dialog.",
+                                                                               "manualCopyTitle": "Manual copy required",
+                                                                               "manualCopyPrompt": "Copy storefront link",
+                                                                               "downloadSuccess": "Storefront QR download started."
+                                                                           },
+                                                               "whatsAppMessage": "Shop with {{storeName}}. Order online here: {{storefrontUrl}}"
+                                                           }
+                                       },
     "categories":  {
                        "title":  "Categories",
                        "add":  "Add Category",

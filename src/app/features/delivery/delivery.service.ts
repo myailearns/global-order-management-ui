@@ -50,7 +50,33 @@ export interface TenantConfig {
   employeeCodeConfig: EmployeeCodeConfig;
   deliveryPincodeConfig?: DeliveryPincodeConfig;
   storefrontConfig?: StorefrontConfig;
+  storefrontShare?: StorefrontShare;
   returnPolicy?: ReturnPolicy;
+}
+
+export interface StorefrontPlanSummary {
+  planId: string;
+  planName: string;
+  planTier: string;
+  subscriptionStatus: string;
+  planStartAt: string | null;
+  planExpiresAt: string | null;
+  trialEndsAt: string | null;
+}
+
+export interface StorefrontShare {
+  storefrontUrl: string;
+  tenantAdminUrl: string;
+  storeSlug: string;
+  qrPngDataUrl: string;
+  qrFileName: string;
+  lastGeneratedAt: string | null;
+  planSummary: StorefrontPlanSummary;
+}
+
+export interface StorefrontShareEventPayload {
+  action: 'SHARE_CENTER_VIEWED' | 'LINK_COPIED' | 'QR_DOWNLOADED' | 'WHATSAPP_SHARE_INITIATED';
+  channel?: string;
 }
 
 export type LayoutMode = 'GRID' | 'GRID3' | 'LIST';
@@ -208,6 +234,10 @@ export class DeliveryService {
 
   updateStorefrontConfig(cfg: Partial<StorefrontConfig>): Observable<ApiSuccess<TenantConfig>> {
     return this.http.patch<ApiSuccess<TenantConfig>>(this.tenantConfigUrl, { storefrontConfig: cfg });
+  }
+
+  trackStorefrontShareEvent(payload: StorefrontShareEventPayload): Observable<ApiSuccess<{ success?: boolean; ignored?: boolean }>> {
+    return this.http.post<ApiSuccess<{ success?: boolean; ignored?: boolean }>>(`${this.tenantConfigUrl}/storefront-share/events`, payload);
   }
 
   updateReturnPolicy(policy: Partial<ReturnPolicy>): Observable<ApiSuccess<TenantConfig>> {

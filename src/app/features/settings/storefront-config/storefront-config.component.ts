@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 import {
   FormControlsModule,
@@ -19,6 +20,8 @@ import {
   LayoutMode,
   PaymentMethod,
   StorefrontConfig,
+  StorefrontShare,
+  StorefrontShareEventPayload,
 } from '../../delivery/delivery.service';
 import { MediaAssetService } from '../../saas-platform/media/media-asset.service';
 
@@ -28,6 +31,7 @@ import { MediaAssetService } from '../../saas-platform/media/media-asset.service
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    TranslateModule,
     FormControlsModule,
     DisableIfNoFeatureDirective,
     GomButtonComponent,
@@ -44,6 +48,7 @@ export class StorefrontConfigComponent implements OnInit {
   private readonly toast = inject(GomAlertToastService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly authSession = inject(AuthSessionService);
+  private readonly translate = inject(TranslateService);
 
   readonly loading = signal(false);
   readonly saving = signal(false);
@@ -54,6 +59,9 @@ export class StorefrontConfigComponent implements OnInit {
   readonly tenantCode = signal('');
   readonly useCustomColors = signal(false);
   readonly canWrite = computed(() => this.authSession.canWrite('tenant-admin'));
+  readonly storefrontShare = signal<StorefrontShare | null>(null);
+  readonly shareBusy = signal<'copy' | 'whatsapp' | 'download' | null>(null);
+  readonly hasStorefrontShareAccess = computed(() => this.authSession.hasFeature('storefront.share'));
 
   readonly tabs: TabItem[] = [
     { id: 'basic', label: 'Basic Settings' },
@@ -63,6 +71,8 @@ export class StorefrontConfigComponent implements OnInit {
   ];
 
   readonly activeTab = signal<'basic' | 'branding' | 'catalog' | 'commerce'>('basic');
+
+  private shareCenterViewTracked = false;
 
   private readonly defaultTheme = {
     primaryColor: '#0a5d8b',
@@ -129,7 +139,9 @@ export class StorefrontConfigComponent implements OnInit {
   }
 
   switchTab(tab: string | number): void {
-    this.activeTab.set(tab as 'basic' | 'branding' | 'catalog' | 'commerce');
+    if (tab === 'basic' || tab === 'branding' || tab === 'catalog' || tab === 'commerce') {
+      this.activeTab.set(tab);
+    }
   }
 
   resetThemeDefaults(): void {
@@ -162,6 +174,8 @@ export class StorefrontConfigComponent implements OnInit {
         next: (res) => {
           const tenantId = String(res.data?.tenantId || '').trim().toLowerCase();
           this.tenantCode.set(tenantId);
+          this.storefrontShare.set(res.data?.storefrontShare ?? null);
+          this.trackShareCenterViewedOnce();
 
           const cfg = res.data?.storefrontConfig;
           if (cfg) {
@@ -179,7 +193,7 @@ export class StorefrontConfigComponent implements OnInit {
         },
         error: () => {
           this.loading.set(false);
-          this.errorMessage.set('Failed to load storefront config.');
+          this.errorMessage.set(this.t('storefrontConfig.shareCenter.messages.loadError'));
         },
       });
   }
@@ -526,8 +540,8 @@ export class StorefrontConfigComponent implements OnInit {
 
     if (this.configForm.invalid) {
       this.configForm.markAllAsTouched();
-      this.errorMessage.set('Please fix validation errors before saving.');
-      this.toast.error('Please fix validation errors before saving.');
+      this.errorMessage.set(this.t('storefrontConfig.shareCenter.messages.validationError'));
+      this.toast.error(this.t('storefrontConfig.shareCenter.messages.validationError'));
       return;
     }
 
@@ -584,18 +598,121 @@ export class StorefrontConfigComponent implements OnInit {
         next: (res) => {
           const tenantId = String(res.data?.tenantId || this.tenantCode()).trim().toLowerCase();
           const cfg = res.data?.storefrontConfig;
+          this.storefrontShare.set(res.data?.storefrontShare ?? null);
+          this.trackShareCenterViewedOnce();
           if (cfg) {
             this.patchForm(cfg, tenantId);
           }
-          this.toast.success('Storefront configuration saved.');
+          this.toast.success(this.t('storefrontConfig.shareCenter.messages.saveSuccess'));
           this.saving.set(false);
         },
         error: (err) => {
           const msg = (err as { error?: { message?: string } })?.error?.message;
-          this.errorMessage.set(msg || 'Failed to save storefront configuration.');
+          this.errorMessage.set(msg || this.t('storefrontConfig.shareCenter.messages.saveError'));
           this.saving.set(false);
         },
       });
+  }
+
+  copyStorefrontLink(): void {
+    const storefrontUrl = String(this.storefrontShare()?.storefrontUrl || '').trim();
+    if (!storefrontUrl || !this.hasStorefrontShareAccess()) {
+      return;
+    }
+
+    this.shareBusy.set('copy');
+    this.copyTextToClipboard(storefrontUrl)
+      .then(() => {
+        this.toast.success(this.t('storefrontConfig.shareCenter.messages.copySuccess'));
+        this.trackShareEvent({ action: 'LINK_COPIED', channel: 'clipboard' });
+      })
+      .catch(() => {
+        this.toast.warning(
+          this.t('storefrontConfig.shareCenter.messages.copyFallback'),
+          this.t('storefrontConfig.shareCenter.messages.manualCopyTitle')
+        );
+      })
+      .finally(() => {
+        this.shareBusy.set(null);
+      });
+  }
+
+  shareOnWhatsApp(): void {
+    const share = this.storefrontShare();
+    const storefrontUrl = String(share?.storefrontUrl || '').trim();
+    if (!storefrontUrl || !this.hasStorefrontShareAccess()) {
+      return;
+    }
+
+    const storeName = String(this.configForm.controls.storeDisplayName.value || this.tenantCode() || 'our store').trim();
+    const message = this.t('storefrontConfig.shareCenter.whatsAppMessage', { storeName, storefrontUrl });
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+
+    this.shareBusy.set('whatsapp');
+    globalThis.open?.(whatsappUrl, '_blank', 'noopener,noreferrer');
+    this.trackShareEvent({ action: 'WHATSAPP_SHARE_INITIATED', channel: 'whatsapp' });
+    this.shareBusy.set(null);
+  }
+
+  downloadStorefrontQr(): void {
+    const share = this.storefrontShare();
+    const dataUrl = String(share?.qrPngDataUrl || '').trim();
+    if (!dataUrl || !this.hasStorefrontShareAccess()) {
+      return;
+    }
+
+    this.shareBusy.set('download');
+    const anchor = document.createElement('a');
+    anchor.href = dataUrl;
+    anchor.download = String(share?.qrFileName || `${this.tenantCode() || 'storefront'}-storefront-qr.png`).trim();
+    anchor.rel = 'noopener';
+    anchor.click();
+
+    this.toast.success(this.t('storefrontConfig.shareCenter.messages.downloadSuccess'));
+    this.trackShareEvent({ action: 'QR_DOWNLOADED', channel: 'download' });
+    this.shareBusy.set(null);
+  }
+
+  private trackShareEvent(payload: StorefrontShareEventPayload): void {
+    this.service
+      .trackStorefrontShareEvent(payload)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({ error: () => {} });
+  }
+
+  private trackShareCenterViewedOnce(): void {
+    if (this.shareCenterViewTracked || !this.hasStorefrontShareAccess() || !this.storefrontShare()?.storefrontUrl) {
+      return;
+    }
+
+    this.shareCenterViewTracked = true;
+    this.trackShareEvent({ action: 'SHARE_CENTER_VIEWED', channel: 'settings' });
+  }
+
+  private copyTextToClipboard(value: string): Promise<void> {
+    if (navigator.clipboard?.writeText) {
+      return navigator.clipboard.writeText(value);
+    }
+
+    globalThis.prompt?.(this.t('storefrontConfig.shareCenter.messages.manualCopyPrompt'), value);
+    return Promise.reject(new Error('Clipboard not available'));
+  }
+
+  formatPlanDate(value: string | null | undefined): string {
+    if (!value) {
+      return this.t('storefrontConfig.shareCenter.notSet');
+    }
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return this.t('storefrontConfig.shareCenter.notSet');
+    }
+
+    return new Intl.DateTimeFormat('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    }).format(date);
   }
 
   private toSlug(value: string): string {
@@ -606,6 +723,10 @@ export class StorefrontConfigComponent implements OnInit {
       .replaceAll(/-+/g, '-')
       .replaceAll(/^-|-$/g, '')
       .slice(0, 64);
+  }
+
+  private t(key: string, params?: Record<string, string>): string {
+    return this.translate.instant(key, params);
   }
 
   private normalizeBoolean(value: unknown, fallback: boolean): boolean {

@@ -360,6 +360,15 @@
     "actions": ["delete"]
   },
   {
+    "featureKey": "storefront.share",
+    "displayName": "Share Storefront",
+    "module": "tenant-admin",
+    "description": "Copy storefront link, share it on WhatsApp, and download the customer QR code",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["view", "share", "download"]
+  },
+  {
     "featureKey": "customer.list",
     "displayName": "View Customers",
     "module": "customers",
