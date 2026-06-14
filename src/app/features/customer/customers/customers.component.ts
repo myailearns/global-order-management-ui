@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
-import { GomAlertToastService } from '@gomlibs/ui';
+import { FormControlsModule, GomAlertToastService } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { GomButtonComponent, GomInputComponent } from '@gomlibs/ui';
 import { GomModalComponent } from '@gomlibs/ui';
@@ -10,6 +11,7 @@ import {
   CustomerEngagementService,
   CustomerInsight,
   CustomerOrderHistoryItem,
+  CustomerDetail,
   CustomerSummary,
 } from '../customer-engagement.service';
 
@@ -30,6 +32,8 @@ interface CustomerRow extends GomTableRow {
   standalone: true,
   imports: [
     CommonModule,
+    ReactiveFormsModule,
+    FormControlsModule,
     GomButtonComponent,
     GomInputComponent,
     GomTableComponent,
@@ -41,10 +45,12 @@ interface CustomerRow extends GomTableRow {
 export class CustomersComponent implements OnInit {
   private readonly service = inject(CustomerEngagementService);
   private readonly toast = inject(GomAlertToastService);
+  private readonly fb = inject(FormBuilder);
 
   readonly loading = signal(false);
   private readonly authSession = inject(AuthSessionService);
   readonly canWrite = computed(() => this.authSession.canWrite('customers'));
+  readonly canUnlock = computed(() => this.authSession.canWrite('tenant-admin'));
 
   readonly detailLoading = signal(false);
   readonly errorMessage = signal<string | null>(null);
@@ -53,7 +59,15 @@ export class CustomersComponent implements OnInit {
 
   readonly detailOpen = signal(false);
   readonly selectedCustomer = signal<CustomerSummary | null>(null);
+  readonly selectedCustomerDetail = signal<CustomerDetail | null>(null);
   readonly selectedCustomerOrders = signal<CustomerOrderHistoryItem[]>([]);
+  readonly unlockDialogOpen = signal(false);
+  readonly unlockSaving = signal(false);
+  readonly unlockError = signal<string | null>(null);
+
+  readonly unlockForm = this.fb.group({
+    reason: ['', [Validators.required, Validators.minLength(3)]],
+  });
 
   readonly columns: GomTableColumn<CustomerRow>[] = [
     { key: 'name', header: 'Customer', sortable: true, filterable: true, width: '14rem' },
@@ -147,16 +161,27 @@ export class CustomersComponent implements OnInit {
     this.detailOpen.set(true);
     this.detailLoading.set(true);
     this.selectedCustomer.set(null);
+    this.selectedCustomerDetail.set(null);
     this.selectedCustomerOrders.set([]);
 
     this.service.getCustomerSummary(customerId).subscribe({
       next: (response) => {
         this.selectedCustomer.set(response.data || null);
-        this.detailLoading.set(false);
       },
       error: (error) => {
         this.toast.error(String(error?.error?.message || 'Failed to load customer summary.'));
         this.closeCustomerDetail();
+      },
+    });
+
+    this.service.getCustomerById(customerId).subscribe({
+      next: (response) => {
+        this.selectedCustomerDetail.set(response.data || null);
+        this.detailLoading.set(false);
+      },
+      error: (error) => {
+        this.detailLoading.set(false);
+        this.toast.error(String(error?.error?.message || 'Failed to load customer details.'));
       },
     });
 
@@ -174,6 +199,77 @@ export class CustomersComponent implements OnInit {
     this.detailOpen.set(false);
     this.detailLoading.set(false);
     this.selectedCustomer.set(null);
+    this.selectedCustomerDetail.set(null);
     this.selectedCustomerOrders.set([]);
+    this.unlockDialogOpen.set(false);
+    this.unlockSaving.set(false);
+    this.unlockError.set(null);
+    this.unlockForm.reset({ reason: '' });
+  }
+
+  isPinLocked(): boolean {
+    const lockUntil = this.selectedCustomerDetail()?.pinLockedUntil;
+    if (!lockUntil) {
+      return false;
+    }
+
+    const lockDate = new Date(lockUntil);
+    if (!Number.isFinite(lockDate.getTime())) {
+      return false;
+    }
+
+    return lockDate.getTime() > Date.now();
+  }
+
+  openUnlockDialog(): void {
+    if (!this.canUnlock() || !this.isPinLocked()) {
+      return;
+    }
+
+    this.unlockError.set(null);
+    this.unlockForm.reset({ reason: '' });
+    this.unlockDialogOpen.set(true);
+  }
+
+  closeUnlockDialog(): void {
+    this.unlockDialogOpen.set(false);
+    this.unlockSaving.set(false);
+    this.unlockError.set(null);
+    this.unlockForm.reset({ reason: '' });
+  }
+
+  confirmUnlock(): void {
+    if (!this.canUnlock()) {
+      return;
+    }
+
+    const customerId = this.selectedCustomer()?.customer?._id;
+    if (!customerId) {
+      return;
+    }
+
+    const reason = String(this.unlockForm.controls.reason.value || '').trim();
+    if (!reason) {
+      this.unlockError.set('Unlock reason is required.');
+      this.unlockForm.controls.reason.markAsTouched();
+      return;
+    }
+
+    this.unlockSaving.set(true);
+    this.unlockError.set(null);
+
+    this.service.unlockPin(customerId, reason).subscribe({
+      next: (response) => {
+        this.toast.success(response.message || 'Customer PIN unlocked successfully.');
+        this.unlockSaving.set(false);
+        this.closeUnlockDialog();
+        this.openCustomerDetail(customerId);
+        this.loadCustomers();
+      },
+      error: (error) => {
+        this.unlockSaving.set(false);
+        this.unlockError.set(String(error?.error?.message || 'Failed to unlock customer PIN.'));
+      },
+    });
   }
 }
