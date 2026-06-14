@@ -1,0 +1,66 @@
+<section class="settings-page">
+  <header class="settings-page__header">
+    <h2>PIN Security Policy</h2>
+    <p>Configure PIN attempt limits and lock behavior for tenant customers.</p>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="settings-page__error">{{ errorMessage() }}</div>
+  }
+
+  <form class="settings-card" [formGroup]="configForm" (ngSubmit)="save()">
+    <div class="settings-flow">
+      <gom-lib-checkbox
+        label="Allow Unlimited Attempts"
+        description="Default is ON. When ON, account is never locked by failed-attempt count."
+        [formControl]="configForm.controls.allowUnlimitedAttempts"
+      ></gom-lib-checkbox>
+
+      @if (shouldShowAttemptControls()) {
+        <div class="settings-grid">
+          <gom-lib-input
+            type="number"
+            label="Maximum PIN Attempts"
+            placeholder="1-10"
+            [formControl]="configForm.controls.maxAttempts"
+            [required]="true"
+            min="1"
+            max="10"
+            [error]="getMaxAttemptsError()"
+            description="After this many failed attempts, the account is locked."
+          ></gom-lib-input>
+
+          <gom-lib-checkbox
+            label="Enable Auto-Unlock"
+            description="Always enabled. Locked accounts are automatically unlocked after the configured duration."
+            [formControl]="configForm.controls.enableAutoUnlock"
+          ></gom-lib-checkbox>
+        </div>
+
+        @if (shouldShowLockoutDuration()) {
+          <gom-lib-input
+            type="number"
+            label="Lockout Duration (minutes)"
+            placeholder="1-120"
+            [formControl]="configForm.controls.lockoutMinutes"
+            [required]="true"
+            min="1"
+            max="120"
+            [error]="getLockoutDurationError()"
+            description="Locked account is automatically unlocked after this duration."
+          ></gom-lib-input>
+        }
+      }
+    </div>
+
+    <div class="settings-page__actions">
+      <gom-lib-button
+        type="submit"
+        variant="primary"
+        [gomDisableIfNoCapability]="'tenant-admin'"
+        [disabled]="loading() || saving() || !canWrite() || !hasChanges()">
+        {{ saving() ? 'Saving...' : 'Save PIN Security Policy' }}
+      </gom-lib-button>
+    </div>
+  </form>
+</section>

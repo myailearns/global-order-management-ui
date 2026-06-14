@@ -1,128 +1,244 @@
-## Adding New Features To The System
+# GOM UI — Dev Rules
 
-- All feature definitions are embedded in `src/app/features/saas-platform/entitlements/feature-catalog.component.ts` as the `FEATURE_TEMPLATES` constant.
-- Each new feature must have entry in `FEATURE_TEMPLATES` with:
-  - `featureKey`: lowercase dot notation with action suffix (e.g., `rider.list`, `rider.create`)
-  - `displayName`: user-friendly label (e.g., "View Riders", "Create Rider")
-  - `module`: feature's domain/module (e.g., `delivery`, `masters`)
-  - `dependencies`: array of prerequisite feature keys (e.g., `['rider.list']` for edit action)
-- After updating `FEATURE_TEMPLATES`, rebuild the admin UI: `cd gom-ui && npm run build`
-- Feature templates will auto-populate in Platform Admin → SaaS Features → Add Feature dropdown on next browser load.
+---
 
-## Dropdowns With Many Options
+## 1. Angular 20 Standards (Required)
 
-- Use `[searchable]="true"` on `gom-lib-select` when options count exceeds ~10.
-- Add `[searchPlaceholder]` for user-friendly search field placeholder (key: e.g., `'saas.platform.features.ph_search'`).
-- Search filters both `label` and `value` by default in `GomSelectComponent`.
-- Applies to: feature templates, dependencies, modules, and other large option lists.
+These are non-negotiable. All code must follow Angular 20+ patterns.
 
-## Accessibility And UX Baseline
+- **Use Angular 20+ APIs and patterns only.** Do not use patterns from older Angular versions.
+- **Control flow syntax**: Use `@if`, `@for`, `@switch` in all templates. Never use legacy `*ngIf`, `*ngFor`, `*ngSwitch` directives.
+- **Standalone components**: All components must be standalone. Use shared barrels (`index.ts`) for imports.
+- **Reactive Forms only**: Use `FormGroup`, `FormControl`, `FormArray`. Do not use template-driven forms.
+- **Signals**: Prefer Angular signals (`signal()`, `computed()`, `effect()`) for local component state over class properties with manual change detection.
+- **`inject()`**: Use the `inject()` function for dependency injection in standalone components. Do not use constructor injection unless required by a base class.
+- **`@for` with `track`**: Always provide a `track` expression in `@for` loops for performance.
+- **Defer blocks**: Use `@defer` for lazy-loading heavy components that are not visible on initial render.
+- **Input/Output**: Use the new `input()` and `output()` signal-based APIs for component inputs and outputs in new components.
+- **File structure**: Each non-root component lives in its own folder (`list/`, `form/`, `view/`) with colocated `.ts`, `.html`, `.scss` files.
+- Keep feature root focused on: container component, feature service, constants, and `index.ts` barrel.
 
-- Provide meaningful aria-label/title text for icon-only controls.
-- Ensure keyboard interaction works for actionable elements.
-- Keep focus-visible behavior intact for interactive elements.
-# Dev Rules
+---
 
-## Core Standards
+## 2. Gomblips Component Library (Required)
 
-- Use Angular 20+ patterns only.
-- Use Angular 20 control flow syntax in templates (`@if`, `@for`, `@switch`); do not use legacy `*ngIf`, `*ngFor`, `*ngSwitch`.
-- Use standalone components and shared barrels for imports.
-- Use Reactive Forms only.
-- Use `FormArray` for repeatable item groups.
-- Keep code lint/format clean and consistent with project style.
-- For feature modules, keep each non-root component in its own folder (example: `list/`, `form/`, `view/`) with colocated `.ts`, `.html`, `.scss` files.
-- Keep feature root focused on container + service + constants + index barrel.
+**Gomblips** is the shared UI component library (`@gom/ui`, sourced from `gom-libs/projects/gom-ui`). All UI elements must come from Gomblips. Do not create local duplicates of components that already exist in the library.
 
-- Reuse shared form controls and shared table components; do not create duplicate local controls unless approved.
-- Reuse shared modal, confirmation modal, card, alert/toast, and action button policy.
-- Shared component selector naming convention:
-- Use theme tokens from shared theming only (no hardcoded UI colors/sizes in components unless justified).
-- Use SCSS standards and keep styles scoped per component.
+### Available Gomblips Components
 
-- For create/update/save actions in forms and wizards: disable the primary submit button until required inputs are valid; also keep it disabled while submit/save is in progress.
-- Danger/delete buttons must stay danger on hover/focus/active (never switch to primary/blue).
-- In detail/view modals, use shared footer layout classes:
-- Multi-button content mode is controlled from one place: `src/app/shared/components/config/gom-action-button-policy.ts`.
-- Supported roles: `primary-action`, `danger-action`, `secondary-action`, `dismiss`.
-## i18n And Static Text
+| Component | Selector | Use For |
+|-----------|----------|---------|
+| Button | `gom-lib-button` | All buttons and icon-only actions |
+| Input | `gom-lib-input` | Text, number, search inputs |
+| Select / Dropdown | `gom-lib-select` | Single and multi-select dropdowns |
+| Checkbox | `gom-lib-checkbox` | Checkbox inputs |
+| Switch | `gom-lib-switch` | Toggle on/off switches |
+| Textarea | `gom-lib-textarea` | Multi-line text areas |
+| Table | `gom-lib-table` | Data tables with sorting and pagination |
+| Modal | `gom-lib-modal` | Dialog overlays and confirmation modals |
+| Alert / Toast | `gom-lib-alert` | Inline alerts; use `toast.success()` / `toast.error()` for toasts |
+| Card | `gom-lib-card` | Card containers and panels |
+| Chip | `gom-lib-chip` | Tags, filter chips, status badges |
+| Tabs | `gom-lib-tabs` | Tab navigation within a page |
+| Dynamic Form | `gom-lib-dynamic-form` | Config-driven form rendering |
 
-- Do not hardcode new user-facing static text in templates/components.
+### Rules
+
+- **Never build a local button, input, select, checkbox, switch, modal, table, or alert.** Always use the Gomblips equivalent.
+- For dropdowns with more than ~10 options: add `[searchable]="true"` and `[searchPlaceholder]` on `gom-lib-select`.
+- Danger/delete buttons must use the `danger` variant and must stay danger on hover/focus/active — never switch to primary/blue.
+- Disable the primary submit button until required inputs are valid, and also while a submit is in progress.
+- Multi-button modal footers are controlled from one place: `src/app/shared/components/config/gom-action-button-policy.ts`.
+- Supported button roles: `primary-action`, `danger-action`, `secondary-action`, `dismiss`.
+
+### Generic Component Contribution Rule
+
+> **If a component or utility is needed by both GOM UI and GOM Customer Web, it must be built in Gomblips (`gom-libs`) first, then consumed in both applications.**
+
+- Do not duplicate generic UI logic across apps. Examples: loaders, empty states, pagination, badge, rating, pin input.
+- When adding a component to Gomblips: export it from `public-api.ts`, add a selector with the `gom-lib-` prefix, and document its inputs/outputs in the component file.
+- After adding to Gomblips, rebuild the library: `cd gom-libs && npm run build`.
+
+---
+
+## 3. Theming — Gomblips SCSS Token Functions (Required)
+
+All visual styling must use Gomblips SCSS token functions. **Never hardcode color values, font sizes, spacing, or border radii** in component styles.
+
+### Color Token Functions
+
+```scss
+// Text colors
+color: get-text(primary);         // Brand primary text / links
+color: get-text(default);         // Default body text
+color: get-text(default-light);   // Secondary / subdued text
+color: get-text(hint);            // Hint / placeholder text
+color: get-text(disabled);        // Disabled text
+color: get-text(danger);          // Error / destructive text
+color: get-text(success);         // Success text
+color: get-text(warning);         // Warning text
+color: get-text(on-primary);      // Text on primary-colored backgrounds
+
+// Background colors
+background: get-background(standard);       // Default page / card background
+background: get-background(secondary);      // Alt surfaces
+background: get-background(primary);        // Brand primary fill
+background: get-background(primary-light);  // Light primary tint
+background: get-background(success);        // Success fill
+background: get-background(success-light);  // Light success tint
+background: get-background(warning);        // Warning fill
+background: get-background(danger);         // Danger fill
+background: get-background(danger-light);   // Light danger tint
+background: get-background(info);           // Info fill
+
+// Border colors
+border-color: get-border(standard);         // Default borders
+border-color: get-border(light);            // Subtle/faint borders
+border-color: get-border(primary);          // Active/focused borders
+border-color: get-border(danger);           // Error borders
+border-color: get-border(disabled);         // Disabled borders
+```
+
+### Typography Token Functions
+
+```scss
+// Font sizes
+font-size: get-font-size(xs);           // 12px
+font-size: get-font-size(sm);           // 14px
+font-size: get-font-size(body);         // 16px  ← use for "medium"
+font-size: get-font-size(body-lg);      // 18px  ← use for "large"
+font-size: get-font-size(heading-sm);
+font-size: get-font-size(heading-md);
+font-size: get-font-size(heading-lg);
+
+// Typography mixins
+@include typography-body();             // Standard body text styles
+@include typography-heading(lg);        // Heading styles (sm, md, lg, xl, xxl, 3xl)
+```
+
+### Spacing, Radius, Sizing
+
+```scss
+padding: get-spacing(sm);     // 16px
+margin: get-spacing(md);      // 24px
+gap: get-gap(sm);
+border-radius: get-radius(sm); // 8px
+border-radius: get-radius(md); // 12px
+width: get-size(lg);
+```
+
+### Breakpoints
+
+```scss
+@include breakpoint-up(md)  { ... }   // min-width: 840px
+@include breakpoint-down(sm) { ... }  // max-width: 428px
+```
+
+### What NOT to do
+
+```scss
+/* ❌ Never */
+color: #0a5d8b;
+font-size: 14px;
+padding: 16px;
+border-radius: 8px;
+color: red;
+
+/* ✅ Always */
+color: get-text(primary);
+font-size: get-font-size(sm);
+padding: get-spacing(sm);
+border-radius: get-radius(sm);
+color: get-text(danger);
+```
+
+---
+
+## 4. i18n And Static Text
+
+- Do not hardcode user-facing static text in templates or components.
+- Add all strings to all three locale files:
   - `src/assets/i18n/en.json`
   - `src/assets/i18n/te.json`
   - `src/assets/i18n/hi.json`
 
-## Dynamic Form Config Pattern
+---
 
-- Prefer a hybrid form architecture:
-  - Keep page/service orchestration in component TypeScript.
-- Use shared dynamic form renderer component for config-based forms:
-  - `gom-lib-dynamic-form`
-  - Shared package path: `src/app/shared/components/dynamic-form/`
+## 5. Dynamic Form Config Pattern
+
+- Use `gom-lib-dynamic-form` for config-driven forms.
 - Store form config JSON under `src/assets/form-config/<domain>/`.
-- Define a typed config model (`*.model.ts`) near the feature form and use it when reading JSON.
-  - `GomDynamicFormLoaderService`
-  - Supports `asset` source now and `api` source when backend-delivered config is enabled.
-- Allow JSON to define only declarative concerns:
-  - field control type, label key, placeholder key
-  - default value and basic validators
-  - validation message keys
-## Data, API, And Error Handling
+- Define a typed config model (`*.model.ts`) near the feature form.
+- Use `GomDynamicFormLoaderService` to load config (supports `asset` and `api` sources).
+- JSON defines only declarative concerns: control type, label key, placeholder key, default value, validators, validation message keys.
+- Keep orchestration logic (submit, patch, side-effects) in the component TypeScript, not in JSON config.
 
-- Keep API calls in feature services; components should not build raw HTTP logic.
-## Adding New Features To The System
+---
 
-- All feature definitions are embedded in `src/app/features/saas-platform/entitlements/feature-catalog.component.ts` as the `FEATURE_TEMPLATES` constant.
-- Each new feature must have entry in `FEATURE_TEMPLATES` with:
-  - `featureKey`: lowercase dot notation with action suffix (e.g., `rider.list`, `rider.create`)
-  - `displayName`: user-friendly label (e.g., "View Riders", "Create Rider")
-  - `module`: feature's domain/module (e.g., `delivery`, `masters`)
-  - `dependencies`: array of prerequisite feature keys (e.g., `['rider.list']` for edit action)
-- After updating `FEATURE_TEMPLATES`, rebuild the admin UI: `cd gom-ui && npm run build`
-- Feature templates will auto-populate in Platform Admin → SaaS Features → Add Feature dropdown on next browser load.
+## 6. Data, API, And Error Handling
 
-## Dropdowns With Many Options
+- Keep all API calls in feature services. Components must not build raw HTTP logic.
+- Use typed response models for all API calls.
+- Handle loading, error, and empty states explicitly in every list/table view.
 
-- Use `[searchable]="true"` on `gom-lib-select` when options count exceeds ~10.
-- Add `[searchPlaceholder]` for user-friendly search field placeholder (key: e.g., `'saas.platform.features.ph_search'`).
-- Search filters both `label` and `value` by default in `GomSelectComponent`.
-- Applies to: feature templates, dependencies, modules, and other large option lists.
+---
 
-## SaaS Entitlements And Feature Governance
+## 7. Forms And Actions
 
-- Treat feature keys as a shared contract between UI and API. Backend authorization is source of truth; UI visibility and actions must mirror that same contract.
-- Feature key format must be lowercase dot notation with action suffix: `<domain>.<action>`.
-- Preferred action suffixes: `list`, `create`, `edit`, `delete`, `approve`, `export`. Add others only when business flow genuinely requires them.
-- Normalize feature keys to lowercase before persistence, comparison, payload mapping, or form submission to avoid silent mismatches.
-- Keep feature naming stable across backend guards, session payloads, SaaS feature catalog, package plans, UI route metadata, and module docs.
-- Route and action protection must be feature-specific. Prefer `category.edit` over broad checks like `masters.write`.
-- Entitlement handling must fail safe by default:
-  - If `*.list` is missing, do not call list APIs for that module.
-  - If `*.create|*.edit|*.delete` is missing, block UI actions and related API calls.
-  - If route feature requirements are not satisfied, redirect to access-denied flow.
-- Every new tenant-facing functionality must include entitlement work in the same change:
-  - Add/update key metadata in `src/assets/data/features.json`.
-  - Add/update SaaS Platform Feature Catalog entry with feature key, display name, module, and dependency keys where required.
-  - Add/update package or entitlement mapping so the new key can be granted as intended.
-  - Add/update backend guard or middleware enforcement for each protected route.
-  - Add/update login/session payload mapping so effective `featureKeys` are returned to UI.
-- UI-specific implementation requirements:
-  - Add/update route-level gating using `featureKeys` route data.
-  - Add/update sidebar or menu gating so unavailable features are not navigable.
+- **Reactive Forms only**: `FormGroup`, `FormControl`, `FormArray`.
+- Disable the primary submit button until the form is valid and while a submit is in progress.
+- Danger/delete actions must always use the `danger` variant. Never revert to primary/blue on hover or focus.
+- Use `src/app/shared/components/config/gom-action-button-policy.ts` for multi-button footer layouts in modals.
+
+---
+
+## 8. SaaS Entitlements And Feature Governance
+
+- Feature keys are a shared contract between UI and API. Backend is source of truth; UI must mirror it.
+- Feature key format: lowercase dot notation with action suffix — `<domain>.<action>`.
+- Preferred actions: `list`, `create`, `edit`, `delete`, `approve`, `export`.
+- Normalize feature keys to lowercase before persistence, comparison, or payload mapping.
+- Keep feature naming stable across backend guards, session payloads, SaaS catalog, plans, route metadata, and module docs.
+- Prefer `category.edit` over broad guards like `masters.write`.
+- Entitlement handling must **fail safe**:
+  - No `*.list` → do not call list APIs.
+  - No `*.create|*.edit|*.delete` → block UI actions and API calls.
+  - Route requirements not met → redirect to access-denied.
+- Every new tenant-facing functionality requires entitlement work in the same PR:
+  - Add/update key in `src/assets/data/features.json`.
+  - Add/update SaaS Platform Feature Catalog entry (key, display name, module, dependencies).
+  - Add/update package/entitlement mapping.
+  - Add/update backend guard or middleware.
+  - Add/update session payload mapping so `featureKeys` are returned to UI on login.
+- UI implementation:
+  - Add/update route-level gating via `featureKeys` route data.
+  - Add/update sidebar/menu gating.
   - Add/update component-level guards for create, edit, delete, and row actions.
-  - Use `can*` naming for derived capability flags (`canEditCategory`, `canDeleteUnit`) and do not mix `allow*` and `can*` for the same purpose.
-  - When introducing a new feature domain, document expected keys in module docs and keep naming consistent with SaaS entitlement screens.
+  - Use `can*` naming for capability flags (`canEditCategory`, `canDeleteUnit`). Do not mix `allow*` and `can*` for the same purpose.
 
-## Accessibility And UX Baseline
+---
 
-- Provide meaningful aria-label/title text for icon-only controls.
-- Ensure keyboard interaction works for actionable elements.
-- Keep focus-visible behavior intact for interactive elements.
-- Keep empty/loading/error states explicit on tables and lists.
+## 9. Adding New Features To The System
 
-## Performance And Maintainability
+- All feature definitions live in `src/app/features/saas-platform/entitlements/feature-catalog.component.ts` as the `FEATURE_TEMPLATES` constant.
+- Each entry requires: `featureKey`, `displayName`, `module`, `dependencies`.
+- After updating `FEATURE_TEMPLATES`, rebuild: `cd gom-ui && npm run build`.
+- Feature templates auto-populate in Platform Admin → SaaS Features → Add Feature on next browser load.
 
-- Use `track`/`trackBy` for list rendering in `@for` loops.
-- Avoid repeated transformation logic; extract helpers for row-to-model mapping.
-- Remove unused code/styles during feature updates.
-- Keep component styles under budget; if budget changes are required, document the reason in PR notes.
+---
+
+## 10. Accessibility And UX Baseline
+
+- Provide meaningful `aria-label`/`title` for icon-only controls.
+- Keyboard interaction must work for all actionable elements.
+- Keep `focus-visible` styles intact.
+- Every list and table must have explicit empty, loading, and error states.
+
+---
+
+## 11. Performance And Maintainability
+
+- Use `track` in all `@for` loops.
+- Extract repeated row-to-model mapping logic into helpers.
+- Remove unused code and styles during feature updates.
+- Keep component style budgets; if a budget change is required, document the reason in the PR.

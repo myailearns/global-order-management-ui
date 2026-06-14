@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { ReactiveFormsModule } from '@angular/forms';
 
-import { GomAlertToastService } from '@gomlibs/ui';
+import { FormControlsModule, GomAlertToastService } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { GomButtonComponent, GomInputComponent } from '@gomlibs/ui';
 import { GomModalComponent } from '@gomlibs/ui';
@@ -10,6 +11,7 @@ import {
   CustomerEngagementService,
   CustomerInsight,
   CustomerOrderHistoryItem,
+  CustomerDetail,
   CustomerSummary,
 } from '../customer-engagement.service';
 
@@ -30,6 +32,8 @@ interface CustomerRow extends GomTableRow {
   standalone: true,
   imports: [
     CommonModule,
+    ReactiveFormsModule,
+    FormControlsModule,
     GomButtonComponent,
     GomInputComponent,
     GomTableComponent,
@@ -53,6 +57,7 @@ export class CustomersComponent implements OnInit {
 
   readonly detailOpen = signal(false);
   readonly selectedCustomer = signal<CustomerSummary | null>(null);
+  readonly selectedCustomerDetail = signal<CustomerDetail | null>(null);
   readonly selectedCustomerOrders = signal<CustomerOrderHistoryItem[]>([]);
 
   readonly columns: GomTableColumn<CustomerRow>[] = [
@@ -134,7 +139,7 @@ export class CustomersComponent implements OnInit {
       return;
     }
 
-    const row = event.row as { customerId?: unknown };
+    const row = event.row as CustomerRow;
     const customerId = typeof row.customerId === 'string' ? row.customerId : '';
     if (!customerId) {
       return;
@@ -147,16 +152,27 @@ export class CustomersComponent implements OnInit {
     this.detailOpen.set(true);
     this.detailLoading.set(true);
     this.selectedCustomer.set(null);
+    this.selectedCustomerDetail.set(null);
     this.selectedCustomerOrders.set([]);
 
     this.service.getCustomerSummary(customerId).subscribe({
       next: (response) => {
         this.selectedCustomer.set(response.data || null);
-        this.detailLoading.set(false);
       },
       error: (error) => {
         this.toast.error(String(error?.error?.message || 'Failed to load customer summary.'));
         this.closeCustomerDetail();
+      },
+    });
+
+    this.service.getCustomerById(customerId).subscribe({
+      next: (response) => {
+        this.selectedCustomerDetail.set(response.data || null);
+        this.detailLoading.set(false);
+      },
+      error: (error) => {
+        this.detailLoading.set(false);
+        this.toast.error(String(error?.error?.message || 'Failed to load customer details.'));
       },
     });
 
@@ -174,6 +190,21 @@ export class CustomersComponent implements OnInit {
     this.detailOpen.set(false);
     this.detailLoading.set(false);
     this.selectedCustomer.set(null);
+    this.selectedCustomerDetail.set(null);
     this.selectedCustomerOrders.set([]);
+  }
+
+  isPinLocked(): boolean {
+    const lockUntil = this.selectedCustomerDetail()?.pinLockedUntil;
+    if (!lockUntil) {
+      return false;
+    }
+
+    const lockDate = new Date(lockUntil);
+    if (!Number.isFinite(lockDate.getTime())) {
+      return false;
+    }
+
+    return lockDate.getTime() > Date.now();
   }
 }

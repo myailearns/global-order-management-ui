@@ -48,6 +48,11 @@
     <section class="customer-summary-grid">
       <div><strong>Name:</strong> {{ summary.customer.name }}</div>
       <div><strong>Phone:</strong> {{ summary.customer.phone }}</div>
+      <div><strong>PIN Attempts:</strong> {{ selectedCustomerDetail()?.pinAttempts ?? 0 }}</div>
+      <div>
+        <strong>PIN Lock Status:</strong>
+        {{ isPinLocked() ? ('Locked until ' + (selectedCustomerDetail()?.pinLockedUntil | date: 'medium')) : 'Unlocked' }}
+      </div>
       <div><strong>Total Orders:</strong> {{ summary.metrics.totalOrders }}</div>
       <div><strong>Delivered:</strong> {{ summary.metrics.deliveredOrders }}</div>
       <div><strong>Cancelled:</strong> {{ summary.metrics.cancelledOrders }}</div>

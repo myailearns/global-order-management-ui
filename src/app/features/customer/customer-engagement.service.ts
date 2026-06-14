@@ -26,6 +26,9 @@ export interface CustomerInsight {
   name: string;
   phone: string;
   email?: string;
+  pinAttempts?: number;
+  pinLockedUntil?: string | null;
+  pinLocked?: boolean;
   primaryPincode?: string;
   totalOrders: number;
   deliveredOrders: number;
@@ -83,6 +86,40 @@ export interface CustomerSummary {
   groupIds: string[];
 }
 
+export interface CustomerDetail {
+  _id: string;
+  name: string;
+  phone: string;
+  email?: string;
+  status: string;
+  pinAttempts?: number;
+  pinLockedUntil?: string | null;
+}
+
+export interface UnlockPinResult {
+  status: string;
+  customer: {
+    id: string;
+    phone: string;
+    pinLocked: boolean;
+    pinAttempts: number;
+    pinLockedUntil?: string | null;
+  };
+  message: string;
+}
+
+export interface LockPinResult {
+  status: string;
+  customer: {
+    id: string;
+    phone: string;
+    pinLocked: boolean;
+    pinAttempts: number;
+    pinLockedUntil?: string | null;
+  };
+  message: string;
+}
+
 export interface CustomerGroup {
   _id: string;
   name: string;
@@ -115,6 +152,7 @@ export class CustomerEngagementService {
   private readonly customersInsightsUrl = `${environment.apiBaseUrl}/customers-insights`;
   private readonly customerGroupsUrl = `${environment.apiBaseUrl}/customer-groups`;
   private readonly customersUrl = `${environment.apiBaseUrl}/customers`;
+  private readonly tenantAdminCustomersUrl = `${environment.apiBaseUrl}/tenant-admin/customers`;
 
   listCustomerInsights(params?: {
     search?: string;
@@ -137,6 +175,10 @@ export class CustomerEngagementService {
 
   getCustomerSummary(customerId: string): Observable<ApiSuccess<CustomerSummary>> {
     return this.http.get<ApiSuccess<CustomerSummary>>(`${this.customersInsightsUrl}/${customerId}/summary`);
+  }
+
+  getCustomerById(customerId: string): Observable<ApiSuccess<CustomerDetail>> {
+    return this.http.get<ApiSuccess<CustomerDetail>>(`${this.customersUrl}/${customerId}`);
   }
 
   listCustomerOrderHistory(customerId: string): Observable<ApiPaginated<CustomerOrderHistoryItem>> {
@@ -181,5 +223,13 @@ export class CustomerEngagementService {
 
   searchCustomers(query: string): Observable<ApiPaginated<{ _id: string; name: string; phone: string }>> {
     return this.http.get<ApiPaginated<{ _id: string; name: string; phone: string }>>(`${this.customersUrl}?search=${encodeURIComponent(query)}`);
+  }
+
+  unlockPin(customerId: string, reason: string): Observable<ApiSuccess<UnlockPinResult>> {
+    return this.http.post<ApiSuccess<UnlockPinResult>>(`${this.tenantAdminCustomersUrl}/${customerId}/unlock-pin`, { reason });
+  }
+
+  lockPin(customerId: string, reason: string): Observable<ApiSuccess<LockPinResult>> {
+    return this.http.post<ApiSuccess<LockPinResult>>(`${this.tenantAdminCustomersUrl}/${customerId}/lock-pin`, { reason });
   }
 }
