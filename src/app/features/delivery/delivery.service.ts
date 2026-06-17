@@ -120,6 +120,8 @@ export interface StorefrontConfig {
   accentColor: string;
   layoutMode: LayoutMode;
   b1g1HomeCardsPerRow?: number;
+  catalogInitialCategoryCount?: number;
+  catalogGroupsPerCategoryPage?: number;
   bannerImages: BannerImage[];
   welcomeMessage: string;
   footerText: string;

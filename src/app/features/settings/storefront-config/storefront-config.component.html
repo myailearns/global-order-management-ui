@@ -320,6 +320,20 @@
               [formControl]="configForm.controls.b1g1HomeCardsPerRow"
               hint="Controls how many BXGY cards are visible in one row (1 to 8). Default is 3."
             ></gom-lib-input>
+
+            <gom-lib-input
+              label="Initial categories to load"
+              type="number"
+              [formControl]="configForm.controls.catalogInitialCategoryCount"
+              hint="Number of category sections loaded on first open of All view (1 to 10). Default is 3."
+            ></gom-lib-input>
+
+            <gom-lib-input
+              label="Groups per category page"
+              type="number"
+              [formControl]="configForm.controls.catalogGroupsPerCategoryPage"
+              hint="How many product groups load per category per page, including each Load More tap (2 to 50). Default is 10."
+            ></gom-lib-input>
           </div>
         </fieldset>
 
