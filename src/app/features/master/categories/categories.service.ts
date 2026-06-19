@@ -33,12 +33,25 @@ export interface AvailableAssociations {
   units: AssociationItem[];
 }
 
+export interface PaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  hasMore: boolean;
+  totalPages: number;
+  canLoadAll: boolean;
+  tenantPlan?: string;
+}
+
 export interface UpdateAssociationsPayload {
   addFieldGroupIds?: string[];
   removeFieldGroupIds?: string[];
   addUnitIds?: string[];
   removeUnitIds?: string[];
 }
+
+export type AssociationResourceType = 'fieldGroups' | 'units' | 'groups';
+export type AvailableAssociationResourceType = 'fieldGroups' | 'units';
 
 interface ApiSuccess<T> {
   success: boolean;
@@ -49,12 +62,7 @@ interface ApiSuccess<T> {
 interface ApiPaginated<T> {
   success: boolean;
   data: T[];
-  meta: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
+  pagination: PaginationMeta;
 }
 
 @Injectable({
@@ -72,11 +80,14 @@ export class CategoriesService {
     return this.authSession.getTenantHeaders();
   }
 
-  getCategories(page?: number, limit?: number, status?: 'ACTIVE' | 'INACTIVE'): Observable<ApiPaginated<Category>> {
+  getCategories(page?: number, limit?: number, status?: 'ACTIVE' | 'INACTIVE', search?: string, sortBy?: string, order?: 'asc' | 'desc'): Observable<ApiPaginated<Category>> {
     const params = new URLSearchParams();
     if (page) params.set('page', String(page));
     if (limit) params.set('limit', String(limit));
     if (status) params.set('status', status);
+    if (search) params.set('search', search);
+    if (sortBy) params.set('sortBy', sortBy);
+    if (order) params.set('order', order);
 
     const query = params.toString();
     const url = query ? `${this.apiUrl}?${query}` : this.apiUrl;
@@ -101,6 +112,30 @@ export class CategoriesService {
 
   getAvailableAssociations(id: string): Observable<ApiSuccess<AvailableAssociations>> {
     return this.http.get<ApiSuccess<AvailableAssociations>>(`${this.apiUrl}/${id}/available-associations`, { headers: this.tenantHeaders });
+  }
+
+  getAssociationsResource(
+    id: string,
+    params: { resource: AssociationResourceType; page?: number; limit?: number; search?: string },
+  ): Observable<ApiPaginated<AssociationItem>> {
+    const query = new URLSearchParams();
+    query.set('resource', params.resource);
+    if (params.page) query.set('page', String(params.page));
+    if (params.limit) query.set('limit', String(params.limit));
+    if (params.search) query.set('search', params.search);
+    return this.http.get<ApiPaginated<AssociationItem>>(`${this.apiUrl}/${id}/associations?${query.toString()}`, { headers: this.tenantHeaders });
+  }
+
+  getAvailableAssociationsResource(
+    id: string,
+    params: { resource: AvailableAssociationResourceType; page?: number; limit?: number; search?: string },
+  ): Observable<ApiPaginated<AssociationItem>> {
+    const query = new URLSearchParams();
+    query.set('resource', params.resource);
+    if (params.page) query.set('page', String(params.page));
+    if (params.limit) query.set('limit', String(params.limit));
+    if (params.search) query.set('search', params.search);
+    return this.http.get<ApiPaginated<AssociationItem>>(`${this.apiUrl}/${id}/available-associations?${query.toString()}`, { headers: this.tenantHeaders });
   }
 
   updateAssociations(id: string, payload: UpdateAssociationsPayload): Observable<ApiSuccess<CategoryAssociations>> {

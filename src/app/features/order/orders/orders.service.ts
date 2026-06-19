@@ -6,12 +6,16 @@ import { environment } from '../../../../environments/environment';
 
 export interface ApiPaginated<T> {
   success: boolean;
+  message?: string;
   data: T[];
-  meta: {
+  pagination: {
     page: number;
     limit: number;
     total: number;
+    hasMore: boolean;
     totalPages: number;
+    canLoadAll: boolean;
+    tenantPlan?: string;
   };
 }
 
@@ -308,8 +312,31 @@ export class OrdersService {
   private readonly variantsUrl = `${environment.apiBaseUrl}/variants`;
   private readonly tenantConfigUrl = `${environment.apiBaseUrl}/tenant-config`;
 
-  listOrders(): Observable<ApiPaginated<Order>> {
-    return this.http.get<ApiPaginated<Order>>(this.ordersUrl);
+  listOrders(params?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    customerId?: string;
+    from?: string;
+    to?: string;
+    search?: string;
+    sortBy?: string;
+    order?: 'asc' | 'desc';
+  }): Observable<ApiPaginated<Order>> {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.set('page', String(params.page));
+    if (params?.limit) searchParams.set('limit', String(params.limit));
+    if (params?.status) searchParams.set('status', params.status);
+    if (params?.customerId) searchParams.set('customerId', params.customerId);
+    if (params?.from) searchParams.set('from', params.from);
+    if (params?.to) searchParams.set('to', params.to);
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.sortBy) searchParams.set('sortBy', params.sortBy);
+    if (params?.order) searchParams.set('order', params.order);
+
+    const query = searchParams.toString();
+    const url = query ? `${this.ordersUrl}?${query}` : this.ordersUrl;
+    return this.http.get<ApiPaginated<Order>>(url);
   }
 
   listVariants(): Observable<ApiPaginated<Variant>> {
@@ -493,7 +520,12 @@ export class OrdersService {
     return this.http.get<ApiSuccess<OrderRating | null>>(`${this.ordersUrl}/${orderId}/rating`);
   }
 
-  listReturns(orderId: string): Observable<ApiPaginated<ReturnRequest>> {
-    return this.http.get<ApiPaginated<ReturnRequest>>(`${environment.apiBaseUrl}/returns?orderId=${encodeURIComponent(orderId)}`);
+  listReturns(orderId: string, params?: { page?: number; limit?: number; status?: string }): Observable<ApiPaginated<ReturnRequest>> {
+    const searchParams = new URLSearchParams();
+    searchParams.set('orderId', orderId);
+    if (params?.page) searchParams.set('page', String(params.page));
+    if (params?.limit) searchParams.set('limit', String(params.limit));
+    if (params?.status) searchParams.set('status', params.status);
+    return this.http.get<ApiPaginated<ReturnRequest>>(`${environment.apiBaseUrl}/returns?${searchParams.toString()}`);
   }
 }

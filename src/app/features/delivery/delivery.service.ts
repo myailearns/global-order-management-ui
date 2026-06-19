@@ -6,12 +6,16 @@ import { environment } from '../../../environments/environment';
 
 export interface ApiPaginated<T> {
   success: boolean;
+  message?: string;
   data: T[];
-  meta: {
+  pagination: {
     page: number;
     limit: number;
     total: number;
+    hasMore: boolean;
     totalPages: number;
+    canLoadAll: boolean;
+    tenantPlan?: string;
   };
 }
 
@@ -206,8 +210,27 @@ export class DeliveryService {
   private readonly courierPartnersUrl = `${environment.apiBaseUrl}/courier-partners`;
   private readonly tenantConfigUrl = `${environment.apiBaseUrl}/tenant-config`;
 
-  listRiders(page = 1, limit = 200): Observable<ApiPaginated<Rider>> {
-    return this.http.get<ApiPaginated<Rider>>(`${this.ridersUrl}?page=${page}&limit=${limit}`);
+  listRiders(params?: {
+    page?: number;
+    limit?: number;
+    status?: RiderStatus;
+    search?: string;
+    employeeCode?: string;
+    sortBy?: string;
+    order?: 'asc' | 'desc';
+  }): Observable<ApiPaginated<Rider>> {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.set('page', String(params.page));
+    if (params?.limit) searchParams.set('limit', String(params.limit));
+    if (params?.status) searchParams.set('status', params.status);
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.employeeCode) searchParams.set('employeeCode', params.employeeCode);
+    if (params?.sortBy) searchParams.set('sortBy', params.sortBy);
+    if (params?.order) searchParams.set('order', params.order);
+
+    const query = searchParams.toString();
+    const url = query ? `${this.ridersUrl}?${query}` : this.ridersUrl;
+    return this.http.get<ApiPaginated<Rider>>(url);
   }
 
   createRider(payload: RiderPayload): Observable<ApiSuccess<Rider>> {
@@ -267,8 +290,25 @@ export class DeliveryService {
     });
   }
 
-  listCourierPartners(page = 1, limit = 200): Observable<ApiPaginated<CourierPartner>> {
-    return this.http.get<ApiPaginated<CourierPartner>>(`${this.courierPartnersUrl}?page=${page}&limit=${limit}`);
+  listCourierPartners(params?: {
+    page?: number;
+    limit?: number;
+    status?: CourierPartnerStatus;
+    search?: string;
+    sortBy?: string;
+    order?: 'asc' | 'desc';
+  }): Observable<ApiPaginated<CourierPartner>> {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.set('page', String(params.page));
+    if (params?.limit) searchParams.set('limit', String(params.limit));
+    if (params?.status) searchParams.set('status', params.status);
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.sortBy) searchParams.set('sortBy', params.sortBy);
+    if (params?.order) searchParams.set('order', params.order);
+
+    const query = searchParams.toString();
+    const url = query ? `${this.courierPartnersUrl}?${query}` : this.courierPartnersUrl;
+    return this.http.get<ApiPaginated<CourierPartner>>(url);
   }
 
   createCourierPartner(payload: CourierPartnerPayload): Observable<ApiSuccess<CourierPartner>> {

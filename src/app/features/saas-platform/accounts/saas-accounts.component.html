@@ -28,9 +28,22 @@
     [columns]="columns"
     [rows]="rows()"
     [loading]="loading()"
+    [dataMode]="accountTableDataMode()"
     [totalItems]="total()"
+    [pageIndex]="accountTablePageIndex()"
+    [pageSize]="accountTablePageSize()"
+    [pageSizeOptions]="[20, 50, 100]"
     (rowAction)="onTableAction($event)"
+    (queryChange)="onAccountsTableQueryChange($event)"
   ></gom-lib-table>
+
+  @if (canLoadAllAccounts() && !allAccountsLoaded()) {
+    <div class="saas-accounts__loading">
+      <gom-lib-button type="button" variant="secondary" [disabled]="loading()" (buttonClick)="loadAllAccounts()">
+        Load All ({{ total() }})
+      </gom-lib-button>
+    </div>
+  }
 
   @if (loading()) {
     <div class="saas-accounts__loading" aria-live="polite">{{ 'saas.platform.accounts.msg_loading' | translate }}</div>

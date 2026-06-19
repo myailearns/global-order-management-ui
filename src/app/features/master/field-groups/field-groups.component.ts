@@ -9,6 +9,7 @@ import {
   GomConfirmationModalComponent,
   GomTableColumn,
   GomTableComponent,
+  GomTableQuery,
   GomTableRow,
 } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
@@ -65,7 +66,7 @@ export class FieldGroupsComponent implements OnInit {
   readonly canEditFieldGroup = computed(() => this.authSession.hasFeature('fieldGroup.edit'));
   readonly canDeleteFieldGroup = computed(() => this.authSession.hasFeature('fieldGroup.delete'));
   readonly fieldGroupCreateLimit = computed(() => this.authSession.getFeatureConfigNumber('fieldGroup.create', 'max_count'));
-  readonly fieldGroupCreateUsed = computed(() => this.fieldGroups().length);
+  readonly fieldGroupCreateUsed = computed(() => this.totalFieldGroups());
   readonly fieldGroupCreateRemaining = computed(() => {
     const limit = this.fieldGroupCreateLimit();
     if (limit === null) {
@@ -80,6 +81,13 @@ export class FieldGroupsComponent implements OnInit {
   readonly pendingDeleteFieldGroup = signal<FieldGroup | null>(null);
 
   readonly fieldGroups = signal<FieldGroup[]>([]);
+  readonly totalFieldGroups = signal(0);
+  readonly fieldGroupTablePageIndex = signal(0);
+  readonly fieldGroupTablePageSize = signal(50);
+  readonly canLoadAllFieldGroups = signal(false);
+  readonly allFieldGroupsLoaded = signal(false);
+  readonly serverSidePaginationFieldGroups = computed(() => this.totalFieldGroups() > 500);
+  readonly fieldGroupsTableDataMode = computed<'client' | 'server'>(() => (this.serverSidePaginationFieldGroups() && !this.allFieldGroupsLoaded() ? 'server' : 'client'));
   readonly fields = signal<PricingField[]>([]);
   readonly groups = signal<ProductGroupUsage[]>([]);
   readonly categories = signal<CategoryOption[]>([]);
@@ -240,17 +248,32 @@ export class FieldGroupsComponent implements OnInit {
   }
 
   private loadData(): void {
+    this.fieldGroupTablePageIndex.set(0);
+    this.allFieldGroupsLoaded.set(false);
+
     this.loading.set(true);
     this.errorMessage.set(null);
 
     forkJoin({
-      fieldGroups: this.fieldGroupsService.listFieldGroups(),
-      fields: this.fieldGroupsService.listFields(),
-      groups: this.fieldGroupsService.listGroups(),
-      categories: this.fieldGroupsService.listCategories(),
+      fieldGroups: this.fieldGroupsService.listFieldGroups({ page: 1, limit: this.fieldGroupTablePageSize() }),
+      fields: this.fieldGroupsService.listFields({ page: 1, limit: 5000 }),
+      groups: this.fieldGroupsService.listGroups({ page: 1, limit: 5000 }),
+      categories: this.fieldGroupsService.listCategories({ page: 1, limit: 5000, status: 'ACTIVE' }),
     }).subscribe({
       next: (result) => {
-        this.fieldGroups.set(result.fieldGroups.data ?? []);
+        const pagination = result.fieldGroups.pagination;
+        this.totalFieldGroups.set(pagination.total);
+        this.canLoadAllFieldGroups.set(pagination.canLoadAll);
+        this.allFieldGroupsLoaded.set(pagination.total <= 500);
+
+        if (pagination.total <= 500 && pagination.hasMore) {
+          this.fieldGroupsService.listFieldGroups({ page: 1, limit: pagination.total }).subscribe({
+            next: (allRes) => this.fieldGroups.set(allRes.data ?? []),
+          });
+        } else {
+          this.fieldGroups.set(result.fieldGroups.data ?? []);
+        }
+
         this.fields.set(result.fields.data ?? []);
         this.groups.set(result.groups.data ?? []);
         this.categories.set(result.categories.data ?? []);
@@ -259,6 +282,59 @@ export class FieldGroupsComponent implements OnInit {
       error: (error) => {
         console.error('Error loading field groups:', error);
         this.errorMessage.set(this.translate.instant('fieldGroups.toast.errorLoad'));
+        this.loading.set(false);
+      },
+    });
+  }
+
+  onFieldGroupsTableQueryChange(query: GomTableQuery): void {
+    if (this.fieldGroupsTableDataMode() !== 'server') {
+      return;
+    }
+
+    this.loading.set(true);
+    this.errorMessage.set(null);
+
+    const search = query.searchTerm?.trim();
+    const sortBy = query.sort?.key;
+    const order = query.sort?.direction as 'asc' | 'desc' | undefined;
+
+    this.fieldGroupsService.listFieldGroups({
+      page: query.pageIndex + 1,
+      limit: query.pageSize,
+      search,
+      sortBy,
+      order,
+    }).subscribe({
+      next: (response) => {
+        this.allFieldGroupsLoaded.set(false);
+        this.fieldGroups.set(response.data ?? []);
+        this.totalFieldGroups.set(response.pagination.total);
+        this.canLoadAllFieldGroups.set(response.pagination.canLoadAll);
+        this.fieldGroupTablePageIndex.set(query.pageIndex);
+        this.fieldGroupTablePageSize.set(query.pageSize);
+        this.loading.set(false);
+      },
+      error: (error) => {
+        console.error('Error loading field groups table page:', error);
+        this.loading.set(false);
+      },
+    });
+  }
+
+  loadAllFieldGroups(): void {
+    this.loading.set(true);
+    this.fieldGroupsService.listFieldGroups({ page: 1, limit: this.totalFieldGroups() }).subscribe({
+      next: (response) => {
+        this.fieldGroups.set(response.data ?? []);
+        this.totalFieldGroups.set(response.pagination.total);
+        this.canLoadAllFieldGroups.set(false);
+        this.allFieldGroupsLoaded.set(true);
+        this.fieldGroupTablePageIndex.set(0);
+        this.loading.set(false);
+      },
+      error: (error) => {
+        console.error('Error loading all field groups:', error);
         this.loading.set(false);
       },
     });

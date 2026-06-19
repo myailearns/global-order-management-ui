@@ -45,10 +45,32 @@
           [columns]="columns()"
           [rows]="filteredOffers()"
           [loading]="loading()"
+          [dataMode]="offerTableDataMode()"
+          [totalItems]="totalOffers()"
+          [pageIndex]="offerTablePageIndex()"
+          [pageSize]="offerTablePageSize()"
+          [pageSizeOptions]="serverSidePaginationOffers() ? [50] : [10, 20, 50]"
           [searchPlaceholder]="'gom.offers.search_placeholder' | translate"
           [emptyMessage]="'gom.offers.no_offers' | translate"
           (rowAction)="onTableAction($event)"
+          (queryChange)="onOfferTableQueryChange($event)"
         ></gom-lib-table>
+
+        @if (serverSidePaginationOffers() && canLoadAllOffers() && !allOffersLoaded()) {
+          <div class="pagination-controls">
+            <div class="pagination-controls__info">
+              {{ totalOffers() }} offers total. Use table pager for page navigation.
+            </div>
+            <div class="pagination-controls__actions">
+              <gom-lib-button
+                type="button"
+                variant="secondary"
+                [disabled]="loading()"
+                (buttonClick)="loadAllOffers()"
+              ><i class="ri-download-2-line" aria-hidden="true"></i> Load All</gom-lib-button>
+            </div>
+          </div>
+        }
       }
     </div>
   </section>

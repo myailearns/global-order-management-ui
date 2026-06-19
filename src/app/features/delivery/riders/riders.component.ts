@@ -12,6 +12,7 @@ import {
   GomModalComponent,
   GomTableColumn,
   GomTableComponent,
+  GomTableQuery,
   GomTableRow,
 } from '@gomlibs/ui';
 import { DeliveryService, EmployeeCodePreview, Rider, RiderPayload, RiderStatus } from '../delivery.service';
@@ -69,6 +70,13 @@ export class RidersComponent implements OnInit {
   });
   readonly saving = signal(false);
   readonly errorMessage = signal<string | null>(null);
+  readonly totalRiders = signal(0);
+  readonly riderTablePageIndex = signal(0);
+  readonly riderTablePageSize = signal(50);
+  readonly canLoadAllRiders = signal(false);
+  readonly allRidersLoaded = signal(false);
+  readonly serverSidePaginationRiders = computed(() => this.totalRiders() > 500);
+  readonly riderTableDataMode = computed<'client' | 'server'>(() => (this.serverSidePaginationRiders() && !this.allRidersLoaded() ? 'server' : 'client'));
   readonly riders = signal<Rider[]>([]);
   readonly formOpen = signal(false);
   readonly editingId = signal<string | null>(null);
@@ -211,9 +219,26 @@ export class RidersComponent implements OnInit {
     this.loading.set(true);
     this.errorMessage.set(null);
 
-    this.service.listRiders().subscribe({
+    this.riderTablePageIndex.set(0);
+    this.allRidersLoaded.set(false);
+
+    const selectedStatus = this.selectedStatus();
+    const status: RiderStatus | undefined = selectedStatus === 'ALL' ? undefined : selectedStatus;
+
+    this.service.listRiders({ page: 1, limit: this.riderTablePageSize(), status }).subscribe({
       next: (response) => {
-        this.riders.set(response.data || []);
+        const pagination = response.pagination;
+        this.totalRiders.set(pagination.total);
+        this.canLoadAllRiders.set(pagination.canLoadAll);
+        this.allRidersLoaded.set(pagination.total <= 500);
+
+        if (pagination.total <= 500 && pagination.hasMore) {
+          this.service.listRiders({ page: 1, limit: pagination.total, status }).subscribe({
+            next: (allRes) => this.riders.set(allRes.data || []),
+          });
+        } else {
+          this.riders.set(response.data || []);
+        }
         this.loading.set(false);
       },
       error: (error) => {
@@ -260,6 +285,7 @@ export class RidersComponent implements OnInit {
     }
 
     this.selectedStatus.set(status);
+    this.loadRiders();
   }
 
   isStatusFilterActive(status: 'ALL' | RiderStatus): boolean {
@@ -559,6 +585,52 @@ export class RidersComponent implements OnInit {
         this.toast.error(this.extractApiMessage(error) || 'Failed to save rider.');
         this.saving.set(false);
       },
+    });
+  }
+
+  onRiderTableQueryChange(query: GomTableQuery): void {
+    if (this.riderTableDataMode() !== 'server') {
+      return;
+    }
+
+    this.loading.set(true);
+    const selectedStatus = this.selectedStatus();
+    const status: RiderStatus | undefined = selectedStatus === 'ALL' ? undefined : selectedStatus;
+    this.service.listRiders({
+      page: query.pageIndex + 1,
+      limit: query.pageSize,
+      status,
+      search: query.searchTerm?.trim() || undefined,
+      sortBy: query.sort?.key || undefined,
+      order: query.sort?.direction as 'asc' | 'desc' | undefined,
+    }).subscribe({
+      next: (res) => {
+        this.allRidersLoaded.set(false);
+        this.riders.set(res.data ?? []);
+        this.totalRiders.set(res.pagination.total);
+        this.canLoadAllRiders.set(res.pagination.canLoadAll);
+        this.riderTablePageIndex.set(query.pageIndex);
+        this.riderTablePageSize.set(query.pageSize);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false),
+    });
+  }
+
+  loadAllRiders(): void {
+    this.loading.set(true);
+    const selectedStatus = this.selectedStatus();
+    const status: RiderStatus | undefined = selectedStatus === 'ALL' ? undefined : selectedStatus;
+    this.service.listRiders({ page: 1, limit: this.totalRiders(), status }).subscribe({
+      next: (res) => {
+        this.riders.set(res.data ?? []);
+        this.totalRiders.set(res.pagination.total);
+        this.canLoadAllRiders.set(false);
+        this.allRidersLoaded.set(true);
+        this.riderTablePageIndex.set(0);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false),
     });
   }
 

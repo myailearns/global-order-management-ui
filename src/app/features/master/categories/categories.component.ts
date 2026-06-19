@@ -8,12 +8,12 @@ import { CategoriesListComponent, CategoryAction } from './list/categories-list.
 import { CategoriesFormComponent, CategoryFormData } from './form/categories-form.component';
 import { CategoriesViewComponent } from './view/categories-view.component';
 import { CategoryAssociationsModalComponent } from './associations/category-associations-modal.component';
-import { GomAlertToastService, GomConfirmationModalComponent } from '@gomlibs/ui';
+import { GomAlertToastService, GomButtonComponent, GomConfirmationModalComponent, GomTableQuery } from '@gomlibs/ui';
 
 @Component({
   selector: 'gom-categories',
   standalone: true,
-  imports: [CommonModule, TranslateModule, CategoriesListComponent, CategoriesFormComponent, CategoriesViewComponent, CategoryAssociationsModalComponent, GomConfirmationModalComponent],
+  imports: [CommonModule, TranslateModule, CategoriesListComponent, CategoriesFormComponent, CategoriesViewComponent, CategoryAssociationsModalComponent, GomConfirmationModalComponent, GomButtonComponent],
   templateUrl: './categories.component.html',
   styleUrl: './categories.component.scss'
 })
@@ -66,6 +66,14 @@ export class CategoriesComponent implements OnInit {
   associationsOpen = signal(false);
   associationsCategory = signal<Category | null>(null);
 
+  readonly totalCategories = signal(0);
+  readonly categoryTablePageIndex = signal(0);
+  readonly categoryTablePageSize = signal(50);
+  readonly canLoadAllCategories = signal(false);
+  readonly allCategoriesLoaded = signal(false);
+  readonly serverSidePaginationCategories = computed(() => this.totalCategories() > 500);
+  readonly categoryTableDataMode = computed<'client' | 'server'>(() => (this.serverSidePaginationCategories() && !this.allCategoriesLoaded() ? 'server' : 'client'));
+
   ngOnInit() {
     this.loadCategories();
   }
@@ -80,10 +88,23 @@ export class CategoriesComponent implements OnInit {
 
     this.loading.set(true);
     this.errorMessage.set(null);
+    this.categoryTablePageIndex.set(0);
+    this.allCategoriesLoaded.set(false);
 
-    this.categoriesService.getCategories().subscribe({
+    this.categoriesService.getCategories(1, this.categoryTablePageSize()).subscribe({
       next: (response) => {
-        this.categories.set(response.data ?? []);
+        const pagination = response.pagination;
+        this.totalCategories.set(pagination.total);
+        this.canLoadAllCategories.set(pagination.canLoadAll);
+        this.allCategoriesLoaded.set(pagination.total <= 500);
+
+        if (pagination.total <= 500 && pagination.hasMore) {
+          this.categoriesService.getCategories(1, pagination.total).subscribe({
+            next: (allRes) => this.categories.set(allRes.data || []),
+          });
+        } else {
+          this.categories.set(response.data || []);
+        }
         this.loading.set(false);
       },
       error: (error) => {
@@ -91,6 +112,46 @@ export class CategoriesComponent implements OnInit {
         this.errorMessage.set(this.translate.instant(this.text.errorLoad));
         this.loading.set(false);
       }
+    });
+  }
+
+  onCategoryTableQueryChange(query: GomTableQuery): void {
+    if (this.categoryTableDataMode() !== 'server') {
+      return;
+    }
+
+    this.loading.set(true);
+
+    const search = query.searchTerm?.trim();
+    const sortBy = query.sort?.key;
+    const order = query.sort?.direction as 'asc' | 'desc' | undefined;
+
+    this.categoriesService.getCategories(query.pageIndex + 1, query.pageSize, undefined, search, sortBy, order).subscribe({
+      next: (res) => {
+        this.allCategoriesLoaded.set(false);
+        this.categories.set(res.data ?? []);
+        this.totalCategories.set(res.pagination.total);
+        this.canLoadAllCategories.set(res.pagination.canLoadAll);
+        this.categoryTablePageIndex.set(query.pageIndex);
+        this.categoryTablePageSize.set(query.pageSize);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false),
+    });
+  }
+
+  loadAllCategories(): void {
+    this.loading.set(true);
+    this.categoriesService.getCategories(1, this.totalCategories()).subscribe({
+      next: (res) => {
+        this.categories.set(res.data ?? []);
+        this.totalCategories.set(res.pagination.total);
+        this.canLoadAllCategories.set(false);
+        this.allCategoriesLoaded.set(true);
+        this.categoryTablePageIndex.set(0);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false),
     });
   }
 

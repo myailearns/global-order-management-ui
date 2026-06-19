@@ -42,6 +42,7 @@
                                    "customerGroups":  "Customer Groups",
                                    "saasAccounts":  "SaaS Accounts",
                                    "saasPackages":  "SaaS Packages",
+                                   "platformUsers":  "Platform Users",
                                    "saasFeatures":  "SaaS Features",
                                    "platformTenantRoles":  "Platform Tenant Roles",
                                    "tenantEntitlements":  "Tenant Entitlements",

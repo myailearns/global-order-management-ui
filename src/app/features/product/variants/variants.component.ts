@@ -15,6 +15,7 @@ import {
   GomSelectOption,
   GomTableColumn,
   GomTableComponent,
+  GomTableQuery,
   GomTableRow,
   getButtonContentMode,
   showButtonIcon,
@@ -82,6 +83,14 @@ export class VariantsComponent implements OnInit {
   });
   readonly saving = signal(false);
   readonly errorMessage = signal<string | null>(null);
+
+  readonly totalVariants = signal(0);
+  readonly variantTablePageIndex = signal(0);
+  readonly variantTablePageSize = signal(50);
+  readonly canLoadAllVariants = signal(false);
+  readonly allVariantsLoaded = signal(false);
+  readonly serverSidePaginationVariants = computed(() => this.totalVariants() > 500);
+  readonly variantTableDataMode = computed<'client' | 'server'>(() => (this.serverSidePaginationVariants() && !this.allVariantsLoaded() ? 'server' : 'client'));
 
   readonly groups = signal<Group[]>([]);
   readonly units = signal<Unit[]>([]);
@@ -433,16 +442,71 @@ export class VariantsComponent implements OnInit {
   loadVariants(groupId: string): void {
     this.loading.set(true);
     this.errorMessage.set(null);
+    this.variantTablePageIndex.set(0);
+    this.allVariantsLoaded.set(false);
 
-    this.service.listVariants(groupId).subscribe({
+    this.service.listVariants(groupId, 1, this.variantTablePageSize()).subscribe({
       next: (response) => {
-        this.variants.set(response.data || []);
+        const pagination = response.pagination;
+        this.totalVariants.set(pagination.total);
+        this.canLoadAllVariants.set(pagination.canLoadAll);
+        this.allVariantsLoaded.set(pagination.total <= 500);
+
+        if (pagination.total <= 500 && pagination.hasMore) {
+          this.service.listVariants(groupId, 1, pagination.total).subscribe({
+            next: (allRes) => this.variants.set(allRes.data || []),
+          });
+        } else {
+          this.variants.set(response.data || []);
+        }
         this.loading.set(false);
       },
       error: () => {
         this.errorMessage.set('Failed to load variants.');
         this.loading.set(false);
       },
+    });
+  }
+
+  onVariantTableQueryChange(query: GomTableQuery): void {
+    if (this.variantTableDataMode() !== 'server') {
+      return;
+    }
+
+    this.loading.set(true);
+    const groupId = this.selectedGroupId();
+
+    const search = query.searchTerm?.trim();
+    const sortBy = query.sort?.key;
+    const order = query.sort?.direction as 'asc' | 'desc' | undefined;
+
+    this.service.listVariants(groupId, query.pageIndex + 1, query.pageSize, undefined, search, sortBy, order).subscribe({
+      next: (res) => {
+        this.allVariantsLoaded.set(false);
+        this.variants.set(res.data ?? []);
+        this.totalVariants.set(res.pagination.total);
+        this.canLoadAllVariants.set(res.pagination.canLoadAll);
+        this.variantTablePageIndex.set(query.pageIndex);
+        this.variantTablePageSize.set(query.pageSize);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false),
+    });
+  }
+
+  loadAllVariants(): void {
+    this.loading.set(true);
+    const groupId = this.selectedGroupId();
+    this.service.listVariants(groupId, 1, this.totalVariants()).subscribe({
+      next: (res) => {
+        this.variants.set(res.data ?? []);
+        this.totalVariants.set(res.pagination.total);
+        this.canLoadAllVariants.set(false);
+        this.allVariantsLoaded.set(true);
+        this.variantTablePageIndex.set(0);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false),
     });
   }
 

@@ -14,6 +14,7 @@ import {
   GomSelectOption,
   GomTableColumn,
   GomTableComponent,
+  GomTableQuery,
   GomTableRow,
   getButtonContentMode,
   showButtonIcon,
@@ -22,7 +23,7 @@ import {
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { ImagePickerComponent, PickedImage } from '../../../shared/components/image-picker/image-picker.component';
 import { DisableIfNoFeatureDirective } from '../../../shared/directives/disable-if-no-feature.directive';
-import { Pack, PacksService, VariantOption } from './packs.service';
+import { CreatePackPayload, Pack, PacksService, VariantOption } from './packs.service';
 
 interface PackRow extends GomTableRow {
   _id: string;
@@ -70,7 +71,7 @@ export class PacksComponent implements OnInit {
   readonly canUpdatePack = computed(() => this.authSession.hasFeature('pack.edit') || this.authSession.hasFeature('pack.update'));
   readonly canDeletePack = computed(() => this.authSession.hasFeature('pack.delete'));
   readonly packCreateLimit = computed(() => this.authSession.getFeatureConfigNumber('pack.create', 'max_count'));
-  readonly packCreateUsed = computed(() => this.packs().length);
+  readonly packCreateUsed = computed(() => this.totalPacks());
   readonly packCreateRemaining = computed(() => {
     const limit = this.packCreateLimit();
     if (limit === null) {
@@ -83,6 +84,13 @@ export class PacksComponent implements OnInit {
   readonly errorMessage = signal<string | null>(null);
 
   readonly packs = signal<Pack[]>([]);
+  readonly totalPacks = signal(0);
+  readonly packTablePageIndex = signal(0);
+  readonly packTablePageSize = signal(50);
+  readonly canLoadAllPacks = signal(false);
+  readonly allPacksLoaded = signal(false);
+  readonly serverSidePaginationPacks = computed(() => this.totalPacks() > 500);
+  readonly packTableDataMode = computed<'client' | 'server'>(() => (this.serverSidePaginationPacks() && !this.allPacksLoaded() ? 'server' : 'client'));
   readonly variants = signal<VariantOption[]>([]);
 
   readonly DEFAULT_MAX_IMAGES = 6;
@@ -122,7 +130,7 @@ export class PacksComponent implements OnInit {
     outOfStockThreshold: [1, [Validators.required, Validators.min(1)]],
     discountPercentage: [0, [Validators.min(0), Validators.max(100)]],
     discountDescription: [''],
-    status: ['ACTIVE' as 'ACTIVE' | 'INACTIVE'],
+    status: ['ACTIVE'],
     items: this.fb.array([]),
     badges: this.fb.array([]),
   });
@@ -294,18 +302,79 @@ export class PacksComponent implements OnInit {
   loadInitialData(): void {
     this.loading.set(true);
     this.errorMessage.set(null);
+    this.packTablePageIndex.set(0);
+    this.allPacksLoaded.set(false);
 
     forkJoin({
-      packs: this.service.listPacks(1, 100),
+      packs: this.service.listPacks({ page: 1, limit: this.packTablePageSize() }),
       variants: this.service.listVariantOptions(1, 100),
     }).subscribe({
       next: ({ packs, variants }) => {
-        this.packs.set(packs.data || []);
+        const pagination = packs.pagination;
+        this.totalPacks.set(pagination.total);
+        this.canLoadAllPacks.set(pagination.canLoadAll);
+        this.allPacksLoaded.set(pagination.total <= 500);
+
+        if (pagination.total <= 500 && pagination.hasMore) {
+          this.service.listPacks({ page: 1, limit: pagination.total }).subscribe({
+            next: (allRes) => this.packs.set(allRes.data || []),
+          });
+        } else {
+          this.packs.set(packs.data || []);
+        }
+
         this.variants.set((variants.data || []).filter((item) => item.status === 'ACTIVE'));
         this.loading.set(false);
       },
       error: () => {
         this.errorMessage.set('Failed to load packs.');
+        this.loading.set(false);
+      },
+    });
+  }
+
+  onPackTableQueryChange(query: GomTableQuery): void {
+    if (this.packTableDataMode() !== 'server') {
+      return;
+    }
+
+    this.loading.set(true);
+    this.errorMessage.set(null);
+
+    this.service.listPacks({
+      page: query.pageIndex + 1,
+      limit: query.pageSize,
+      search: query.searchTerm?.trim() || undefined,
+      sortBy: query.sort?.key || undefined,
+      order: query.sort?.direction as 'asc' | 'desc' | undefined,
+    }).subscribe({
+      next: (response) => {
+        this.allPacksLoaded.set(false);
+        this.packs.set(response.data ?? []);
+        this.totalPacks.set(response.pagination.total);
+        this.canLoadAllPacks.set(response.pagination.canLoadAll);
+        this.packTablePageIndex.set(query.pageIndex);
+        this.packTablePageSize.set(query.pageSize);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.loading.set(false);
+      },
+    });
+  }
+
+  loadAllPacks(): void {
+    this.loading.set(true);
+    this.service.listPacks({ page: 1, limit: this.totalPacks() }).subscribe({
+      next: (response) => {
+        this.packs.set(response.data ?? []);
+        this.totalPacks.set(response.pagination.total);
+        this.canLoadAllPacks.set(false);
+        this.allPacksLoaded.set(true);
+        this.packTablePageIndex.set(0);
+        this.loading.set(false);
+      },
+      error: () => {
         this.loading.set(false);
       },
     });
@@ -459,7 +528,7 @@ export class PacksComponent implements OnInit {
       return 'JPEG';
     }
 
-    const payload = {
+    const payload: CreatePackPayload = {
       name: String(this.packForm.controls.name.value || '').trim(),
       description: String(this.packForm.controls.description.value || '').trim(),
       allowOutOfStockItems: this.normalizeBoolean(this.packForm.controls.allowOutOfStockItems.value, false),
@@ -488,7 +557,7 @@ export class PacksComponent implements OnInit {
           format: normalizeImageFormat(img.format),
         };
       }),
-      status: this.packForm.controls.status.value || 'ACTIVE',
+      status: (this.packForm.controls.status.value === 'INACTIVE' ? 'INACTIVE' : 'ACTIVE'),
       items: this.itemControls.controls.map((group) => {
         const raw = group.getRawValue();
         return {

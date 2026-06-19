@@ -42,12 +42,17 @@ interface ApiSuccess<T> {
 interface ApiPaginated<T> {
   success: boolean;
   data: T[];
-  meta: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
+  pagination: PaginationMeta;
+}
+
+interface PaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  hasMore: boolean;
+  totalPages: number;
+  canLoadAll: boolean;
+  tenantPlan?: string;
 }
 
 @Injectable({
@@ -59,12 +64,45 @@ export class UnitsService {
 
   constructor(private readonly http: HttpClient) {}
 
-  getUnits(): Observable<ApiPaginated<Unit>> {
-    return this.http.get<ApiPaginated<Unit>>(`${this.apiUrl}?_ts=${Date.now()}`);
+  getUnits(params?: {
+    page?: number;
+    limit?: number;
+    status?: UnitStatus;
+    search?: string;
+    sortBy?: string;
+    order?: 'asc' | 'desc';
+  }): Observable<ApiPaginated<Unit>> {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.set('page', String(params.page));
+    if (params?.limit) searchParams.set('limit', String(params.limit));
+    if (params?.status) searchParams.set('status', params.status);
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.sortBy) searchParams.set('sortBy', params.sortBy);
+    if (params?.order) searchParams.set('order', params.order);
+    searchParams.set('_ts', String(Date.now()));
+
+    return this.http.get<ApiPaginated<Unit>>(`${this.apiUrl}?${searchParams.toString()}`);
   }
 
-  listCategories(): Observable<ApiPaginated<CategoryOption>> {
-    return this.http.get<ApiPaginated<CategoryOption>>(`${this.categoriesUrl}?status=ACTIVE`);
+  listCategories(params?: {
+    page?: number;
+    limit?: number;
+    status?: 'ACTIVE' | 'INACTIVE';
+    search?: string;
+    sortBy?: string;
+    order?: 'asc' | 'desc';
+  }): Observable<ApiPaginated<CategoryOption>> {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.set('page', String(params.page));
+    if (params?.limit) searchParams.set('limit', String(params.limit));
+    if (params?.status) searchParams.set('status', params.status);
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.sortBy) searchParams.set('sortBy', params.sortBy);
+    if (params?.order) searchParams.set('order', params.order);
+
+    const query = searchParams.toString();
+    const url = query ? `${this.categoriesUrl}?${query}` : this.categoriesUrl;
+    return this.http.get<ApiPaginated<CategoryOption>>(url);
   }
 
   createUnit(payload: UnitPayload): Observable<ApiSuccess<Unit>> {

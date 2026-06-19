@@ -23,13 +23,33 @@
       [columns]="columns"
       [rows]="rows()"
       [loading]="loading()"
-      [pageSize]="10"
-      [pageSizeOptions]="[10, 20, 50]"
+      [dataMode]="customerTableDataMode()"
+      [totalItems]="totalCustomers()"
+      [pageIndex]="customerTablePageIndex()"
+      [pageSize]="customerTablePageSize()"
+      [pageSizeOptions]="serverSidePaginationCustomers() ? [50] : [10, 20, 50]"
       searchPlaceholder="Search customers"
       emptyMessage="No customers found."
       [mobileCardView]="true"
       (rowAction)="onRowAction($event)"
+      (queryChange)="onCustomerTableQueryChange($event)"
     ></gom-lib-table>
+
+    @if (serverSidePaginationCustomers() && canLoadAllCustomers() && !allCustomersLoaded()) {
+      <div class="pagination-controls">
+        <div class="pagination-controls__info">
+          {{ totalCustomers() }} customers total. Use table pager for page navigation.
+        </div>
+        <div class="pagination-controls__actions">
+          <gom-lib-button
+            type="button"
+            variant="secondary"
+            [disabled]="loading()"
+            (buttonClick)="loadAllCustomers()"
+          ><i class="ri-download-2-line" aria-hidden="true"></i> Load All</gom-lib-button>
+        </div>
+      </div>
+    }
   </article>
 </section>
 
@@ -80,30 +100,20 @@
     <h4 class="customer-section-title">Order History</h4>
     @if (selectedCustomerOrders().length > 0) {
       <div class="customer-orders-wrap">
-        <table class="customer-orders-table">
-          <thead>
-            <tr>
-              <th>Order No</th>
-              <th>Status</th>
-              <th>Type</th>
-              <th>Source</th>
-              <th>Total</th>
-              <th>Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (order of selectedCustomerOrders(); track order._id) {
-              <tr>
-                <td>{{ order.orderNo }}</td>
-                <td>{{ order.status }}</td>
-                <td>{{ order.orderType }}</td>
-                <td>{{ order.orderSource }}</td>
-                <td>Rs {{ (order.pricingSnapshot.grandTotal || 0).toLocaleString('en-IN') }}</td>
-                <td>{{ order.createdAt | date: 'medium' }}</td>
-              </tr>
-            }
-          </tbody>
-        </table>
+        <gom-lib-table
+          [columns]="customerOrderHistoryColumns"
+          [rows]="customerOrderHistoryRows()"
+          [loading]="false"
+          [dataMode]="'server'"
+          [totalItems]="customerOrderHistoryTotal()"
+          [pageIndex]="customerOrderHistoryPageIndex()"
+          [pageSize]="customerOrderHistoryPageSize()"
+          [pageSizeOptions]="[25]"
+          searchPlaceholder="Search order history"
+          emptyMessage="No orders found for this customer."
+          [mobileCardView]="true"
+          (queryChange)="onCustomerOrderHistoryQueryChange($event)"
+        ></gom-lib-table>
       </div>
     } @else {
       <p class="customer-empty">No orders found for this customer.</p>

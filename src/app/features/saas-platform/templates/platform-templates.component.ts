@@ -53,6 +53,38 @@ export class PlatformTemplatesComponent implements OnInit {
   activeTab = signal<string | number>('categories');
   loading = signal(false);
 
+  private readonly defaultPageSize = 50;
+
+  categoriesTotal = signal(0);
+  categoriesPageIndex = signal(0);
+  categoriesPageSize = signal(this.defaultPageSize);
+  categoriesCanLoadAll = signal(false);
+  categoriesAllLoaded = signal(false);
+
+  fieldsTotal = signal(0);
+  fieldsPageIndex = signal(0);
+  fieldsPageSize = signal(this.defaultPageSize);
+  fieldsCanLoadAll = signal(false);
+  fieldsAllLoaded = signal(false);
+
+  fieldGroupsTotal = signal(0);
+  fieldGroupsPageIndex = signal(0);
+  fieldGroupsPageSize = signal(this.defaultPageSize);
+  fieldGroupsCanLoadAll = signal(false);
+  fieldGroupsAllLoaded = signal(false);
+
+  unitsTotal = signal(0);
+  unitsPageIndex = signal(0);
+  unitsPageSize = signal(this.defaultPageSize);
+  unitsCanLoadAll = signal(false);
+  unitsAllLoaded = signal(false);
+
+  taxProfilesTotal = signal(0);
+  taxProfilesPageIndex = signal(0);
+  taxProfilesPageSize = signal(this.defaultPageSize);
+  taxProfilesCanLoadAll = signal(false);
+  taxProfilesAllLoaded = signal(false);
+
   // --- Table column configs ---
   readonly categoryColumns: GomTableColumn<GomTableRow>[] = [
     { key: 'name', header: 'Name', sortable: true, filterable: true },
@@ -159,6 +191,26 @@ export class PlatformTemplatesComponent implements OnInit {
     this.loadAll();
   }
 
+  get categoriesDataMode(): 'client' | 'server' {
+    return this.categoriesTotal() > 500 && !this.categoriesAllLoaded() ? 'server' : 'client';
+  }
+
+  get fieldsDataMode(): 'client' | 'server' {
+    return this.fieldsTotal() > 500 && !this.fieldsAllLoaded() ? 'server' : 'client';
+  }
+
+  get fieldGroupsDataMode(): 'client' | 'server' {
+    return this.fieldGroupsTotal() > 500 && !this.fieldGroupsAllLoaded() ? 'server' : 'client';
+  }
+
+  get unitsDataMode(): 'client' | 'server' {
+    return this.unitsTotal() > 500 && !this.unitsAllLoaded() ? 'server' : 'client';
+  }
+
+  get taxProfilesDataMode(): 'client' | 'server' {
+    return this.taxProfilesTotal() > 500 && !this.taxProfilesAllLoaded() ? 'server' : 'client';
+  }
+
   // --- Table row getters ---
   get categoryRows(): GomTableRow[] {
     return this.categories().map((c) => ({ ...c, description: c.description || '—' }));
@@ -243,9 +295,15 @@ export class PlatformTemplatesComponent implements OnInit {
 
   // --- Categories (shared form) ---
   loadCategories() {
-    this.catalogService.listCategories().subscribe({
+    this.catalogService.listCategories({
+      page: this.categoriesPageIndex() + 1,
+      limit: this.categoriesPageSize(),
+    }).subscribe({
       next: (res) => {
         const cats = res.data ?? [];
+        this.categoriesTotal.set(res.pagination?.total || 0);
+        this.categoriesCanLoadAll.set(Boolean(res.pagination?.canLoadAll) && (res.pagination?.total || 0) <= 5000);
+        this.categoriesAllLoaded.set((res.pagination?.total || 0) <= 500);
         this.categories.set(cats);
         this.categorySelectOptions.set(cats.map((c) => ({ label: c.name, value: c._id })));
       },
@@ -290,8 +348,16 @@ export class PlatformTemplatesComponent implements OnInit {
 
   // --- Fields (shared form) ---
   loadFields() {
-    this.catalogService.listFields().subscribe({
-      next: (res) => this.fields.set(res.data ?? []),
+    this.catalogService.listFields({
+      page: this.fieldsPageIndex() + 1,
+      limit: this.fieldsPageSize(),
+    }).subscribe({
+      next: (res) => {
+        this.fieldsTotal.set(res.pagination?.total || 0);
+        this.fieldsCanLoadAll.set(Boolean(res.pagination?.canLoadAll) && (res.pagination?.total || 0) <= 5000);
+        this.fieldsAllLoaded.set((res.pagination?.total || 0) <= 500);
+        this.fields.set(res.data ?? []);
+      },
       error: () => this.toast.error('Failed to load template fields'),
     });
   }
@@ -345,9 +411,15 @@ export class PlatformTemplatesComponent implements OnInit {
 
   // --- Units (shared form) ---
   loadUnits() {
-    this.catalogService.listUnits().subscribe({
+    this.catalogService.listUnits({
+      page: this.unitsPageIndex() + 1,
+      limit: this.unitsPageSize(),
+    }).subscribe({
       next: (res) => {
         const unitList = res.data ?? [];
+        this.unitsTotal.set(res.pagination?.total || 0);
+        this.unitsCanLoadAll.set(Boolean(res.pagination?.canLoadAll) && (res.pagination?.total || 0) <= 5000);
+        this.unitsAllLoaded.set((res.pagination?.total || 0) <= 500);
         this.units.set(unitList);
         this.unitBaseOptions.set(
           unitList.map((u) => ({
@@ -405,8 +477,16 @@ export class PlatformTemplatesComponent implements OnInit {
 
   // --- Tax Profiles (shared gom-tax-profiles-form) ---
   loadTaxProfiles() {
-    this.catalogService.listTaxProfiles().subscribe({
-      next: (res) => this.taxProfiles.set(res.data ?? []),
+    this.catalogService.listTaxProfiles({
+      page: this.taxProfilesPageIndex() + 1,
+      limit: this.taxProfilesPageSize(),
+    }).subscribe({
+      next: (res) => {
+        this.taxProfilesTotal.set(res.pagination?.total || 0);
+        this.taxProfilesCanLoadAll.set(Boolean(res.pagination?.canLoadAll) && (res.pagination?.total || 0) <= 5000);
+        this.taxProfilesAllLoaded.set((res.pagination?.total || 0) <= 500);
+        this.taxProfiles.set(res.data ?? []);
+      },
       error: () => this.toast.error('Failed to load template tax profiles'),
     });
   }
@@ -456,14 +536,50 @@ export class PlatformTemplatesComponent implements OnInit {
 
   // --- Field Groups (shared gom-field-groups-form) ---
   loadFieldGroups() {
-    this.catalogService.listFieldGroups().subscribe({
+    this.catalogService.listFieldGroups({
+      page: this.fieldGroupsPageIndex() + 1,
+      limit: this.fieldGroupsPageSize(),
+    }).subscribe({
       next: (res) => {
         const fgs = res.data ?? [];
+        this.fieldGroupsTotal.set(res.pagination?.total || 0);
+        this.fieldGroupsCanLoadAll.set(Boolean(res.pagination?.canLoadAll) && (res.pagination?.total || 0) <= 5000);
+        this.fieldGroupsAllLoaded.set((res.pagination?.total || 0) <= 500);
         this.fieldGroups.set(fgs);
         this.fieldGroupAssignOptions.set(fgs.map((fg) => ({ id: fg._id, name: fg.name })));
       },
       error: () => this.toast.error('Failed to load template field groups'),
     });
+  }
+
+  onCategoriesQueryChange(event: { pageIndex: number; pageSize: number }) {
+    this.categoriesPageIndex.set(event.pageIndex);
+    this.categoriesPageSize.set(event.pageSize);
+    this.loadCategories();
+  }
+
+  onFieldsQueryChange(event: { pageIndex: number; pageSize: number }) {
+    this.fieldsPageIndex.set(event.pageIndex);
+    this.fieldsPageSize.set(event.pageSize);
+    this.loadFields();
+  }
+
+  onFieldGroupsQueryChange(event: { pageIndex: number; pageSize: number }) {
+    this.fieldGroupsPageIndex.set(event.pageIndex);
+    this.fieldGroupsPageSize.set(event.pageSize);
+    this.loadFieldGroups();
+  }
+
+  onUnitsQueryChange(event: { pageIndex: number; pageSize: number }) {
+    this.unitsPageIndex.set(event.pageIndex);
+    this.unitsPageSize.set(event.pageSize);
+    this.loadUnits();
+  }
+
+  onTaxProfilesQueryChange(event: { pageIndex: number; pageSize: number }) {
+    this.taxProfilesPageIndex.set(event.pageIndex);
+    this.taxProfilesPageSize.set(event.pageSize);
+    this.loadTaxProfiles();
   }
 
   openFieldGroupForm(fg?: TemplateFieldGroup) {

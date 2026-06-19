@@ -2,11 +2,18 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 
-import { FormControlsModule, GomAlertToastService } from '@gomlibs/ui';
+import {
+  FormControlsModule,
+  GomAlertToastService,
+  GomButtonComponent,
+  GomInputComponent,
+  GomModalComponent,
+  GomTableColumn,
+  GomTableComponent,
+  GomTableQuery,
+  GomTableRow,
+} from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
-import { GomButtonComponent, GomInputComponent } from '@gomlibs/ui';
-import { GomModalComponent } from '@gomlibs/ui';
-import { GomTableColumn, GomTableComponent, GomTableRow } from '@gomlibs/ui';
 import {
   CustomerEngagementService,
   CustomerInsight,
@@ -25,6 +32,16 @@ interface CustomerRow extends GomTableRow {
   averageOrderValue: string;
   lastOrderAt: string;
   actions: string;
+}
+
+interface CustomerOrderHistoryRow extends GomTableRow {
+  _id: string;
+  orderNo: string;
+  status: string;
+  orderType: string;
+  orderSource: string;
+  grandTotal: string;
+  createdAt: string;
 }
 
 @Component({
@@ -54,11 +71,40 @@ export class CustomersComponent implements OnInit {
   readonly errorMessage = signal<string | null>(null);
   readonly searchTerm = signal('');
   readonly customers = signal<CustomerInsight[]>([]);
+  readonly totalCustomers = signal(0);
+  readonly customerTablePageIndex = signal(0);
+  readonly customerTablePageSize = signal(50);
+  readonly canLoadAllCustomers = signal(false);
+  readonly allCustomersLoaded = signal(false);
+  readonly serverSidePaginationCustomers = computed(() => this.totalCustomers() > 500);
+  readonly customerTableDataMode = computed<'client' | 'server'>(() => (this.serverSidePaginationCustomers() && !this.allCustomersLoaded() ? 'server' : 'client'));
 
   readonly detailOpen = signal(false);
   readonly selectedCustomer = signal<CustomerSummary | null>(null);
   readonly selectedCustomerDetail = signal<CustomerDetail | null>(null);
   readonly selectedCustomerOrders = signal<CustomerOrderHistoryItem[]>([]);
+  readonly customerOrderHistoryTotal = signal(0);
+  readonly customerOrderHistoryPageIndex = signal(0);
+  readonly customerOrderHistoryPageSize = signal(25);
+  readonly customerOrderHistoryColumns: GomTableColumn<CustomerOrderHistoryRow>[] = [
+    { key: 'orderNo', header: 'Order No', sortable: true },
+    { key: 'status', header: 'Status', sortable: true },
+    { key: 'orderType', header: 'Type', sortable: true },
+    { key: 'orderSource', header: 'Source', sortable: true },
+    { key: 'grandTotal', header: 'Total', sortable: true },
+    { key: 'createdAt', header: 'Date', sortable: true },
+  ];
+  readonly customerOrderHistoryRows = computed<CustomerOrderHistoryRow[]>(() =>
+    this.selectedCustomerOrders().map((order) => ({
+      _id: order._id,
+      orderNo: order.orderNo,
+      status: order.status,
+      orderType: order.orderType,
+      orderSource: order.orderSource,
+      grandTotal: `Rs ${Number(order.pricingSnapshot.grandTotal || 0).toLocaleString('en-IN')}`,
+      createdAt: order.createdAt ? new Date(order.createdAt).toLocaleString() : '-',
+    }))
+  );
 
   readonly columns: GomTableColumn<CustomerRow>[] = [
     { key: 'name', header: 'Customer', sortable: true, filterable: true, width: '14rem' },
@@ -117,16 +163,71 @@ export class CustomersComponent implements OnInit {
   loadCustomers(): void {
     this.loading.set(true);
     this.errorMessage.set(null);
+    this.customerTablePageIndex.set(0);
+    this.allCustomersLoaded.set(false);
 
-    this.service.listCustomerInsights().subscribe({
+    this.service.listCustomerInsights({ page: 1, limit: this.customerTablePageSize() }).subscribe({
       next: (response) => {
-        this.customers.set(response.data || []);
+        const pagination = response.pagination;
+        this.totalCustomers.set(pagination.total);
+        this.canLoadAllCustomers.set(pagination.canLoadAll);
+        this.allCustomersLoaded.set(pagination.total <= 500);
+
+        if (pagination.total <= 500 && pagination.hasMore) {
+          this.service.listCustomerInsights({ page: 1, limit: pagination.total }).subscribe({
+            next: (allRes) => this.customers.set(allRes.data || []),
+          });
+        } else {
+          this.customers.set(response.data || []);
+        }
         this.loading.set(false);
       },
       error: (error) => {
         this.errorMessage.set(String(error?.error?.message || 'Failed to load customers.'));
         this.loading.set(false);
       },
+    });
+  }
+
+  onCustomerTableQueryChange(query: GomTableQuery): void {
+    if (this.customerTableDataMode() !== 'server') {
+      return;
+    }
+
+    this.loading.set(true);
+
+    this.service.listCustomerInsights({
+      page: query.pageIndex + 1,
+      limit: query.pageSize,
+      search: query.searchTerm?.trim() || undefined,
+      sortBy: query.sort?.key as 'lastOrderAt' | 'totalOrders' | 'totalSpend' | 'averageOrderValue' | undefined,
+      sortOrder: query.sort?.direction as 'asc' | 'desc' | undefined,
+    }).subscribe({
+      next: (res) => {
+        this.allCustomersLoaded.set(false);
+        this.customers.set(res.data ?? []);
+        this.totalCustomers.set(res.pagination.total);
+        this.canLoadAllCustomers.set(res.pagination.canLoadAll);
+        this.customerTablePageIndex.set(query.pageIndex);
+        this.customerTablePageSize.set(query.pageSize);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false),
+    });
+  }
+
+  loadAllCustomers(): void {
+    this.loading.set(true);
+    this.service.listCustomerInsights({ page: 1, limit: this.totalCustomers() }).subscribe({
+      next: (res) => {
+        this.customers.set(res.data ?? []);
+        this.totalCustomers.set(res.pagination.total);
+        this.canLoadAllCustomers.set(false);
+        this.allCustomersLoaded.set(true);
+        this.customerTablePageIndex.set(0);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false),
     });
   }
 
@@ -154,6 +255,7 @@ export class CustomersComponent implements OnInit {
     this.selectedCustomer.set(null);
     this.selectedCustomerDetail.set(null);
     this.selectedCustomerOrders.set([]);
+    this.customerOrderHistoryPageIndex.set(0);
 
     this.service.getCustomerSummary(customerId).subscribe({
       next: (response) => {
@@ -176,9 +278,30 @@ export class CustomersComponent implements OnInit {
       },
     });
 
-    this.service.listCustomerOrderHistory(customerId).subscribe({
+    this.service.listCustomerOrderHistory(customerId, 1, this.customerOrderHistoryPageSize()).subscribe({
       next: (response) => {
         this.selectedCustomerOrders.set(response.data || []);
+        this.customerOrderHistoryTotal.set(response.pagination.total);
+      },
+      error: () => {
+        this.selectedCustomerOrders.set([]);
+        this.customerOrderHistoryTotal.set(0);
+      },
+    });
+  }
+
+  onCustomerOrderHistoryQueryChange(query: GomTableQuery): void {
+    const customerId = this.selectedCustomer()?.customer?._id;
+    if (!customerId) {
+      return;
+    }
+
+    this.service.listCustomerOrderHistory(customerId, query.pageIndex + 1, query.pageSize).subscribe({
+      next: (response) => {
+        this.selectedCustomerOrders.set(response.data || []);
+        this.customerOrderHistoryTotal.set(response.pagination.total);
+        this.customerOrderHistoryPageIndex.set(query.pageIndex);
+        this.customerOrderHistoryPageSize.set(query.pageSize);
       },
       error: () => {
         this.selectedCustomerOrders.set([]);
@@ -192,6 +315,8 @@ export class CustomersComponent implements OnInit {
     this.selectedCustomer.set(null);
     this.selectedCustomerDetail.set(null);
     this.selectedCustomerOrders.set([]);
+    this.customerOrderHistoryTotal.set(0);
+    this.customerOrderHistoryPageIndex.set(0);
   }
 
   isPinLocked(): boolean {

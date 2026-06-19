@@ -7,7 +7,7 @@ import { startWith } from 'rxjs';
 import { GomAlertToastService } from '@gomlibs/ui';
 import { GomButtonComponent, GomInputComponent, GomSelectComponent, GomSelectOption, GomTextareaComponent } from '@gomlibs/ui';
 import { GomModalComponent } from '@gomlibs/ui';
-import { GomTableColumn, GomTableComponent, GomTableRow } from '@gomlibs/ui';
+import { GomTableColumn, GomTableComponent, GomTableQuery, GomTableRow } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { SaasAccountService } from './saas-account.service';
 import { AccountStatus, AuditLogItem, CreateAccountRequest, TenantAccount, TenantStorageItem, TrialMode, UpdateAccountRequest } from './saas-account.model';
@@ -54,9 +54,15 @@ export class SaasAccountsComponent implements OnInit {
   readonly loading = signal(false);
   readonly canWrite = computed(() => this.authSession.canWrite('platform-admin'));
   readonly accounts = signal<TenantAccount[]>([]);
-  readonly page = signal(1);
-  readonly limit = signal(20);
   readonly total = signal(0);
+  readonly accountTablePageIndex = signal(0);
+  readonly accountTablePageSize = signal(50);
+  readonly canLoadAllAccounts = signal(false);
+  readonly allAccountsLoaded = signal(false);
+  readonly serverSidePaginationAccounts = computed(() => this.total() > 500);
+  readonly accountTableDataMode = computed<'client' | 'server'>(() => (
+    this.serverSidePaginationAccounts() && !this.allAccountsLoaded() ? 'server' : 'client'
+  ));
   readonly search = signal('');
   readonly statusFilter = signal('');
   readonly tenantCodeAutoMode = signal(true);
@@ -217,10 +223,33 @@ export class SaasAccountsComponent implements OnInit {
 
   loadAccounts(): void {
     this.loading.set(true);
-    this.service.listAccounts(this.page(), this.limit(), this.search(), this.statusFilter()).subscribe({
+    this.accountTablePageIndex.set(0);
+    this.allAccountsLoaded.set(false);
+
+    this.service.listAccounts({
+      page: 1,
+      limit: this.accountTablePageSize(),
+      search: this.search(),
+      status: this.statusFilter(),
+    }).subscribe({
       next: (response) => {
-        this.accounts.set(response.items);
-        this.total.set(response.meta.total);
+        const pagination = response.pagination;
+        this.total.set(pagination.total);
+        this.canLoadAllAccounts.set(pagination.canLoadAll && pagination.total <= 5000);
+        this.allAccountsLoaded.set(pagination.total <= 500);
+
+        if (pagination.total <= 500 && pagination.hasMore) {
+          this.service.listAccounts({
+            page: 1,
+            limit: pagination.total,
+            search: this.search(),
+            status: this.statusFilter(),
+          }).subscribe({
+            next: (allRes) => this.accounts.set(allRes.data || []),
+          });
+        } else {
+          this.accounts.set(response.data || []);
+        }
         this.loading.set(false);
       },
       error: (error) => {
@@ -232,7 +261,6 @@ export class SaasAccountsComponent implements OnInit {
 
   onSearchChange(value: string): void {
     this.search.set(value.trim());
-    this.page.set(1);
     this.loadAccounts();
   }
 
@@ -257,8 +285,58 @@ export class SaasAccountsComponent implements OnInit {
 
   onStatusFilterChange(value: string): void {
     this.statusFilter.set(value);
-    this.page.set(1);
     this.loadAccounts();
+  }
+
+  onAccountsTableQueryChange(query: GomTableQuery): void {
+    if (this.accountTableDataMode() !== 'server') {
+      return;
+    }
+
+    this.loading.set(true);
+    this.service.listAccounts({
+      page: query.pageIndex + 1,
+      limit: query.pageSize,
+      search: query.searchTerm?.trim() || this.search() || undefined,
+      status: this.statusFilter() || undefined,
+      sortBy: query.sort?.key || undefined,
+      order: (query.sort?.direction as 'asc' | 'desc' | undefined),
+    }).subscribe({
+      next: (res) => {
+        this.allAccountsLoaded.set(false);
+        this.accounts.set(res.data || []);
+        this.total.set(res.pagination.total);
+        this.canLoadAllAccounts.set(res.pagination.canLoadAll && res.pagination.total <= 5000);
+        this.accountTablePageIndex.set(query.pageIndex);
+        this.accountTablePageSize.set(query.pageSize);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false),
+    });
+  }
+
+  loadAllAccounts(): void {
+    if (this.total() > 5000) {
+      return;
+    }
+
+    this.loading.set(true);
+    this.service.listAccounts({
+      page: 1,
+      limit: this.total(),
+      search: this.search(),
+      status: this.statusFilter(),
+    }).subscribe({
+      next: (res) => {
+        this.accounts.set(res.data || []);
+        this.total.set(res.pagination.total);
+        this.canLoadAllAccounts.set(false);
+        this.allAccountsLoaded.set(true);
+        this.accountTablePageIndex.set(0);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false),
+    });
   }
 
   onTimezoneSearchChange(value: string): void {

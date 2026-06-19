@@ -28,9 +28,28 @@
     [canCreate]="canCreateUnit()"
     [canEdit]="canEditUnit()"
     [canDelete]="canDeleteUnit()"
+    [dataMode]="unitTableDataMode()"
+    [totalItems]="totalUnits()"
+    [pageIndex]="unitTablePageIndex()"
+    [pageSize]="unitTablePageSize()"
+    [pageSizeOptions]="serverSidePaginationUnits() ? [50] : [10, 20, 50]"
     (addNew)="onAddNew()"
     (action)="onAction($event)"
+    (queryChange)="onUnitTableQueryChange($event)"
   ></gom-units-list>
+
+  @if (serverSidePaginationUnits() && canLoadAllUnits() && !allUnitsLoaded()) {
+    <div class="pagination-controls">
+      <div class="pagination-controls__info">
+        {{ totalUnits() }} units total. Use table pager for page navigation.
+      </div>
+      <div class="pagination-controls__actions">
+        <button type="button" class="load-all-btn" [disabled]="loading()" (click)="loadAllUnits()">
+          <i class="ri-download-2-line" aria-hidden="true"></i> Load All
+        </button>
+      </div>
+    </div>
+  }
 
   <gom-units-form
     [isOpen]="formOpen()"

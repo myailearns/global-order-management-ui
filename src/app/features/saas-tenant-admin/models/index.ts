@@ -20,4 +20,6 @@ export type {
 	UpdateOfferRequest,
 	OfferListFilter,
 	OfferProgramSettings,
+	ApiResponse,
+	ApiListResponse,
 } from './offer.model';

@@ -28,9 +28,28 @@
     [canCreate]="canCreateField()"
     [canEdit]="canEditField()"
     [canDelete]="canDeleteField()"
+    [dataMode]="fieldTableDataMode()"
+    [totalItems]="totalFields()"
+    [pageIndex]="fieldTablePageIndex()"
+    [pageSize]="fieldTablePageSize()"
+    [pageSizeOptions]="serverSidePaginationFields() ? [50] : [10, 20, 50]"
     (addNew)="onAddNew()"
     (action)="onAction($event)"
+    (queryChange)="onFieldTableQueryChange($event)"
   ></gom-fields-list>
+
+  @if (serverSidePaginationFields() && canLoadAllFields() && !allFieldsLoaded()) {
+    <div class="pagination-controls">
+      <div class="pagination-controls__info">
+        {{ totalFields() }} fields total. Use table pager for page navigation.
+      </div>
+      <div class="pagination-controls__actions">
+        <button type="button" class="load-all-btn" [disabled]="loading()" (click)="loadAllFields()">
+          <i class="ri-download-2-line" aria-hidden="true"></i> Load All
+        </button>
+      </div>
+    </div>
+  }
 
   <gom-fields-form
     [isOpen]="formOpen()"

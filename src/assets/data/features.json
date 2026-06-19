@@ -407,7 +407,7 @@
   {
     "featureKey": "customerGroup.list",
     "displayName": "View Customer Groups",
-    "module": "customers",
+    "module": "CustomerGroups",
     "description": "List and view all customer groups",
     "planAvailability": ["GROWTH", "SCALE"],
     "dependencies": [],
@@ -416,7 +416,7 @@
   {
     "featureKey": "customerGroup.create",
     "displayName": "Create Customer Group",
-    "module": "customers",
+    "module": "CustomerGroups",
     "description": "Create new customer groups",
     "planAvailability": ["GROWTH", "SCALE"],
     "dependencies": [],
@@ -425,7 +425,7 @@
   {
     "featureKey": "customerGroup.edit",
     "displayName": "Edit Customer Group",
-    "module": "customers",
+    "module": "CustomerGroups",
     "description": "Edit existing customer groups",
     "planAvailability": ["GROWTH", "SCALE"],
     "dependencies": ["customerGroup.list"],
@@ -434,7 +434,7 @@
   {
     "featureKey": "customerGroup.delete",
     "displayName": "Delete Customer Group",
-    "module": "customers",
+    "module": "CustomerGroups",
     "description": "Delete customer groups",
     "planAvailability": ["SCALE"],
     "dependencies": ["customerGroup.list"],

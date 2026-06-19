@@ -7,12 +7,17 @@ import { environment } from '../../../../environments/environment';
 export interface ApiPaginated<T> {
   success: boolean;
   data: T[];
-  meta: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
+  pagination: PaginationMeta;
+}
+
+export interface PaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  hasMore: boolean;
+  totalPages: number;
+  canLoadAll: boolean;
+  tenantPlan?: string;
 }
 
 export interface ApiSuccess<T> {
@@ -57,8 +62,25 @@ export class TaxProfilesService {
   private readonly http = inject(HttpClient);
   private readonly taxProfilesUrl = `${environment.apiBaseUrl}/tax-profiles`;
 
-  listTaxProfiles(page = 1, limit = 100): Observable<ApiPaginated<TaxProfile>> {
-    return this.http.get<ApiPaginated<TaxProfile>>(`${this.taxProfilesUrl}?page=${page}&limit=${limit}`);
+  listTaxProfiles(params?: {
+    page?: number;
+    limit?: number;
+    status?: TaxStatus;
+    search?: string;
+    sortBy?: string;
+    order?: 'asc' | 'desc';
+  }): Observable<ApiPaginated<TaxProfile>> {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.set('page', String(params.page));
+    if (params?.limit) searchParams.set('limit', String(params.limit));
+    if (params?.status) searchParams.set('status', params.status);
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.sortBy) searchParams.set('sortBy', params.sortBy);
+    if (params?.order) searchParams.set('order', params.order);
+
+    const query = searchParams.toString();
+    const url = query ? `${this.taxProfilesUrl}?${query}` : this.taxProfilesUrl;
+    return this.http.get<ApiPaginated<TaxProfile>>(url);
   }
 
   createTaxProfile(payload: TaxProfilePayload): Observable<ApiSuccess<TaxProfile>> {

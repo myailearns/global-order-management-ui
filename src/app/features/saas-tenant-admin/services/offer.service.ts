@@ -29,15 +29,13 @@ export class OfferService {
   /**
    * List all offers for the applied tenant with filtering/sorting
    */
-  listOffers(filter?: OfferListFilter): Observable<Offer[]> {
+  listOffers(filter?: OfferListFilter): Observable<ApiListResponse<Offer>> {
     const params = this.buildOfferListParams(filter);
 
-    return this.http
-      .get<ApiListResponse<Offer>>(this.apiBaseUrl, {
-        headers: this.buildTenantHeaders(),
-        params,
-      })
-      .pipe(map((res) => res.data));
+    return this.http.get<ApiListResponse<Offer>>(this.apiBaseUrl, {
+      headers: this.buildTenantHeaders(),
+      params,
+    });
   }
 
   private buildOfferListParams(filter?: OfferListFilter): HttpParams {

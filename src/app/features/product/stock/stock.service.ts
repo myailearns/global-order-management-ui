@@ -7,11 +7,14 @@ import { environment } from '../../../../environments/environment';
 export interface ApiPaginated<T> {
   success: boolean;
   data: T[];
-  meta: {
+  pagination: {
     page: number;
     limit: number;
     total: number;
+    hasMore: boolean;
     totalPages: number;
+    canLoadAll: boolean;
+    tenantPlan?: string;
   };
 }
 
@@ -114,10 +117,25 @@ export class StockService {
     return this.http.get<ApiSuccess<StockSummary>>(`${this.stockUrl}/summary?groupId=${groupId}`);
   }
 
-  getHistory(groupId: string, page = 1, limit = 20): Observable<ApiPaginated<StockHistoryEntry>> {
-    return this.http.get<ApiPaginated<StockHistoryEntry>>(
-      `${this.stockUrl}/history?groupId=${groupId}&page=${page}&limit=${limit}`
-    );
+  getHistory(params: {
+    groupId: string;
+    page?: number;
+    limit?: number;
+    movementType?: 'IN' | 'OUT' | 'ADJUST';
+    transactionType?: 'IN' | 'OUT' | 'ADJUST';
+    dateFrom?: string;
+    dateTo?: string;
+  }): Observable<ApiPaginated<StockHistoryEntry>> {
+    const query = new URLSearchParams();
+    query.set('groupId', params.groupId);
+    if (params.page) query.set('page', String(params.page));
+    if (params.limit) query.set('limit', String(params.limit));
+    if (params.movementType) query.set('movementType', params.movementType);
+    if (params.transactionType) query.set('transactionType', params.transactionType);
+    if (params.dateFrom) query.set('dateFrom', params.dateFrom);
+    if (params.dateTo) query.set('dateTo', params.dateTo);
+
+    return this.http.get<ApiPaginated<StockHistoryEntry>>(`${this.stockUrl}/history?${query.toString()}`);
   }
 
   addStock(payload: AddStockPayload): Observable<ApiSuccess<unknown>> {

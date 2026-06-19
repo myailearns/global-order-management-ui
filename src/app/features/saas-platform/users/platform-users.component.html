@@ -1,0 +1,50 @@
+<section class="platform-users">
+  <header class="platform-users__header">
+    <div>
+      <h1>Platform Users</h1>
+      <p>Manage platform admin and support users with server-side pagination.</p>
+    </div>
+  </header>
+
+  <div class="platform-users__filters">
+    <gom-lib-input
+      type="search"
+      [placeholder]="'Search by name or email'"
+      (valueChange)="onSearchChange($event)"
+    ></gom-lib-input>
+
+    <gom-lib-select
+      [label]="'Role'"
+      [options]="roleOptions"
+      [ngModel]="roleFilter()"
+      (valueChange)="onRoleFilterChange($event)"
+    ></gom-lib-select>
+
+    <gom-lib-select
+      [label]="'Status'"
+      [options]="statusOptions"
+      [ngModel]="statusFilter()"
+      (valueChange)="onStatusFilterChange($event)"
+    ></gom-lib-select>
+  </div>
+
+  <gom-lib-table
+    [columns]="columns"
+    [rows]="rows()"
+    [loading]="loading()"
+    [dataMode]="tableDataMode()"
+    [totalItems]="total()"
+    [pageIndex]="tablePageIndex()"
+    [pageSize]="tablePageSize()"
+    [pageSizeOptions]="[20, 50, 100]"
+    (queryChange)="onTableQueryChange($event)"
+  ></gom-lib-table>
+
+  @if (canLoadAll() && !allLoaded()) {
+    <div class="platform-users__load-all">
+      <button type="button" class="platform-users__load-all-btn" (click)="loadAllUsers()" [disabled]="loading()">
+        Load All ({{ total() }})
+      </button>
+    </div>
+  }
+</section>

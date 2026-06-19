@@ -6,6 +6,7 @@ import {
   GomButtonComponent,
   GomTableColumn,
   GomTableComponent,
+  GomTableQuery,
   GomTableRow,
 } from '@gomlibs/ui';
 import { TaxProfile, TaxProfilesService } from './tax-profiles.service';
@@ -49,6 +50,13 @@ export class TaxProfilesComponent implements OnInit {
   readonly errorMessage = signal<string | null>(null);
 
   readonly taxProfiles = signal<TaxProfile[]>([]);
+  readonly totalTaxProfiles = signal(0);
+  readonly taxProfilesTablePageIndex = signal(0);
+  readonly taxProfilesTablePageSize = signal(50);
+  readonly canLoadAllTaxProfiles = signal(false);
+  readonly allTaxProfilesLoaded = signal(false);
+  readonly serverSidePaginationTaxProfiles = computed(() => this.totalTaxProfiles() > 500);
+  readonly taxProfilesTableDataMode = computed<'client' | 'server'>(() => (this.serverSidePaginationTaxProfiles() && !this.allTaxProfilesLoaded() ? 'server' : 'client'));
   readonly formOpen = signal(false);
   readonly editingId = signal<string | null>(null);
   readonly editingFormData = signal<TaxProfileFormData | null>(null);
@@ -88,16 +96,82 @@ export class TaxProfilesComponent implements OnInit {
   }
 
   loadTaxProfiles(): void {
+    this.taxProfilesTablePageIndex.set(0);
+    this.allTaxProfilesLoaded.set(false);
+
     this.loading.set(true);
     this.errorMessage.set(null);
 
-    this.service.listTaxProfiles(1, 100).subscribe({
+    this.service.listTaxProfiles({ page: 1, limit: this.taxProfilesTablePageSize() }).subscribe({
       next: (response) => {
-        this.taxProfiles.set(response.data || []);
+        const pagination = response.pagination;
+        this.totalTaxProfiles.set(pagination.total);
+        this.canLoadAllTaxProfiles.set(pagination.canLoadAll);
+        this.allTaxProfilesLoaded.set(pagination.total <= 500);
+
+        if (pagination.total <= 500 && pagination.hasMore) {
+          this.service.listTaxProfiles({ page: 1, limit: pagination.total }).subscribe({
+            next: (allRes) => this.taxProfiles.set(allRes.data || []),
+          });
+        } else {
+          this.taxProfiles.set(response.data || []);
+        }
+
         this.loading.set(false);
       },
       error: () => {
         this.errorMessage.set('Failed to load tax profiles.');
+        this.loading.set(false);
+      },
+    });
+  }
+
+  onTaxProfilesTableQueryChange(query: GomTableQuery): void {
+    if (this.taxProfilesTableDataMode() !== 'server') {
+      return;
+    }
+
+    this.loading.set(true);
+    this.errorMessage.set(null);
+
+    const search = query.searchTerm?.trim();
+    const sortBy = query.sort?.key;
+    const order = query.sort?.direction as 'asc' | 'desc' | undefined;
+
+    this.service.listTaxProfiles({
+      page: query.pageIndex + 1,
+      limit: query.pageSize,
+      search,
+      sortBy,
+      order,
+    }).subscribe({
+      next: (response) => {
+        this.allTaxProfilesLoaded.set(false);
+        this.taxProfiles.set(response.data ?? []);
+        this.totalTaxProfiles.set(response.pagination.total);
+        this.canLoadAllTaxProfiles.set(response.pagination.canLoadAll);
+        this.taxProfilesTablePageIndex.set(query.pageIndex);
+        this.taxProfilesTablePageSize.set(query.pageSize);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.loading.set(false);
+      },
+    });
+  }
+
+  loadAllTaxProfiles(): void {
+    this.loading.set(true);
+    this.service.listTaxProfiles({ page: 1, limit: this.totalTaxProfiles() }).subscribe({
+      next: (response) => {
+        this.taxProfiles.set(response.data ?? []);
+        this.totalTaxProfiles.set(response.pagination.total);
+        this.canLoadAllTaxProfiles.set(false);
+        this.allTaxProfilesLoaded.set(true);
+        this.taxProfilesTablePageIndex.set(0);
+        this.loading.set(false);
+      },
+      error: () => {
         this.loading.set(false);
       },
     });

@@ -23,6 +23,7 @@ import { PinSecurityConfigComponent } from './features/settings/pin-security-con
 import { CustomersComponent } from './features/customer/customers';
 import { CustomerGroupsComponent } from './features/customer/customer-groups';
 import { SaasAccountsComponent } from './features/saas-platform/accounts/saas-accounts.component';
+import { PlatformUsersComponent } from './features/saas-platform/users/platform-users.component';
 import { FeatureCatalogComponent } from './features/saas-platform/entitlements/feature-catalog.component';
 import { PackagePlansComponent } from './features/saas-platform/entitlements/package-plans.component';
 import { TenantEntitlementsComponent } from './features/saas-platform/entitlements/tenant-entitlements.component';
@@ -309,6 +310,16 @@ export const routes: Routes = [
 					capability: 'platform-admin',
 					title: 'SaaS Packages',
 					description: 'Manage package plans and the feature bundles offered per tier.',
+				},
+			},
+			{
+				path: 'settings/platform-users',
+				component: PlatformUsersComponent,
+				data: {
+					actor: 'platform',
+					capability: 'platform-admin',
+					title: 'Platform Users',
+					description: 'Manage platform super-admin, admin, and support users.',
 				},
 			},
 			{

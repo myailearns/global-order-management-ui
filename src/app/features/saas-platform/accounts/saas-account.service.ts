@@ -26,20 +26,46 @@ export class SaasAccountService {
     return new ngHttp.HttpHeaders(this.authSession.getPlatformHeaders());
   }
 
-  listAccounts(page: number, limit: number, search = '', status = ''): Observable<{ items: TenantAccount[]; meta: AccountListResponse['meta'] }> {
-    let params = new ngHttp.HttpParams().set('page', String(page)).set('limit', String(limit));
+  listAccounts(params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    status?: string;
+    tier?: string;
+    sortBy?: string;
+    order?: 'asc' | 'desc';
+  }): Observable<AccountListResponse> {
+    let httpParams = new ngHttp.HttpParams();
 
-    if (search) {
-      params = params.set('search', search);
+    if (params?.page) {
+      httpParams = httpParams.set('page', String(params.page));
     }
 
-    if (status) {
-      params = params.set('status', status);
+    if (params?.limit) {
+      httpParams = httpParams.set('limit', String(params.limit));
     }
 
-    return this.http
-      .get<AccountListResponse>(this.baseUrl, { headers: this.platformHeaders, params })
-      .pipe(map((res) => ({ items: res.data, meta: res.meta })));
+    if (params?.search) {
+      httpParams = httpParams.set('search', params.search);
+    }
+
+    if (params?.status) {
+      httpParams = httpParams.set('status', params.status);
+    }
+
+    if (params?.tier) {
+      httpParams = httpParams.set('tier', params.tier);
+    }
+
+    if (params?.sortBy) {
+      httpParams = httpParams.set('sortBy', params.sortBy);
+    }
+
+    if (params?.order) {
+      httpParams = httpParams.set('order', params.order);
+    }
+
+    return this.http.get<AccountListResponse>(this.baseUrl, { headers: this.platformHeaders, params: httpParams });
   }
 
   createAccount(payload: CreateAccountRequest): Observable<CreateAccountResult> {
@@ -80,14 +106,14 @@ export class SaasAccountService {
       .pipe(map((res) => res.data));
   }
 
-  getAuditLog(id: string, page = 1, limit = 25): Observable<{ items: AuditLogItem[]; meta: AccountListResponse['meta'] }> {
+  getAuditLog(id: string, page = 1, limit = 25): Observable<{ items: AuditLogItem[]; pagination: AccountListResponse['pagination'] }> {
     const params = new ngHttp.HttpParams().set('page', String(page)).set('limit', String(limit));
     return this.http
-      .get<{ success: boolean; data: AuditLogItem[]; meta: AccountListResponse['meta'] }>(`${this.baseUrl}/${id}/audit-log`, {
+      .get<{ success: boolean; data: AuditLogItem[]; pagination: AccountListResponse['pagination'] }>(`${this.baseUrl}/${id}/audit-log`, {
         headers: this.platformHeaders,
         params,
       })
-      .pipe(map((res) => ({ items: res.data, meta: res.meta })));
+      .pipe(map((res) => ({ items: res.data, pagination: res.pagination })));
   }
 
   getPerTenantStorage(): Observable<TenantStorageItem[]> {

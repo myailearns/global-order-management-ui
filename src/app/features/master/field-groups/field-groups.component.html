@@ -36,13 +36,33 @@
       [columns]="columns"
       [rows]="rows()"
       [loading]="loading()"
-      [pageSize]="10"
-      [pageSizeOptions]="[10, 20, 50]"
+      [dataMode]="fieldGroupsTableDataMode()"
+      [totalItems]="totalFieldGroups()"
+      [pageIndex]="fieldGroupTablePageIndex()"
+      [pageSize]="fieldGroupTablePageSize()"
+      [pageSizeOptions]="serverSidePaginationFieldGroups() ? [50] : [10, 20, 50]"
       [searchPlaceholder]="'fieldGroups.search' | translate"
       [emptyMessage]="'fieldGroups.empty' | translate"
       [mobileCardView]="true"
       (rowAction)="onRowAction($event)"
+      (queryChange)="onFieldGroupsTableQueryChange($event)"
     ></gom-lib-table>
+
+    @if (serverSidePaginationFieldGroups() && canLoadAllFieldGroups() && !allFieldGroupsLoaded()) {
+      <div class="pagination-controls">
+        <div class="pagination-controls__info">
+          {{ totalFieldGroups() }} field groups total. Use table pager for page navigation.
+        </div>
+        <div class="pagination-controls__actions">
+          <gom-lib-button
+            type="button"
+            variant="secondary"
+            [disabled]="loading()"
+            (buttonClick)="loadAllFieldGroups()"
+          ><i class="ri-download-2-line" aria-hidden="true"></i> Load All</gom-lib-button>
+        </div>
+      </div>
+    }
   </article>
 </section>
 
