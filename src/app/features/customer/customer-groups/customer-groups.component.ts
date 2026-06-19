@@ -5,7 +5,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { GomAlertToastService } from '@gomlibs/ui';
 import { GomButtonComponent, GomInputComponent } from '@gomlibs/ui';
 import { GomConfirmationModalComponent, GomModalComponent } from '@gomlibs/ui';
-import { GomTableColumn, GomTableComponent, GomTableRow } from '@gomlibs/ui';
+import { GomTableColumn, GomTableComponent, GomTableQuery, GomTableRow } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import {
   CustomerEngagementService,
@@ -55,6 +55,13 @@ export class CustomerGroupsComponent implements OnInit {
   readonly saving = signal(false);
   readonly errorMessage = signal<string | null>(null);
   readonly groups = signal<CustomerGroup[]>([]);
+  readonly totalGroups = signal(0);
+  readonly groupTablePageIndex = signal(0);
+  readonly groupTablePageSize = signal(50);
+  readonly canLoadAllGroups = signal(false);
+  readonly allGroupsLoaded = signal(false);
+  readonly serverSidePaginationGroups = computed(() => this.totalGroups() > 500);
+  readonly groupTableDataMode = computed<'client' | 'server'>(() => (this.serverSidePaginationGroups() && !this.allGroupsLoaded() ? 'server' : 'client'));
 
   readonly formOpen = signal(false);
   readonly editingGroupId = signal<string | null>(null);
@@ -133,16 +140,68 @@ export class CustomerGroupsComponent implements OnInit {
   loadGroups(): void {
     this.loading.set(true);
     this.errorMessage.set(null);
+    this.groupTablePageIndex.set(0);
+    this.allGroupsLoaded.set(false);
 
-    this.service.listCustomerGroups().subscribe({
+    this.service.listCustomerGroups({ page: 1, limit: this.groupTablePageSize() }).subscribe({
       next: (response) => {
-        this.groups.set(response.data || []);
+        const pagination = response.pagination;
+        this.totalGroups.set(pagination.total);
+        this.canLoadAllGroups.set(pagination.canLoadAll);
+        this.allGroupsLoaded.set(pagination.total <= 500);
+
+        if (pagination.total <= 500 && pagination.hasMore) {
+          this.service.listCustomerGroups({ page: 1, limit: pagination.total }).subscribe({
+            next: (allRes) => this.groups.set(allRes.data || []),
+          });
+        } else {
+          this.groups.set(response.data || []);
+        }
         this.loading.set(false);
       },
       error: (error) => {
         this.errorMessage.set(String(error?.error?.message || 'Failed to load customer groups.'));
         this.loading.set(false);
       },
+    });
+  }
+
+  onGroupTableQueryChange(query: GomTableQuery): void {
+    if (this.groupTableDataMode() !== 'server') {
+      return;
+    }
+
+    this.loading.set(true);
+    this.service.listCustomerGroups({
+      page: query.pageIndex + 1,
+      limit: query.pageSize,
+      search: query.searchTerm?.trim() || undefined,
+    }).subscribe({
+      next: (res) => {
+        this.allGroupsLoaded.set(false);
+        this.groups.set(res.data || []);
+        this.totalGroups.set(res.pagination.total);
+        this.canLoadAllGroups.set(res.pagination.canLoadAll);
+        this.groupTablePageIndex.set(query.pageIndex);
+        this.groupTablePageSize.set(query.pageSize);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false),
+    });
+  }
+
+  loadAllGroups(): void {
+    this.loading.set(true);
+    this.service.listCustomerGroups({ page: 1, limit: this.totalGroups() }).subscribe({
+      next: (res) => {
+        this.groups.set(res.data || []);
+        this.totalGroups.set(res.pagination.total);
+        this.canLoadAllGroups.set(false);
+        this.allGroupsLoaded.set(true);
+        this.groupTablePageIndex.set(0);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false),
     });
   }
 

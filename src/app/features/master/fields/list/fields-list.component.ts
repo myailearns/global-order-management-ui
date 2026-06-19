@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, injec
 import { CommonModule } from '@angular/common';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
-import { GomButtonComponent, GomTableColumn, GomTableComponent, GomTableRow } from '@gomlibs/ui';
+import { GomButtonComponent, GomTableColumn, GomTableComponent, GomTableQuery, GomTableRow } from '@gomlibs/ui';
 import {
   FIELD_DEFAULT_STATUS,
   FIELD_UI_TEXT,
@@ -42,8 +42,14 @@ export class FieldsListComponent implements OnChanges {
   @Input() canCreate = true;
   @Input() canEdit = true;
   @Input() canDelete = true;
+  @Input() dataMode: 'client' | 'server' = 'client';
+  @Input() totalItems = 0;
+  @Input() pageIndex = 0;
+  @Input() pageSize = 10;
+  @Input() pageSizeOptions: number[] = [10, 20, 50];
   @Output() action = new EventEmitter<FieldAction>();
   @Output() addNew = new EventEmitter<void>();
+  @Output() queryChange = new EventEmitter<GomTableQuery>();
 
   readonly text = FIELD_UI_TEXT;
   private readonly translate = inject(TranslateService);
@@ -124,15 +130,16 @@ export class FieldsListComponent implements OnChanges {
     this.action.emit({ action: 'view', field: this.mapRowToField(row) });
   }
 
+  onTableQueryChange(query: GomTableQuery): void {
+    this.queryChange.emit(query);
+  }
+
   private mapRowToField(row: GomTableRow): Field {
     const type = this.mapType(row['type']);
     const rowId = typeof row['_id'] === 'string' ? row['_id'] : undefined;
     const rowValueFormat = typeof row['valueFormat'] === 'string' ? row['valueFormat'].trim().toUpperCase() : '';
-    const rowCurrencyCode = typeof row['currencyCode'] === 'string' ? row['currencyCode'].trim().toUpperCase() : '';
     const valueFormat = rowValueFormat === 'CURRENCY' ? 'CURRENCY' : 'NUMBER';
-    const currencyCode = valueFormat === 'CURRENCY'
-      ? (rowCurrencyCode === 'INR' ? 'INR' : 'INR')
-      : null;
+    const currencyCode = valueFormat === 'CURRENCY' ? 'INR' : null;
     return {
       _id: rowId,
       name: typeof row['name'] === 'string' ? row['name'] : '',

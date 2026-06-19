@@ -11,6 +11,7 @@ import {
   GomConfirmationModalComponent,
   GomTableColumn,
   GomTableComponent,
+  GomTableQuery,
   GomTableRow,
 } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../../core/auth/auth-session.service';
@@ -70,9 +71,13 @@ export class OffersListComponent implements OnInit {
 
 
   readonly offers = signal<Offer[]>([]);
-  readonly page = signal(1);
-  readonly limit = signal(10);
-  readonly total = signal(0);
+  readonly totalOffers = signal(0);
+  readonly offerTablePageIndex = signal(0);
+  readonly offerTablePageSize = signal(50);
+  readonly canLoadAllOffers = signal(false);
+  readonly allOffersLoaded = signal(false);
+  readonly serverSidePaginationOffers = computed(() => this.totalOffers() > 500);
+  readonly offerTableDataMode = computed<'client' | 'server'>(() => (this.serverSidePaginationOffers() && !this.allOffersLoaded() ? 'server' : 'client'));
   readonly translationVersion = signal(0);
 
   readonly deleteModalOpen = signal(false);
@@ -193,21 +198,94 @@ export class OffersListComponent implements OnInit {
   loadOffers(): void {
     this.loading.set(true);
     this.errorMessage.set(null);
+    this.offerTablePageIndex.set(0);
+    this.allOffersLoaded.set(false);
 
     this.offerService.listOffers({
-      page: this.page(),
-      limit: this.limit(),
+      page: 1,
+      limit: this.offerTablePageSize(),
       sortBy: 'priority',
       sortOrder: 'desc',
     }).subscribe({
-      next: (offers) => {
-        this.offers.set(offers);
+      next: (response) => {
+        const pagination = response.pagination;
+        this.totalOffers.set(pagination?.total || response.data.length || 0);
+        this.canLoadAllOffers.set(Boolean(pagination?.canLoadAll));
+        this.allOffersLoaded.set((pagination?.total || 0) <= 500);
+
+        if ((pagination?.total || 0) <= 500 && pagination?.hasMore) {
+          this.offerService.listOffers({
+            page: 1,
+            limit: pagination.total,
+            sortBy: 'priority',
+            sortOrder: 'desc',
+          }).subscribe({
+            next: (allRes) => this.offers.set(allRes.data || []),
+          });
+        } else {
+          this.offers.set(response.data || []);
+        }
+
         this.loading.set(false);
       },
       error: (error) => {
         console.error('Error loading offers:', error);
         this.errorMessage.set(this.translate.instant('gom.offers.error_load'));
         this.toast.error(this.translate.instant('gom.offers.error_load'));
+        this.loading.set(false);
+      },
+    });
+  }
+
+  onOfferTableQueryChange(query: GomTableQuery): void {
+    if (this.offerTableDataMode() !== 'server') {
+      return;
+    }
+
+    this.loading.set(true);
+    this.errorMessage.set(null);
+
+    this.offerService.listOffers({
+      page: query.pageIndex + 1,
+      limit: query.pageSize,
+      search: query.searchTerm?.trim() || undefined,
+      sortBy: query.sort?.key || 'priority',
+      sortOrder: (query.sort?.direction as 'asc' | 'desc' | undefined) || 'desc',
+    }).subscribe({
+      next: (response) => {
+        this.allOffersLoaded.set(false);
+        this.offers.set(response.data ?? []);
+        this.totalOffers.set(response.pagination?.total || 0);
+        this.canLoadAllOffers.set(Boolean(response.pagination?.canLoadAll));
+        this.offerTablePageIndex.set(query.pageIndex);
+        this.offerTablePageSize.set(query.pageSize);
+        this.loading.set(false);
+      },
+      error: (error) => {
+        console.error('Error loading offers table page:', error);
+        this.loading.set(false);
+      },
+    });
+  }
+
+  loadAllOffers(): void {
+    this.loading.set(true);
+    this.offerService.listOffers({
+      page: 1,
+      limit: this.totalOffers(),
+      sortBy: 'priority',
+      sortOrder: 'desc',
+    }).subscribe({
+      next: (response) => {
+        this.offers.set(response.data ?? []);
+        this.totalOffers.set(response.pagination?.total || response.data.length || 0);
+        this.canLoadAllOffers.set(false);
+        this.allOffersLoaded.set(true);
+        this.offerTablePageIndex.set(0);
+        this.loading.set(false);
+      },
+      error: (error) => {
+        console.error('Error loading all offers:', error);
         this.loading.set(false);
       },
     });

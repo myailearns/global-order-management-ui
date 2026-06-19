@@ -4,8 +4,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { forkJoin, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 
-import { GomAlertToastService } from '@gomlibs/ui';
-import { GomConfirmationModalComponent } from '@gomlibs/ui';
+import { GomAlertToastService, GomConfirmationModalComponent, GomTableQuery } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { FIELD_DEFAULT_STATUS, FIELD_DEFAULT_TYPE, FIELD_UI_TEXT } from './fields.constants';
 import { Field, FieldGroupUpdatePayload, FieldGroupUsage, FieldsService } from './fields.service';
@@ -35,7 +34,7 @@ export class FieldsComponent implements OnInit {
   readonly canDeleteField = computed(() => this.authSession.hasFeature('field.delete'));
   readonly canViewFieldGroups = computed(() => this.authSession.hasFeature('fieldGroup.list'));
   readonly fieldCreateLimit = computed(() => this.authSession.getFeatureConfigNumber('field.create', 'max_count'));
-  readonly fieldCreateUsed = computed(() => this.fields().length);
+  readonly fieldCreateUsed = computed(() => this.totalFields());
   readonly fieldCreateRemaining = computed(() => {
     const limit = this.fieldCreateLimit();
     if (limit === null) {
@@ -48,6 +47,13 @@ export class FieldsComponent implements OnInit {
   fields = signal<Field[]>([]);
   fieldGroups = signal<FieldGroupUsage[]>([]);
   loading = signal(false);
+  totalFields = signal(0);
+  fieldTablePageIndex = signal(0);
+  fieldTablePageSize = signal(50);
+  canLoadAllFields = signal(false);
+  allFieldsLoaded = signal(false);
+  serverSidePaginationFields = computed(() => this.totalFields() > 500);
+  fieldTableDataMode = computed<'client' | 'server'>(() => (this.serverSidePaginationFields() && !this.allFieldsLoaded() ? 'server' : 'client'));
   formOpen = signal(false);
   selectedField = signal<Field | null>(null);
   viewOpen = signal(false);
@@ -121,29 +127,97 @@ export class FieldsComponent implements OnInit {
   }
 
   loadFields(): void {
+    this.fieldTablePageIndex.set(0);
+    this.allFieldsLoaded.set(false);
+
     this.loading.set(true);
     this.errorMessage.set(null);
 
     const fieldsRequest = this.canViewField()
-      ? this.fieldsService.getFields()
-      : of({ success: true, data: [], meta: { page: 1, limit: 0, total: 0, totalPages: 0 } });
+      ? this.fieldsService.getFields({ page: 1, limit: this.fieldTablePageSize() })
+      : of({ success: true, data: [], pagination: { page: 1, limit: 50, total: 0, hasMore: false, totalPages: 1, canLoadAll: false } });
 
     const fieldGroupsRequest = this.canViewFieldGroups()
-      ? this.fieldsService.getFieldGroups()
-      : of({ success: true, data: [], meta: { page: 1, limit: 0, total: 0, totalPages: 0 } });
+      ? this.fieldsService.getFieldGroups({ page: 1, limit: 5000 })
+      : of({ success: true, data: [], pagination: { page: 1, limit: 50, total: 0, hasMore: false, totalPages: 1, canLoadAll: false } });
 
     forkJoin({
       fields: fieldsRequest,
       fieldGroups: fieldGroupsRequest,
     }).subscribe({
       next: (response) => {
-        this.fields.set(response.fields.data ?? []);
+        const pagination = response.fields.pagination;
+        this.totalFields.set(pagination.total);
+        this.canLoadAllFields.set(pagination.canLoadAll);
+        this.allFieldsLoaded.set(pagination.total <= 500);
         this.fieldGroups.set(response.fieldGroups.data ?? []);
+
+        if (pagination.total <= 500 && pagination.hasMore && this.canViewField()) {
+          this.fieldsService.getFields({ page: 1, limit: pagination.total }).subscribe({
+            next: (allRes) => this.fields.set(allRes.data ?? []),
+          });
+        } else {
+          this.fields.set(response.fields.data ?? []);
+        }
+
         this.loading.set(false);
       },
       error: (error) => {
         console.error('Error loading fields:', error);
         this.errorMessage.set(this.translate.instant(this.text.errorLoad));
+        this.loading.set(false);
+      },
+    });
+  }
+
+  onFieldTableQueryChange(query: GomTableQuery): void {
+    if (this.fieldTableDataMode() !== 'server') {
+      return;
+    }
+
+    this.loading.set(true);
+    this.errorMessage.set(null);
+
+    const search = query.searchTerm?.trim();
+    const sortBy = query.sort?.key;
+    const order = query.sort?.direction as 'asc' | 'desc' | undefined;
+
+    this.fieldsService.getFields({
+      page: query.pageIndex + 1,
+      limit: query.pageSize,
+      search,
+      sortBy,
+      order,
+    }).subscribe({
+      next: (response) => {
+        this.allFieldsLoaded.set(false);
+        this.fields.set(response.data ?? []);
+        this.totalFields.set(response.pagination.total);
+        this.canLoadAllFields.set(response.pagination.canLoadAll);
+        this.fieldTablePageIndex.set(query.pageIndex);
+        this.fieldTablePageSize.set(query.pageSize);
+        this.loading.set(false);
+      },
+      error: (error) => {
+        console.error('Error loading fields table page:', error);
+        this.loading.set(false);
+      },
+    });
+  }
+
+  loadAllFields(): void {
+    this.loading.set(true);
+    this.fieldsService.getFields({ page: 1, limit: this.totalFields() }).subscribe({
+      next: (response) => {
+        this.fields.set(response.data ?? []);
+        this.totalFields.set(response.pagination.total);
+        this.canLoadAllFields.set(false);
+        this.allFieldsLoaded.set(true);
+        this.fieldTablePageIndex.set(0);
+        this.loading.set(false);
+      },
+      error: (error) => {
+        console.error('Error loading all fields:', error);
         this.loading.set(false);
       },
     });

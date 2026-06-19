@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, injec
 import { CommonModule } from '@angular/common';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
-import { GomButtonComponent, GomTableColumn, GomTableComponent, GomTableRow } from '@gomlibs/ui';
+import { GomButtonComponent, GomTableColumn, GomTableComponent, GomTableQuery, GomTableRow } from '@gomlibs/ui';
 import { UNIT_DEFAULT_STATUS, UNIT_UI_TEXT } from '../units.constants';
 import { Unit } from '../units.service';
 import { DisableIfNoFeatureDirective } from '../../../../shared/directives/disable-if-no-feature.directive';
@@ -35,8 +35,14 @@ export class UnitsListComponent implements OnChanges {
   @Input() canCreate = true;
   @Input() canEdit = true;
   @Input() canDelete = true;
+  @Input() dataMode: 'client' | 'server' = 'client';
+  @Input() totalItems = 0;
+  @Input() pageIndex = 0;
+  @Input() pageSize = 10;
+  @Input() pageSizeOptions: number[] = [10, 20, 50];
   @Output() action = new EventEmitter<UnitAction>();
   @Output() addNew = new EventEmitter<void>();
+  @Output() queryChange = new EventEmitter<GomTableQuery>();
 
   readonly text = UNIT_UI_TEXT;
   readonly mobileCardFields: string[] = ['name', 'symbol', 'baseUnit', 'status'];
@@ -114,6 +120,10 @@ export class UnitsListComponent implements OnChanges {
     }
 
     this.action.emit({ action: 'view', unit });
+  }
+
+  onTableQueryChange(query: GomTableQuery): void {
+    this.queryChange.emit(query);
   }
 
   private mapRowToUnit(row: GomTableRow): Unit | null {

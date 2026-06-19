@@ -10,6 +10,7 @@ import {
   GomModalComponent,
   GomTableColumn,
   GomTableComponent,
+  GomTableQuery,
   GomTableRow,
 } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
@@ -67,6 +68,13 @@ export class CourierPartnersComponent implements OnInit {
 
   readonly saving = signal(false);
   readonly errorMessage = signal<string | null>(null);
+  readonly totalPartners = signal(0);
+  readonly partnerTablePageIndex = signal(0);
+  readonly partnerTablePageSize = signal(50);
+  readonly canLoadAllPartners = signal(false);
+  readonly allPartnersLoaded = signal(false);
+  readonly serverSidePaginationPartners = computed(() => this.totalPartners() > 500);
+  readonly partnerTableDataMode = computed<'client' | 'server'>(() => (this.serverSidePaginationPartners() && !this.allPartnersLoaded() ? 'server' : 'client'));
   readonly partners = signal<CourierPartner[]>([]);
   readonly formOpen = signal(false);
   readonly editingId = signal<string | null>(null);
@@ -174,9 +182,26 @@ export class CourierPartnersComponent implements OnInit {
     this.loading.set(true);
     this.errorMessage.set(null);
 
-    this.service.listCourierPartners().subscribe({
+    this.partnerTablePageIndex.set(0);
+    this.allPartnersLoaded.set(false);
+
+    const selectedStatus = this.selectedStatus();
+    const status: CourierPartnerStatus | undefined = selectedStatus === 'ALL' ? undefined : selectedStatus;
+
+    this.service.listCourierPartners({ page: 1, limit: this.partnerTablePageSize(), status }).subscribe({
       next: (response) => {
-        this.partners.set(response.data || []);
+        const pagination = response.pagination;
+        this.totalPartners.set(pagination.total);
+        this.canLoadAllPartners.set(pagination.canLoadAll);
+        this.allPartnersLoaded.set(pagination.total <= 500);
+
+        if (pagination.total <= 500 && pagination.hasMore) {
+          this.service.listCourierPartners({ page: 1, limit: pagination.total, status }).subscribe({
+            next: (allRes) => this.partners.set(allRes.data || []),
+          });
+        } else {
+          this.partners.set(response.data || []);
+        }
         this.loading.set(false);
       },
       error: (error) => {
@@ -212,6 +237,7 @@ export class CourierPartnersComponent implements OnInit {
     }
 
     this.selectedStatus.set(status);
+    this.loadPartners();
   }
 
   isStatusFilterActive(status: 'ALL' | CourierPartnerStatus): boolean {
@@ -423,6 +449,52 @@ export class CourierPartnersComponent implements OnInit {
         this.toast.error(this.extractApiMessage(error) || 'Failed to save courier partner.');
         this.saving.set(false);
       },
+    });
+  }
+
+  onPartnerTableQueryChange(query: GomTableQuery): void {
+    if (this.partnerTableDataMode() !== 'server') {
+      return;
+    }
+
+    this.loading.set(true);
+    const selectedStatus = this.selectedStatus();
+    const status: CourierPartnerStatus | undefined = selectedStatus === 'ALL' ? undefined : selectedStatus;
+    this.service.listCourierPartners({
+      page: query.pageIndex + 1,
+      limit: query.pageSize,
+      status,
+      search: query.searchTerm?.trim() || undefined,
+      sortBy: query.sort?.key || undefined,
+      order: query.sort?.direction as 'asc' | 'desc' | undefined,
+    }).subscribe({
+      next: (res) => {
+        this.allPartnersLoaded.set(false);
+        this.partners.set(res.data ?? []);
+        this.totalPartners.set(res.pagination.total);
+        this.canLoadAllPartners.set(res.pagination.canLoadAll);
+        this.partnerTablePageIndex.set(query.pageIndex);
+        this.partnerTablePageSize.set(query.pageSize);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false),
+    });
+  }
+
+  loadAllPartners(): void {
+    this.loading.set(true);
+    const selectedStatus = this.selectedStatus();
+    const status: CourierPartnerStatus | undefined = selectedStatus === 'ALL' ? undefined : selectedStatus;
+    this.service.listCourierPartners({ page: 1, limit: this.totalPartners(), status }).subscribe({
+      next: (res) => {
+        this.partners.set(res.data ?? []);
+        this.totalPartners.set(res.pagination.total);
+        this.canLoadAllPartners.set(false);
+        this.allPartnersLoaded.set(true);
+        this.partnerTablePageIndex.set(0);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false),
     });
   }
 

@@ -7,12 +7,17 @@ import { environment } from '../../../../environments/environment';
 export interface ApiPaginated<T> {
   success: boolean;
   data: T[];
-  meta: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
+  pagination: PaginationMeta;
+}
+
+export interface PaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  hasMore: boolean;
+  totalPages: number;
+  canLoadAll: boolean;
+  tenantPlan?: string;
 }
 
 export interface ApiSuccess<T> {
@@ -89,20 +94,88 @@ export class FieldGroupsService {
   private readonly groupsUrl = `${environment.apiBaseUrl}/groups`;
   private readonly categoriesUrl = `${environment.apiBaseUrl}/categories`;
 
-  listFieldGroups(): Observable<ApiPaginated<FieldGroup>> {
-    return this.http.get<ApiPaginated<FieldGroup>>(this.fieldGroupsUrl);
+  listFieldGroups(params?: {
+    page?: number;
+    limit?: number;
+    status?: 'ACTIVE' | 'INACTIVE';
+    search?: string;
+    sortBy?: string;
+    order?: 'asc' | 'desc';
+  }): Observable<ApiPaginated<FieldGroup>> {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.set('page', String(params.page));
+    if (params?.limit) searchParams.set('limit', String(params.limit));
+    if (params?.status) searchParams.set('status', params.status);
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.sortBy) searchParams.set('sortBy', params.sortBy);
+    if (params?.order) searchParams.set('order', params.order);
+
+    const query = searchParams.toString();
+    const url = query ? `${this.fieldGroupsUrl}?${query}` : this.fieldGroupsUrl;
+    return this.http.get<ApiPaginated<FieldGroup>>(url);
   }
 
-  listFields(): Observable<ApiPaginated<PricingField>> {
-    return this.http.get<ApiPaginated<PricingField>>(this.fieldsUrl);
+  listFields(params?: {
+    page?: number;
+    limit?: number;
+    status?: 'ACTIVE' | 'INACTIVE';
+    search?: string;
+    sortBy?: string;
+    order?: 'asc' | 'desc';
+  }): Observable<ApiPaginated<PricingField>> {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.set('page', String(params.page));
+    if (params?.limit) searchParams.set('limit', String(params.limit));
+    if (params?.status) searchParams.set('status', params.status);
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.sortBy) searchParams.set('sortBy', params.sortBy);
+    if (params?.order) searchParams.set('order', params.order);
+
+    const query = searchParams.toString();
+    const url = query ? `${this.fieldsUrl}?${query}` : this.fieldsUrl;
+    return this.http.get<ApiPaginated<PricingField>>(url);
   }
 
-  listGroups(): Observable<ApiPaginated<ProductGroupUsage>> {
-    return this.http.get<ApiPaginated<ProductGroupUsage>>(this.groupsUrl);
+  listGroups(params?: {
+    page?: number;
+    limit?: number;
+    status?: 'ACTIVE' | 'INACTIVE';
+    search?: string;
+    sortBy?: string;
+    order?: 'asc' | 'desc';
+  }): Observable<ApiPaginated<ProductGroupUsage>> {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.set('page', String(params.page));
+    if (params?.limit) searchParams.set('limit', String(params.limit));
+    if (params?.status) searchParams.set('status', params.status);
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.sortBy) searchParams.set('sortBy', params.sortBy);
+    if (params?.order) searchParams.set('order', params.order);
+
+    const query = searchParams.toString();
+    const url = query ? `${this.groupsUrl}?${query}` : this.groupsUrl;
+    return this.http.get<ApiPaginated<ProductGroupUsage>>(url);
   }
 
-  listCategories(): Observable<ApiPaginated<CategoryOption>> {
-    return this.http.get<ApiPaginated<CategoryOption>>(`${this.categoriesUrl}?status=ACTIVE`);
+  listCategories(params?: {
+    page?: number;
+    limit?: number;
+    status?: 'ACTIVE' | 'INACTIVE';
+    search?: string;
+    sortBy?: string;
+    order?: 'asc' | 'desc';
+  }): Observable<ApiPaginated<CategoryOption>> {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.set('page', String(params.page));
+    if (params?.limit) searchParams.set('limit', String(params.limit));
+    if (params?.status) searchParams.set('status', params.status);
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.sortBy) searchParams.set('sortBy', params.sortBy);
+    if (params?.order) searchParams.set('order', params.order);
+
+    const query = searchParams.toString();
+    const url = query ? `${this.categoriesUrl}?${query}` : this.categoriesUrl;
+    return this.http.get<ApiPaginated<CategoryOption>>(url);
   }
 
   createFieldGroup(payload: FieldGroupPayload): Observable<ApiSuccess<FieldGroup>> {

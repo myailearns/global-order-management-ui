@@ -214,10 +214,10 @@ export class RolesListComponent implements OnInit {
   }
 
   private loadTenantOptions(): void {
-    this.saasAccountService.listAccounts(1, 200).subscribe({
+    this.saasAccountService.listAccounts({ page: 1, limit: 200 }).subscribe({
       next: (response) => {
         this.tenantOptions.set(
-          response.items.map((account) => ({
+          response.data.map((account) => ({
             value: account.tenantCode,
             label: `${account.accountName} (${account.tenantCode})`,
           })),

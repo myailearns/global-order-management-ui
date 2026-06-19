@@ -1,0 +1,43 @@
+.platform-users {
+  display: grid;
+  gap: 1rem;
+}
+
+.platform-users__header h1 {
+  margin: 0;
+}
+
+.platform-users__header p {
+  margin: 0.25rem 0 0;
+  color: #4b5563;
+}
+
+.platform-users__filters {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 2fr 1fr 1fr;
+}
+
+.platform-users__load-all {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.platform-users__load-all-btn {
+  border: 1px solid #d1d5db;
+  background: #fff;
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+}
+
+.platform-users__load-all-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 960px) {
+  .platform-users__filters {
+    grid-template-columns: 1fr;
+  }
+}

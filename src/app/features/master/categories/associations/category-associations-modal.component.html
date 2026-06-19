@@ -39,6 +39,17 @@
                   }
                 </div>
               }
+
+              @if (availableFieldGroupsPagination()) {
+                <div class="associations__pager" style="margin-top: 0.75rem; display: flex; gap: 0.5rem; align-items: center;">
+                  <gom-lib-button variant="secondary" [disabled]="loading() || availableFieldGroupsPage() <= 1" (buttonClick)="previousPage('availableFieldGroups')">Prev</gom-lib-button>
+                  <span>Page {{ availableFieldGroupsPagination()!.page }} / {{ availableFieldGroupsPagination()!.totalPages }}</span>
+                  <gom-lib-button variant="secondary" [disabled]="loading() || !availableFieldGroupsPagination()!.hasMore" (buttonClick)="nextPage('availableFieldGroups')">Next</gom-lib-button>
+                  @if (availableFieldGroupsPagination()!.canLoadAll && availableFieldGroupsPagination()!.total <= 5000 && availableFieldGroupsPagination()!.hasMore) {
+                    <gom-lib-button variant="secondary" [disabled]="loading()" (buttonClick)="loadAll('availableFieldGroups')">Load All</gom-lib-button>
+                  }
+                </div>
+              }
             </div>
           }
 
@@ -57,6 +68,17 @@
                 </span>
               }
             </div>
+
+            @if (fieldGroupsPagination()) {
+              <div class="associations__pager" style="margin-top: 0.75rem; display: flex; gap: 0.5rem; align-items: center;">
+                <gom-lib-button variant="secondary" [disabled]="loading() || fieldGroupsPage() <= 1" (buttonClick)="previousPage('fieldGroups')">Prev</gom-lib-button>
+                <span>Page {{ fieldGroupsPagination()!.page }} / {{ fieldGroupsPagination()!.totalPages }}</span>
+                <gom-lib-button variant="secondary" [disabled]="loading() || !fieldGroupsPagination()!.hasMore" (buttonClick)="nextPage('fieldGroups')">Next</gom-lib-button>
+                @if (fieldGroupsPagination()!.canLoadAll && fieldGroupsPagination()!.total <= 5000 && fieldGroupsPagination()!.hasMore) {
+                  <gom-lib-button variant="secondary" [disabled]="loading()" (buttonClick)="loadAll('fieldGroups')">Load All</gom-lib-button>
+                }
+              </div>
+            }
           }
         </div>
       </gom-lib-tab-content>
@@ -86,6 +108,17 @@
                   }
                 </div>
               }
+
+              @if (availableUnitsPagination()) {
+                <div class="associations__pager" style="margin-top: 0.75rem; display: flex; gap: 0.5rem; align-items: center;">
+                  <gom-lib-button variant="secondary" [disabled]="loading() || availableUnitsPage() <= 1" (buttonClick)="previousPage('availableUnits')">Prev</gom-lib-button>
+                  <span>Page {{ availableUnitsPagination()!.page }} / {{ availableUnitsPagination()!.totalPages }}</span>
+                  <gom-lib-button variant="secondary" [disabled]="loading() || !availableUnitsPagination()!.hasMore" (buttonClick)="nextPage('availableUnits')">Next</gom-lib-button>
+                  @if (availableUnitsPagination()!.canLoadAll && availableUnitsPagination()!.total <= 5000 && availableUnitsPagination()!.hasMore) {
+                    <gom-lib-button variant="secondary" [disabled]="loading()" (buttonClick)="loadAll('availableUnits')">Load All</gom-lib-button>
+                  }
+                </div>
+              }
             </div>
           }
 
@@ -104,6 +137,17 @@
                 </span>
               }
             </div>
+
+            @if (unitsPagination()) {
+              <div class="associations__pager" style="margin-top: 0.75rem; display: flex; gap: 0.5rem; align-items: center;">
+                <gom-lib-button variant="secondary" [disabled]="loading() || unitsPage() <= 1" (buttonClick)="previousPage('units')">Prev</gom-lib-button>
+                <span>Page {{ unitsPagination()!.page }} / {{ unitsPagination()!.totalPages }}</span>
+                <gom-lib-button variant="secondary" [disabled]="loading() || !unitsPagination()!.hasMore" (buttonClick)="nextPage('units')">Next</gom-lib-button>
+                @if (unitsPagination()!.canLoadAll && unitsPagination()!.total <= 5000 && unitsPagination()!.hasMore) {
+                  <gom-lib-button variant="secondary" [disabled]="loading()" (buttonClick)="loadAll('units')">Load All</gom-lib-button>
+                }
+              </div>
+            }
           }
         </div>
       </gom-lib-tab-content>
@@ -127,6 +171,17 @@
                 </span>
               }
             </div>
+
+            @if (groupsPagination()) {
+              <div class="associations__pager" style="margin-top: 0.75rem; display: flex; gap: 0.5rem; align-items: center;">
+                <gom-lib-button variant="secondary" [disabled]="loading() || groupsPage() <= 1" (buttonClick)="previousPage('groups')">Prev</gom-lib-button>
+                <span>Page {{ groupsPagination()!.page }} / {{ groupsPagination()!.totalPages }}</span>
+                <gom-lib-button variant="secondary" [disabled]="loading() || !groupsPagination()!.hasMore" (buttonClick)="nextPage('groups')">Next</gom-lib-button>
+                @if (groupsPagination()!.canLoadAll && groupsPagination()!.total <= 5000 && groupsPagination()!.hasMore) {
+                  <gom-lib-button variant="secondary" [disabled]="loading()" (buttonClick)="loadAll('groups')">Load All</gom-lib-button>
+                }
+              </div>
+            }
           }
         </div>
       </gom-lib-tab-content>

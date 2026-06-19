@@ -27,9 +27,31 @@
     [canCreate]="canCreateCategory()"
     [canEdit]="canEditCategory()"
     [canDelete]="canDeleteCategory()"
+    [dataMode]="categoryTableDataMode()"
+    [totalItems]="totalCategories()"
+    [pageIndex]="categoryTablePageIndex()"
+    [pageSize]="categoryTablePageSize()"
+    [pageSizeOptions]="serverSidePaginationCategories() ? [50] : [10, 20, 50]"
     (addNew)="onAddNew()"
     (action)="onAction($event)"
+    (queryChange)="onCategoryTableQueryChange($event)"
   ></gom-categories-list>
+
+  @if (serverSidePaginationCategories() && canLoadAllCategories() && !allCategoriesLoaded()) {
+    <div class="pagination-controls">
+      <div class="pagination-controls__info">
+        {{ totalCategories() }} categories total. Use table pager for page navigation.
+      </div>
+      <div class="pagination-controls__actions">
+        <gom-lib-button
+          type="button"
+          variant="secondary"
+          [disabled]="loading()"
+          (buttonClick)="loadAllCategories()"
+        ><i class="ri-download-2-line" aria-hidden="true"></i> Load All</gom-lib-button>
+      </div>
+    </div>
+  }
 
   <gom-categories-form
     [isOpen]="formOpen()"

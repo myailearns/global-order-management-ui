@@ -72,13 +72,33 @@
       [columns]="columns"
       [rows]="rows()"
       [loading]="loading()"
-      [pageSize]="10"
-      [pageSizeOptions]="[10, 20, 50]"
+      [dataMode]="riderTableDataMode()"
+      [totalItems]="totalRiders()"
+      [pageIndex]="riderTablePageIndex()"
+      [pageSize]="riderTablePageSize()"
+      [pageSizeOptions]="serverSidePaginationRiders() ? [50] : [10, 20, 50]"
       searchPlaceholder="Search riders"
       emptyMessage="No riders found."
       [mobileCardView]="true"
       (rowAction)="onRowAction($event)"
+      (queryChange)="onRiderTableQueryChange($event)"
     ></gom-lib-table>
+
+    @if (serverSidePaginationRiders() && canLoadAllRiders() && !allRidersLoaded()) {
+      <div class="pagination-controls">
+        <div class="pagination-controls__info">
+          {{ totalRiders() }} riders total. Use table pager for page navigation.
+        </div>
+        <div class="pagination-controls__actions">
+          <gom-lib-button
+            type="button"
+            variant="secondary"
+            [disabled]="loading()"
+            (buttonClick)="loadAllRiders()"
+          ><i class="ri-download-2-line" aria-hidden="true"></i> Load All</gom-lib-button>
+        </div>
+      </div>
+    }
   </article>
 </section>
 

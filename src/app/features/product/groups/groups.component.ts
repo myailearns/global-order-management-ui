@@ -20,6 +20,7 @@ import {
   GomTabContentComponent,
   GomTableColumn,
   GomTableComponent,
+  GomTableQuery,
   GomTableRow,
   GomTabsComponent,
   TabItem,
@@ -134,6 +135,16 @@ export class GroupsComponent implements OnInit {
   });
   readonly saving = signal(false);
   readonly errorMessage = signal<string | null>(null);
+
+  readonly totalGroups = signal(0);
+  readonly currentGroupPage = signal(1);
+  readonly groupTablePageIndex = signal(0);
+  readonly groupTablePageSize = signal(50);
+  readonly canLoadAllGroups = signal(false);
+  readonly allGroupsLoaded = signal(false);
+  readonly serverSidePagination = computed(() => this.totalGroups() > 500);
+  readonly tableDataMode = computed<'client' | 'server'>(() => (this.serverSidePagination() && !this.allGroupsLoaded() ? 'server' : 'client'));
+  readonly totalGroupPages = computed(() => Math.max(Math.ceil(this.totalGroups() / 50), 1));
 
   readonly groups = signal<Group[]>([]);
   readonly selectedGroupRows = signal<GroupRow[]>([]);
@@ -450,7 +461,7 @@ export class GroupsComponent implements OnInit {
     this.errorMessage.set(null);
 
     forkJoin({
-      groups: this.groupsService.listGroups(),
+      groups: this.groupsService.listGroups({ page: 1, limit: this.groupTablePageSize() }),
       categories: this.groupsService.listCategories(),
       fields: this.groupsService.listFields(),
       fieldGroups: this.groupsService.listFieldGroups(),
@@ -458,7 +469,20 @@ export class GroupsComponent implements OnInit {
       taxProfiles: this.groupsService.listTaxProfiles(),
     }).subscribe({
       next: (result) => {
-        this.groups.set(result.groups.data ?? []);
+        const gPagination = result.groups.pagination;
+        this.totalGroups.set(gPagination.total);
+        this.canLoadAllGroups.set(gPagination.canLoadAll);
+        this.currentGroupPage.set(1);
+        this.groupTablePageIndex.set(0);
+        this.allGroupsLoaded.set(gPagination.total <= 500);
+
+        if (gPagination.total <= 500 && gPagination.hasMore) {
+          this.groupsService.listGroups({ page: 1, limit: gPagination.total }).subscribe({
+            next: (allRes) => this.groups.set(allRes.data ?? []),
+          });
+        } else {
+          this.groups.set(result.groups.data ?? []);
+        }
         this.categories.set(result.categories.data ?? []);
         this.fields.set(result.fields.data ?? []);
         this.fieldGroups.set(result.fieldGroups.data ?? []);
@@ -476,6 +500,42 @@ export class GroupsComponent implements OnInit {
         this.errorMessage.set('Failed to load group setup data. Please refresh and try again.');
         this.loading.set(false);
       },
+    });
+  }
+
+  onGroupTableQueryChange(query: GomTableQuery): void {
+    if (this.tableDataMode() !== 'server') {
+      return;
+    }
+
+    this.loading.set(true);
+
+    const params: Parameters<GroupsService['listGroups']>[0] = {
+      page: query.pageIndex + 1,
+      limit: query.pageSize,
+    };
+
+    if (query.searchTerm?.trim()) {
+      params.search = query.searchTerm.trim();
+    }
+
+    if (query.sort?.key && query.sort?.direction && (query.sort.direction === 'asc' || query.sort.direction === 'desc')) {
+      params.sortBy = query.sort.key;
+      params.order = query.sort.direction;
+    }
+
+    this.groupsService.listGroups(params).subscribe({
+      next: (res) => {
+        this.allGroupsLoaded.set(false);
+        this.groups.set(res.data ?? []);
+        this.totalGroups.set(res.pagination.total);
+        this.canLoadAllGroups.set(res.pagination.canLoadAll);
+        this.currentGroupPage.set(query.pageIndex + 1);
+        this.groupTablePageIndex.set(query.pageIndex);
+        this.groupTablePageSize.set(query.pageSize);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false),
     });
   }
 
@@ -605,21 +665,47 @@ export class GroupsComponent implements OnInit {
       next: () => {
         const actionLabel = nextStatus === 'ACTIVE' ? 'activated' : 'deactivated';
         this.toast.success(`${rowsToUpdate.length} group${this.pluralSuffix(rowsToUpdate.length)} ${actionLabel} successfully.`);
-        this.groupsService.listGroups().subscribe({
-          next: (res) => {
-            this.groups.set(res.data ?? []);
-            this.selectedGroupRows.set([]);
-            this.saving.set(false);
-          },
-          error: () => {
-            this.saving.set(false);
-          },
-        });
+        this.refreshGroupList(() => {
+          this.selectedGroupRows.set([]);
+          this.saving.set(false);
+        }, () => this.saving.set(false));
       },
       error: () => {
         this.toast.error(`Failed to ${nextStatus === 'ACTIVE' ? 'activate' : 'deactivate'} selected groups.`);
         this.saving.set(false);
       },
+    });
+  }
+
+  private refreshGroupList(onSuccess?: () => void, onError?: () => void): void {
+    const pageIndex = this.groupTablePageIndex();
+    const pageSize = this.groupTablePageSize();
+    const limit = this.tableDataMode() === 'server' ? pageSize : Math.max(this.totalGroups(), pageSize);
+    const page = this.tableDataMode() === 'server' ? pageIndex + 1 : 1;
+
+    this.groupsService.listGroups({ page, limit }).subscribe({
+      next: (res) => {
+        this.totalGroups.set(res.pagination.total);
+        this.canLoadAllGroups.set(res.pagination.canLoadAll);
+        this.groups.set(res.data ?? []);
+        onSuccess?.();
+      },
+      error: () => onError?.(),
+    });
+  }
+
+  loadAllGroups(): void {
+    this.loading.set(true);
+    this.groupsService.listGroups({ page: 1, limit: this.totalGroups() }).subscribe({
+      next: (res) => {
+        this.groups.set(res.data ?? []);
+        this.totalGroups.set(res.pagination.total);
+        this.canLoadAllGroups.set(false);
+        this.allGroupsLoaded.set(true);
+        this.groupTablePageIndex.set(0);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false),
     });
   }
 
@@ -670,13 +756,7 @@ export class GroupsComponent implements OnInit {
       this.groupsService.patchGroupStatus(existing._id, nextStatus).subscribe({
         next: () => {
           this.toast.success(`"${existing.name}" ${actionLabel} successfully.`);
-          this.groupsService.listGroups().subscribe({
-            next: (res) => {
-              this.groups.set(res.data ?? []);
-              this.saving.set(false);
-            },
-            error: () => this.saving.set(false),
-          });
+          this.refreshGroupList(() => this.saving.set(false), () => this.saving.set(false));
         },
         error: () => {
           this.toast.error(`Failed to ${nextStatus === 'ACTIVE' ? 'publish' : 'unpublish'} group.`);

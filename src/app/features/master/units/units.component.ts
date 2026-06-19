@@ -3,9 +3,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { forkJoin } from 'rxjs';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
-import { GomAlertToastService } from '@gomlibs/ui';
-import { GomConfirmationModalComponent } from '@gomlibs/ui';
-import { GomSelectOption } from '@gomlibs/ui';
+import { GomAlertToastService, GomConfirmationModalComponent, GomSelectOption, GomTableQuery } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { UNIT_UI_TEXT } from './units.constants';
 import { CategoryOption, Unit, UnitPayload, UnitsService } from './units.service';
@@ -28,13 +26,20 @@ export class UnitsComponent implements OnInit {
 
   readonly text = UNIT_UI_TEXT;
   readonly units = signal<Unit[]>([]);
+  readonly totalUnits = signal(0);
+  readonly unitTablePageIndex = signal(0);
+  readonly unitTablePageSize = signal(50);
+  readonly canLoadAllUnits = signal(false);
+  readonly allUnitsLoaded = signal(false);
+  readonly serverSidePaginationUnits = computed(() => this.totalUnits() > 500);
+  readonly unitTableDataMode = computed<'client' | 'server'>(() => (this.serverSidePaginationUnits() && !this.allUnitsLoaded() ? 'server' : 'client'));
   readonly categories = signal<CategoryOption[]>([]);
   readonly loading = signal(false);
   readonly canCreateUnit = computed(() => this.authSession.hasFeature('unit.create'));
   readonly canEditUnit = computed(() => this.authSession.hasFeature('unit.edit'));
   readonly canDeleteUnit = computed(() => this.authSession.hasFeature('unit.delete'));
   readonly unitCreateLimit = computed(() => this.authSession.getFeatureConfigNumber('unit.create', 'max_count'));
-  readonly unitCreateUsed = computed(() => this.units().length);
+  readonly unitCreateUsed = computed(() => this.totalUnits());
   readonly unitCreateRemaining = computed(() => {
     const limit = this.unitCreateLimit();
     if (limit === null) {
@@ -99,21 +104,89 @@ export class UnitsComponent implements OnInit {
   }
 
   loadUnits(): void {
+    this.unitTablePageIndex.set(0);
+    this.allUnitsLoaded.set(false);
+
     this.loading.set(true);
     this.errorMessage.set(null);
 
     forkJoin({
-      units: this.unitsService.getUnits(),
-      categories: this.unitsService.listCategories(),
+      units: this.unitsService.getUnits({ page: 1, limit: this.unitTablePageSize() }),
+      categories: this.unitsService.listCategories({ page: 1, limit: 5000, status: 'ACTIVE' }),
     }).subscribe({
       next: (result) => {
-        this.units.set(result.units.data ?? []);
+        const pagination = result.units.pagination;
+        this.totalUnits.set(pagination.total);
+        this.canLoadAllUnits.set(pagination.canLoadAll);
+        this.allUnitsLoaded.set(pagination.total <= 500);
+
+        if (pagination.total <= 500 && pagination.hasMore) {
+          this.unitsService.getUnits({ page: 1, limit: pagination.total }).subscribe({
+            next: (allRes) => this.units.set(allRes.data ?? []),
+          });
+        } else {
+          this.units.set(result.units.data ?? []);
+        }
+
         this.categories.set(result.categories.data ?? []);
         this.loading.set(false);
       },
       error: (error) => {
         console.error('Error loading units:', error);
         this.errorMessage.set(this.translate.instant(this.text.errorLoad));
+        this.loading.set(false);
+      },
+    });
+  }
+
+  onUnitTableQueryChange(query: GomTableQuery): void {
+    if (this.unitTableDataMode() !== 'server') {
+      return;
+    }
+
+    this.loading.set(true);
+    this.errorMessage.set(null);
+
+    const search = query.searchTerm?.trim();
+    const sortBy = query.sort?.key;
+    const order = query.sort?.direction as 'asc' | 'desc' | undefined;
+
+    this.unitsService.getUnits({
+      page: query.pageIndex + 1,
+      limit: query.pageSize,
+      search,
+      sortBy,
+      order,
+    }).subscribe({
+      next: (response) => {
+        this.allUnitsLoaded.set(false);
+        this.units.set(response.data ?? []);
+        this.totalUnits.set(response.pagination.total);
+        this.canLoadAllUnits.set(response.pagination.canLoadAll);
+        this.unitTablePageIndex.set(query.pageIndex);
+        this.unitTablePageSize.set(query.pageSize);
+        this.loading.set(false);
+      },
+      error: (error) => {
+        console.error('Error loading units table page:', error);
+        this.loading.set(false);
+      },
+    });
+  }
+
+  loadAllUnits(): void {
+    this.loading.set(true);
+    this.unitsService.getUnits({ page: 1, limit: this.totalUnits() }).subscribe({
+      next: (response) => {
+        this.units.set(response.data ?? []);
+        this.totalUnits.set(response.pagination.total);
+        this.canLoadAllUnits.set(false);
+        this.allUnitsLoaded.set(true);
+        this.unitTablePageIndex.set(0);
+        this.loading.set(false);
+      },
+      error: (error) => {
+        console.error('Error loading all units:', error);
         this.loading.set(false);
       },
     });

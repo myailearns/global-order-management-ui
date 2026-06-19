@@ -137,14 +137,14 @@ export class TenantEntitlementsComponent {
   }
 
   private loadTenantOptions(): void {
-    this.saasAccountService.listAccounts(1, 200).subscribe({
+    this.saasAccountService.listAccounts({ page: 1, limit: 200 }).subscribe({
       next: (response) => {
         const planByCode: Record<string, string> = {};
-        const options = response.items.map((account) => ({
+        const options = response.data.map((account) => ({
           value: account.tenantCode,
           label: `${account.accountName} (${account.tenantCode})`,
         }));
-        response.items.forEach((account) => {
+        response.data.forEach((account) => {
           planByCode[account.tenantCode] = account.planId;
         });
 

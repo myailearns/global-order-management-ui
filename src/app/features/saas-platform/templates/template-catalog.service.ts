@@ -1,4 +1,4 @@
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../../environments/environment';
@@ -103,7 +103,14 @@ interface ApiSuccess<T> {
 interface ApiPaginated<T> {
   success: boolean;
   data: T[];
-  meta: { page: number; limit: number; total: number; totalPages: number };
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    hasMore: boolean;
+    totalPages: number;
+    canLoadAll: boolean;
+  };
 }
 
 @Injectable({ providedIn: 'root' })
@@ -116,9 +123,38 @@ export class TemplateCatalogService {
     return new HttpHeaders(this.authSession.getPlatformHeaders());
   }
 
+  private buildListParams(params?: { page?: number; limit?: number; search?: string; sort?: string; order?: 'asc' | 'desc' }): HttpParams {
+    let httpParams = new HttpParams();
+
+    if (params?.page) {
+      httpParams = httpParams.set('page', String(params.page));
+    }
+
+    if (params?.limit) {
+      httpParams = httpParams.set('limit', String(params.limit));
+    }
+
+    if (params?.search) {
+      httpParams = httpParams.set('search', params.search);
+    }
+
+    if (params?.sort) {
+      httpParams = httpParams.set('sort', params.sort);
+    }
+
+    if (params?.order) {
+      httpParams = httpParams.set('order', params.order);
+    }
+
+    return httpParams;
+  }
+
   // --- Categories ---
-  listCategories(): Observable<ApiPaginated<TemplateCategory>> {
-    return this.http.get<ApiPaginated<TemplateCategory>>(`${this.baseUrl}/categories`, { headers: this.headers });
+  listCategories(params?: { page?: number; limit?: number; search?: string; sort?: string; order?: 'asc' | 'desc' }): Observable<ApiPaginated<TemplateCategory>> {
+    return this.http.get<ApiPaginated<TemplateCategory>>(`${this.baseUrl}/categories`, {
+      headers: this.headers,
+      params: this.buildListParams(params),
+    });
   }
 
   getCategoryDetail(id: string): Observable<TemplateCategoryDetail> {
@@ -140,8 +176,11 @@ export class TemplateCatalogService {
   }
 
   // --- Fields ---
-  listFields(): Observable<ApiPaginated<TemplateField>> {
-    return this.http.get<ApiPaginated<TemplateField>>(`${this.baseUrl}/fields`, { headers: this.headers });
+  listFields(params?: { page?: number; limit?: number; search?: string; sort?: string; order?: 'asc' | 'desc' }): Observable<ApiPaginated<TemplateField>> {
+    return this.http.get<ApiPaginated<TemplateField>>(`${this.baseUrl}/fields`, {
+      headers: this.headers,
+      params: this.buildListParams(params),
+    });
   }
 
   createField(payload: Partial<TemplateField> & Record<string, any>): Observable<ApiSuccess<TemplateField>> {
@@ -157,8 +196,11 @@ export class TemplateCatalogService {
   }
 
   // --- Field Groups ---
-  listFieldGroups(): Observable<ApiPaginated<TemplateFieldGroup>> {
-    return this.http.get<ApiPaginated<TemplateFieldGroup>>(`${this.baseUrl}/field-groups`, { headers: this.headers });
+  listFieldGroups(params?: { page?: number; limit?: number; search?: string; sort?: string; order?: 'asc' | 'desc' }): Observable<ApiPaginated<TemplateFieldGroup>> {
+    return this.http.get<ApiPaginated<TemplateFieldGroup>>(`${this.baseUrl}/field-groups`, {
+      headers: this.headers,
+      params: this.buildListParams(params),
+    });
   }
 
   createFieldGroup(payload: Partial<TemplateFieldGroup>): Observable<ApiSuccess<TemplateFieldGroup>> {
@@ -174,8 +216,11 @@ export class TemplateCatalogService {
   }
 
   // --- Units ---
-  listUnits(): Observable<ApiPaginated<TemplateUnit>> {
-    return this.http.get<ApiPaginated<TemplateUnit>>(`${this.baseUrl}/units`, { headers: this.headers });
+  listUnits(params?: { page?: number; limit?: number; search?: string; sort?: string; order?: 'asc' | 'desc' }): Observable<ApiPaginated<TemplateUnit>> {
+    return this.http.get<ApiPaginated<TemplateUnit>>(`${this.baseUrl}/units`, {
+      headers: this.headers,
+      params: this.buildListParams(params),
+    });
   }
 
   createUnit(payload: Partial<TemplateUnit> & Record<string, any>): Observable<ApiSuccess<TemplateUnit>> {
@@ -191,8 +236,11 @@ export class TemplateCatalogService {
   }
 
   // --- Tax Profiles ---
-  listTaxProfiles(): Observable<ApiPaginated<TemplateTaxProfile>> {
-    return this.http.get<ApiPaginated<TemplateTaxProfile>>(`${this.baseUrl}/tax-profiles`, { headers: this.headers });
+  listTaxProfiles(params?: { page?: number; limit?: number; search?: string; sort?: string; order?: 'asc' | 'desc' }): Observable<ApiPaginated<TemplateTaxProfile>> {
+    return this.http.get<ApiPaginated<TemplateTaxProfile>>(`${this.baseUrl}/tax-profiles`, {
+      headers: this.headers,
+      params: this.buildListParams(params),
+    });
   }
 
   createTaxProfile(payload: Partial<TemplateTaxProfile>): Observable<ApiSuccess<TemplateTaxProfile>> {

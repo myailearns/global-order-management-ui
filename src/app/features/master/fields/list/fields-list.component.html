@@ -16,8 +16,11 @@
       [columns]="columns"
       [rows]="rows"
       [loading]="loading"
-      [pageSize]="10"
-      [pageSizeOptions]="[10, 20, 50]"
+      [dataMode]="dataMode"
+      [totalItems]="totalItems"
+      [pageIndex]="pageIndex"
+      [pageSize]="pageSize"
+      [pageSizeOptions]="pageSizeOptions"
       [searchPlaceholder]="text.searchPlaceholder | translate"
       [emptyMessage]="text.emptyMessage | translate"
       [mobileCardView]="true"
@@ -25,6 +28,7 @@
       [mobileCardClickable]="true"
       (rowAction)="onRowAction($event)"
       (rowClick)="onRowClick($event)"
+      (queryChange)="onTableQueryChange($event)"
     ></gom-lib-table>
   </section>
 </div>

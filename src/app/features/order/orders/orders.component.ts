@@ -15,6 +15,7 @@ import {
   GomSelectOption,
   GomTableColumn,
   GomTableComponent,
+  GomTableQuery,
   GomTableRow,
 } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
@@ -132,6 +133,13 @@ export class OrdersComponent implements OnInit {
   });
 
   readonly orders = signal<Order[]>([]);
+  readonly totalOrders = signal(0);
+  readonly orderTablePageIndex = signal(0);
+  readonly orderTablePageSize = signal(50);
+  readonly canLoadAllOrders = signal(false);
+  readonly allOrdersLoaded = signal(false);
+  readonly serverSidePaginationOrders = computed(() => this.totalOrders() > 500);
+  readonly orderTableDataMode = computed<'client' | 'server'>(() => (this.serverSidePaginationOrders() && !this.allOrdersLoaded() ? 'server' : 'client'));
   readonly riders = signal<Rider[]>([]);
   readonly courierPartners = signal<CourierPartner[]>([]);
   readonly variants = signal<Variant[]>([]);
@@ -437,16 +445,70 @@ export class OrdersComponent implements OnInit {
   loadInitialData(): void {
     this.loading.set(true);
     this.errorMessage.set(null);
+    this.orderTablePageIndex.set(0);
+    this.allOrdersLoaded.set(false);
 
-    this.service.listOrders().subscribe({
+    this.service.listOrders({ page: 1, limit: this.orderTablePageSize() }).subscribe({
       next: (orders) => {
-        this.orders.set(orders.data || []);
+        const pagination = orders.pagination;
+        this.totalOrders.set(pagination.total);
+        this.canLoadAllOrders.set(pagination.canLoadAll);
+        this.allOrdersLoaded.set(pagination.total <= 500);
+
+        if (pagination.total <= 500 && pagination.hasMore) {
+          this.service.listOrders({ page: 1, limit: pagination.total }).subscribe({
+            next: (allRes) => this.orders.set(allRes.data || []),
+          });
+        } else {
+          this.orders.set(orders.data || []);
+        }
         this.loading.set(false);
       },
       error: () => {
         this.errorMessage.set('Failed to load orders data.');
         this.loading.set(false);
       },
+    });
+  }
+
+  onOrderTableQueryChange(query: GomTableQuery): void {
+    if (this.orderTableDataMode() !== 'server') {
+      return;
+    }
+
+    this.loading.set(true);
+    this.service.listOrders({
+      page: query.pageIndex + 1,
+      limit: query.pageSize,
+      search: query.searchTerm?.trim() || undefined,
+      sortBy: query.sort?.key || undefined,
+      order: query.sort?.direction as 'asc' | 'desc' | undefined,
+    }).subscribe({
+      next: (res) => {
+        this.allOrdersLoaded.set(false);
+        this.orders.set(res.data ?? []);
+        this.totalOrders.set(res.pagination.total);
+        this.canLoadAllOrders.set(res.pagination.canLoadAll);
+        this.orderTablePageIndex.set(query.pageIndex);
+        this.orderTablePageSize.set(query.pageSize);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false),
+    });
+  }
+
+  loadAllOrders(): void {
+    this.loading.set(true);
+    this.service.listOrders({ page: 1, limit: this.totalOrders() }).subscribe({
+      next: (res) => {
+        this.orders.set(res.data ?? []);
+        this.totalOrders.set(res.pagination.total);
+        this.canLoadAllOrders.set(false);
+        this.allOrdersLoaded.set(true);
+        this.orderTablePageIndex.set(0);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false),
     });
   }
 

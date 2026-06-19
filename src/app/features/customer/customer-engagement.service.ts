@@ -7,11 +7,14 @@ import { environment } from '../../../environments/environment';
 export interface ApiPaginated<T> {
   success: boolean;
   data: T[];
-  meta: {
+  pagination: {
     page: number;
     limit: number;
     total: number;
+    hasMore: boolean;
     totalPages: number;
+    canLoadAll: boolean;
+    tenantPlan?: string;
   };
 }
 
@@ -155,6 +158,8 @@ export class CustomerEngagementService {
   private readonly tenantAdminCustomersUrl = `${environment.apiBaseUrl}/tenant-admin/customers`;
 
   listCustomerInsights(params?: {
+    page?: number;
+    limit?: number;
     search?: string;
     sortBy?: 'lastOrderAt' | 'totalOrders' | 'totalSpend' | 'averageOrderValue';
     sortOrder?: 'asc' | 'desc';
@@ -162,6 +167,8 @@ export class CustomerEngagementService {
     groupId?: string;
   }): Observable<ApiPaginated<CustomerInsight>> {
     const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.set('page', String(params.page));
+    if (params?.limit) searchParams.set('limit', String(params.limit));
     if (params?.search) searchParams.set('search', params.search);
     if (params?.sortBy) searchParams.set('sortBy', params.sortBy);
     if (params?.sortOrder) searchParams.set('sortOrder', params.sortOrder);
@@ -181,12 +188,26 @@ export class CustomerEngagementService {
     return this.http.get<ApiSuccess<CustomerDetail>>(`${this.customersUrl}/${customerId}`);
   }
 
-  listCustomerOrderHistory(customerId: string): Observable<ApiPaginated<CustomerOrderHistoryItem>> {
-    return this.http.get<ApiPaginated<CustomerOrderHistoryItem>>(`${this.customersInsightsUrl}/${customerId}/orders`);
+  listCustomerOrderHistory(customerId: string, page?: number, limit?: number): Observable<ApiPaginated<CustomerOrderHistoryItem>> {
+    const params = new URLSearchParams();
+    if (page) params.set('page', String(page));
+    if (limit) params.set('limit', String(limit));
+    const query = params.toString();
+    const url = query
+      ? `${this.customersInsightsUrl}/${customerId}/orders?${query}`
+      : `${this.customersInsightsUrl}/${customerId}/orders`;
+    return this.http.get<ApiPaginated<CustomerOrderHistoryItem>>(url);
   }
 
-  listCustomerGroups(params?: { search?: string; status?: 'ACTIVE' | 'INACTIVE' }): Observable<ApiPaginated<CustomerGroup>> {
+  listCustomerGroups(params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    status?: 'ACTIVE' | 'INACTIVE';
+  }): Observable<ApiPaginated<CustomerGroup>> {
     const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.set('page', String(params.page));
+    if (params?.limit) searchParams.set('limit', String(params.limit));
     if (params?.search) searchParams.set('search', params.search);
     if (params?.status) searchParams.set('status', params.status);
 
@@ -207,8 +228,16 @@ export class CustomerEngagementService {
     return this.http.delete<ApiSuccess<CustomerGroup>>(`${this.customerGroupsUrl}/${groupId}`);
   }
 
-  listGroupMembers(groupId: string): Observable<ApiPaginated<CustomerGroupMember>> {
-    return this.http.get<ApiPaginated<CustomerGroupMember>>(`${this.customerGroupsUrl}/${groupId}/members`);
+  listGroupMembers(groupId: string, params?: { page?: number; limit?: number; search?: string }): Observable<ApiPaginated<CustomerGroupMember>> {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.set('page', String(params.page));
+    if (params?.limit) searchParams.set('limit', String(params.limit));
+    if (params?.search) searchParams.set('search', params.search);
+    const query = searchParams.toString();
+    const url = query
+      ? `${this.customerGroupsUrl}/${groupId}/members?${query}`
+      : `${this.customerGroupsUrl}/${groupId}/members`;
+    return this.http.get<ApiPaginated<CustomerGroupMember>>(url);
   }
 
   addGroupMembers(groupId: string, customerIds: string[]): Observable<ApiSuccess<{ addedCount: number; skippedCount: number; failed: Array<{ customerId: string; reason: string }> }>> {

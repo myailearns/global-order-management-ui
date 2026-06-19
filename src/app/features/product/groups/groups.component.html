@@ -69,15 +69,35 @@
       [columns]="columns"
       [rows]="rows()"
       [loading]="loading()"
-      [pageSize]="10"
-      [pageSizeOptions]="[10, 20, 50]"
+      [dataMode]="tableDataMode()"
+      [totalItems]="totalGroups()"
+      [pageIndex]="groupTablePageIndex()"
+      [pageSize]="groupTablePageSize()"
+      [pageSizeOptions]="serverSidePagination() ? [50] : [10, 20, 50]"
       searchPlaceholder="Search groups"
       emptyMessage="No groups found."
       [mobileCardView]="true"
       [enableRowSelection]="true"
       (rowAction)="onRowAction($event)"
       (selectedRowsChange)="onSelectedGroupsChange($event)"
+      (queryChange)="onGroupTableQueryChange($event)"
     ></gom-lib-table>
+
+    @if (serverSidePagination() && canLoadAllGroups() && !allGroupsLoaded()) {
+      <div class="pagination-controls">
+        <div class="pagination-controls__info">
+          {{ totalGroups() }} groups total. Use table pager for page navigation.
+        </div>
+        <div class="pagination-controls__actions">
+          <gom-lib-button
+            type="button"
+            variant="secondary"
+            [disabled]="loading()"
+            (buttonClick)="loadAllGroups()"
+          ><i class="ri-download-2-line" aria-hidden="true"></i> Load All</gom-lib-button>
+        </div>
+      </div>
+    }
   </article>
 </section>
 

@@ -1,18 +1,24 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
 
+export interface PaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  hasMore: boolean;
+  totalPages: number;
+  canLoadAll: boolean;
+  tenantPlan?: string;
+}
+
 export interface ApiPaginated<T> {
   success: boolean;
+  message?: string;
   data: T[];
-  meta: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
+  pagination: PaginationMeta;
 }
 
 export interface ApiSuccess<T> {
@@ -146,8 +152,24 @@ export class GroupsService {
   private readonly unitsUrl = `${environment.apiBaseUrl}/units`;
   private readonly taxProfilesUrl = `${environment.apiBaseUrl}/tax-profiles`;
 
-  listGroups(): Observable<ApiPaginated<Group>> {
-    return this.http.get<ApiPaginated<Group>>(this.groupsUrl);
+  listGroups(params?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    search?: string;
+    categoryId?: string;
+    sortBy?: string;
+    order?: 'asc' | 'desc';
+  }): Observable<ApiPaginated<Group>> {
+    let httpParams = new HttpParams();
+    if (params?.page != null) httpParams = httpParams.set('page', String(params.page));
+    if (params?.limit != null) httpParams = httpParams.set('limit', String(params.limit));
+    if (params?.status) httpParams = httpParams.set('status', params.status);
+    if (params?.search) httpParams = httpParams.set('search', params.search);
+    if (params?.categoryId) httpParams = httpParams.set('categoryId', params.categoryId);
+    if (params?.sortBy) httpParams = httpParams.set('sortBy', params.sortBy);
+    if (params?.order) httpParams = httpParams.set('order', params.order);
+    return this.http.get<ApiPaginated<Group>>(this.groupsUrl, { params: httpParams });
   }
 
   createGroup(payload: GroupPayload): Observable<ApiSuccess<Group>> {

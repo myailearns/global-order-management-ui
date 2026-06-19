@@ -5,15 +5,21 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
 
+export interface PaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  hasMore: boolean;
+  totalPages: number;
+  canLoadAll: boolean;
+  tenantPlan?: string;
+}
+
 export interface ApiPaginated<T> {
   success: boolean;
+  message?: string;
   data: T[];
-  meta: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
+  pagination: PaginationMeta;
 }
 
 export interface ApiSuccess<T> {
@@ -140,12 +146,18 @@ export class VariantsService {
     page?: number,
     limit?: number,
     status?: 'ACTIVE' | 'INACTIVE',
+    search?: string,
+    sortBy?: string,
+    order?: 'asc' | 'desc'
   ): Observable<ApiPaginated<Variant>> {
     const params = new URLSearchParams();
     if (groupId) params.set('groupId', groupId);
     if (page) params.set('page', String(page));
     if (limit) params.set('limit', String(limit));
     if (status) params.set('status', status);
+    if (search) params.set('search', search);
+    if (sortBy) params.set('sortBy', sortBy);
+    if (order) params.set('order', order);
 
     const query = params.toString();
     const url = query ? `${this.variantsUrl}?${query}` : this.variantsUrl;

@@ -7,11 +7,14 @@ import { environment } from '../../../../environments/environment';
 export interface ApiPaginated<T> {
   success: boolean;
   data: T[];
-  meta: {
+  pagination: {
     page: number;
     limit: number;
     total: number;
+    hasMore: boolean;
     totalPages: number;
+    canLoadAll: boolean;
+    tenantPlan?: string;
   };
 }
 
@@ -114,8 +117,25 @@ export class PacksService {
   private readonly packsUrl = `${environment.apiBaseUrl}/packs`;
   private readonly variantsUrl = `${environment.apiBaseUrl}/variants`;
 
-  listPacks(page = 1, limit = 100): Observable<ApiPaginated<Pack>> {
-    return this.http.get<ApiPaginated<Pack>>(`${this.packsUrl}?page=${page}&limit=${limit}`);
+  listPacks(params?: {
+    page?: number;
+    limit?: number;
+    status?: 'ACTIVE' | 'INACTIVE';
+    search?: string;
+    sortBy?: string;
+    order?: 'asc' | 'desc';
+  }): Observable<ApiPaginated<Pack>> {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.set('page', String(params.page));
+    if (params?.limit) searchParams.set('limit', String(params.limit));
+    if (params?.status) searchParams.set('status', params.status);
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.sortBy) searchParams.set('sortBy', params.sortBy);
+    if (params?.order) searchParams.set('order', params.order);
+
+    const query = searchParams.toString();
+    const url = query ? `${this.packsUrl}?${query}` : this.packsUrl;
+    return this.http.get<ApiPaginated<Pack>>(url);
   }
 
   createPack(payload: CreatePackPayload): Observable<ApiSuccess<Pack>> {

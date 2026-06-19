@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { CATEGORY_DEFAULT_STATUS, CATEGORY_UI_TEXT } from '../categories.constants';
 import { Category } from '../categories.service';
-import { GomButtonComponent, GomTableColumn, GomTableComponent, GomTableRow } from '@gomlibs/ui';
+import { GomButtonComponent, GomTableColumn, GomTableComponent, GomTableQuery, GomTableRow } from '@gomlibs/ui';
 import { DisableIfNoFeatureDirective } from '../../../../shared/directives/disable-if-no-feature.directive';
 
 interface CategoryTableRow extends GomTableRow {
@@ -33,8 +33,14 @@ export class CategoriesListComponent implements OnChanges {
   @Input() canCreate = true;
   @Input() canEdit = true;
   @Input() canDelete = true;
+  @Input() dataMode: 'client' | 'server' = 'client';
+  @Input() totalItems = 0;
+  @Input() pageIndex = 0;
+  @Input() pageSize = 10;
+  @Input() pageSizeOptions: number[] = [10, 20, 50];
   @Output() action = new EventEmitter<CategoryAction>();
   @Output() addNew = new EventEmitter<void>();
+  @Output() queryChange = new EventEmitter<GomTableQuery>();
 
   readonly text = CATEGORY_UI_TEXT;
   private readonly translate = inject(TranslateService);
@@ -115,6 +121,10 @@ export class CategoriesListComponent implements OnChanges {
 
   onRowClick(row: GomTableRow): void {
     this.action.emit({ action: 'view', category: this.mapRowToCategory(row) });
+  }
+
+  onTableQueryChange(query: GomTableQuery): void {
+    this.queryChange.emit(query);
   }
 
   private mapRowToCategory(row: GomTableRow): Category {

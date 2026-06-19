@@ -17,13 +17,25 @@
       [columns]="columns"
       [rows]="rows()"
       [loading]="loading()"
-      [pageSize]="10"
+      [dataMode]="groupTableDataMode()"
+      [totalItems]="totalGroups()"
+      [pageIndex]="groupTablePageIndex()"
+      [pageSize]="groupTablePageSize()"
       [pageSizeOptions]="[10, 20, 50]"
       searchPlaceholder="Search customer groups"
       emptyMessage="No customer groups found."
       [mobileCardView]="true"
       (rowAction)="onRowAction($event)"
+      (queryChange)="onGroupTableQueryChange($event)"
     ></gom-lib-table>
+
+    @if (canLoadAllGroups() && !allGroupsLoaded()) {
+      <div class="master-page__load-all">
+        <gom-lib-button type="button" variant="secondary" [disabled]="loading()" (buttonClick)="loadAllGroups()">
+          Load All ({{ totalGroups() }})
+        </gom-lib-button>
+      </div>
+    }
   </article>
 </section>
 

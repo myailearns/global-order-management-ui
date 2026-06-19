@@ -103,8 +103,8 @@ export class ProgramSettingsComponent implements OnInit {
       sortBy: 'updatedAt',
       sortOrder: 'desc',
     }).subscribe({
-      next: (offers) => {
-        this.activeB1g1OfferCount.set((offers || []).length);
+      next: (response) => {
+        this.activeB1g1OfferCount.set((response.data || []).length);
       },
       error: () => {
         this.activeB1g1OfferCount.set(0);

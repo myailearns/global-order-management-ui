@@ -67,12 +67,17 @@ interface ApiSuccess<T> {
 interface ApiPaginated<T> {
   success: boolean;
   data: T[];
-  meta: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
+  pagination: PaginationMeta;
+}
+
+interface PaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  hasMore: boolean;
+  totalPages: number;
+  canLoadAll: boolean;
+  tenantPlan?: string;
 }
 
 @Injectable({
@@ -84,12 +89,46 @@ export class FieldsService {
 
   constructor(private readonly http: HttpClient) {}
 
-  getFields(): Observable<ApiPaginated<Field>> {
-    return this.http.get<ApiPaginated<Field>>(this.apiUrl);
+  getFields(params?: {
+    page?: number;
+    limit?: number;
+    status?: FieldStatus;
+    search?: string;
+    sortBy?: string;
+    order?: 'asc' | 'desc';
+  }): Observable<ApiPaginated<Field>> {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.set('page', String(params.page));
+    if (params?.limit) searchParams.set('limit', String(params.limit));
+    if (params?.status) searchParams.set('status', params.status);
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.sortBy) searchParams.set('sortBy', params.sortBy);
+    if (params?.order) searchParams.set('order', params.order);
+
+    const query = searchParams.toString();
+    const url = query ? `${this.apiUrl}?${query}` : this.apiUrl;
+    return this.http.get<ApiPaginated<Field>>(url);
   }
 
-  getFieldGroups(): Observable<ApiPaginated<FieldGroupUsage>> {
-    return this.http.get<ApiPaginated<FieldGroupUsage>>(this.fieldGroupsUrl);
+  getFieldGroups(params?: {
+    page?: number;
+    limit?: number;
+    status?: 'ACTIVE' | 'INACTIVE';
+    search?: string;
+    sortBy?: string;
+    order?: 'asc' | 'desc';
+  }): Observable<ApiPaginated<FieldGroupUsage>> {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.set('page', String(params.page));
+    if (params?.limit) searchParams.set('limit', String(params.limit));
+    if (params?.status) searchParams.set('status', params.status);
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.sortBy) searchParams.set('sortBy', params.sortBy);
+    if (params?.order) searchParams.set('order', params.order);
+
+    const query = searchParams.toString();
+    const url = query ? `${this.fieldGroupsUrl}?${query}` : this.fieldGroupsUrl;
+    return this.http.get<ApiPaginated<FieldGroupUsage>>(url);
   }
 
   createField(payload: FieldPayload): Observable<ApiSuccess<Field>> {

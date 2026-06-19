@@ -326,7 +326,10 @@ export interface ApiListResponse<T> {
     page: number;
     limit: number;
     total: number;
-    pages: number;
+    hasMore: boolean;
+    totalPages: number;
+    canLoadAll: boolean;
+    tenantPlan?: string;
   };
   message?: string;
 }

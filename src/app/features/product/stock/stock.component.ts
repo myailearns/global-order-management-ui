@@ -14,6 +14,7 @@ import {
   GomSelectOption,
   GomTableColumn,
   GomTableComponent,
+  GomTableQuery,
   GomTableRow,
   getButtonContentMode,
   showButtonIcon,
@@ -86,6 +87,13 @@ export class StockComponent implements OnInit {
   readonly selectedGroupId = signal<string>('');
   readonly summary = signal<StockSummary | null>(null);
   readonly history = signal<StockHistoryEntry[]>([]);
+  readonly historyTotal = signal(0);
+  readonly historyTablePageIndex = signal(0);
+  readonly historyTablePageSize = signal(50);
+  readonly canLoadAllHistory = signal(false);
+  readonly allHistoryLoaded = signal(false);
+  readonly serverSidePaginationHistory = computed(() => this.historyTotal() > 500);
+  readonly historyTableDataMode = computed<'client' | 'server'>(() => (this.serverSidePaginationHistory() && !this.allHistoryLoaded() ? 'server' : 'client'));
   readonly currentGroupPricingFields = signal<Array<{ fieldId: string; key: string; type: 'NUMBER' | 'PERCENTAGE'; value: number }>>([]);
   readonly pricingForm = this.fb.record<FormControl<number | null>>({});
 
@@ -246,6 +254,7 @@ export class StockComponent implements OnInit {
     if (!groupId) {
       this.summary.set(null);
       this.history.set([]);
+      this.historyTotal.set(0);
       this.stockCreateUsed.set(0);
       return;
     }
@@ -256,15 +265,36 @@ export class StockComponent implements OnInit {
   loadStockData(groupId: string): void {
     this.loading.set(true);
     this.errorMessage.set(null);
+    this.historyTablePageIndex.set(0);
+    this.allHistoryLoaded.set(false);
 
     forkJoin({
       summary: this.stockService.getSummary(groupId),
-      history: this.stockService.getHistory(groupId, 1, 50),
+      history: this.stockService.getHistory({
+        groupId,
+        page: 1,
+        limit: this.historyTablePageSize(),
+      }),
     }).subscribe({
       next: ({ summary, history }) => {
+        const pagination = history.pagination;
         this.summary.set(summary.data);
-        this.history.set(history.data || []);
-        this.stockCreateUsed.set(Number(history.meta?.total || 0));
+        this.historyTotal.set(Number(pagination.total || 0));
+        this.stockCreateUsed.set(Number(pagination.total || 0));
+        this.canLoadAllHistory.set(Boolean(pagination.canLoadAll) && Number(pagination.total || 0) <= 5000);
+        this.allHistoryLoaded.set(Number(pagination.total || 0) <= 500);
+
+        if (Number(pagination.total || 0) <= 500 && Boolean(pagination.hasMore)) {
+          this.stockService.getHistory({
+            groupId,
+            page: 1,
+            limit: Number(pagination.total || 0),
+          }).subscribe({
+            next: (allRes) => this.history.set(allRes.data || []),
+          });
+        } else {
+          this.history.set(history.data || []);
+        }
 
         this.reorderForm.patchValue({
           reorderLevel: summary.data.reorderLevel,
@@ -277,6 +307,67 @@ export class StockComponent implements OnInit {
         this.errorMessage.set('Failed to load stock summary/history.');
         this.loading.set(false);
       },
+    });
+  }
+
+  onHistoryTableQueryChange(query: GomTableQuery): void {
+    if (this.historyTableDataMode() !== 'server') {
+      return;
+    }
+
+    const groupId = this.selectedGroupId();
+    if (!groupId) {
+      return;
+    }
+
+    const normalizedSearch = String(query.searchTerm || '').trim().toUpperCase();
+    const movementType = ['IN', 'OUT', 'ADJUST'].includes(normalizedSearch)
+      ? (normalizedSearch as 'IN' | 'OUT' | 'ADJUST')
+      : undefined;
+
+    this.loading.set(true);
+    this.stockService.getHistory({
+      groupId,
+      page: query.pageIndex + 1,
+      limit: query.pageSize,
+      transactionType: movementType,
+    }).subscribe({
+      next: (res) => {
+        this.allHistoryLoaded.set(false);
+        this.history.set(res.data || []);
+        this.historyTotal.set(res.pagination.total);
+        this.stockCreateUsed.set(Number(res.pagination.total || 0));
+        this.canLoadAllHistory.set(Boolean(res.pagination.canLoadAll) && Number(res.pagination.total || 0) <= 5000);
+        this.historyTablePageIndex.set(query.pageIndex);
+        this.historyTablePageSize.set(query.pageSize);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false),
+    });
+  }
+
+  loadAllHistory(): void {
+    const groupId = this.selectedGroupId();
+    if (!groupId || this.historyTotal() > 5000) {
+      return;
+    }
+
+    this.loading.set(true);
+    this.stockService.getHistory({
+      groupId,
+      page: 1,
+      limit: this.historyTotal(),
+    }).subscribe({
+      next: (res) => {
+        this.history.set(res.data || []);
+        this.historyTotal.set(res.pagination.total);
+        this.stockCreateUsed.set(Number(res.pagination.total || 0));
+        this.canLoadAllHistory.set(false);
+        this.allHistoryLoaded.set(true);
+        this.historyTablePageIndex.set(0);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false),
     });
   }
 

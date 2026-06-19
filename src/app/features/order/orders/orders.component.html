@@ -30,13 +30,33 @@
       [columns]="columns"
       [rows]="rows()"
       [loading]="loading()"
-      [pageSize]="10"
-      [pageSizeOptions]="[10, 20, 50]"
+      [dataMode]="orderTableDataMode()"
+      [totalItems]="totalOrders()"
+      [pageIndex]="orderTablePageIndex()"
+      [pageSize]="orderTablePageSize()"
+      [pageSizeOptions]="serverSidePaginationOrders() ? [50] : [10, 20, 50]"
       searchPlaceholder="Search orders"
       emptyMessage="No orders found."
       [mobileCardView]="true"
       (rowAction)="onRowAction($event)"
+      (queryChange)="onOrderTableQueryChange($event)"
     ></gom-lib-table>
+
+    @if (serverSidePaginationOrders() && canLoadAllOrders() && !allOrdersLoaded()) {
+      <div class="pagination-controls">
+        <div class="pagination-controls__info">
+          {{ totalOrders() }} orders total. Use table pager for page navigation.
+        </div>
+        <div class="pagination-controls__actions">
+          <gom-lib-button
+            type="button"
+            variant="secondary"
+            [disabled]="loading()"
+            (buttonClick)="loadAllOrders()"
+          ><i class="ri-download-2-line" aria-hidden="true"></i> Load All</gom-lib-button>
+        </div>
+      </div>
+    }
   </article>
 
   <gom-lib-confirmation-modal

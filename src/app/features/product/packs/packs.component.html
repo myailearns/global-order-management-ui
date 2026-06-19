@@ -36,13 +36,33 @@
       [columns]="columns"
       [rows]="rows()"
       [loading]="loading()"
-      [pageSize]="10"
-      [pageSizeOptions]="[10, 20, 50]"
+      [dataMode]="packTableDataMode()"
+      [totalItems]="totalPacks()"
+      [pageIndex]="packTablePageIndex()"
+      [pageSize]="packTablePageSize()"
+      [pageSizeOptions]="serverSidePaginationPacks() ? [50] : [10, 20, 50]"
       searchPlaceholder="Search packs"
       emptyMessage="No packs found."
       [mobileCardView]="true"
       (rowAction)="onRowAction($event)"
+      (queryChange)="onPackTableQueryChange($event)"
     ></gom-lib-table>
+
+    @if (serverSidePaginationPacks() && canLoadAllPacks() && !allPacksLoaded()) {
+      <div class="pagination-controls">
+        <div class="pagination-controls__info">
+          {{ totalPacks() }} packs total. Use table pager for page navigation.
+        </div>
+        <div class="pagination-controls__actions">
+          <gom-lib-button
+            type="button"
+            variant="secondary"
+            [disabled]="loading()"
+            (buttonClick)="loadAllPacks()"
+          ><i class="ri-download-2-line" aria-hidden="true"></i> Load All</gom-lib-button>
+        </div>
+      </div>
+    }
   </article>
 </section>
 

@@ -113,13 +113,25 @@
       [columns]="columns"
       [rows]="rows()"
       [loading]="loading()"
-      [pageSize]="10"
+      [dataMode]="historyTableDataMode()"
+      [totalItems]="historyTotal()"
+      [pageIndex]="historyTablePageIndex()"
+      [pageSize]="historyTablePageSize()"
       [pageSizeOptions]="[10, 20, 50]"
       searchPlaceholder="Search stock history"
       emptyMessage="No stock history found."
       [mobileCardView]="true"
       (rowAction)="onRowAction($event)"
+      (queryChange)="onHistoryTableQueryChange($event)"
     ></gom-lib-table>
+
+    @if (canLoadAllHistory() && !allHistoryLoaded()) {
+      <div class="master-page__load-all">
+        <gom-lib-button type="button" variant="secondary" [disabled]="loading()" (buttonClick)="loadAllHistory()">
+          Load All ({{ historyTotal() }})
+        </gom-lib-button>
+      </div>
+    }
   </article>
 </section>
 

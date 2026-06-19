@@ -63,13 +63,33 @@
       [columns]="columns"
       [rows]="rows()"
       [loading]="loading()"
-      [pageSize]="10"
-      [pageSizeOptions]="[10, 20, 50]"
+      [dataMode]="partnerTableDataMode()"
+      [totalItems]="totalPartners()"
+      [pageIndex]="partnerTablePageIndex()"
+      [pageSize]="partnerTablePageSize()"
+      [pageSizeOptions]="serverSidePaginationPartners() ? [50] : [10, 20, 50]"
       searchPlaceholder="Search courier partners"
       emptyMessage="No courier partners found."
       [mobileCardView]="true"
       (rowAction)="onRowAction($event)"
+      (queryChange)="onPartnerTableQueryChange($event)"
     ></gom-lib-table>
+
+    @if (serverSidePaginationPartners() && canLoadAllPartners() && !allPartnersLoaded()) {
+      <div class="pagination-controls">
+        <div class="pagination-controls__info">
+          {{ totalPartners() }} courier partners total. Use table pager for page navigation.
+        </div>
+        <div class="pagination-controls__actions">
+          <gom-lib-button
+            type="button"
+            variant="secondary"
+            [disabled]="loading()"
+            (buttonClick)="loadAllPartners()"
+          ><i class="ri-download-2-line" aria-hidden="true"></i> Load All</gom-lib-button>
+        </div>
+      </div>
+    }
   </article>
 </section>
 

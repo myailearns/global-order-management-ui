@@ -32,11 +32,14 @@ export interface TenantAccount {
 export interface AccountListResponse {
   success: boolean;
   data: TenantAccount[];
-  meta: {
+  pagination: {
     page: number;
     limit: number;
     total: number;
+    hasMore: boolean;
     totalPages: number;
+    canLoadAll: boolean;
+    tenantPlan?: string;
   };
 }
 
