@@ -1241,7 +1241,79 @@
                                "previous":  "Previous",
                                "next":  "Next"
                            },
-                "offers":  {
+                                "variantsWorkspace": {
+                                    "title": "One-Page Variant Workspace",
+                                    "subtitle": "Create multiple variants in one place with row-level preview.",
+                                    "actions": {
+                                        "autoGenerate": "Auto Generate",
+                                        "addRow": "Add Row",
+                                        "duplicate": "Duplicate",
+                                        "clearRows": "Clear Rows",
+                                        "saveSelected": "Save Selected ({{count}})",
+                                        "saving": "Saving...",
+                                        "remove": "Remove",
+                                        "addOverride": "Add Field",
+                                        "removeOverride": "Remove override"
+                                    },
+                                    "bulkApply": {
+                                        "additionalChargeLabel": "Bulk Additional Charge",
+                                        "additionalChargePlaceholder": "Enter amount",
+                                        "applyToSelected": "Apply To Selected",
+                                        "fieldOverridesLabel": "Bulk Field Overrides (JSON)",
+                                        "fieldOverridesPlaceholder": "{\"fabricCost\": 250, \"laborCharge\": 70}",
+                                        "applyOverridesToSelected": "Apply Overrides To Selected"
+                                    },
+                                    "summary": {
+                                        "totalRows": "Total rows: {{count}}",
+                                        "selectedRows": "Selected: {{count}}",
+                                        "errorRows": "Rows with errors: {{count}}"
+                                    },
+                                    "columns": {
+                                        "select": "Select",
+                                        "quantity": "Quantity",
+                                        "unit": "Unit",
+                                        "options": "Options",
+                                        "additionalCharge": "Additional Charge",
+                                        "fieldOverrides": "Field Overrides",
+                                        "displayName": "Display Name",
+                                        "derivedSelling": "Derived Selling Price",
+                                        "status": "Status",
+                                        "action": "Action"
+                                    },
+                                    "placeholders": {
+                                        "quantity": "Quantity",
+                                        "unit": "Unit",
+                                        "displayName": "Auto name if empty",
+                                        "fieldOverrides": "JSON object of override inputs",
+                                        "fieldKey": "Field key",
+                                        "fieldValue": "Value"
+                                    },
+                                    "state": {
+                                        "ready": "Ready"
+                                    },
+                                    "toast": {
+                                        "selectGroupFirst": "Please select a group first.",
+                                        "noCombinations": "No new combinations available.",
+                                        "autoGenerateFailed": "Failed to generate variant combinations.",
+                                        "selectOneRow": "Select at least one row to save.",
+                                        "fixRowErrors": "Please fix row errors before saving selected variants.",
+                                        "invalidBulkAdditionalCharge": "Enter a valid non-negative additional charge.",
+                                        "bulkApplySuccess": "Additional charge applied to selected rows.",
+                                        "bulkOverridesApplySuccess": "Field overrides applied to selected rows.",
+                                        "saveFailed": "Failed to create variants from rows.",
+                                        "saveSuccess": "{{count}} variant(s) created successfully."
+                                    },
+                                    "errors": {
+                                        "quantityPositive": "Quantity must be greater than zero.",
+                                        "unitRequired": "Unit is required.",
+                                        "additionalChargeNonNegative": "Additional charge must be zero or greater.",
+                                        "previewFailed": "Unable to preview price for this row.",
+                                        "fieldOverridesInvalid": "Field overrides must be a valid JSON object with numeric values.",
+                                        "duplicateCombination": "Duplicate variant combination found in selected rows."
+                                    },
+                                    "empty": "Add rows manually or use auto-generate to start creating variants."
+                                },
+                                "offers":  {
                                "title":  "Offers",
                                "subtitle":  "Create, manage, and monitor promotional campaigns for your tenant.",
                                "btn_create":  "Create Offer",

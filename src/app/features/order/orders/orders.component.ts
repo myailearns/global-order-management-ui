@@ -32,6 +32,7 @@ interface OrderRow extends GomTableRow {
   deliveryType: string;
   orderType: string;
   status: string;
+  rawStatus: string;
   paymentStatus: string;
   discount: string;
   couponsUsed: string;
@@ -234,11 +235,11 @@ export class OrdersComponent implements OnInit {
       width: '12rem',
       actionButtons: [
         {
-          label: (row) => this.getNextStatusLabel(String(row['status'] || ''), String(row['deliveryType'] || ''), String(row['orderType'] || '')),
+          label: (row) => this.getNextStatusLabel(String(row['rawStatus'] || ''), String(row['deliveryType'] || ''), String(row['orderType'] || '')),
           actionKey: 'next',
           variant: 'secondary',
           disabled: (row) => !this.getNextStatus(
-            String(row['status'] || ''),
+            String(row['rawStatus'] || ''),
             String(row['deliveryType'] || ''),
             String(row['orderType'] || '')
           ),
@@ -249,7 +250,7 @@ export class OrdersComponent implements OnInit {
           actionKey: 'assign-rider',
           variant: 'secondary',
           disabled: (row) => !this.canAssignRider(
-            String(row['status'] || ''),
+            String(row['rawStatus'] || ''),
             String(row['deliveryType'] || ''),
             String(row['orderType'] || '')
           ),
@@ -284,13 +285,13 @@ export class OrdersComponent implements OnInit {
               label: 'Edit Order Details',
               actionKey: 'edit-order-details',
               variant: 'secondary',
-              disabled: (row) => !this.canEditOrderDetails(String(row['status'] || '')),
+              disabled: (row) => !this.canEditOrderDetails(String(row['rawStatus'] || '')),
             },
             {
               label: 'Add / Change Items',
               actionKey: 'edit-order-items',
               variant: 'secondary',
-              disabled: (row) => !this.canEditOrderItems(String(row['status'] || ''), String(row['paymentStatus'] || '')),
+              disabled: (row) => !this.canEditOrderItems(String(row['rawStatus'] || ''), String(row['paymentStatus'] || '')),
             },
             {
               label: 'Mark Payment Received',
@@ -304,15 +305,17 @@ export class OrdersComponent implements OnInit {
               variant: 'secondary',
               disabled: (row) => !(
                 String(row['deliveryType'] || '').toUpperCase() === 'DELIVERY'
-                && String(row['status'] || '') === 'SHIPPED'
+                && String(row['rawStatus'] || '') === 'SHIPPED'
               ),
             },
             {
-              label: 'Request Return / Refund',
+              label: (row) => String(row['deliveryType'] || '').toUpperCase() === 'PICKUP'
+                ? 'Request Return / Refund'
+                : 'Request Return / Refund',
               icon: 'ri-arrow-go-back-line',
               actionKey: 'request-return',
               variant: 'secondary',
-              disabled: (row) => String(row['status'] || '') !== 'DELIVERED',
+              disabled: (row) => String(row['rawStatus'] || '') !== 'DELIVERED',
             },
             {
               label: 'Mark Return In Transit',
@@ -320,7 +323,7 @@ export class OrdersComponent implements OnInit {
               actionKey: 'mark-return-in-transit',
               variant: 'secondary',
               disabled: (row) => !(
-                String(row['status'] || '') === 'RETURN_REQUESTED'
+                String(row['rawStatus'] || '') === 'RETURN_REQUESTED'
                 && (
                   String(row['deliveryType'] || '').toUpperCase() === 'DELIVERY'
                   || String(row['orderType'] || '').toUpperCase() === 'CALL_COURIER'
@@ -333,9 +336,15 @@ export class OrdersComponent implements OnInit {
               actionKey: 'mark-return-received',
               variant: 'secondary',
               disabled: (row) => !(
-                String(row['status'] || '') === 'RETURN_IN_TRANSIT'
+                (
+                  String(row['rawStatus'] || '') === 'RETURN_IN_TRANSIT'
+                  && (
+                    String(row['deliveryType'] || '').toUpperCase() === 'DELIVERY'
+                    || String(row['orderType'] || '').toUpperCase() === 'CALL_COURIER'
+                  )
+                )
                 || (
-                  String(row['status'] || '') === 'RETURN_REQUESTED'
+                  String(row['rawStatus'] || '') === 'RETURN_REQUESTED'
                   && String(row['deliveryType'] || '').toUpperCase() === 'PICKUP'
                 )
               ),
@@ -345,29 +354,26 @@ export class OrdersComponent implements OnInit {
               icon: 'ri-refund-2-line',
               actionKey: 'mark-money-refunded',
               variant: 'secondary',
-              disabled: (row) => String(row['status'] || '') !== 'RETURNED',
+              disabled: (row) => String(row['rawStatus'] || '') !== 'RETURNED',
             },
             {
               label: 'Return to Warehouse (Undeliverable)',
               icon: 'ri-store-3-line',
               actionKey: 'courier-return-to-warehouse',
               variant: 'secondary',
-              disabled: (row) => !(
-                String(row['orderType'] || '').toUpperCase() === 'CALL_COURIER'
-                && String(row['status'] || '') === 'DISPATCHED'
-              ),
+              disabled: (row) => !this.canShowCourierReturnAction(row),
             },
             {
               label: 'Cancel Order',
               actionKey: 'cancel',
               variant: 'danger',
-              disabled: (row) => !this.canCancelStatus(String(row['status'] || '')),
+              disabled: (row) => !this.canCancelStatus(String(row['rawStatus'] || '')),
             },
             {
               label: 'Delete Draft',
               actionKey: 'delete',
               variant: 'danger',
-              disabled: (row) => !this.canDeleteStatus(String(row['status'] || '')),
+              disabled: (row) => !this.canDeleteStatus(String(row['rawStatus'] || '')),
             },
           ],
         },
@@ -387,7 +393,8 @@ export class OrdersComponent implements OnInit {
       source: item.orderSource,
       deliveryType: item.deliveryType,
       orderType: item.orderType || 'WALK_IN_INSTANT',
-      status: item.status,
+      status: this.getStatusDisplayLabel(item.status, item.deliveryType),
+      rawStatus: item.status,
       paymentStatus: item.paymentStatus,
       total: `Rs ${Number(item.pricingSnapshot?.grandTotal || 0).toLocaleString()}`,
       createdAt: new Date(item.createdAt).toLocaleDateString(),
@@ -426,6 +433,87 @@ export class OrdersComponent implements OnInit {
     const cogsTotal = Number(order.profitabilitySnapshot.cogsTotal || 0);
     const marginLabel = Number.isFinite(marginPct) ? `${marginPct.toFixed(2)}%` : 'N/A';
     return `COGS: Rs ${cogsTotal.toLocaleString()} | Margin: ${marginLabel}`;
+  }
+
+  private isPickupDeliveryType(deliveryType: string | null | undefined): boolean {
+    return String(deliveryType || '').toUpperCase() === 'PICKUP';
+  }
+
+  private getStatusDisplayLabel(status: string, deliveryType: string): string {
+    const normalized = String(status || '').toUpperCase();
+    if (!this.isPickupDeliveryType(deliveryType)) {
+      return normalized;
+    }
+
+    const pickupLabels: Record<string, string> = {
+      PACKED: 'READY_FOR_PICKUP',
+      DELIVERED: 'PICKED_UP',
+    };
+
+    return pickupLabels[normalized] || normalized;
+  }
+
+  private getPickupPreferredTime(notes: string | null | undefined): string {
+    for (const part of String(notes || '').split('|')) {
+      const trimmed = part.trim();
+      if (trimmed.toLowerCase().startsWith('preferred pickup time:')) {
+        return trimmed.replace(/^preferred pickup time:\s*/i, '').trim();
+      }
+    }
+    return '';
+  }
+
+  private getSanitizedOrderNotes(notes: string | null | undefined): string {
+    return String(notes || '')
+      .split('|')
+      .map((part) => part.trim())
+      .filter((part) => part && !part.toLowerCase().startsWith('preferred pickup time:'))
+      .join(' | ');
+  }
+
+  get viewOrderIsPickup(): boolean {
+    return this.isPickupDeliveryType(this.viewOrderTarget()?.deliveryType);
+  }
+
+  get viewOrderPickupTime(): string {
+    return this.getPickupPreferredTime(this.viewOrderTarget()?.notes);
+  }
+
+  get viewOrderLocationTitle(): string {
+    return this.viewOrderIsPickup ? 'Pickup Location' : 'Delivery Address';
+  }
+
+  get viewOrderLocationText(): string {
+    const order = this.viewOrderTarget();
+    if (!order?.addressSnapshot) {
+      return '-';
+    }
+
+    return [
+      order.addressSnapshot.name,
+      order.addressSnapshot.line1,
+      order.addressSnapshot.line2,
+      [order.addressSnapshot.city, order.addressSnapshot.state].filter(Boolean).join(', '),
+      order.addressSnapshot.postalCode,
+    ].filter(Boolean).join(' | ');
+  }
+
+  get viewOrderNotes(): string {
+    return this.getSanitizedOrderNotes(this.viewOrderTarget()?.notes);
+  }
+
+  getViewOrderStatusLabel(order: Order | null | undefined): string {
+    if (!order) {
+      return '-';
+    }
+    return this.getStatusDisplayLabel(order.status, order.deliveryType);
+  }
+
+  getStatusHistoryLabel(status: string | null | undefined, deliveryType: string | null | undefined): string {
+    if (!status) {
+      return 'Order Created';
+    }
+    return this.getStatusDisplayLabel(status, String(deliveryType || ''));
   }
 
   getOrderMarginLabel(order: Order): string {
@@ -522,6 +610,7 @@ export class OrdersComponent implements OnInit {
 
   onRowAction(event: { actionKey: string; row: GomTableRow }): void {
     if (!this.hasActionPermission(event.actionKey)) {
+      this.toast.warning('You do not have permission to perform this action');
       return;
     }
     const orderId = typeof event.row['_id'] === 'string' ? event.row['_id'] : '';
@@ -606,6 +695,7 @@ export class OrdersComponent implements OnInit {
 
     if (event.actionKey === 'next') {
       const nextStatus = this.getNextStatus(row.status, row.deliveryType, row.orderType || '');
+      
       if (!nextStatus) {
         this.toast.warning('No next transition for this order status.');
         return;
@@ -1265,6 +1355,15 @@ export class OrdersComponent implements OnInit {
       return 'Confirm Status Update';
     }
 
+    if (this.isPickupDeliveryType(target.order.deliveryType)) {
+      const pickupTitleMap: Record<string, string> = {
+        CONFIRMED: `Confirm Pickup Order ${target.order.orderNo}`,
+        PACKED: `Mark Ready for Pickup ${target.order.orderNo}`,
+        DELIVERED: `Mark Picked Up ${target.order.orderNo}`,
+      };
+      return pickupTitleMap[target.nextStatus] || `Move Order ${target.order.orderNo}`;
+    }
+
     return `Move Order ${target.order.orderNo}`;
   }
 
@@ -1276,6 +1375,11 @@ export class OrdersComponent implements OnInit {
 
     const isDeliveredWithPendingPayment =
       target.nextStatus === 'DELIVERED' && String(target.order.paymentStatus || '').toUpperCase() === 'PENDING';
+
+    if (this.isPickupDeliveryType(target.order.deliveryType)) {
+      const pickupTargetLabel = this.getStatusDisplayLabel(target.nextStatus, target.order.deliveryType);
+      return `Current status: ${this.getStatusDisplayLabel(target.order.status, target.order.deliveryType)}. New status: ${pickupTargetLabel}. Do you want to continue?`;
+    }
 
     if (isDeliveredWithPendingPayment) {
       return `Current status: ${target.order.status}. New status: DELIVERED.\n\n⚠️ Payment has not been received yet. Marking this order as Delivered will automatically mark the payment as received. Are you sure you want to proceed?`;
@@ -1316,7 +1420,8 @@ export class OrdersComponent implements OnInit {
     this.transitionBusy.set(true);
     this.service.updateStatus(target.order._id, target.nextStatus, target.reason).subscribe({
       next: () => {
-        this.toast.success(`Order moved to ${target.nextStatus}.`);
+        const nextLabel = this.getStatusDisplayLabel(target.nextStatus, target.order.deliveryType);
+        this.toast.success(`Order moved to ${nextLabel}.`);
         this.closeTransitionModal();
         this.loadInitialData();
       },
@@ -1337,6 +1442,16 @@ export class OrdersComponent implements OnInit {
     const nextStatus = this.getNextStatus(status, deliveryType, orderType);
     if (!nextStatus) {
       return 'No Next Status';
+    }
+    if (this.isPickupDeliveryType(deliveryType)) {
+      const pickupFriendlyNames: Record<string, string> = {
+        CONFIRMED: 'Confirm Order',
+        PACKED: 'Mark Ready for Pickup',
+        DELIVERED: 'Mark Picked Up',
+        RETURNED: 'Confirm Returned at Store',
+        REFUNDED: 'Mark Refunded',
+      };
+      return pickupFriendlyNames[nextStatus] ?? `Move to ${nextStatus}`;
     }
     const friendlyNames: Record<string, string> = {
       RETURN_IN_TRANSIT: 'Confirm Rider Collected Return',
@@ -1472,6 +1587,14 @@ export class OrdersComponent implements OnInit {
     };
 
     return transitions[status] || null;
+  }
+
+  private canShowDeliveryAttemptAction(row: OrderRow): boolean {
+    return String(row.deliveryType || '').toUpperCase() === 'DELIVERY' && String(row.rawStatus || '').toUpperCase() === 'SHIPPED';
+  }
+
+  private canShowCourierReturnAction(row: OrderRow): boolean {
+    return String(row.orderType || '').toUpperCase() === 'CALL_COURIER' && String(row.rawStatus || '').toUpperCase() === 'DISPATCHED';
   }
 
   getStatusChipTone(status: string): GomChipTone {

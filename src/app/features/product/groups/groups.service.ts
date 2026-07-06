@@ -92,21 +92,30 @@ export interface GroupResolvedField {
   value: number;
 }
 
+export type PricingRefreshMode = 'FIXED' | 'MANUAL_REFRESH' | 'AUTO_REFRESH';
+
 export interface Group {
   _id: string;
   name: string;
   description?: string;
+  groupType?: 'MEASURED' | 'ATTRIBUTE' | 'HYBRID';
   categoryId: string;
   quantity: number;
   fieldGroupId: string;
   fieldGroupVersion: number;
   resolvedFields: GroupResolvedField[];
     excludedFieldKeys: string[];
+  optionAxes?: Array<{
+    key: string;
+    label: string;
+    values: string[];
+  }>;
   formula: {
     sellingPrice: string;
     anchorPrice: string;
     actualPrice: string;
   };
+  pricingRefreshMode?: PricingRefreshMode;
   baseUnitId: string;
   allowedUnitIds: string[];
   taxProfileId?: string | null;
@@ -123,16 +132,28 @@ export interface Group {
 export interface GroupPayload {
   name: string;
   description?: string;
+  groupType?: 'MEASURED' | 'ATTRIBUTE' | 'HYBRID';
+  createDefaultVariant?: boolean;
+  defaultVariant?: {
+    quantity: number;
+    unitId: string;
+  };
   categoryId: string;
   quantity: number;
   fieldGroupId: string;
   customFields: Array<{ fieldId: string; value: number }>;
     excludedFieldKeys: string[];
+  optionAxes?: Array<{
+    key: string;
+    label: string;
+    values: string[];
+  }>;
   formula: {
     sellingPrice: string;
     anchorPrice: string;
     actualPrice: string;
   };
+  pricingRefreshMode: PricingRefreshMode;
   baseUnitId: string;
   allowedUnitIds: string[];
   taxProfileId?: string | null;

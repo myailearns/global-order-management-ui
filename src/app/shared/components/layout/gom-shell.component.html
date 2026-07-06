@@ -115,6 +115,9 @@
                     >
                       <span class="gom-shell__nav-icon"><i [class]="item.icon" aria-hidden="true"></i></span>
                       <span class="gom-shell__nav-label">{{ item.translationKey | translate }}</span>
+                      @if (item.route === '/product/stock' && pendingPricingCount() > 0) {
+                        <span class="gom-shell__nav-badge" title="Pending price approvals">{{ pendingPricingCount() }}</span>
+                      }
                       <span class="gom-shell__nav-trail" aria-hidden="true"><i class="ri-arrow-right-s-line"></i></span>
                     </a>
                   </li>

@@ -3,7 +3,7 @@
   (showChange)="isOpen = $event"
   [title]="(initialData ? text.formTitleEdit : text.formTitleCreate) | translate"
   [closeOnBackdropClick]="true"
-  size="small"
+  size="medium"
   (closed)="onCancel()"
 >
   <form [formGroup]="form" (ngSubmit)="onSubmit()" class="units-form">
@@ -54,6 +54,7 @@
         [label]="('units.labels.mappedCategories' | translate)"
         [placeholder]="('units.placeholders.mappedCategories' | translate)"
         [multiple]="true"
+        [searchable]="true"
         [options]="categoryOptions"
         [selectedValues]="selectedCategoryIds"
         [closeMenuTrigger]="categorySelectCloseToken"

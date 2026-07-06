@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, ViewChild, computed, inject, signal } from '@angular/core';
 import { forkJoin } from 'rxjs';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
@@ -55,6 +55,8 @@ export class UnitsComponent implements OnInit {
   readonly pendingDeleteUnit = signal<Unit | null>(null);
   readonly deleteConfirmOpen = signal(false);
   readonly errorMessage = signal<string | null>(null);
+
+  @ViewChild(UnitsFormComponent) unitsFormComponent!: UnitsFormComponent;
 
   readonly categoryOptions = computed<GomSelectOption[]>(() =>
     this.categories()
@@ -243,8 +245,17 @@ export class UnitsComponent implements OnInit {
 
     request.subscribe({
       next: (response) => {
-        this.formOpen.set(false);
-        this.selectedUnit.set(null);
+        // Keep modal open after create to add more units quickly
+        if (isEdit) {
+          this.formOpen.set(false);
+          this.selectedUnit.set(null);
+        } else {
+          // Reset form for new entry - don't close modal
+          this.selectedUnit.set(null);
+          if (this.unitsFormComponent) {
+            this.unitsFormComponent.resetForNewEntry();
+          }
+        }
 
         const saved = response?.data;
         if (saved?._id) {

@@ -2,8 +2,10 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, DestroyRef, inject, OnInit, Output, EventEmitter, signal, ViewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
+  FormArray,
   FormBuilder,
   FormControl,
+  FormGroup,
   FormRecord,
   ReactiveFormsModule,
   Validators,
@@ -174,6 +176,7 @@ export class CreateGroupWizardComponent implements OnInit {
   readonly basicForm = this.fb.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
     description: [''],
+    groupType: ['MEASURED' as 'MEASURED' | 'ATTRIBUTE' | 'HYBRID', [Validators.required]],
     categoryId: ['', [Validators.required]],
     taxProfileId: [''],
   });
@@ -242,6 +245,12 @@ export class CreateGroupWizardComponent implements OnInit {
         return { label: `${item.name} (${taxLabel})`, value: item._id };
       })
   );
+
+  readonly groupTypeOptions: GomSelectOption[] = [
+    { label: 'Measured (by Weight/Volume)', value: 'MEASURED' },
+    { label: 'Attribute (by Color/Size)', value: 'ATTRIBUTE' },
+    { label: 'Hybrid (Measured + Attribute)', value: 'HYBRID' },
+  ];
 
   readonly selectedFieldGroups = computed<FieldGroup[]>(() => {
     const selectedIds = this.selectedFieldGroupIds();
@@ -1116,6 +1125,7 @@ export class CreateGroupWizardComponent implements OnInit {
     this.simpleAnchorPercentControl.setValue('5', { emitEvent: false });
     this.errorMessage.set(null);
     this.basicForm.reset({ name: '', description: '', categoryId: '', taxProfileId: '' });
+    this.basicForm.controls.groupType.setValue('MEASURED');
     this.descEditor?.clear();
     this.selectionForm.reset({ fieldGroupId: '' });
     this.formulaForm.reset({ sellingPrice: '', anchorPrice: '', actualPrice: '' });
@@ -1131,30 +1141,38 @@ export class CreateGroupWizardComponent implements OnInit {
       value: Number(values[field.key]),
     }));
 
-    const quantity = this.editingGroupId() ? this.editingQuantity() : 1;
+    const editingGroupId = this.editingGroupId();
+    const quantity = editingGroupId ? this.editingQuantity() : 1;
     const baseUnitId = String(this.unitsForm.controls.baseUnitId.value || '');
     const allowedUnitIds = new Set(this.allowedUnitIds());
     if (baseUnitId) allowedUnitIds.add(baseUnitId);
     const taxProfileId = String(this.basicForm.controls.taxProfileId.value || '').trim();
 
-    return {
+    const payload: GroupPayload = {
       name: String(this.basicForm.controls.name.value || '').trim(),
       description: this.basicForm.controls.description.value || '',
       categoryId: String(this.basicForm.controls.categoryId.value || ''),
       quantity,
       fieldGroupId: String(this.selectionForm.controls.fieldGroupId.value || ''),
       customFields,
-        excludedFieldKeys: [...this.hiddenGroupFieldKeys()],
+      excludedFieldKeys: [...this.hiddenGroupFieldKeys()],
       formula: {
         sellingPrice: String(this.formulaForm.controls.sellingPrice.value || '').trim(),
         anchorPrice: String(this.formulaForm.controls.anchorPrice.value || '').trim(),
         actualPrice: String(this.formulaForm.controls.actualPrice.value || '').trim(),
       },
+      pricingRefreshMode: 'AUTO_REFRESH',
       baseUnitId,
       allowedUnitIds: [...allowedUnitIds],
       taxProfileId,
       status: 'ACTIVE',
     };
+
+    if (!editingGroupId) {
+      payload.groupType = this.basicForm.controls.groupType.value || 'MEASURED';
+    }
+
+    return payload;
   }
 
   private calculateFormulaPreview(): { sellingPrice: number | null; anchorPrice: number | null; actualPrice: number | null; error: string | null } {
@@ -1301,8 +1319,7 @@ export class CreateGroupWizardComponent implements OnInit {
 
     const marginPercent = Math.max(0, Number(this.simpleMarginPercent()) || 0);
     const anchorPercent = Math.max(0, Number(this.simpleAnchorPercent()) || 0);
-    const marginBaseToken = 'actualPrice';
-    const sellingFormula = `actualPrice + (${marginBaseToken} * ${marginPercent}%)`;
+    const sellingFormula = `actualPrice + (${baseToken} * ${marginPercent}%)`;
     const anchorMultiplier = (1 + anchorPercent / 100).toFixed(4).replace(/\.0+$/, '').replace(/(\.\d*?)0+$/, '$1');
     const anchorFormula = anchorPercent > 0 ? `sellingPrice * ${anchorMultiplier}` : 'sellingPrice';
 

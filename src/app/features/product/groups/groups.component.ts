@@ -1,8 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, OnInit, signal, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, computed, inject, OnInit, signal, ViewChild } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import {
   FormBuilder,
   FormControl,
+  FormGroup,
   FormRecord,
   ReactiveFormsModule,
   Validators,
@@ -40,6 +42,7 @@ import {
   FieldGroup,
   Group,
   GroupPayload,
+  PricingRefreshMode,
   GroupsService,
   Unit,
   TaxProfile,
@@ -115,6 +118,7 @@ export class GroupsComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly authSession = inject(AuthSessionService);
+  private readonly cdr = inject(ChangeDetectorRef);
   private readonly bulkRowEditContextStorageKey = 'gom.bulk.row.edit.context';
   private readonly groupFieldToggleControls = new Map<string, FormControl<boolean>>();
 
@@ -164,8 +168,8 @@ export class GroupsComponent implements OnInit {
   readonly formulaTarget = signal<FormulaTarget>('sellingPrice');
   readonly showAdvancedFormulaTools = signal(false);
   readonly simpleBaseCostKey = signal<string>('');
-  readonly simpleMarginPercent = signal<number>(20);
-  readonly simpleAnchorPercent = signal<number>(5);
+  readonly simpleMarginPercent = signal<number>(0);
+  readonly simpleAnchorPercent = signal<number>(0);
   readonly simpleSellingMarginBase = signal<SellingMarginBase>('buy');
   readonly simpleActualExtraKeys = signal<string[]>([]);
   readonly submitMode: GomButtonContentMode = getButtonContentMode('primary-action');
@@ -175,8 +179,11 @@ export class GroupsComponent implements OnInit {
   readonly basicForm = this.fb.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
     description: [''],
+    groupType: ['MEASURED' as 'MEASURED' | 'ATTRIBUTE' | 'HYBRID', [Validators.required]],
+    createDefaultVariant: [false],
     categoryId: ['', [Validators.required]],
     taxProfileId: [''],
+    pricingRefreshMode: ['AUTO_REFRESH' as PricingRefreshMode, [Validators.required]],
   });
 
   readonly selectionForm = this.fb.group({
@@ -196,6 +203,26 @@ export class GroupsComponent implements OnInit {
   });
 
   readonly allowedUnitIds = signal<string[]>([]);
+
+  // --- Option Axes for ATTRIBUTE/HYBRID groups ---
+  readonly optionAxesForm = this.fb.array<FormGroup<{
+    key: FormControl<string>;
+    label: FormControl<string>;
+    values: FormControl<string>;
+  }>>([]);
+
+  readonly currentGroupType = toSignal(this.basicForm.controls.groupType.valueChanges, {
+    initialValue: this.basicForm.controls.groupType.value,
+  });
+
+  readonly selectedCategoryId = toSignal(this.basicForm.controls.categoryId.valueChanges, {
+    initialValue: this.basicForm.controls.categoryId.value,
+  });
+
+  readonly needsOptionAxes = computed(() => {
+    const groupType = this.currentGroupType();
+    return groupType === 'ATTRIBUTE' || groupType === 'HYBRID';
+  });
 
   // --- Images ---
   readonly DEFAULT_MAX_IMAGES = 10;
@@ -284,13 +311,13 @@ export class GroupsComponent implements OnInit {
   );
 
   readonly fieldGroupOptions = computed<GomSelectOption[]>(() =>
-    this.getFieldGroupsForCategory(this.basicForm.controls.categoryId.value || '')
+    this.getFieldGroupsForCategory(this.selectedCategoryId() || '')
       .filter((item) => item.status === 'ACTIVE')
       .map((item) => ({ label: `${item.name} (v${item.version})`, value: item._id }))
   );
 
   readonly unitOptions = computed<GomSelectOption[]>(() =>
-    this.getUnitsForCategory(this.basicForm.controls.categoryId.value || '')
+    this.getUnitsForCategory(this.selectedCategoryId() || '')
       .filter((item) => item.status === 'ACTIVE')
       .map((item) => ({ label: `${item.name} (${item.symbol})`, value: item._id }))
   );
@@ -306,6 +333,32 @@ export class GroupsComponent implements OnInit {
         };
       })
   );
+
+  readonly pricingRefreshModeOptions: GomSelectOption[] = [
+    { label: 'Auto Refresh (apply automatically)', value: 'AUTO_REFRESH' },
+    { label: 'Manual Refresh (require approval)', value: 'MANUAL_REFRESH' },
+    { label: 'Fixed (no auto updates)', value: 'FIXED' },
+  ];
+
+  getPricingRefreshModeHint(): string {
+    const mode = this.basicForm.controls.pricingRefreshMode.value;
+    switch (mode) {
+      case 'AUTO_REFRESH':
+        return 'Prices will update automatically whenever you add stock. No approval needed.';
+      case 'MANUAL_REFRESH':
+        return 'System will calculate new prices and show suggestions for your approval before applying changes.';
+      case 'FIXED':
+        return 'Prices will never change automatically. You can only edit prices manually on the group page.';
+      default:
+        return 'Select a mode to see how pricing updates will work for this group.';
+    }
+  }
+
+  readonly groupTypeOptions: GomSelectOption[] = [
+    { label: 'Measured (by Weight/Volume)', value: 'MEASURED' },
+    { label: 'Attribute (by Options)', value: 'ATTRIBUTE' },
+    { label: 'Hybrid (Weight/Volume + Options)', value: 'HYBRID' },
+  ];
 
   readonly selectedFieldGroups = computed<FieldGroup[]>(() => {
     const selectedIds = this.selectedFieldGroupIds();
@@ -618,7 +671,12 @@ export class GroupsComponent implements OnInit {
       this.allowedUnitIds.set(baseUnitId ? [baseUnitId] : []);
 
       this.currentStep.set(1);
-      this.wizardOpen.set(true);
+
+      // Defer modal open with enough time for form initialization
+      setTimeout(() => {
+        this.wizardOpen.set(true);
+        this.cdr.markForCheck();
+      }, 50);
 
       setTimeout(() => this.descEditor?.setContent(String(context?.description || '')), 0);
 
@@ -632,7 +690,11 @@ export class GroupsComponent implements OnInit {
 
   openCreateWizard(): void {
     this.resetWizard();
-    this.wizardOpen.set(true);
+    // Defer modal open with enough time for form initialization
+    setTimeout(() => {
+      this.wizardOpen.set(true);
+      this.cdr.markForCheck();
+    }, 50);
   }
 
   openBulkUpload(): void {
@@ -670,8 +732,16 @@ export class GroupsComponent implements OnInit {
           this.saving.set(false);
         }, () => this.saving.set(false));
       },
-      error: () => {
-        this.toast.error(`Failed to ${nextStatus === 'ACTIVE' ? 'activate' : 'deactivate'} selected groups.`);
+      error: (error) => {
+        const apiMessage = String(error?.error?.message || '').trim();
+        const publishReadinessMessage = 'Cannot publish group: at least one active variant is required';
+
+        if (nextStatus === 'ACTIVE' && apiMessage === publishReadinessMessage) {
+          this.toast.warning('Cannot publish selected groups. Add at least one active variant to each group first.');
+        } else {
+          this.toast.error(`Failed to ${nextStatus === 'ACTIVE' ? 'activate' : 'deactivate'} selected groups.`);
+        }
+
         this.saving.set(false);
       },
     });
@@ -758,8 +828,16 @@ export class GroupsComponent implements OnInit {
           this.toast.success(`"${existing.name}" ${actionLabel} successfully.`);
           this.refreshGroupList(() => this.saving.set(false), () => this.saving.set(false));
         },
-        error: () => {
-          this.toast.error(`Failed to ${nextStatus === 'ACTIVE' ? 'publish' : 'unpublish'} group.`);
+        error: (error) => {
+          const apiMessage = String(error?.error?.message || '').trim();
+          const publishReadinessMessage = 'Cannot publish group: at least one active variant is required';
+
+          if (nextStatus === 'ACTIVE' && apiMessage === publishReadinessMessage) {
+            this.toast.warning(`Cannot publish "${existing.name}". Add at least one active variant first.`);
+          } else {
+            this.toast.error(`Failed to ${nextStatus === 'ACTIVE' ? 'publish' : 'unpublish'} group.`);
+          }
+
           this.saving.set(false);
         },
         complete: () => this.saving.set(false),
@@ -777,9 +855,13 @@ export class GroupsComponent implements OnInit {
     this.basicForm.patchValue({
       name: existing.name,
       description: existing.description || '',
+      groupType: existing.groupType || 'MEASURED',
+      createDefaultVariant: false,
       categoryId: existing.categoryId,
       taxProfileId: existing.taxProfileId || '',
+      pricingRefreshMode: existing.pricingRefreshMode || 'AUTO_REFRESH',
     });
+    this.syncOptionAxesFromExisting(existing);
     this.editingQuantity.set(existing.quantity || 1);
 
     this.selectedFieldGroupIds.set([existing.fieldGroupId]);
@@ -806,8 +888,13 @@ export class GroupsComponent implements OnInit {
     this.allowedUnitIds.set([...existing.allowedUnitIds]);
 
     this.currentStep.set(1);
-    this.wizardOpen.set(true);
     this.loadGroupImages(existing._id);
+
+    // Defer modal open with enough time for form initialization
+    setTimeout(() => {
+      this.wizardOpen.set(true);
+      this.cdr.markForCheck();
+    }, 50);
 
     // Set editor content after wizard opens (need a tick for ViewChild to resolve)
     setTimeout(() => this.descEditor?.setContent(existing.description || ''), 0);
@@ -974,8 +1061,47 @@ export class GroupsComponent implements OnInit {
     return this.allowedUnitIds().includes(unitId);
   }
 
+  // --- Option Axes Management ---
+  addOptionAxis(): void {
+    const axisGroup = this.fb.group({
+      key: this.fb.control('', { validators: [Validators.required, Validators.pattern(/^[a-zA-Z_]\w*$/)], nonNullable: true }),
+      label: this.fb.control('', { validators: [Validators.required], nonNullable: true }),
+      values: this.fb.control('', { validators: [Validators.required], nonNullable: true }),
+    });
+    this.optionAxesForm.push(axisGroup);
+  }
+
+  removeOptionAxis(index: number): void {
+    this.optionAxesForm.removeAt(index);
+  }
+
+  getOptionAxisControl(index: number, field: 'key' | 'label' | 'values'): FormControl<string> {
+    const group = this.optionAxesForm.at(index);
+    if (!group) {
+      return new FormControl<string>('', { nonNullable: true });
+    }
+    const control = group.get(field);
+    if (!control) {
+      return new FormControl<string>('', { nonNullable: true });
+    }
+    return control as FormControl<string>;
+  }
+
+  getOptionAxisValuesArray(valuesString: string): string[] {
+    return valuesString
+      .split(',')
+      .map(v => v.trim())
+      .filter(v => v.length > 0);
+  }
+
   getValueControl(key: string): FormControl<number | null> {
-    return this.valuesForm.get(key) as FormControl<number | null>;
+    let control = this.valuesForm.get(key) as FormControl<number | null> | null;
+    if (!control) {
+      // Create control on-the-fly if it doesn't exist yet
+      control = new FormControl<number | null>(null);
+      this.valuesForm.addControl(key, control);
+    }
+    return control;
   }
 
   getFieldHint(field: GroupWizardField): string {
@@ -1168,8 +1294,7 @@ export class GroupsComponent implements OnInit {
 
     const marginPercent = Math.max(0, Number(this.simpleMarginPercent()) || 0);
     const anchorPercent = Math.max(0, Number(this.simpleAnchorPercent()) || 0);
-    const marginBaseToken = 'actualPrice';
-    const sellingFormula = `actualPrice + (${marginBaseToken} * ${marginPercent}%)`;
+    const sellingFormula = `actualPrice + (${baseToken} * ${marginPercent}%)`;
     const anchorMultiplier = (1 + (anchorPercent / 100)).toFixed(4).replace(/\.0+$/, '').replace(/(\.\d*?)0+$/, '$1');
     const anchorFormula = anchorPercent > 0 ? `sellingPrice * ${anchorMultiplier}` : 'sellingPrice';
 
@@ -1182,12 +1307,6 @@ export class GroupsComponent implements OnInit {
 
   nextStep(): void {
     const step = this.currentStep();
-
-    if (!this.isStepValid(step)) {
-      this.touchStep(step);
-      return;
-    }
-
     if (step < 6) {
       this.currentStep.set(step + 1);
     }
@@ -1202,24 +1321,7 @@ export class GroupsComponent implements OnInit {
 
   selectStep(stepId: string | number): void {
     const step = typeof stepId === 'number' ? stepId : Number.parseInt(stepId, 10);
-    const currentStep = this.currentStep();
-
-    // Allow jumping backwards without validation
-    if (step < currentStep) {
-      this.currentStep.set(step);
-      return;
-    }
-
-    // For moving forward, validate all intermediate steps
-    if (step > currentStep) {
-      for (let i = currentStep; i < step; i++) {
-        if (!this.isStepValid(i)) {
-          this.touchStep(i);
-          return;
-        }
-      }
-    }
-
+    // Allow free navigation to any tab
     this.currentStep.set(step);
   }
 
@@ -1379,7 +1481,27 @@ export class GroupsComponent implements OnInit {
 
   private isStepValid(step: number): boolean {
     if (step === 1) {
-      return this.basicForm.valid;
+      if (!this.basicForm.valid) {
+        return false;
+      }
+      
+      // For ATTRIBUTE/HYBRID groups, validate optionAxes
+      const groupType = this.currentGroupType();
+      if (groupType === 'ATTRIBUTE' || groupType === 'HYBRID') {
+        if (this.optionAxesForm.length === 0) {
+          return false;
+        }
+        
+        // Check all axes are valid
+        return this.optionAxesForm.controls.every(control => {
+          const key = (control.controls.key.value || '').trim();
+          const valuesString = (control.controls.values.value || '').trim();
+          const values = this.getOptionAxisValuesArray(valuesString);
+          return control.valid && key.length > 0 && values.length > 0;
+        });
+      }
+      
+      return true;
     }
 
     if (step === 2) {
@@ -1392,6 +1514,25 @@ export class GroupsComponent implements OnInit {
 
     if (step === 4) {
       const preview = this.formulaPreview();
+      
+      // Validate simple pricing builder fields (required when using simple mode)
+      const baseCost = this.simpleBaseCostKey();
+      const margin = this.simpleMarginPercent();
+      const markup = this.simpleAnchorPercent();
+      
+      // All three simple builder fields must be filled
+      if (!baseCost || !baseCost.trim()) {
+        return false; // Base cost is required
+      }
+      
+      if (!Number.isFinite(margin) || margin <= 0) {
+        return false; // Profit margin must be > 0
+      }
+      
+      if (!Number.isFinite(markup) || markup <= 0) {
+        return false; // MRP markup must be > 0
+      }
+      
       return this.formulaForm.valid && !preview.error;
     }
 
@@ -1439,7 +1580,7 @@ export class GroupsComponent implements OnInit {
     const currentValues = this.valuesForm.getRawValue() as Record<string, number | null>;
 
     for (const field of this.wizardFields()) {
-      const currentValue = Object.prototype.hasOwnProperty.call(currentValues, field.key)
+      const currentValue = Object.hasOwn(currentValues, field.key)
         ? currentValues[field.key]
         : null;
       const initialValue = resolvedByKey.has(field.key)
@@ -1485,13 +1626,51 @@ export class GroupsComponent implements OnInit {
     this.simpleActualExtraKeys.set([]);
     this.groupFieldToggleControls.clear();
 
-    this.basicForm.reset({ name: '', description: '', categoryId: '', taxProfileId: '' });
+    this.basicForm.reset({ name: '', description: '', createDefaultVariant: false, categoryId: '', taxProfileId: '' });
+    this.basicForm.controls.groupType.setValue('MEASURED');
+    this.basicForm.controls.pricingRefreshMode.setValue('AUTO_REFRESH');
     this.descEditor?.clear();
     this.selectionForm.reset({ fieldGroupId: '' });
     this.formulaForm.reset({ sellingPrice: '', anchorPrice: '', actualPrice: '' });
     this.unitsForm.reset({ baseUnitId: '' });
     this.replaceValuesForm(new FormRecord<FormControl<number | null>>({}));
     this.groupImages.set([]);
+    this.clearOptionAxes();
+  }
+
+  private clearOptionAxes(): void {
+    while (this.optionAxesForm.length > 0) {
+      this.optionAxesForm.removeAt(this.optionAxesForm.length - 1);
+    }
+  }
+
+  private syncOptionAxesFromExisting(existing?: Group): void {
+    this.clearOptionAxes();
+
+    const groupType = String(existing?.groupType || this.basicForm.controls.groupType.value || 'MEASURED').toUpperCase();
+    if (groupType !== 'ATTRIBUTE' && groupType !== 'HYBRID') {
+      return;
+    }
+
+    const optionAxes = Array.isArray(existing?.optionAxes) ? existing.optionAxes : [];
+    optionAxes.forEach((axis) => {
+      const axisGroup = this.fb.group({
+        key: this.fb.control(String(axis?.key || '').trim(), {
+          validators: [Validators.required, Validators.pattern(/^[a-zA-Z_]\w*$/)],
+          nonNullable: true,
+        }),
+        label: this.fb.control(String(axis?.label || '').trim(), {
+          validators: [Validators.required],
+          nonNullable: true,
+        }),
+        values: this.fb.control((Array.isArray(axis?.values) ? axis.values : []).join(', '), {
+          validators: [Validators.required],
+          nonNullable: true,
+        }),
+      });
+
+      this.optionAxesForm.push(axisGroup);
+    });
   }
 
   private buildPayload(): GroupPayload | null {
@@ -1501,7 +1680,8 @@ export class GroupsComponent implements OnInit {
       value: Number(values[field.key]),
     }));
 
-    const quantity = this.editingGroupId() ? this.editingQuantity() : 1;
+    const editingGroupId = this.editingGroupId();
+    const quantity = editingGroupId ? this.editingQuantity() : 1;
 
     const baseUnitId = String(this.unitsForm.controls.baseUnitId.value || '');
     const allowedUnitIds = new Set(this.allowedUnitIds());
@@ -1510,25 +1690,57 @@ export class GroupsComponent implements OnInit {
     }
 
     const taxProfileId = String(this.basicForm.controls.taxProfileId.value || '').trim();
+    const pricingRefreshMode = this.basicForm.controls.pricingRefreshMode.value || 'AUTO_REFRESH';
 
-    return {
+    const payload: GroupPayload = {
       name: String(this.basicForm.controls.name.value || '').trim(),
       description: this.basicForm.controls.description.value || '',
       categoryId: String(this.basicForm.controls.categoryId.value || ''),
       quantity,
       fieldGroupId: String(this.selectionForm.controls.fieldGroupId.value || ''),
       customFields,
-        excludedFieldKeys: [...this.hiddenGroupFieldKeys()],
+      excludedFieldKeys: [...this.hiddenGroupFieldKeys()],
       formula: {
         sellingPrice: String(this.formulaForm.controls.sellingPrice.value || '').trim(),
         anchorPrice: String(this.formulaForm.controls.anchorPrice.value || '').trim(),
         actualPrice: String(this.formulaForm.controls.actualPrice.value || '').trim(),
       },
+      pricingRefreshMode,
       baseUnitId,
       allowedUnitIds: [...allowedUnitIds],
       taxProfileId,
       status: 'ACTIVE',
     };
+
+    if (!editingGroupId) {
+      const createDefaultVariant = this.basicForm.controls.createDefaultVariant.value !== false;
+      payload.createDefaultVariant = createDefaultVariant;
+      if (createDefaultVariant && baseUnitId) {
+        payload.defaultVariant = {
+          quantity,
+          unitId: baseUnitId,
+        };
+      }
+    }
+
+    if (!editingGroupId) {
+      payload.groupType = this.basicForm.controls.groupType.value || 'MEASURED';
+    }
+
+    // Add optionAxes for ATTRIBUTE/HYBRID groups
+    const groupType = this.basicForm.controls.groupType.value;
+    if (groupType === 'ATTRIBUTE' || groupType === 'HYBRID') {
+      payload.optionAxes = this.optionAxesForm.controls.map(control => {
+        const valuesString = control.controls.values.value || '';
+        return {
+          key: (control.controls.key.value || '').trim(),
+          label: (control.controls.label.value || '').trim(),
+          values: this.getOptionAxisValuesArray(valuesString),
+        };
+      }).filter(axis => axis.key && axis.values.length > 0);
+    }
+
+    return payload;
   }
 
   private calculateFormulaPreview(): { sellingPrice: number | null; anchorPrice: number | null; actualPrice: number | null; error: string | null } {
@@ -1604,34 +1816,30 @@ export class GroupsComponent implements OnInit {
     const normalizedCategoryId = String(categoryId || '').trim();
     const activeFieldGroups = this.fieldGroups().filter((item) => item.status === 'ACTIVE');
 
+    // If no category selected, return empty array
     if (!normalizedCategoryId) {
-      return activeFieldGroups;
+      return [];
     }
 
+    // Only return field groups that are explicitly mapped to this category
     return activeFieldGroups.filter((fieldGroup) => {
       const mappedCategoryIds = fieldGroup.categoryIds || [];
-      if (!mappedCategoryIds.length) {
-        return true;
-      }
-
       return mappedCategoryIds.includes(normalizedCategoryId);
     });
   }
 
   private getUnitsForCategory(categoryId: string): Unit[] {
     const normalizedCategoryId = String(categoryId || '').trim();
-    const allUnits = this.units();
+    const allUnits = this.units().filter((item) => item.status === 'ACTIVE');
 
+    // If no category selected, return empty array
     if (!normalizedCategoryId) {
-      return allUnits;
+      return [];
     }
 
+    // Only return units that are explicitly mapped to this category
     return allUnits.filter((unit) => {
       const mappedCategoryIds = unit.categoryIds || [];
-      if (!mappedCategoryIds.length) {
-        return true;
-      }
-
       return mappedCategoryIds.includes(normalizedCategoryId);
     });
   }

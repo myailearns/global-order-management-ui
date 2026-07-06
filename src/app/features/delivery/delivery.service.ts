@@ -94,6 +94,22 @@ export interface StorefrontShareEventPayload {
 
 export type LayoutMode = 'GRID' | 'GRID3' | 'LIST';
 export type PaymentMethod = 'COD' | 'UPI' | 'CARD' | 'NET_BANKING';
+export type FulfillmentMode = 'DELIVERY' | 'PICKUP' | 'BOTH';
+
+export interface PickupConfig {
+  locationId?: string;
+  locationName?: string;
+  storeAddressLine1?: string;
+  storeAddressLine2?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  mapUrl?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  pickupInstructions?: string;
+  pickupTimingText?: string;
+}
 
 export interface ReturnPolicy {
   returnsEnabled: boolean;
@@ -131,12 +147,22 @@ export interface StorefrontConfig {
   footerText: string;
   socialLinks: SocialLinks;
   showPacks: boolean;
+  fulfillmentMode?: FulfillmentMode;
   deliveryCharge?: number;
   deliveryChargeNote: string;
   estimatedDeliveryDays: number;
+  pickupConfig?: PickupConfig;
+  pickupLocations?: PickupConfig[];
+  pickupWindowType?: 'DAYS' | 'HOURS';
+  pickupWindowValue?: number;
+  pickupMaxAdvanceDays?: number;
+  pickupAdvanceDays?: number;
+  pickupSameDayLeadMinutes?: number;
   minimumOrderValue: number;
   whatsappNumber: string;
   paymentMethods: PaymentMethod[];
+  allowCustomerCancellation?: boolean;
+  cancellationWindowMinutes?: number;
 }
 
 export interface EmployeeCodePreview {

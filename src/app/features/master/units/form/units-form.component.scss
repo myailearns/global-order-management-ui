@@ -7,7 +7,21 @@
 
 .units-form__grid {
   display: grid;
-  gap: theme.get-gap(sm);
+  grid-template-columns: repeat(2, 1fr);
+  gap: theme.get-gap(md);
+  
+  // Full width items
+  > gom-lib-select[multiple] {
+    grid-column: 1 / -1;
+  }
+  
+  .units-form__validation-error {
+    grid-column: 1 / -1;
+  }
+  
+  .units-form__conversion-preview {
+    grid-column: 1 / -1;
+  }
 }
 
 .units-form__actions {

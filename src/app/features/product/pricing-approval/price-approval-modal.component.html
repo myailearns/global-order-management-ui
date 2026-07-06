@@ -1,0 +1,398 @@
+<gom-lib-modal [show]="show" (showChange)="onModalShowChange($event)" [title]="'Price Update Review \u2014 ' + groupName" size="medium">
+
+  @if (loading()) {
+    <div class="price-approval__loading">
+      <i class="ri-loader-4-line" aria-hidden="true"></i> Loading suggestions...
+    </div>
+  }
+
+  @if (!loading() && suggestionRows().length === 0) {
+    <div class="price-approval__empty">
+      <i class="ri-check-double-line" aria-hidden="true"></i>
+      No pending price suggestions for this group.
+    </div>
+  }
+
+  @if (!loading() && suggestionRows().length > 0) {
+
+    <section class="price-approval__decision-banner price-approval__decision-banner--{{ getSummaryTone() }}">
+      <div>
+        <p class="price-approval__decision-eyebrow">Decision guide</p>
+        <h3 class="price-approval__decision-title">{{ getSummaryTitle() }}</h3>
+        <p class="price-approval__decision-copy">
+          <strong>Current price:</strong> {{ getSummaryCurrentPriceText() }}.
+          <strong>Suggested price:</strong> {{ getSummarySuggestedPriceText() }}.
+          <strong>Difference:</strong>
+          <span class="price-approval__decision-diff-chip" [ngClass]="getSummaryDifferenceChipClass()">
+            {{ getSummaryDifferenceText() }}
+          </span>
+        </p>
+      </div>
+    </section>
+
+    @if (formulaInputs && formulaInputs.length > 0) {
+      <section class="price-approval__group-inputs-panel">
+        <div class="price-approval__context-item price-approval__context-item--inputs">
+          <span class="price-approval__context-label">Group Inputs</span>
+          <div class="price-approval__input-tags">
+            @for (input of formulaInputs; track input.key) {
+              <span class="price-approval__input-tag">{{ formatInputLabel(input.key) }}: {{ formatInputValue(input) }}</span>
+            }
+          </div>
+        </div>
+      </section>
+    }
+
+    <section class="price-approval__group-summary">
+      <header class="price-approval__group-header">
+        <div>
+          <h3 class="price-approval__group-title">Group Summary</h3>
+          <p class="price-approval__group-subtitle">{{ groupName }}
+            @if (pricingMode) {
+              · {{ pricingMode === 'MANUAL_REFRESH' ? 'Manual Refresh' : pricingMode === 'AUTO_REFRESH' ? 'Auto Refresh' : 'Fixed' }}
+            }
+          </p>
+        </div>
+      </header>
+
+      <div class="price-approval__formula-grid">
+        <div class="price-approval__formula-card">
+          <span class="price-approval__formula-label">Actual Price Formula</span>
+          <p class="price-approval__formula-text">{{ getReadableFormula('actualPrice') }}</p>
+        </div>
+        <div class="price-approval__formula-card">
+          <span class="price-approval__formula-label">Selling Price Formula</span>
+          <p class="price-approval__formula-text">{{ getReadableFormula('sellingPrice') }}</p>
+        </div>
+        <div class="price-approval__formula-card">
+          <span class="price-approval__formula-label">Anchor Price Formula</span>
+          <p class="price-approval__formula-text">{{ getReadableFormula('anchorPrice') }}</p>
+        </div>
+      </div>
+
+      @if (isGroupLevel) {
+        <div class="price-approval__overwrite-toggle">
+          <gom-lib-checkbox
+            label="Do you want to overwrite selling price or profit percentage"
+            hint="Enable this if you want to review the system suggestion and enter your own value before approval."
+            [formControl]="groupOverwriteControl"
+            (checkedChange)="onGroupOverwriteToggle($event)"
+          ></gom-lib-checkbox>
+        </div>
+
+        @if (groupOverwriteEnabled()) {
+          <div class="price-approval__custom-section price-approval__custom-section--inline">
+            <div class="price-approval__custom-header">
+              <span class="price-approval__metric-label">Adjust price</span>
+              <button type="button" class="price-approval__reset-btn" (click)="resetGroupCustomPrice()" title="Reset to auto-suggested values">
+                <i class="ri-restart-line" aria-hidden="true"></i> Reset
+              </button>
+            </div>
+            <div class="price-approval__custom-row">
+              <div class="price-approval__custom-field">
+                <label for="group-custom-price" class="price-approval__custom-label">Your suggested price</label>
+                <input
+                  id="group-custom-price"
+                  type="number"
+                  class="price-approval__custom-input"
+                  [value]="groupCustomPrice()"
+                  (change)="onGroupCustomPriceChange($event)"
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+              <div class="price-approval__custom-field">
+                <label for="group-custom-profit" class="price-approval__custom-label">Profit %</label>
+                <input
+                  id="group-custom-profit"
+                  type="number"
+                  class="price-approval__custom-input"
+                  [value]="groupCustomProfitPct()"
+                  (change)="onGroupCustomProfitChange($event)"
+                  step="0.01"
+                />
+              </div>
+            </div>
+          </div>
+        }
+      }
+
+      <div class="price-approval__group-metrics">
+        <div class="price-approval__metrics-cards">
+          <!-- Actual Price Card -->
+          <gom-lib-card class="price-approval__metric-card price-approval__metric-card--actual">
+            <div class="price-approval__card-header">
+              <div class="price-approval__card-icon">
+                <i class="ri-calculator-line" aria-hidden="true"></i>
+              </div>
+              <h4 class="price-approval__card-title">Actual Price</h4>
+            </div>
+            <div class="price-approval__card-body">
+              <div class="price-approval__price-row">
+                <span class="price-approval__price-label">Previous</span>
+                <span class="price-approval__price-amount">{{ getGroupMetricValue('actualPrice', 'previous') }}</span>
+              </div>
+              <div class="price-approval__price-row">
+                <span class="price-approval__price-label">Suggested</span>
+                <span class="price-approval__price-amount price-approval__price-amount--suggested">{{ getGroupMetricValue('actualPrice', 'suggested') }}</span>
+              </div>
+              @if (groupOverwriteEnabled()) {
+                <div class="price-approval__price-row">
+                  <span class="price-approval__price-label">Your suggestion</span>
+                  <span class="price-approval__price-amount price-approval__price-amount--suggested">{{ getGroupCustomMetricValue('actualPrice') }}</span>
+                </div>
+              }
+              <div class="price-approval__price-delta">
+                <span class="price-approval__price-label">Delta</span>
+                <span class="price-approval__price-change" [class]="'price-approval__price-change ' + getGroupMetricDeltaClass('actualPrice')">{{ getGroupMetricDelta('actualPrice') }}</span>
+              </div>
+            </div>
+          </gom-lib-card>
+
+          <!-- Selling Price Card -->
+          <gom-lib-card class="price-approval__metric-card price-approval__metric-card--selling">
+            <div class="price-approval__card-header">
+              <div class="price-approval__card-icon">
+                <i class="ri-money-dollar-box-line" aria-hidden="true"></i>
+              </div>
+              <h4 class="price-approval__card-title">Selling Price</h4>
+            </div>
+            <div class="price-approval__card-body">
+              <div class="price-approval__price-row">
+                <span class="price-approval__price-label">Previous</span>
+                <span class="price-approval__price-amount">{{ getGroupMetricValue('sellingPrice', 'previous') }}</span>
+              </div>
+              <div class="price-approval__price-row">
+                <span class="price-approval__price-label">Suggested</span>
+                <span class="price-approval__price-amount price-approval__price-amount--suggested">{{ getGroupMetricValue('sellingPrice', 'suggested') }}</span>
+              </div>
+              @if (groupOverwriteEnabled()) {
+                <div class="price-approval__price-row">
+                  <span class="price-approval__price-label">Your suggestion</span>
+                  <span class="price-approval__price-amount price-approval__price-amount--suggested">{{ getGroupCustomMetricValue('sellingPrice') }}</span>
+                </div>
+              }
+              <div class="price-approval__price-delta">
+                <span class="price-approval__price-label">Delta</span>
+                <span class="price-approval__price-change" [class]="'price-approval__price-change ' + getGroupMetricDeltaClass('sellingPrice')">{{ getGroupMetricDelta('sellingPrice') }}</span>
+              </div>
+            </div>
+          </gom-lib-card>
+
+          <!-- Anchor Price Card -->
+          <gom-lib-card class="price-approval__metric-card price-approval__metric-card--anchor">
+            <div class="price-approval__card-header">
+              <div class="price-approval__card-icon">
+                <i class="ri-price-tag-3-line" aria-hidden="true"></i>
+              </div>
+              <h4 class="price-approval__card-title">Anchor Price</h4>
+            </div>
+            <div class="price-approval__card-body">
+              <div class="price-approval__price-row">
+                <span class="price-approval__price-label">Previous</span>
+                <span class="price-approval__price-amount">{{ getGroupMetricValue('anchorPrice', 'previous') }}</span>
+              </div>
+              <div class="price-approval__price-row">
+                <span class="price-approval__price-label">Suggested</span>
+                <span class="price-approval__price-amount price-approval__price-amount--suggested">{{ getGroupMetricValue('anchorPrice', 'suggested') }}</span>
+              </div>
+              @if (groupOverwriteEnabled()) {
+                <div class="price-approval__price-row">
+                  <span class="price-approval__price-label">Your suggestion</span>
+                  <span class="price-approval__price-amount price-approval__price-amount--suggested">{{ getGroupCustomMetricValue('anchorPrice') }}</span>
+                </div>
+              }
+              <div class="price-approval__price-delta">
+                <span class="price-approval__price-label">Delta</span>
+                <span class="price-approval__price-change" [class]="'price-approval__price-change ' + getGroupMetricDeltaClass('anchorPrice')">{{ getGroupMetricDelta('anchorPrice') }}</span>
+              </div>
+            </div>
+          </gom-lib-card>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Header summary -->
+    <div class="price-approval__summary-bar">
+      @if (isGroupLevel) {
+        <span class="price-approval__hint">
+          <i class="ri-information-line" aria-hidden="true"></i>
+          Group approval: {{ getGroupLevelAffectedVariantsText() }} will be updated in one action
+        </span>
+      } @else {
+        <span class="price-approval__hint">
+          <i class="ri-information-line" aria-hidden="true"></i>
+          Review and decide per variant below
+        </span>
+      }
+    </div>
+
+    @if (isGroupLevel) {
+      <div class="price-approval__table-shell">
+        <gom-lib-table
+          [columns]="groupLevelColumns"
+          [rows]="getGroupLevelTableRows()"
+          [pageSize]="getGroupLevelTablePageSize()"
+          [loading]="loading()"
+          dataMode="client"
+          emptyMessage="No affected variants found."
+          [mobileCardView]="true"
+        ></gom-lib-table>
+      </div>
+    } @else {
+      <div class="price-approval__cards">
+        @for (row of suggestionRows(); track row.suggestion._id) {
+          <section class="price-approval__card" [class.price-approval__card--approved]="row.decision === 'approve'" [class.price-approval__card--rejected]="row.decision === 'reject'">
+            <div class="price-approval__card-head">
+              <div>
+                <h4 class="price-approval__card-title">{{ row.suggestion.previousSnapshot.name || row.suggestion.suggestedSnapshot.name || 'Variant' }}</h4>
+                <p class="price-approval__card-copy">{{ getRecommendationText(row) }}</p>
+              </div>
+              <span class="price-approval__risk-badge price-approval__risk-badge--{{ getRiskBadgeType(row) }}">{{ getRiskBadgeLabel(row) }}</span>
+            </div>
+
+            <div class="price-approval__metric-grid">
+              <div class="price-approval__metric">
+                <span class="price-approval__metric-label">Current price</span>
+                <strong class="price-approval__metric-value">{{ formatPrice(getCurrentDisplayPrice(row) || undefined) }}</strong>
+              </div>
+              <div class="price-approval__metric">
+                <span class="price-approval__metric-label">Suggested price</span>
+                <strong class="price-approval__metric-value">
+                  {{ formatPrice(getSuggestedDisplayPrice(row) || undefined) }}
+                </strong>
+                @if (row.overridePrice !== null) {
+                  <span class="price-approval__edited-badge">edited</span>
+                }
+              </div>
+              <div class="price-approval__metric">
+                <span class="price-approval__metric-label">Price change</span>
+                <strong class="price-approval__metric-value" [class]="getMarginClass(row)">
+                  {{ getPriceChange(row) }}
+                  @if (getPriceChangePercent(row) !== null) {
+                    <span class="price-approval__metric-subtext">({{ getPriceChangePercent(row)! >= 0 ? '+' : '' }}{{ getPriceChangePercent(row) }}%)</span>
+                  }
+                </strong>
+              </div>
+              <div class="price-approval__metric">
+                <span class="price-approval__metric-label">Margin impact</span>
+                <strong class="price-approval__metric-value">
+                  @if (row.suggestion.marginImpact) {
+                    {{ formatMargin(row.suggestion.marginImpact.oldMarginPercent) }} → {{ formatMargin(row.suggestion.marginImpact.newMarginPercent) }}
+                  } @else {
+                    —
+                  }
+                </strong>
+                @if (row.suggestion.marginImpact) {
+                  <span class="price-approval__metric-subtext" [class]="row.suggestion.marginImpact.changePercent < 0 ? 'text-danger' : 'text-success'">
+                    {{ row.suggestion.marginImpact.changePercent >= 0 ? '+' : '' }}{{ row.suggestion.marginImpact.changePercent.toFixed(1) }} pts at latest cost
+                  </span>
+                }
+              </div>
+            </div>
+
+            <div class="price-approval__card-note">
+              <span class="price-approval__metric-label">Why this matters</span>
+              <p>{{ getRecommendationReason(row) }}</p>
+            </div>
+
+            <div class="price-approval__custom-section">
+              <span class="price-approval__metric-label">Adjust price</span>
+              <div class="price-approval__custom-row">
+                <div class="price-approval__custom-field">
+                  <label [for]="'custom-price-' + row.suggestion._id" class="price-approval__custom-label">Your suggested price</label>
+                  <input
+                    type="number"
+                    class="price-approval__custom-input"
+                    [id]="'custom-price-' + row.suggestion._id"
+                    [value]="row.customPrice"
+                    (change)="onCustomPriceChange(row, $event)"
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+                <div class="price-approval__custom-field">
+                  <label [for]="'custom-profit-' + row.suggestion._id" class="price-approval__custom-label">Profit %</label>
+                  <input
+                    type="number"
+                    class="price-approval__custom-input"
+                    [id]="'custom-profit-' + row.suggestion._id"
+                    [value]="row.customProfitPct"
+                    (change)="onCustomProfitChange(row, $event)"
+                    step="0.01"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div class="price-approval__actions-cell">
+              @if (row.decision === null || row.decision === 'pending') {
+                <button class="price-approval__btn price-approval__btn--approve" (click)="markRowDecision(row, 'approve')" type="button" title="Approve suggested price">
+                  <i class="ri-check-line" aria-hidden="true"></i>
+                </button>
+                <button class="price-approval__btn price-approval__btn--reject" (click)="markRowDecision(row, 'reject')" type="button" title="Keep current price">
+                  <i class="ri-close-line" aria-hidden="true"></i>
+                </button>
+              } @else {
+                <span class="price-approval__decision-badge price-approval__decision-badge--{{ row.decision }}">
+                  {{ row.decision === 'approve' ? 'Approve suggested price' : 'Keep current price' }}
+                </span>
+                <button class="price-approval__btn price-approval__btn--undo" (click)="markRowDecision(row, 'pending')" type="button" title="Undo decision">
+                  <i class="ri-arrow-go-back-line" aria-hidden="true"></i>
+                </button>
+              }
+            </div>
+          </section>
+        }
+      </div>
+    }
+
+    <!-- Reason input -->
+    <div class="price-approval__reason-section">
+      <label class="price-approval__reason-label" for="approval-reason">
+        Reason <span class="required">*</span>
+      </label>
+      <input
+        id="approval-reason"
+        type="text"
+        class="price-approval__reason-input"
+        placeholder="Document why you are approving the suggested price or keeping the current price"
+        [formControl]="reasonForm.controls.reason"
+      />
+      @if (reasonForm.controls.reason.touched && reasonForm.controls.reason.invalid) {
+        <span class="price-approval__error">Reason is required (min 3 characters).</span>
+      }
+    </div>
+
+  }
+
+  <footer gom-modal-actions>
+    <div class="gom-modal__action-layout-start">
+      @if (!isGroupLevel && suggestionRows().length > 0) {
+        <span class="price-approval__decision-summary">
+          {{ approvedCount }} approve · {{ rejectedCount }} reject · {{ pendingCount }} pending
+        </span>
+      }
+    </div>
+    <div class="gom-modal__action-layout-end">
+      <gom-lib-button type="button" variant="secondary" [disabled]="saving()" (buttonClick)="close()">
+        Skip for now
+      </gom-lib-button>
+      @if (isGroupLevel && suggestionRows().length > 0) {
+        <gom-lib-button type="button" variant="secondary" [disabled]="saving()" (buttonClick)="rejectAll()">
+          {{ saving() ? 'Saving...' : 'Reject All' }}
+        </gom-lib-button>
+        <gom-lib-button type="button" variant="primary" [disabled]="saving()" (buttonClick)="approveAll()">
+          {{ saving() ? 'Approving...' : 'Approve All' }}
+        </gom-lib-button>
+      }
+      @if (!isGroupLevel && suggestionRows().length > 0) {
+        <gom-lib-button type="button" variant="primary" [disabled]="saving() || (approvedCount === 0 && rejectedCount === 0)" (buttonClick)="saveVariantDecisions()">
+          {{ saving() ? 'Saving...' : 'Save Decisions' }}
+        </gom-lib-button>
+      }
+    </div>
+  </footer>
+
+</gom-lib-modal>

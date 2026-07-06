@@ -107,6 +107,15 @@
   (closed)="closeWizard()"
   size="large"
 >
+  @if (errorMessage()) {
+    <div class="master-page__error wizard__error-banner">
+      <div style="display: flex; gap: 0.75rem; align-items: center;">
+        <i class="ri-alert-fill" style="font-size: 1.25rem; flex-shrink: 0;" aria-hidden="true"></i>
+        <span>{{ errorMessage() }}</span>
+      </div>
+    </div>
+  }
+
   <gom-lib-tabs
     [tabs]="wizardTabs()"
     [activeTab]="currentStep()"
@@ -119,15 +128,27 @@
           <gom-lib-input
             label="Group Name"
             placeholder="Enter group name"
+            [required]="true"
             [error]="basicForm.controls.name.touched && basicForm.controls.name.invalid ? 'Group name is required' : ''"
             [formControl]="basicForm.controls.name"
           ></gom-lib-input>
 
           <gom-lib-select
+            label="Group Type"
+            placeholder="Select group type"
+            [required]="true"
+            [options]="groupTypeOptions"
+            [formControl]="basicForm.controls.groupType"
+            [error]="basicForm.controls.groupType.touched && basicForm.controls.groupType.invalid ? 'Group type is required' : ''"
+          ></gom-lib-select>
+
+          <gom-lib-select
             label="Category"
             placeholder="Select category"
+            [required]="true"
             [options]="categoryOptions()"
             [formControl]="basicForm.controls.categoryId"
+            [searchable]="true"
             [error]="basicForm.controls.categoryId.touched && basicForm.controls.categoryId.invalid ? 'Category is required' : ''"
             (valueChange)="onCategoryChange($event)"
           ></gom-lib-select>
@@ -137,8 +158,79 @@
             placeholder="Select tax profile"
             [options]="taxProfileOptions()"
             [formControl]="basicForm.controls.taxProfileId"
+            [searchable]="true"
+          ></gom-lib-select>
+
+          <gom-lib-select
+            label="Pricing Update Mode"
+            placeholder="Select pricing update mode"
+            [required]="true"
+            [options]="pricingRefreshModeOptions"
+            [formControl]="basicForm.controls.pricingRefreshMode"
+            [hint]="getPricingRefreshModeHint()"
+            [error]="basicForm.controls.pricingRefreshMode.touched && basicForm.controls.pricingRefreshMode.invalid ? 'Pricing update mode is required' : ''"
           ></gom-lib-select>
         </div>
+
+        @if (!editingGroupId()) {
+          <div class="wizard__panel" style="margin-top: 1rem;">
+            <gom-lib-checkbox
+              label="Create Default Variant (quick setup)"
+              [formControl]="basicForm.controls.createDefaultVariant"
+            ></gom-lib-checkbox>
+            <p class="field-hint">If enabled, one default variant is auto-created using group quantity and base unit.</p>
+          </div>
+        }
+
+        <!-- Option Axes for ATTRIBUTE/HYBRID Groups -->
+        @if (needsOptionAxes()) {
+          <div class="wizard__panel" style="margin-top: 1.5rem;">
+            <div class="panel-header">
+              <h4>Product Attributes (Color, Size, etc.)</h4>
+              <gom-lib-button type="button" variant="secondary" (buttonClick)="addOptionAxis()">
+                <i class="ri-add-line" aria-hidden="true"></i> Add Attribute
+              </gom-lib-button>
+            </div>
+            
+            @if (optionAxesForm.controls.length === 0) {
+              <div class="info-message">
+                <i class="ri-information-line" aria-hidden="true"></i>
+                <p><strong>Attribute groups require at least one attribute.</strong> Add attributes like Color, Size, Material, etc. Each attribute must have comma-separated values (e.g., "Red, Blue, Green").</p>
+              </div>
+            }
+
+            @for (axisControl of optionAxesForm.controls; track $index) {
+              <div class="option-axis-row">
+                <div class="form-grid form-grid--three">
+                  <gom-lib-input
+                    label="Key (e.g., color)"
+                    placeholder="Enter key (lowercase, no spaces)"
+                    [formControl]="getOptionAxisControl($index, 'key')"
+                    [error]="getOptionAxisControl($index, 'key').touched && getOptionAxisControl($index, 'key').invalid ? 'Key is required (letters, numbers, underscore only)' : ''"
+                  ></gom-lib-input>
+
+                  <gom-lib-input
+                    label="Label (e.g., Color)"
+                    placeholder="Enter display label"
+                    [formControl]="getOptionAxisControl($index, 'label')"
+                    [error]="getOptionAxisControl($index, 'label').touched && getOptionAxisControl($index, 'label').invalid ? 'Label is required' : ''"
+                  ></gom-lib-input>
+
+                  <gom-lib-input
+                    label="Values (comma-separated)"
+                    placeholder="e.g., Red, Blue, Green"
+                    [formControl]="getOptionAxisControl($index, 'values')"
+                    [error]="getOptionAxisControl($index, 'values').touched && getOptionAxisControl($index, 'values').invalid ? 'At least one value is required' : ''"
+                  ></gom-lib-input>
+                </div>
+
+                <gom-lib-button type="button" variant="danger" (buttonClick)="removeOptionAxis($index)">
+                  <i class="ri-delete-bin-line" aria-hidden="true"></i> Remove
+                </gom-lib-button>
+              </div>
+            }
+          </div>
+        }
 
         <div class="form-grid" style="margin-top: 1rem;">
           <div class="quill-wrapper">
@@ -158,11 +250,12 @@
         <div class="form-grid">
           <gom-lib-select
             label="Field Group"
-            placeholder="Select field group"
+            [placeholder]="fieldGroupOptions().length > 0 ? 'Select field group' : 'Select a category in Basic Info first'"
             [multiple]="true"
             [options]="fieldGroupOptions()"
             [selectedValues]="selectedFieldGroupIds()"
             [error]="selectionForm.controls.fieldGroupId.touched && selectionForm.controls.fieldGroupId.invalid ? 'Field group is required' : ''"
+            [hint]="!basicForm.controls.categoryId.value ? 'Field groups are filtered by the category you select in Basic Info tab' : ''"
             (selectedValuesChange)="onFieldGroupSelectionChange($event)"
           ></gom-lib-select>
         </div>
@@ -185,7 +278,14 @@
               }
             </div>
           } @else {
-            <p>Select a field group to preview included fields.</p>
+            @if (!basicForm.controls.categoryId.value) {
+              <p class="info-message">
+                <i class="ri-information-line"></i>
+                Please select a category in the <strong>Basic Info</strong> tab first to see available field groups.
+              </p>
+            } @else {
+              <p>No field groups available for the selected category.</p>
+            }
           }
         </div>
 
@@ -237,21 +337,26 @@
             <gom-lib-select
               label="Base Cost Field"
               placeholder="Select base cost"
+              [required]="true"
               [options]="simpleBaseCostOptions()"
               (valueChange)="onSimpleBaseCostChange($event)"
             ></gom-lib-select>
 
             <gom-lib-input
-              label="Selling Margin %"
+              label="Profit Margin %"
               type="number"
-              placeholder="20"
+              placeholder="Enter profit margin %"
+              [required]="true"
+              hint="Profit percentage to add on base cost"
               (valueChange)="onSimpleMarginPercentChange($event)"
             ></gom-lib-input>
 
             <gom-lib-input
-              label="Anchor Uplift %"
+              label="MRP Markup %"
               type="number"
-              placeholder="5"
+              placeholder="Enter markup %"
+              [required]="true"
+              hint="Markup percentage over selling price for Maximum Retail Price (MRP)"
               (valueChange)="onSimpleAnchorPercentChange($event)"
             ></gom-lib-input>
           </div>
@@ -386,13 +491,15 @@
 
     <gom-lib-tab-content [tabId]="5" [activeTab]="currentStep()">
       <section class="wizard__body">
+      
         <div class="form-grid">
           <gom-lib-select
             label="Base Unit"
-            placeholder="Select base unit"
+            [placeholder]="unitOptions().length > 0 ? 'Select base unit' : 'Select a category in Basic Info first'"
             [options]="unitOptions()"
             [formControl]="unitsForm.controls.baseUnitId"
             [error]="unitsForm.controls.baseUnitId.touched && unitsForm.controls.baseUnitId.invalid ? 'Base unit is required' : ''"
+            [hint]="!basicForm.controls.categoryId.value ? 'Units are filtered by the category you select in Basic Info tab' : ''"
             (valueChange)="onBaseUnitChange($event)"
           ></gom-lib-select>
         </div>
@@ -413,7 +520,14 @@
               }
             </div>
           } @else {
-            <p>No units available.</p>
+            @if (!basicForm.controls.categoryId.value) {
+              <p class="info-message">
+                <i class="ri-information-line"></i>
+                Please select a category in the <strong>Basic Info</strong> tab first to see available units.
+              </p>
+            } @else {
+              <p>No units available for the selected category.</p>
+            }
           }
         </div>
       </section>
@@ -499,7 +613,7 @@
           aria-label="Next"
           title="Next"
           (buttonClick)="nextStep()"
-          [disabled]="!canProceedToNextStep()"
+          [disabled]="saving()"
         >
           @if (shouldShowIcon(secondaryMode)) {
             <i class="ri-arrow-right-line" aria-hidden="true"></i>

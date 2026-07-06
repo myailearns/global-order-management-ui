@@ -1020,6 +1020,7 @@ export class BulkUploadGroupsComponent implements OnInit {
         anchorPrice: anchorFormula,
         actualPrice: actualFormula,
       },
+      pricingRefreshMode: 'AUTO_REFRESH',
       baseUnitId,
       allowedUnitIds: this.resolveAllowedUnitIds(baseUnitId),
       taxProfileId: taxProfileId || null,
@@ -1653,8 +1654,7 @@ export class BulkUploadGroupsComponent implements OnInit {
 
     const margin = Math.max(0, Number(marginPercent) || 0);
     const anchorPercent = Math.max(0, Number(this.simpleAnchorPercent()) || 0);
-    const marginBaseToken = 'actualPrice';
-    const sellingFormula = `actualPrice + (${marginBaseToken} * ${margin}%)`;
+    const sellingFormula = `actualPrice + (${baseToken} * ${margin}%)`;
     const anchorMultiplier = (1 + (anchorPercent / 100)).toFixed(4).replace(/\.0+$/, '').replace(/(\.\d*?)0+$/, '$1');
     const anchorFormula = anchorPercent > 0 ? `sellingPrice * ${anchorMultiplier}` : 'sellingPrice';
 

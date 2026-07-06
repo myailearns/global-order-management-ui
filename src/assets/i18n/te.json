@@ -1126,6 +1126,78 @@
       "previous": "మునుపటి",
       "next": "తదుపరి"
     },
+    "variantsWorkspace": {
+      "title": "వన్-పేజ్ వేరియంట్ వర్క్‌స్పేస్",
+      "subtitle": "ఒకే చోట పలు వేరియంట్లను రో-లెవల్ ప్రివ్యూతో సృష్టించండి.",
+      "actions": {
+        "autoGenerate": "ఆటో జనరేట్",
+        "addRow": "రో జోడించు",
+        "duplicate": "డూప్లికేట్",
+        "clearRows": "రోలు క్లియర్ చేయి",
+        "saveSelected": "ఎంచుకున్నవి సేవ్ చేయి ({{count}})",
+        "saving": "సేవ్ అవుతోంది...",
+        "remove": "తీసివేయి",
+        "addOverride": "ఫీల్డ్ జోడించు",
+        "removeOverride": "ఓవర్‌రైడ్ తొలగించు"
+      },
+      "bulkApply": {
+        "additionalChargeLabel": "బల్క్ అదనపు చార్జ్",
+        "additionalChargePlaceholder": "మొత్తం నమోదు చేయండి",
+        "applyToSelected": "ఎంచుకున్నవాటికి వర్తింపజేయి",
+        "fieldOverridesLabel": "బల్క్ ఫీల్డ్ ఓవర్‌రైడ్స్ (JSON)",
+        "fieldOverridesPlaceholder": "{\"fabricCost\": 250, \"laborCharge\": 70}",
+        "applyOverridesToSelected": "ఎంచుకున్నవాటికి ఓవర్‌రైడ్స్ వర్తింపజేయి"
+      },
+      "summary": {
+        "totalRows": "మొత్తం రోలు: {{count}}",
+        "selectedRows": "ఎంచుకున్నవి: {{count}}",
+        "errorRows": "లోపాలున్న రోలు: {{count}}"
+      },
+      "columns": {
+        "select": "ఎంచుకోండి",
+        "quantity": "పరిమాణం",
+        "unit": "యూనిట్",
+        "options": "ఆప్షన్లు",
+        "additionalCharge": "అదనపు చార్జ్",
+        "fieldOverrides": "ఫీల్డ్ ఓవర్‌రైడ్స్",
+        "displayName": "డిస్ప్లే పేరు",
+        "derivedSelling": "లెక్కించిన అమ్మక ధర",
+        "status": "స్థితి",
+        "action": "చర్య"
+      },
+      "placeholders": {
+        "quantity": "పరిమాణం",
+        "unit": "యూనిట్",
+        "displayName": "ఖాళీగా ఉంటే ఆటో పేరు",
+        "fieldOverrides": "ఓవర్‌రైడ్ ఇన్‌పుట్‌ల JSON ఆబ్జెక్ట్",
+        "fieldKey": "ఫీల్డ్ కీ",
+        "fieldValue": "విలువ"
+      },
+      "state": {
+        "ready": "సిద్ధం"
+      },
+      "toast": {
+        "selectGroupFirst": "ముందుగా ఒక గ్రూప్‌ను ఎంచుకోండి.",
+        "noCombinations": "కొత్త కాంబినేషన్లు లభించలేదు.",
+        "autoGenerateFailed": "వేరియంట్ కాంబినేషన్లు రూపొందించడంలో విఫలమైంది.",
+        "selectOneRow": "సేవ్ చేయడానికి కనీసం ఒక రోను ఎంచుకోండి.",
+        "fixRowErrors": "ఎంచుకున్న వేరియంట్లను సేవ్ చేయడానికి ముందు రోలోపాలను సరిచేయండి.",
+        "invalidBulkAdditionalCharge": "చెల్లుబాటు అయ్యే, ఋణేతర అదనపు చార్జ్‌ను నమోదు చేయండి.",
+        "bulkApplySuccess": "ఎంచుకున్న రోలపై అదనపు చార్జ్ వర్తింపజేయబడింది.",
+        "bulkOverridesApplySuccess": "ఎంచుకున్న రోలపై ఫీల్డ్ ఓవర్‌రైడ్స్ వర్తింపజేయబడ్డాయి.",
+        "saveFailed": "రోల నుండి వేరియంట్లను సృష్టించడంలో విఫలమైంది.",
+        "saveSuccess": "{{count}} వేరియంట్(లు) విజయవంతంగా సృష్టించబడ్డాయి."
+      },
+      "errors": {
+        "quantityPositive": "పరిమాణం సున్నా కంటే ఎక్కువగా ఉండాలి.",
+        "unitRequired": "యూనిట్ అవసరం.",
+        "additionalChargeNonNegative": "అదనపు చార్జ్ సున్నా లేదా అంతకంటే ఎక్కువగా ఉండాలి.",
+        "previewFailed": "ఈ రోకు ధర ప్రివ్యూ పొందడం సాధ్యపడలేదు.",
+        "fieldOverridesInvalid": "ఫీల్డ్ ఓవర్‌రైడ్స్ సంఖ్యాత్మక విలువలతో సరైన JSON ఆబ్జెక్ట్‌గా ఉండాలి.",
+        "duplicateCombination": "ఎంచుకున్న రోలలో డూప్లికేట్ వేరియంట్ కాంబినేషన్ కనిపించింది."
+      },
+      "empty": "ప్రారంభించడానికి మాన్యువల్‌గా రోలు జోడించండి లేదా ఆటో జనరేట్ వాడండి."
+    },
     "offers": {
       "title": "Offers",
       "subtitle": "Create, manage, and monitor promotional campaigns for your tenant.",

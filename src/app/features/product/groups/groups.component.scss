@@ -204,6 +204,10 @@
   }
 }
 
+.wizard__error-banner {
+  margin-bottom: theme.get-spacing(sm);
+}
+
 .wizard__body {
   display: grid;
   gap: theme.get-gap(md);
@@ -251,6 +255,30 @@
   p {
     margin: 0;
     color: theme.get-text(default-light);
+  }
+}
+
+.info-message {
+  display: flex;
+  align-items: flex-start;
+  gap: theme.get-gap(xxs);
+  padding: theme.get-spacing(sm);
+  background: theme.get-background(secondary);
+  border-left: 3px solid theme.get-border(info);
+  border-radius: theme.get-radius(sm);
+  margin: 0;
+  color: theme.get-text(default);
+
+  i {
+    flex-shrink: 0;
+    font-size: 1.25rem;
+    color: theme.get-text(info);
+    margin-top: 0.125rem;
+  }
+
+  strong {
+    color: theme.get-text(default);
+    font-weight: 600;
   }
 }
 

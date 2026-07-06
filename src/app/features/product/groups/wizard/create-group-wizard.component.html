@@ -27,6 +27,14 @@
           ></gom-lib-input>
 
           <gom-lib-select
+            label="Group Type"
+            placeholder="Select group type"
+            [options]="groupTypeOptions"
+            [formControl]="basicForm.controls.groupType"
+            [error]="basicForm.controls.groupType.touched && basicForm.controls.groupType.invalid ? 'Group type is required' : ''"
+          ></gom-lib-select>
+
+          <gom-lib-select
             label="Category"
             placeholder="Select category"
             [options]="categoryOptions()"
@@ -288,6 +296,7 @@
 
     <gom-lib-tab-content [tabId]="5" [activeTab]="currentStep()">
       <section class="wizard__body">
+    
         <div class="form-grid">
           <gom-lib-select
             label="Base Unit"

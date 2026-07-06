@@ -12,6 +12,15 @@
       </gom-lib-button>
       <gom-lib-button
         type="button"
+        variant="secondary"
+        (buttonClick)="openCorrection()"
+        gomDisableIfNoFeature="stock.create"
+        [disabled]="saving() || !canCreateStock() || !selectedGroupId()"
+      >
+        <i class="ri-tools-line" aria-hidden="true"></i> Stock Correction
+      </gom-lib-button>
+      <gom-lib-button
+        type="button"
         variant="primary"
         (buttonClick)="openAddStock()"
         gomDisableIfNoFeature="stock.create"
@@ -70,6 +79,24 @@
           Save Threshold
         </gom-lib-button>
       </div>
+
+      <!-- Row 3: Costing Method Input + Save Button -->
+      <div style="display: grid; grid-template-columns: 1fr auto; gap: 1rem; align-items: flex-end;">
+        <gom-lib-select
+          label="Costing Method"
+          placeholder="Select costing method"
+          [options]="costingMethodOptions"
+          [formControl]="costingForm.controls.costingMethod"
+        ></gom-lib-select>
+        <gom-lib-button
+          type="button"
+          variant="secondary"
+          (buttonClick)="saveCostingMethod()"
+          [disabled]="saving() || costingForm.invalid || !selectedGroupId() || !costingForm.dirty"
+        >
+          Save Costing Method
+        </gom-lib-button>
+      </div>
     </div>
   </section>
 
@@ -100,6 +127,98 @@
           ⚠ Stock is low! Available ({{ summary()!.available }}) has fallen at or below your alert threshold ({{ summary()!.reorderLevel }}). Consider restocking.
         </span>
       </div>
+    }
+
+    @if (totalPendingPricingSuggestionsCount() > 0) {
+      <gom-lib-accordion
+        class="stock-pending-inbox"
+        [title]="'Pending Price Approvals'"
+        [subtitle]="getPendingInboxSubtitle()"
+        [expanded]="pendingInboxExpanded()"
+        (toggleState)="onInboxToggle($event)"
+      >
+        <div class="stock-pending-inbox__body">
+          @for (group of pendingGroupSummaries(); track group.groupId) {
+            <div class="stock-pending-inbox__row">
+              <div class="stock-pending-inbox__row-info">
+                <span class="stock-pending-inbox__group-name">
+                  <i class="ri-price-tag-3-line" aria-hidden="true"></i>
+                  {{ group.groupName }}
+                </span>
+                <span class="stock-pending-inbox__badge">{{ getPendingGroupBadgeText(group.groupId, group.pendingCount) }}</span>
+              </div>
+              <gom-lib-button
+                type="button"
+                variant="primary"
+                (buttonClick)="openPriceApprovalForGroup(group.groupId, group.groupName)"
+              >
+                Review
+              </gom-lib-button>
+            </div>
+          }
+          @if (pendingGroupSummaries().length === 0) {
+            <div class="stock-pending-inbox__loading">
+              <i class="ri-loader-4-line" aria-hidden="true"></i>
+              Loading groups&hellip;
+            </div>
+          }
+        </div>
+      </gom-lib-accordion>
+    }
+
+    <!-- Variant Stock Breakdown (for ATTRIBUTE/HYBRID groups) -->
+    @if (showsVariantBreakdown() && variantStockInfo().length > 0) {
+      <article class="master-page__table-shell" style="margin-top: 1.5rem;">
+        <header class="table-header">
+          <h3><i class="ri-layout-grid-line" aria-hidden="true"></i> Variant Stock Breakdown</h3>
+          <p>
+            @if (isHybridGroup()) {
+              Calculated sellable pack availability from shared bulk stock
+            } @else {
+              Stock levels for each variant in this group
+            }
+          </p>
+        </header>
+        <div style="overflow-x: auto; border: 1px solid #e0e0e0; border-radius: 4px;">
+          <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr style="background-color: #f5f5f5; border-bottom: 2px solid #e0e0e0;">
+                <th style="padding: 0.75rem; text-align: left; font-weight: 600; font-size: 0.875rem; color: #444;">Variant</th>
+                <th style="padding: 0.75rem; text-align: center; font-weight: 600; font-size: 0.875rem; color: #444;">Unit</th>
+                <th style="padding: 0.75rem; text-align: right; font-weight: 600; font-size: 0.875rem; color: #444;">On Hand</th>
+                <th style="padding: 0.75rem; text-align: right; font-weight: 600; font-size: 0.875rem; color: #444;">Reserved</th>
+                <th style="padding: 0.75rem; text-align: right; font-weight: 600; font-size: 0.875rem; color: #444;">Available</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (variant of variantStockInfo(); track variant.variantId) {
+                <tr style="border-bottom: 1px solid #eee;">
+                  <td style="padding: 0.75rem; font-weight: 500; font-size: 0.875rem;">
+                    <i class="ri-t-shirt-line" aria-hidden="true" style="margin-right: 0.5rem; color: #666;"></i>
+                    {{ variant.variantName }}
+                  </td>
+                  <td style="padding: 0.75rem; text-align: center; font-size: 0.875rem; color: #666;">
+                    @if (variant.unit) {
+                      {{ variant.unit.symbol }}
+                    } @else {
+                      –
+                    }
+                  </td>
+                  <td style="padding: 0.75rem; text-align: right; font-size: 0.875rem; font-weight: 500;">
+                    {{ variant.onHand }}
+                  </td>
+                  <td style="padding: 0.75rem; text-align: right; font-size: 0.875rem; color: #666;">
+                    {{ variant.reserved }}
+                  </td>
+                  <td style="padding: 0.75rem; text-align: right; font-size: 0.875rem; font-weight: 600;" [style.color]="variant.available > 0 ? '#2e7d32' : '#d32f2f'">
+                    {{ variant.available }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </article>
     }
   }
 
@@ -136,95 +255,447 @@
 </section>
 
 <gom-lib-modal
+  title="Stock Pricing Details"
+  [show]="stockDetailsOpen()"
+  (showChange)="stockDetailsOpen.set($event)"
+  (closed)="closeStockHistoryDetails()"
+  size="medium"
+>
+  @if (selectedStockDetailsEntry(); as detailEntry) {
+    <section class="stock-history-details" aria-live="polite">
+      <header class="stock-history-details__header">
+        <div>
+          <h4>Movement Pricing Details</h4>
+          <p>
+            {{ detailEntry.movementType }} · {{ formatNumber(detailEntry.quantity) }} {{ detailEntry.unitId.symbol || '' }}
+            · {{ localDateTimePipe.transform(detailEntry.createdAt) }}
+          </p>
+        </div>
+      </header>
+
+      <div class="stock-history-details__summary">
+        <div>
+          <span class="stock-history-details__label">Total Cost</span>
+          <strong>{{ formatCurrency(detailEntry.costSummary?.totalCost || 0) }}</strong>
+        </div>
+        <div>
+          <span class="stock-history-details__label">Cost / Base Unit</span>
+          <strong>{{ formatCurrency(detailEntry.costSummary?.costPerBaseUnit || 0) }}</strong>
+        </div>
+        <div>
+          <span class="stock-history-details__label">Base Qty</span>
+          <strong>{{ formatNumber(detailEntry.convertedQuantityInBase) }}</strong>
+        </div>
+      </div>
+
+      <div class="stock-history-details__components">
+        <span class="stock-history-details__label">Cost Components</span>
+        @if ((detailEntry.costComponents?.length || 0) === 0) {
+          <p class="stock-history-details__empty">No cost components were captured for this entry.</p>
+        } @else {
+          <ul>
+            @for (component of detailEntry.costComponents; track component.key + '-' + $index) {
+              <li>
+                <span>{{ getCostComponentLabel(component.label, component.key) }}</span>
+                <strong>{{ formatCurrency(component.value) }}</strong>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+
+      <div class="stock-history-details__pricing-impact">
+        <span class="stock-history-details__label">Price Impact</span>
+        @if (!detailEntry.pricingImpact || detailEntry.pricingImpact.appliedCount === 0) {
+          <p class="stock-history-details__empty">No automatic price updates were applied for this stock movement.</p>
+        } @else {
+          <div class="stock-history-details__impact-meta">
+            <span>Mode: {{ detailEntry.pricingImpact.mode }}</span>
+            <span>Applied: {{ detailEntry.pricingImpact.appliedCount }}</span>
+            @if (detailEntry.pricingImpact.suggestionCount && detailEntry.pricingImpact.suggestionCount > 0) {
+              <span>Pending Suggestions: {{ detailEntry.pricingImpact.suggestionCount }}</span>
+            }
+          </div>
+          <div class="stock-history-details__group-impact">
+            <div class="impact-item__header">
+              <strong>Group Price Impact</strong>
+              <span class="stock-history-details__group-impact-count">{{ getImpactChangeCount(detailEntry) }} variant(s)</span>
+            </div>
+            <div class="impact-item__prices">
+              <div class="impact-item__price-row">
+                <span class="impact-item__label">Selling Total</span>
+                <div class="impact-item__value">
+                  <span class="old-value">{{ formatCurrency(getImpactBeforeTotals(detailEntry).selling) }}</span>
+                  <i class="ri-arrow-right-line" aria-hidden="true"></i>
+                  <span class="new-value">{{ formatCurrency(getImpactAfterTotals(detailEntry).selling) }}</span>
+                  <span class="delta" [class.positive]="(getImpactAfterTotals(detailEntry).selling - getImpactBeforeTotals(detailEntry).selling) >= 0">
+                    ({{ (getImpactAfterTotals(detailEntry).selling - getImpactBeforeTotals(detailEntry).selling) >= 0 ? '+' : '' }}{{ formatCurrency(getImpactAfterTotals(detailEntry).selling - getImpactBeforeTotals(detailEntry).selling) }})
+                  </span>
+                </div>
+              </div>
+
+              <div class="impact-item__price-row">
+                <span class="impact-item__label">Actual Total</span>
+                <div class="impact-item__value">
+                  <span class="old-value">{{ formatCurrency(getImpactBeforeTotals(detailEntry).actual) }}</span>
+                  <i class="ri-arrow-right-line" aria-hidden="true"></i>
+                  <span class="new-value">{{ formatCurrency(getImpactAfterTotals(detailEntry).actual) }}</span>
+                  <span class="delta" [class.positive]="(getImpactAfterTotals(detailEntry).actual - getImpactBeforeTotals(detailEntry).actual) >= 0">
+                    ({{ (getImpactAfterTotals(detailEntry).actual - getImpactBeforeTotals(detailEntry).actual) >= 0 ? '+' : '' }}{{ formatCurrency(getImpactAfterTotals(detailEntry).actual - getImpactBeforeTotals(detailEntry).actual) }})
+                  </span>
+                </div>
+              </div>
+
+              <div class="impact-item__price-row">
+                <span class="impact-item__label">Profit Total</span>
+                <div class="impact-item__value">
+                  <span class="old-value">{{ formatCurrency(getImpactBeforeTotals(detailEntry).profit) }}</span>
+                  <i class="ri-arrow-right-line" aria-hidden="true"></i>
+                  <span class="new-value">{{ formatCurrency(getImpactAfterTotals(detailEntry).profit) }} ({{ getImpactTotalMarkupPercent(detailEntry).toFixed(2) }}%)</span>
+                  <span class="delta" [class.positive]="(getImpactAfterTotals(detailEntry).profit - getImpactBeforeTotals(detailEntry).profit) >= 0">
+                    ({{ (getImpactAfterTotals(detailEntry).profit - getImpactBeforeTotals(detailEntry).profit) >= 0 ? '+' : '' }}{{ formatCurrency(getImpactAfterTotals(detailEntry).profit - getImpactBeforeTotals(detailEntry).profit) }})
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <gom-lib-accordion
+            class="stock-history-details__variant-impact-accordion"
+            [title]="'Variant Price Impact'"
+            [subtitle]="getImpactChangeCount(detailEntry) + ' variant(s) affected'"
+            [expanded]="stockImpactVariantExpanded()"
+            (toggleState)="stockImpactVariantExpanded.set($event)"
+          >
+            <ul class="stock-history-details__impact-list">
+              @for (change of detailEntry.pricingImpact.variantChanges; track change.variantId) {
+                <li class="stock-history-details__impact-item">
+                  <div class="impact-item__header">
+                    <strong>{{ change.variantName }}</strong>
+                  </div>
+                  <div class="impact-item__prices">
+                    <div class="impact-item__price-row">
+                      <span class="impact-item__label">Selling Price</span>
+                      <div class="impact-item__value">
+                        <span class="old-value">{{ formatCurrency(change.before.sellingPrice) }}</span>
+                        <i class="ri-arrow-right-line" aria-hidden="true"></i>
+                        <span class="new-value">{{ formatCurrency(change.after.sellingPrice) }}</span>
+                        <span class="delta" [class.positive]="(change.after.sellingPrice - change.before.sellingPrice) >= 0">
+                          ({{ (change.after.sellingPrice - change.before.sellingPrice) >= 0 ? '+' : '' }}{{ formatCurrency(change.after.sellingPrice - change.before.sellingPrice) }})
+                        </span>
+                      </div>
+                    </div>
+
+                    <div class="impact-item__price-row">
+                      <span class="impact-item__label">Actual Price</span>
+                      <div class="impact-item__value">
+                        <span class="old-value">{{ formatCurrency(change.before.actualPrice) }}</span>
+                        <i class="ri-arrow-right-line" aria-hidden="true"></i>
+                        <span class="new-value">{{ formatCurrency(change.after.actualPrice) }}</span>
+                        <span class="delta" [class.positive]="(change.after.actualPrice - change.before.actualPrice) >= 0">
+                          ({{ (change.after.actualPrice - change.before.actualPrice) >= 0 ? '+' : '' }}{{ formatCurrency(change.after.actualPrice - change.before.actualPrice) }})
+                        </span>
+                      </div>
+                    </div>
+
+                    <div class="impact-item__price-row">
+                      <span class="impact-item__label">Profit Amount</span>
+                      <div class="impact-item__value">
+                        <span class="old-value">{{ formatCurrency(change.before.profitValue) }} ({{ calculateMarkupPercent(change.before.actualPrice, change.before.sellingPrice).toFixed(2) }}%)</span>
+                        <i class="ri-arrow-right-line" aria-hidden="true"></i>
+                        <span class="new-value">{{ formatCurrency(change.after.profitValue) }} ({{ calculateMarkupPercent(change.after.actualPrice, change.after.sellingPrice).toFixed(2) }}%)</span>
+                        <span class="delta" [class.positive]="(change.after.profitValue - change.before.profitValue) >= 0">
+                          ({{ (change.after.profitValue - change.before.profitValue) >= 0 ? '+' : '' }}{{ formatCurrency(change.after.profitValue - change.before.profitValue) }})
+                        </span>
+                      </div>
+                    </div>
+
+                    <div class="impact-item__price-row">
+                      <span class="impact-item__label">Margin %</span>
+                      <div class="impact-item__value">
+                        <span class="old-value">{{ change.before.marginPercent.toFixed(2) }}%</span>
+                        <i class="ri-arrow-right-line" aria-hidden="true"></i>
+                        <span class="new-value">{{ change.after.marginPercent.toFixed(2) }}%</span>
+                        <span class="delta" [class.positive]="(change.after.marginPercent - change.before.marginPercent) >= 0">
+                          ({{ (change.after.marginPercent - change.before.marginPercent) >= 0 ? '+' : '' }}{{ (change.after.marginPercent - change.before.marginPercent).toFixed(2) }}%)
+                        </span>
+                      </div>
+                    </div>
+
+                    <div class="impact-item__price-row">
+                      <span class="impact-item__label">Markup %</span>
+                      <div class="impact-item__value">
+                        <span class="old-value">{{ calculateMarkupPercent(change.before.actualPrice, change.before.sellingPrice).toFixed(2) }}%</span>
+                        <i class="ri-arrow-right-line" aria-hidden="true"></i>
+                        <span class="new-value">{{ calculateMarkupPercent(change.after.actualPrice, change.after.sellingPrice).toFixed(2) }}%</span>
+                        <span class="delta" [class.positive]="(calculateMarkupPercent(change.after.actualPrice, change.after.sellingPrice) - calculateMarkupPercent(change.before.actualPrice, change.before.sellingPrice)) >= 0">
+                          ({{ (calculateMarkupPercent(change.after.actualPrice, change.after.sellingPrice) - calculateMarkupPercent(change.before.actualPrice, change.before.sellingPrice)) >= 0 ? '+' : '' }}{{ (calculateMarkupPercent(change.after.actualPrice, change.after.sellingPrice) - calculateMarkupPercent(change.before.actualPrice, change.before.sellingPrice)).toFixed(2) }}%)
+                        </span>
+                      </div>
+                    </div>
+
+                    <div class="impact-item__formula-note">
+                      {{ formatCurrency(change.after.sellingPrice) }} = {{ formatCurrency(change.after.actualPrice) }} cost + {{ formatCurrency(change.after.profitValue) }} profit
+                    </div>
+                  </div>
+                </li>
+              }
+            </ul>
+          </gom-lib-accordion>
+        }
+      </div>
+    </section>
+  }
+</gom-lib-modal>
+
+<gom-lib-modal
   title="Add Stock"
   [(show)]="addStockOpen"
   (closed)="closeAddStock()"
   size="medium"
 >
   <section class="form-grid">
-    <!-- Base Unit Input (Always Base Unit) -->
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
-      <div>
-        <gom-lib-input
-          id="base-qty"
-          label="Base Quantity *"
-          type="number"
-          placeholder="e.g., 100"
-          [formControl]="addStockForm.controls.baseQuantity"
-          [error]="addStockForm.controls.baseQuantity.touched && addStockForm.controls.baseQuantity.invalid ? 'Must be 0 or more' : ''"
-        ></gom-lib-input>
-      </div>
-      <div>
-        <div style="display: flex; flex-direction: column; height: 100%;">
-          <div style="font-weight: 500; font-size: 0.875rem; margin-bottom: 0.5rem; color: #333;">Base Unit</div>
-          <div style="padding: 0.5rem 0.75rem; border: 1px solid #ccc; border-radius: 4px; background-color: #f5f5f5; color: #666; flex-grow: 1; display: flex; align-items: center;" aria-label="Base Unit Selection">
-            @if (baseUnitId(); as baseId) {
-              @for (unit of units(); track unit._id) {
-                @if (unit._id === baseId) {
-                  <span>{{ unit.name }} ({{ unit.symbol }}) [Base]</span>
+    @if (!isVariantTrackedGroup()) {
+      <!-- Base Unit Input (Always Base Unit) -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+        <div>
+          <gom-lib-input
+            id="base-qty"
+            label="Base Quantity *"
+            type="number"
+            placeholder="e.g., 100"
+            [formControl]="addStockForm.controls.baseQuantity"
+            [error]="addStockForm.controls.baseQuantity.touched && addStockForm.controls.baseQuantity.invalid ? 'Must be 0 or more' : ''"
+          ></gom-lib-input>
+        </div>
+        <div>
+          <div style="display: flex; flex-direction: column; height: 100%;">
+            <div style="font-weight: 500; font-size: 0.875rem; margin-bottom: 0.5rem; color: #333;">Base Unit</div>
+            <div style="padding: 0.5rem 0.75rem; border: 1px solid #ccc; border-radius: 4px; background-color: #f5f5f5; color: #666; flex-grow: 1; display: flex; align-items: center;" aria-label="Base Unit Selection">
+              @if (baseUnitId(); as baseId) {
+                @for (unit of units(); track unit._id) {
+                  @if (unit._id === baseId) {
+                    <span>{{ unit.name }} ({{ unit.symbol }}) [Base]</span>
+                  }
                 }
+              } @else {
+                <span>–</span>
               }
-            } @else {
-              <span>–</span>
-            }
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Sub-Unit Input (Optional) -->
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 1rem;">
-      <div>
-        <gom-lib-input
-          id="sub-qty"
-          label="Additional Quantity (Optional)"
-          type="number"
-          placeholder="e.g., 130"
-          [formControl]="addStockForm.controls.subQuantity"
-          [error]="addStockForm.controls.subQuantity.touched && addStockForm.controls.subQuantity.invalid ? 'Must be ≥ 0' : ''"
-        ></gom-lib-input>
+      <!-- Sub-Unit Input (Optional) -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 1rem;">
+        <div>
+          <gom-lib-input
+            id="sub-qty"
+            label="Additional Quantity (Optional)"
+            type="number"
+            placeholder="e.g., 130"
+            [formControl]="addStockForm.controls.subQuantity"
+            [error]="addStockForm.controls.subQuantity.touched && addStockForm.controls.subQuantity.invalid ? 'Must be ≥ 0' : ''"
+          ></gom-lib-input>
+        </div>
+        <div>
+          <gom-lib-select
+            id="sub-unit"
+            label="in Unit"
+            placeholder="Select unit"
+            [options]="subUnitOptions()"
+            [formControl]="addStockForm.controls.subUnit"
+          ></gom-lib-select>
+        </div>
       </div>
-      <div>
-        <gom-lib-select
-          id="sub-unit"
-          label="in Unit"
-          placeholder="Select unit"
-          [options]="subUnitOptions()"
-          [formControl]="addStockForm.controls.subUnit"
-        ></gom-lib-select>
-      </div>
-    </div>
 
-    <!-- Conversion Preview -->
-    <div style="margin-top: 1rem; padding: 0.75rem; background-color: #e3f2fd; border-left: 4px solid #1976d2; border-radius: 4px;">
-      <p style="margin: 0; font-size: 0.875rem; color: #1565c0;">
-        <strong>Total converts to:</strong>
-        @if (getFinalConvertedQuantity(); as total) {
-          {{ total | number: '1.4-4' }}
-          <span> {{ getBaseUnitSymbol() }}</span>
-        } @else {
-          <span>–</span>
+      <!-- Conversion Preview -->
+      <div style="margin-top: 1rem; padding: 0.75rem; background-color: #e3f2fd; border-left: 4px solid #1976d2; border-radius: 4px;">
+        <p style="margin: 0; font-size: 0.875rem; color: #1565c0;">
+          <strong>Total converts to:</strong>
+          @if (getFinalConvertedQuantity(); as total) {
+            {{ total | number: '1.4-4' }}
+            <span> {{ getBaseUnitSymbol() }}</span>
+          } @else {
+            <span>–</span>
+          }
+        </p>
+      </div>
+    } @else {
+      <!-- Step 1: Variant quantities -->
+      <div style="margin-top: 0.5rem;">
+        <h4 style="margin: 0 0 0.5rem 0; font-size: 0.9rem; color: #1f2937;">Step 1: Set Quantities</h4>
+        <div style="border: 1px solid #e0e0e0; border-radius: 4px; overflow: hidden;">
+          <div style="display: grid; grid-template-columns: minmax(14rem, 1fr) 4.5rem 5rem 6.5rem; gap: 0.5rem; font-weight: 600; font-size: 0.8rem; padding: 0.5rem 0.75rem; background: #f5f5f5; color: #444; border-bottom: 1px solid #e0e0e0;">
+            <span>Variant</span>
+            <span>Unit</span>
+            <span style="text-align: right;">Available</span>
+            <span style="text-align: right;">Add Qty</span>
+          </div>
+
+          @for (v of groupVariants(); track v._id) {
+            <div style="display: grid; grid-template-columns: minmax(14rem, 1fr) 4.5rem 5rem 6.5rem; gap: 0.5rem; align-items: center; padding: 0.5rem 0.75rem; border-bottom: 1px solid #eee;">
+              <span style="font-size: 0.875rem; font-weight: 500;">{{ v.name }}</span>
+              <span style="font-size: 0.8rem; color: #666;">{{ getVariantUnitSymbol(v.unitId) }}</span>
+              <span style="font-size: 0.8rem; text-align: right; color: #555;">{{ getVariantAvailable(v._id) }}</span>
+              <label [for]="'variant-allocation-' + v._id" class="sr-only">Add quantity for {{ v.name }}</label>
+              <input
+                [id]="'variant-allocation-' + v._id"
+                [attr.aria-label]="'Add quantity for ' + v.name"
+                type="number"
+                min="0"
+                step="1"
+                style="width: 100%; border: 1px solid #ccc; border-radius: 4px; padding: 0.3rem 0.5rem; font-size: 0.875rem; text-align: right;"
+                [value]="getAllocationQty(v._id)"
+                (input)="onAllocationInput(v._id, $event)"
+              />
+            </div>
+          }
+        </div>
+
+        @if (groupVariants().length === 0) {
+          <div style="padding: 1rem 0.75rem; text-align: center; color: #999; font-size: 0.875rem; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 4px 4px;">
+            Loading variants…
+          </div>
         }
-      </p>
-    </div>
+
+        <div style="margin-top: 0.5rem; padding: 0.75rem; background-color: #e3f2fd; border-left: 4px solid #1976d2; border-radius: 4px;">
+          <p style="margin: 0; font-size: 0.875rem; color: #1565c0;">
+            <strong>{{ getAllocatedVariants().length }}</strong> selected variants •
+            <strong>Total base quantity:</strong>
+            {{ allocationBaseTotal() | number: '1.4-4' }} {{ getBaseUnitSymbol() }}
+          </p>
+        </div>
+        @if (allocationValidationError()) {
+          <p style="color: #d32f2f; font-size: 0.8rem; margin: 0.5rem 0 0; padding-left: 0.25rem;">
+            {{ allocationValidationError() }}
+          </p>
+        }
+
+        <!-- Step 2: Pricing strategy -->
+        @if (currentGroupPricingFields().length > 0) {
+          <div style="margin-top: 1rem; padding: 0.75rem; border: 1px solid #e5e7eb; border-radius: 4px; background: #fff;">
+            <h4 style="margin: 0 0 0.5rem 0; font-size: 0.9rem; color: #1f2937;">Step 2: Pricing Update (Optional)</h4>
+            <p style="margin: 0 0 0.75rem 0; font-size: 0.75rem; color: #6b7280;">
+              Choose one mode. Pricing updates apply only to this stock event.
+            </p>
+            <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.75rem;">
+              <gom-lib-button
+                type="button"
+                variant="secondary"
+                [class.vws-bulk-toggle--active]="variantPricingMode() === 'NONE'"
+                (buttonClick)="setVariantPricingMode('NONE')"
+              >
+                No pricing update
+              </gom-lib-button>
+              <gom-lib-button
+                type="button"
+                variant="secondary"
+                [class.vws-bulk-toggle--active]="variantPricingMode() === 'BULK'"
+                (buttonClick)="setVariantPricingMode('BULK')"
+              >
+                Same pricing for all selected
+              </gom-lib-button>
+              <gom-lib-button
+                type="button"
+                variant="secondary"
+                [class.vws-bulk-toggle--active]="variantPricingMode() === 'CUSTOM'"
+                (buttonClick)="setVariantPricingMode('CUSTOM')"
+              >
+                Customize by variant
+              </gom-lib-button>
+            </div>
+
+            @if (variantPricingMode() === 'BULK') {
+              <div style="padding: 0.75rem; background-color: #eef6ff; border-left: 4px solid #1976d2; border-radius: 4px;">
+                <h5 style="margin: 0 0 0.75rem 0; font-size: 0.825rem; color: #0d47a1;">
+                  Bulk Pricing Defaults
+                </h5>
+                <div class="form-grid form-grid--two">
+                  @for (field of currentGroupPricingFields(); track field.key) {
+                    <gom-lib-input
+                      [label]="field.key"
+                      type="number"
+                      step="0.01"
+                      placeholder="Leave empty to skip"
+                      [formControl]="bulkVariantPricingForm.controls[field.key]"
+                    ></gom-lib-input>
+                  }
+                </div>
+                <div style="display:flex; gap:0.5rem; align-items:center; margin-top:0.75rem; flex-wrap:wrap;">
+                  <gom-lib-button
+                    type="button"
+                    variant="secondary"
+                    [class.vws-bulk-toggle--active]="bulkPricingApplyMode() === 'EMPTY_ONLY'"
+                    (buttonClick)="setBulkPricingApplyMode('EMPTY_ONLY')"
+                  >
+                    Apply to empty fields only
+                  </gom-lib-button>
+                  <gom-lib-button
+                    type="button"
+                    variant="secondary"
+                    [class.vws-bulk-toggle--active]="bulkPricingApplyMode() === 'OVERWRITE_ALL'"
+                    (buttonClick)="setBulkPricingApplyMode('OVERWRITE_ALL')"
+                  >
+                    Overwrite all
+                  </gom-lib-button>
+                  <gom-lib-button
+                    type="button"
+                    variant="primary"
+                    (buttonClick)="applyBulkPricingToAllocatedVariants()"
+                  >
+                    Apply to selected variants
+                  </gom-lib-button>
+                </div>
+              </div>
+            }
+
+            @if (variantPricingMode() === 'CUSTOM') {
+              <div style="display:grid; gap:0.75rem;">
+                @for (variant of getAllocatedVariants(); track variant._id) {
+                  <div style="padding: 0.75rem; background-color: #f9fafb; border-left: 4px solid #f59e0b; border-radius: 4px;">
+                    <h5 style="margin: 0 0 0.75rem 0; font-size: 0.825rem; color: #374151;">
+                      {{ variant.name }}
+                    </h5>
+                    <div class="form-grid form-grid--two">
+                      @for (field of currentGroupPricingFields(); track field.key) {
+                        <gom-lib-input
+                          [label]="field.key"
+                          type="number"
+                          step="0.01"
+                          placeholder="0"
+                          [formControl]="getVariantPricingForm(variant._id).controls[field.key]"
+                        ></gom-lib-input>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
 
     <!-- Pricing Fields (Optional) -->
     @if (currentGroupPricingFields().length > 0) {
-      <div style="margin-top: 1.5rem; padding: 0.75rem; background-color: #f9f9f9; border-left: 4px solid #ff9800; border-radius: 4px;">
-        <h4 style="margin: 0 0 0.75rem 0; font-size: 0.875rem; color: #333;">Update Pricing (Optional)</h4>
-        <div class="form-grid form-grid--two">
-          @for (field of currentGroupPricingFields(); track field.key) {
-            <gom-lib-input
-              [label]="field.key"
-              type="number"
-              step="0.01"
-              placeholder="0"
-              [formControl]="pricingForm.controls[field.key]"
-            ></gom-lib-input>
-          }
+      @if (!isVariantTrackedGroup()) {
+        <div style="margin-top: 1.5rem; padding: 0.75rem; background-color: #f9f9f9; border-left: 4px solid #ff9800; border-radius: 4px;">
+          <h4 style="margin: 0 0 0.75rem 0; font-size: 0.875rem; color: #333;">Update Pricing (Optional)</h4>
+          <div class="form-grid form-grid--two">
+            @for (field of currentGroupPricingFields(); track field.key) {
+              <gom-lib-input
+                [label]="field.key"
+                type="number"
+                step="0.01"
+                placeholder="0"
+                [formControl]="pricingForm.controls[field.key]"
+              ></gom-lib-input>
+            }
+          </div>
+          <p style="margin: 0.5rem 0 0 0; font-size: 0.75rem; color: #666;">These values will update for all variants in this group.</p>
         </div>
-        <p style="margin: 0.5rem 0 0 0; font-size: 0.75rem; color: #666;">These values will update for all variants in this group.</p>
-      </div>
+      }
     }
 
     <gom-lib-textarea
@@ -268,7 +739,101 @@
           <i class="ri-check-line" aria-hidden="true"></i>
         }
         @if (shouldShowText(submitMode)) {
-          {{ saving() ? 'Saving...' : 'Save Stock' }}
+          @if (saving()) {
+            Saving...
+          } @else if (isVariantTrackedGroup()) {
+            Save Stock ({{ getAllocatedVariants().length }} variants)
+          } @else {
+            Save Stock
+          }
+        }
+      </gom-lib-button>
+    </div>
+  </footer>
+</gom-lib-modal>
+
+<gom-lib-modal
+  title="Stock Correction"
+  [(show)]="correctionOpen"
+  (closed)="closeCorrection()"
+  size="medium"
+>
+  <section class="form-grid">
+    <gom-lib-input
+      label="Quantity Delta"
+      type="number"
+      placeholder="Use negative for reduction, positive for increase"
+      [formControl]="correctionForm.controls.quantityDelta"
+      [error]="correctionForm.controls.quantityDelta.touched && correctionForm.controls.quantityDelta.invalid ? 'Quantity delta is required' : ''"
+    ></gom-lib-input>
+
+    <gom-lib-select
+      label="Unit"
+      placeholder="Select unit"
+      [options]="filteredUnitOptions()"
+      [formControl]="correctionForm.controls.unitId"
+      [error]="correctionForm.controls.unitId.touched && correctionForm.controls.unitId.invalid ? 'Unit is required' : ''"
+    ></gom-lib-select>
+
+    @if (isVariantTrackedGroup()) {
+      <gom-lib-select
+        label="Variant"
+        placeholder="Select variant"
+        [options]="correctionVariantOptions()"
+        [formControl]="correctionForm.controls.variantId"
+        [error]="correctionForm.controls.variantId.touched && !correctionForm.controls.variantId.value ? 'Variant is required' : ''"
+      ></gom-lib-select>
+    }
+
+    <gom-lib-select
+      label="Correction Reason"
+      placeholder="Select reason"
+      [options]="correctionReasonOptions"
+      [formControl]="correctionForm.controls.correctionReason"
+    ></gom-lib-select>
+
+    <gom-lib-textarea
+      label="Notes"
+      [rows]="3"
+      placeholder="Add context for audit trail"
+      [formControl]="correctionForm.controls.notes"
+    ></gom-lib-textarea>
+  </section>
+
+  <footer class="gom-modal__action-layout stock-form__actions" gom-modal-actions>
+    <div class="gom-modal__action-layout-start"></div>
+    <div class="gom-modal__action-layout-end">
+      <gom-lib-button
+        class="stock-form__action"
+        type="button"
+        variant="secondary"
+        [size]="cancelMode === 'icon-only' ? 'icon' : 'default'"
+        aria-label="Close"
+        title="Close"
+        (buttonClick)="closeCorrection()"
+      >
+        @if (shouldShowIcon(cancelMode)) {
+          <i class="ri-close-line" aria-hidden="true"></i>
+        }
+        @if (shouldShowText(cancelMode)) {
+          Cancel
+        }
+      </gom-lib-button>
+      <gom-lib-button
+        class="stock-form__action"
+        type="button"
+        variant="primary"
+        [size]="submitMode === 'icon-only' ? 'icon' : 'default'"
+        aria-label="Save Correction"
+        title="Save Correction"
+        (buttonClick)="saveCorrection()"
+        [disabled]="isCorrectionSaveDisabled()"
+      >
+        @if (shouldShowIcon(submitMode)) {
+          <i class="ri-check-line" aria-hidden="true"></i>
+        }
+        @if (shouldShowText(submitMode)) {
+          {{ saving() ? 'Saving...' : 'Save Correction' }}
         }
       </gom-lib-button>
     </div>
@@ -357,3 +922,15 @@
   (confirmed)="confirmDeleteStock()"
   (cancelled)="cancelDeleteStock()"
 ></gom-lib-confirmation-modal>
+
+<gom-price-approval-modal
+  [show]="priceApprovalOpen()"
+  (showChange)="priceApprovalOpen.set($event)"
+  [groupId]="selectedGroupId()"
+  [groupType]="selectedGroupType()"
+  [groupName]="selectedGroupName()"
+  [pricingMode]="selectedGroupPricingMode()"
+  [groupFormulas]="selectedGroupFormulas()"
+  [formulaInputs]="selectedGroupFormulaInputs()"
+  (decisionsCompleted)="onPriceApprovalCompleted()"
+></gom-price-approval-modal>

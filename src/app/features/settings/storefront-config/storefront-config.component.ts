@@ -1,13 +1,18 @@
 import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { startWith } from 'rxjs';
 
 import {
   FormControlsModule,
   GomAlertToastService,
   GomButtonComponent,
+  GomCardComponent,
+  GomChipComponent,
+  GomChipTone,
+  GomModalComponent,
   GomTabContentComponent,
   GomTabsComponent,
   TabItem,
@@ -17,8 +22,10 @@ import { DisableIfNoFeatureDirective } from '../../../shared/directives/disable-
 import {
   BannerImage,
   DeliveryService,
+  FulfillmentMode,
   LayoutMode,
   PaymentMethod,
+  PickupConfig,
   StorefrontConfig,
   StorefrontShare,
   StorefrontShareEventPayload,
@@ -35,6 +42,9 @@ import { MediaAssetService } from '../../saas-platform/media/media-asset.service
     FormControlsModule,
     DisableIfNoFeatureDirective,
     GomButtonComponent,
+    GomCardComponent,
+    GomChipComponent,
+    GomModalComponent,
     GomTabsComponent,
     GomTabContentComponent,
   ],
@@ -49,6 +59,12 @@ export class StorefrontConfigComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly authSession = inject(AuthSessionService);
   private readonly translate = inject(TranslateService);
+
+  readonly pickupWeekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const;
+
+  readonly pickupScheduleRows = this.fb.array(
+    this.pickupWeekDays.map(() => this.createPickupScheduleRow())
+  );
 
   readonly loading = signal(false);
   readonly saving = signal(false);
@@ -67,7 +83,7 @@ export class StorefrontConfigComponent implements OnInit {
     { id: 'basic', label: 'Basic Settings' },
     { id: 'branding', label: 'Branding & Content' },
     { id: 'catalog', label: 'Catalog & Banners' },
-    { id: 'commerce', label: 'Delivery & Payments' },
+    { id: 'commerce', label: 'Delivery/Payments' },
   ];
 
   readonly activeTab = signal<'basic' | 'branding' | 'catalog' | 'commerce'>('basic');
@@ -102,6 +118,30 @@ export class StorefrontConfigComponent implements OnInit {
     { value: 'NET_BANKING', label: 'Net Banking' },
   ];
 
+  readonly fulfillmentOptions = [
+    { value: 'DELIVERY', label: 'Delivery Only' },
+    { value: 'PICKUP', label: 'Come & Collect Only' },
+    { value: 'BOTH', label: 'Both Delivery and Collect' },
+  ];
+
+  readonly showDeliveryModal = signal(false);
+  readonly showPickupModal = signal(false);
+  readonly editingPickupIndex = signal<number | null>(null);
+
+  readonly deliveryEditorForm = this.fb.group({
+    deliveryCharge: [0, [Validators.min(0)]],
+    deliveryChargeNote: [''],
+    estimatedDeliveryDays: [0, [Validators.min(0)]],
+    minimumOrderValue: [0, [Validators.min(0)]],
+  });
+
+  readonly pickupEditorForm = this.fb.group({
+    completeAddress: [''],
+    mapUrl: [''],
+    pickupInstructions: [''],
+    alwaysOpen: [false],
+  });
+
   readonly configForm = this.fb.group({
     enabled: [true],
     logoUrl: [''],
@@ -120,10 +160,18 @@ export class StorefrontConfigComponent implements OnInit {
     instagramSocial: [''],
     facebookSocial: [''],
     showPacks: [true],
+    fulfillmentMode: ['DELIVERY'],
     deliveryCharge: [0, [Validators.min(0)]],
     deliveryChargeNote: [''],
     estimatedDeliveryDays: [0, [Validators.min(0)]],
+    pickupLocations: this.fb.array([this.createPickupLocationGroup()]) as FormArray,
+    pickupWindowType: ['DAYS'],
+    pickupWindowValue: [2, [Validators.min(1), Validators.max(365)]],
+    pickupAdvanceDays: [0, [Validators.min(0), Validators.max(30)]],
+    pickupSameDayLeadMinutes: [0, [Validators.min(0), Validators.max(1440)]],
     minimumOrderValue: [0, [Validators.min(0)]],
+    allowCustomerCancellation: [true],
+    cancellationWindowMinutes: [0, [Validators.min(0), Validators.max(10080)]],
     whatsappNumber: [''],
     paymentCOD: [true],
     paymentUPI: [false],
@@ -132,8 +180,42 @@ export class StorefrontConfigComponent implements OnInit {
     banners: this.fb.array([]) as FormArray,
   });
 
+  readonly fulfillmentModeValue = toSignal(
+    this.configForm.controls.fulfillmentMode.valueChanges.pipe(
+      startWith(this.configForm.controls.fulfillmentMode.value)
+    ),
+    { initialValue: this.configForm.controls.fulfillmentMode.value }
+  );
+
+  readonly selectedFulfillmentMode = computed(() =>
+    String(this.fulfillmentModeValue() || 'DELIVERY') as FulfillmentMode
+  );
+
+  readonly shouldShowDeliveryFields = computed(() => {
+    const mode = this.selectedFulfillmentMode();
+    return mode === 'DELIVERY' || mode === 'BOTH';
+  });
+
+  readonly shouldShowPickupFields = computed(() => {
+    const mode = this.selectedFulfillmentMode();
+    return mode === 'PICKUP' || mode === 'BOTH';
+  });
+
+  readonly pickupWindowTypeValue = toSignal(
+    this.configForm.controls.pickupWindowType.valueChanges.pipe(
+      startWith(this.configForm.controls.pickupWindowType.value)
+    ),
+    { initialValue: this.configForm.controls.pickupWindowType.value }
+  );
+
+  readonly isHoursWindow = computed(() => this.pickupWindowTypeValue() === 'HOURS');
+
   get banners(): FormArray {
     return this.configForm.get('banners') as FormArray;
+  }
+
+  get pickupLocations(): FormArray {
+    return this.configForm.get('pickupLocations') as FormArray;
   }
 
   ngOnInit(): void {
@@ -231,6 +313,7 @@ export class StorefrontConfigComponent implements OnInit {
       instagramSocial: cfg.socialLinks?.instagram || '',
       facebookSocial: cfg.socialLinks?.facebook || '',
       showPacks: this.normalizeBoolean(cfg.showPacks, true),
+      fulfillmentMode: cfg.fulfillmentMode || 'DELIVERY',
       deliveryCharge: cfg.deliveryCharge ?? 0,
       deliveryChargeNote: cfg.deliveryChargeNote || '',
       estimatedDeliveryDays: cfg.estimatedDeliveryDays ?? 0,
@@ -240,6 +323,12 @@ export class StorefrontConfigComponent implements OnInit {
       paymentUPI: (cfg.paymentMethods || []).includes('UPI'),
       paymentCARD: (cfg.paymentMethods || []).includes('CARD'),
       paymentNET_BANKING: (cfg.paymentMethods || []).includes('NET_BANKING'),
+      pickupWindowType: cfg.pickupWindowType || 'DAYS',
+      pickupWindowValue: cfg.pickupWindowValue ?? 2,
+      pickupAdvanceDays: cfg.pickupAdvanceDays ?? 0,
+      pickupSameDayLeadMinutes: cfg.pickupSameDayLeadMinutes ?? 0,
+      allowCustomerCancellation: cfg.allowCustomerCancellation !== false,
+      cancellationWindowMinutes: cfg.cancellationWindowMinutes ?? 0,
     });
 
     // Rebuild banners FormArray
@@ -247,7 +336,343 @@ export class StorefrontConfigComponent implements OnInit {
     for (const banner of cfg.bannerImages || []) {
       this.banners.push(this.createBannerGroup(banner));
     }
+
+    const resolvedPickupLocations = (cfg.pickupLocations?.length)
+      ? cfg.pickupLocations
+      : [cfg.pickupConfig || {}];
+    this.pickupLocations.clear();
+    resolvedPickupLocations.forEach((location, index) => {
+      this.pickupLocations.push(this.createPickupLocationGroup(this.normalizePickupLocation(location, index)));
+    });
+    if (!this.pickupLocations.length) {
+      this.pickupLocations.push(this.createPickupLocationGroup());
+    }
+
     this.bannerWarnings.set({});
+  }
+
+  private normalizePickupLocation(location: Partial<PickupConfig> | undefined, index: number) {
+    return {
+      locationId: String(location?.locationId || (index === 0 ? 'primary' : `location-${index + 1}`)).trim(),
+      locationName: String(location?.locationName || (index === 0 ? 'Main Store' : `Pickup Location ${index + 1}`)).trim(),
+      storeAddressLine1: location?.storeAddressLine1 || '',
+      storeAddressLine2: location?.storeAddressLine2 || '',
+      city: location?.city || '',
+      state: location?.state || '',
+      postalCode: location?.postalCode || '',
+      mapUrl: location?.mapUrl || '',
+      latitude: location?.latitude ?? null,
+      longitude: location?.longitude ?? null,
+      pickupInstructions: location?.pickupInstructions || '',
+      pickupTimingText: location?.pickupTimingText || '',
+    };
+  }
+
+  private createPickupLocationGroup(location?: {
+    locationId?: string;
+    locationName?: string;
+    storeAddressLine1?: string;
+    storeAddressLine2?: string;
+    city?: string;
+    state?: string;
+    postalCode?: string;
+    mapUrl?: string;
+    latitude?: number | null;
+    longitude?: number | null;
+    pickupInstructions?: string;
+    pickupTimingText?: string;
+  }): FormGroup {
+    return this.fb.group({
+      locationId: [location?.locationId || ''],
+      locationName: [location?.locationName || ''],
+      storeAddressLine1: [location?.storeAddressLine1 || ''],
+      storeAddressLine2: [location?.storeAddressLine2 || ''],
+      city: [location?.city || ''],
+      state: [location?.state || ''],
+      postalCode: [location?.postalCode || ''],
+      mapUrl: [location?.mapUrl || ''],
+      latitude: [location?.latitude ?? null],
+      longitude: [location?.longitude ?? null],
+      pickupInstructions: [location?.pickupInstructions || ''],
+      pickupTimingText: [location?.pickupTimingText || ''],
+    });
+  }
+
+  removePickupLocation(index: number): void {
+    if (!this.canWrite() || this.pickupLocations.length <= 1) {
+      return;
+    }
+
+    this.pickupLocations.removeAt(index);
+  }
+
+  setFulfillmentMode(mode: FulfillmentMode): void {
+    if (!this.canWrite()) {
+      return;
+    }
+
+    this.configForm.controls.fulfillmentMode.setValue(mode);
+  }
+
+  getFulfillmentChipTone(mode: FulfillmentMode): GomChipTone {
+    return this.selectedFulfillmentMode() === mode ? 'info' : 'neutral';
+  }
+
+  getPaymentOptionLabel(method: PaymentMethod): string {
+    if (method !== 'COD') {
+      return this.paymentOptions.find((option) => option.value === method)?.label || method;
+    }
+
+    const mode = this.selectedFulfillmentMode();
+    if (mode === 'PICKUP') {
+      return 'Pay at Pickup';
+    }
+    if (mode === 'BOTH') {
+      return 'Cash on Delivery / Pay at Pickup';
+    }
+    return 'Cash on Delivery';
+  }
+
+  openDeliveryEditor(): void {
+    this.deliveryEditorForm.patchValue({
+      deliveryCharge: Number(this.configForm.controls.deliveryCharge.value ?? 0),
+      deliveryChargeNote: this.configForm.controls.deliveryChargeNote.value || '',
+      estimatedDeliveryDays: Number(this.configForm.controls.estimatedDeliveryDays.value ?? 0),
+      minimumOrderValue: Number(this.configForm.controls.minimumOrderValue.value ?? 0),
+    });
+    this.showDeliveryModal.set(true);
+  }
+
+  closeDeliveryEditor(): void {
+    this.showDeliveryModal.set(false);
+  }
+
+  saveDeliveryEditor(): void {
+    if (this.deliveryEditorForm.invalid) {
+      this.deliveryEditorForm.markAllAsTouched();
+      return;
+    }
+
+    const raw = this.deliveryEditorForm.getRawValue();
+    this.configForm.patchValue({
+      deliveryCharge: Number(raw.deliveryCharge ?? 0),
+      deliveryChargeNote: raw.deliveryChargeNote || '',
+      estimatedDeliveryDays: Number(raw.estimatedDeliveryDays ?? 0),
+      minimumOrderValue: Number(raw.minimumOrderValue ?? 0),
+    });
+    this.showDeliveryModal.set(false);
+  }
+
+  openPickupEditor(index?: number): void {
+    const targetIndex = typeof index === 'number' ? index : null;
+    this.editingPickupIndex.set(targetIndex);
+    this.resetPickupScheduleRows();
+
+    if (targetIndex === null) {
+      this.pickupEditorForm.patchValue({
+        completeAddress: '',
+        mapUrl: '',
+        pickupInstructions: '',
+        alwaysOpen: false,
+      });
+    } else {
+      const locationControl = this.pickupLocations.at(targetIndex) as FormGroup;
+      const locationRaw = locationControl.getRawValue();
+      this.pickupEditorForm.patchValue({
+        completeAddress: this.composeCompleteAddress(locationRaw),
+        mapUrl: String(locationRaw.mapUrl || ''),
+        pickupInstructions: String(locationRaw.pickupInstructions || ''),
+        alwaysOpen: /^24\s*x\s*7$/i.test(String(locationRaw.pickupTimingText || '')),
+      });
+      if (this.isPickupAlwaysOpen) {
+        this.setPickupAlwaysOpen(true);
+      }
+    }
+
+    this.showPickupModal.set(true);
+  }
+
+  closePickupEditor(): void {
+    this.showPickupModal.set(false);
+    this.editingPickupIndex.set(null);
+  }
+
+  savePickupEditor(): void {
+    if (this.pickupEditorForm.invalid) {
+      this.pickupEditorForm.markAllAsTouched();
+      return;
+    }
+
+    const raw = this.pickupEditorForm.getRawValue();
+    const pickupTimingText = this.buildPickupTimingText();
+    const targetIndex = this.editingPickupIndex();
+    const resolvedIndex = targetIndex ?? this.pickupLocations.length;
+    const normalized = this.normalizePickupLocation(
+      {
+        storeAddressLine1: String(raw.completeAddress || '').trim(),
+        storeAddressLine2: '',
+        city: '',
+        state: '',
+        postalCode: '',
+        mapUrl: raw.mapUrl || '',
+        latitude: null,
+        longitude: null,
+        pickupInstructions: raw.pickupInstructions || '',
+        pickupTimingText,
+      },
+      resolvedIndex
+    );
+
+    if (targetIndex === null) {
+      this.pickupLocations.push(this.createPickupLocationGroup(normalized));
+    } else {
+      const locationControl = this.pickupLocations.at(targetIndex) as FormGroup;
+      locationControl.patchValue(normalized);
+    }
+
+    this.showPickupModal.set(false);
+    this.editingPickupIndex.set(null);
+  }
+
+  getPickupLocationTitle(location: FormGroup, index: number): string {
+    const locationName = String(location.get('locationName')?.value || '').trim();
+    if (locationName) {
+      return locationName;
+    }
+
+    return `Pickup Location ${index + 1}`;
+  }
+
+  getPickupAddressSummary(location: FormGroup): string {
+    const line1 = String(location.get('storeAddressLine1')?.value || '').trim();
+    const line2 = String(location.get('storeAddressLine2')?.value || '').trim();
+    const city = String(location.get('city')?.value || '').trim();
+    const state = String(location.get('state')?.value || '').trim();
+    const postalCode = String(location.get('postalCode')?.value || '').trim();
+
+    const parts = [line1, line2, city, state, postalCode].filter((part) => !!part);
+    return parts.join(', ') || 'Address details not added yet.';
+  }
+
+  canOpenPickupMap(): boolean {
+    const mapUrl = String(this.pickupEditorForm.controls.mapUrl.value || '').trim();
+    return /^https?:\/\//i.test(mapUrl);
+  }
+
+  openPickupMapLink(): void {
+    const mapUrl = String(this.pickupEditorForm.controls.mapUrl.value || '').trim();
+    if (!/^https?:\/\//i.test(mapUrl)) {
+      return;
+    }
+
+    window.open(mapUrl, '_blank', 'noopener');
+  }
+
+  setPickupAlwaysOpen(checked: boolean): void {
+    this.pickupEditorForm.controls.alwaysOpen.setValue(checked);
+
+    this.pickupScheduleRows.controls.forEach((group) => {
+      const row = group;
+      if (checked) {
+        row.patchValue({ enabled: true, open: '00:00', close: '23:59' });
+      } else {
+        row.patchValue({ enabled: false, open: '09:00', close: '21:00' });
+      }
+    });
+  }
+
+  get isPickupAlwaysOpen(): boolean {
+    return !!this.pickupEditorForm.controls.alwaysOpen.value;
+  }
+
+  setPickupDayEnabled(index: number, enabled: boolean): void {
+    const row = this.pickupScheduleRows.at(index);
+
+    if (this.isPickupAlwaysOpen && !enabled) {
+      this.pickupEditorForm.controls.alwaysOpen.setValue(false);
+    }
+
+    row.controls['enabled'].setValue(enabled);
+
+    if (!enabled) {
+      return;
+    }
+
+    const open = String(row.controls['open'].value || '').trim();
+    const close = String(row.controls['close'].value || '').trim();
+    if (!open) {
+      row.controls['open'].setValue('09:00');
+    }
+    if (!close) {
+      row.controls['close'].setValue('21:00');
+    }
+  }
+
+  isPickupDayEnabled(index: number): boolean {
+    const row = this.pickupScheduleRows.at(index);
+    return !!row.controls['enabled'].value;
+  }
+
+  private createPickupScheduleRow(): FormGroup {
+    return this.fb.group({
+      enabled: [true],
+      open: ['09:00'],
+      close: ['21:00'],
+    });
+  }
+
+  private resetPickupScheduleRows(): void {
+    this.pickupEditorForm.controls.alwaysOpen.setValue(false);
+    this.pickupScheduleRows.controls.forEach((group) => {
+      const row = group;
+      row.patchValue({
+        enabled: false,
+        open: '09:00',
+        close: '21:00',
+      });
+    });
+  }
+
+  private buildPickupTimingText(): string {
+    if (this.isPickupAlwaysOpen) {
+      return '24x7';
+    }
+
+    return this.pickupScheduleRows.controls
+      .map((group, index) => {
+        const row = group;
+        const dayLabel = this.pickupWeekDays[index] || 'Mon';
+        const enabled = !!row.controls['enabled'].value;
+        if (!enabled) {
+          return `${dayLabel} Closed`;
+        }
+
+        const open = String(row.controls['open'].value || '09:00').trim() || '09:00';
+        const close = String(row.controls['close'].value || '21:00').trim() || '21:00';
+        return `${dayLabel} ${open}-${close}`;
+      })
+      .join(' | ');
+  }
+
+  private composeCompleteAddress(location: Record<string, unknown>): string {
+    const toText = (value: unknown): string => {
+      if (typeof value === 'string') {
+        return value.trim();
+      }
+      if (typeof value === 'number') {
+        return String(value).trim();
+      }
+      return '';
+    };
+    const parts = [
+      toText(location['storeAddressLine1']),
+      toText(location['storeAddressLine2']),
+      toText(location['city']),
+      toText(location['state']),
+      toText(location['postalCode']),
+    ].filter((part) => !!part);
+
+    return parts.join(', ');
   }
 
   private createBannerGroup(banner?: BannerImage): FormGroup {
@@ -561,6 +986,24 @@ export class StorefrontConfigComponent implements OnInit {
     if (raw.paymentCARD) paymentMethods.push('CARD');
     if (raw.paymentNET_BANKING) paymentMethods.push('NET_BANKING');
 
+    const toSafeString = (value: unknown): string => {
+      if (typeof value === 'string') {
+        return value.trim();
+      }
+      if (typeof value === 'number' || typeof value === 'boolean') {
+        return String(value).trim();
+      }
+      return '';
+    };
+
+    const toNullableNumber = (value: unknown): number | null => {
+      if (value === null || value === '') {
+        return null;
+      }
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : null;
+    };
+
     const payload: Partial<StorefrontConfig> = {
       enabled: this.normalizeBoolean(raw.enabled, true),
       logoUrl: raw.logoUrl || '',
@@ -586,10 +1029,31 @@ export class StorefrontConfigComponent implements OnInit {
         facebook: raw.facebookSocial || '',
       },
       showPacks: this.normalizeBoolean(raw.showPacks, true),
+      fulfillmentMode: (raw.fulfillmentMode as FulfillmentMode) || 'DELIVERY',
       deliveryCharge: raw.deliveryCharge ?? 0,
       deliveryChargeNote: raw.deliveryChargeNote || '',
       estimatedDeliveryDays: raw.estimatedDeliveryDays ?? 0,
+      pickupLocations: ((raw.pickupLocations as Array<Record<string, unknown>>) || []).map((location, index) => ({
+        locationId: toSafeString(location['locationId']) || (index === 0 ? 'primary' : `location-${index + 1}`),
+        locationName: toSafeString(location['locationName']) || (index === 0 ? 'Main Store' : `Pickup Location ${index + 1}`),
+        storeAddressLine1: toSafeString(location['storeAddressLine1']),
+        storeAddressLine2: toSafeString(location['storeAddressLine2']),
+        city: toSafeString(location['city']),
+        state: toSafeString(location['state']),
+        postalCode: toSafeString(location['postalCode']),
+        mapUrl: toSafeString(location['mapUrl']),
+        latitude: toNullableNumber(location['latitude']),
+        longitude: toNullableNumber(location['longitude']),
+        pickupInstructions: toSafeString(location['pickupInstructions']),
+        pickupTimingText: toSafeString(location['pickupTimingText']),
+      })),
       minimumOrderValue: raw.minimumOrderValue ?? 0,
+      pickupWindowType: (raw.pickupWindowType as 'DAYS' | 'HOURS') || 'DAYS',
+      pickupWindowValue: Math.max(1, Number(raw.pickupWindowValue ?? 2)),
+      pickupAdvanceDays: Math.max(0, Number(raw.pickupAdvanceDays ?? 0)),
+      pickupSameDayLeadMinutes: Math.max(0, Number(raw.pickupSameDayLeadMinutes ?? 0)),
+      allowCustomerCancellation: raw.allowCustomerCancellation !== false,
+      cancellationWindowMinutes: Math.max(0, Number(raw.cancellationWindowMinutes ?? 0)),
       whatsappNumber: raw.whatsappNumber || '',
       paymentMethods,
     };

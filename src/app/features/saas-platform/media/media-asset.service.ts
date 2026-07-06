@@ -141,4 +141,24 @@ export class MediaAssetService {
       .patch<{ success: boolean }>(`${this.groupsUrl}/${groupId}/images/detach`, { remove })
       .pipe(map(() => undefined));
   }
+
+  // --- Variant Images ---
+
+  getVariantImages(variantId: string): Observable<GroupImage[]> {
+    return this.http
+      .get<GroupImagesResponse>(`${environment.apiBaseUrl}/variants/${variantId}/images`)
+      .pipe(map((res) => res.data));
+  }
+
+  attachVariantImages(variantId: string, add: GroupImageEntry[]): Observable<void> {
+    return this.http
+      .patch<{ success: boolean }>(`${environment.apiBaseUrl}/variants/${variantId}/images/attach`, { add })
+      .pipe(map(() => undefined));
+  }
+
+  detachVariantImages(variantId: string, remove: string[]): Observable<void> {
+    return this.http
+      .patch<{ success: boolean }>(`${environment.apiBaseUrl}/variants/${variantId}/images/detach`, { remove })
+      .pipe(map(() => undefined));
+  }
 }

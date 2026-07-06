@@ -442,17 +442,28 @@
         <div>
           <strong>Status:</strong>
           <button type="button" class="status-inline-link" (click)="openStatusHistoryModal(order)">
-            <gom-lib-chip [tone]="getStatusChipTone(order.status)">{{ order.status }}</gom-lib-chip>
+            <gom-lib-chip [tone]="getStatusChipTone(order.status)">{{ getViewOrderStatusLabel(order) }}</gom-lib-chip>
           </button>
         </div>
         <div><strong>Order Type:</strong> {{ order.orderType || '-' }}</div>
         <div><strong>Source:</strong> {{ order.orderSource }}</div>
         <div><strong>Customer Name:</strong> {{ viewOrderCustomerName }}</div>
         <div><strong>Customer Phone:</strong> {{ viewOrderCustomerPhone }}</div>
+        <div><strong>{{ viewOrderLocationTitle }}:</strong> {{ viewOrderLocationText }}</div>
+        @if (viewOrderIsPickup && viewOrderPickupTime) {
+          <div><strong>Preferred Pickup Time:</strong> {{ viewOrderPickupTime }}</div>
+        }
         <div><strong>Payment:</strong> {{ order.paymentStatus }}</div>
         <div><strong>Total:</strong> Rs {{ (order.pricingSnapshot.grandTotal || 0).toLocaleString() }}</div>
         <div><strong>Created:</strong> {{ order.createdAt | date: 'medium' }}</div>
       </div>
+
+      @if (viewOrderNotes) {
+        <h4 class="view-order-section-title">Operational Notes</h4>
+        <div class="view-order-summary-grid">
+          <div class="view-order-note-full"><strong>Notes:</strong> {{ viewOrderNotes }}</div>
+        </div>
+      }
 
       <h4 class="view-order-section-title">Offer & Profit Snapshot</h4>
       <div class="view-order-summary-grid">
@@ -561,16 +572,16 @@
     <h4 class="view-order-section-title">Status History</h4>
     @if (viewOrderTarget()?.timeline && viewOrderTarget()!.timeline!.length > 0) {
       <div class="view-order-timeline">
-        @for (event of viewOrderTarget()?.timeline; track $index; let isFirst = $first; let isLast = $last) {
+        @for (event of viewOrderTarget()?.timeline; track $index) {
           <div class="timeline-item">
-            <div class="timeline-marker" [class.timeline-marker--first]="isFirst">
+            <div class="timeline-marker">
               <i class="ri-check-line" aria-hidden="true"></i>
             </div>
             <div class="timeline-content">
               <div class="timeline-header">
                 <strong>
                   @if (event.fromStatus) {
-                    {{ event.fromStatus }} → {{ event.toStatus }}
+                    {{ getStatusHistoryLabel(event.fromStatus, viewOrderTarget()?.deliveryType) }} → {{ getStatusHistoryLabel(event.toStatus, viewOrderTarget()?.deliveryType) }}
                   } @else {
                     Order Created
                   }
@@ -619,16 +630,16 @@
 
     @if (statusHistoryTarget()?.timeline && statusHistoryTarget()!.timeline!.length > 0) {
       <div class="view-order-timeline">
-        @for (event of statusHistoryTarget()?.timeline; track $index; let isFirst = $first) {
+        @for (event of statusHistoryTarget()?.timeline; track $index) {
           <div class="timeline-item">
-            <div class="timeline-marker" [class.timeline-marker--first]="isFirst">
+            <div class="timeline-marker">
               <i class="ri-check-line" aria-hidden="true"></i>
             </div>
             <div class="timeline-content">
               <div class="timeline-header">
                 <strong>
                   @if (event.fromStatus) {
-                    {{ event.fromStatus }} → {{ event.toStatus }}
+                    {{ getStatusHistoryLabel(event.fromStatus, statusHistoryTarget()?.deliveryType) }} → {{ getStatusHistoryLabel(event.toStatus, statusHistoryTarget()?.deliveryType) }}
                   } @else {
                     Order Created
                   }

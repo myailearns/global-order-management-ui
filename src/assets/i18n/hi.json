@@ -1127,6 +1127,78 @@
       "previous": "पिछला",
       "next": "अगला"
     },
+    "variantsWorkspace": {
+      "title": "वन-पेज वैरिएंट वर्कस्पेस",
+      "subtitle": "एक ही जगह कई वैरिएंट बनाएं और हर रो का प्रिव्यू देखें।",
+      "actions": {
+        "autoGenerate": "ऑटो जनरेट",
+        "addRow": "रो जोड़ें",
+        "duplicate": "डुप्लिकेट",
+        "clearRows": "रो साफ करें",
+        "saveSelected": "चयनित सेव करें ({{count}})",
+        "saving": "सेव हो रहा है...",
+        "remove": "हटाएं",
+        "addOverride": "फील्ड जोड़ें",
+        "removeOverride": "ओवरराइड हटाएं"
+      },
+      "bulkApply": {
+        "additionalChargeLabel": "बल्क अतिरिक्त शुल्क",
+        "additionalChargePlaceholder": "राशि दर्ज करें",
+        "applyToSelected": "चयनित पर लागू करें",
+        "fieldOverridesLabel": "बल्क फील्ड ओवरराइड्स (JSON)",
+        "fieldOverridesPlaceholder": "{\"fabricCost\": 250, \"laborCharge\": 70}",
+        "applyOverridesToSelected": "चयनित पर ओवरराइड लागू करें"
+      },
+      "summary": {
+        "totalRows": "कुल रो: {{count}}",
+        "selectedRows": "चयनित: {{count}}",
+        "errorRows": "त्रुटि वाली रो: {{count}}"
+      },
+      "columns": {
+        "select": "चयन",
+        "quantity": "मात्रा",
+        "unit": "यूनिट",
+        "options": "विकल्प",
+        "additionalCharge": "अतिरिक्त शुल्क",
+        "fieldOverrides": "फील्ड ओवरराइड्स",
+        "displayName": "डिस्प्ले नाम",
+        "derivedSelling": "निकली हुई बिक्री कीमत",
+        "status": "स्थिति",
+        "action": "क्रिया"
+      },
+      "placeholders": {
+        "quantity": "मात्रा",
+        "unit": "यूनिट",
+        "displayName": "खाली छोड़ें तो ऑटो नाम",
+        "fieldOverrides": "ओवरराइड इनपुट का JSON ऑब्जेक्ट",
+        "fieldKey": "फील्ड की",
+        "fieldValue": "मान"
+      },
+      "state": {
+        "ready": "तैयार"
+      },
+      "toast": {
+        "selectGroupFirst": "कृपया पहले एक समूह चुनें।",
+        "noCombinations": "कोई नई कॉम्बिनेशन उपलब्ध नहीं है।",
+        "autoGenerateFailed": "वैरिएंट कॉम्बिनेशन जनरेट नहीं हो सके।",
+        "selectOneRow": "सेव करने के लिए कम से कम एक रो चुनें।",
+        "fixRowErrors": "चयनित वैरिएंट सेव करने से पहले रो की त्रुटियां ठीक करें।",
+        "invalidBulkAdditionalCharge": "मान्य गैर-नकारात्मक अतिरिक्त शुल्क दर्ज करें।",
+        "bulkApplySuccess": "चयनित रो पर अतिरिक्त शुल्क लागू कर दिया गया है।",
+        "bulkOverridesApplySuccess": "चयनित रो पर फील्ड ओवरराइड लागू कर दिए गए हैं।",
+        "saveFailed": "रो से वैरिएंट बनाना विफल रहा।",
+        "saveSuccess": "{{count}} वैरिएंट सफलतापूर्वक बनाए गए।"
+      },
+      "errors": {
+        "quantityPositive": "मात्रा शून्य से अधिक होनी चाहिए।",
+        "unitRequired": "यूनिट आवश्यक है।",
+        "additionalChargeNonNegative": "अतिरिक्त शुल्क शून्य या उससे अधिक होना चाहिए।",
+        "previewFailed": "इस रो के लिए प्राइस प्रिव्यू नहीं मिल सका।",
+        "fieldOverridesInvalid": "फील्ड ओवरराइड्स संख्यात्मक मानों के साथ वैध JSON ऑब्जेक्ट होना चाहिए।",
+        "duplicateCombination": "चयनित रो में डुप्लिकेट वैरिएंट कॉम्बिनेशन मिला।"
+      },
+      "empty": "शुरू करने के लिए मैन्युअली रो जोड़ें या ऑटो जनरेट का उपयोग करें।"
+    },
     "offers": {
       "title": "Offers",
       "subtitle": "Create, manage, and monitor promotional campaigns for your tenant.",

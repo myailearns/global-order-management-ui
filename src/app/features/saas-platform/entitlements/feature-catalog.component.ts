@@ -231,8 +231,6 @@ export class FeatureCatalogComponent implements OnInit {
   private loadFeatureTemplates(): void {
     // Load from embedded constant - no HTTP needed
     this.featureTemplates.set(FEATURE_TEMPLATES);
-    // eslint-disable-next-line no-console
-    console.log(`Loaded ${FEATURE_TEMPLATES.length} feature templates from embedded constant`);
   }
 
   onFeatureTemplateSelect(featureKey: string): void {

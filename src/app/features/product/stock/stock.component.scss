@@ -80,6 +80,38 @@
   i {
     font-size: 1.1rem;
   }
+
+  &--pricing-pending {
+    border-color: #1976d2;
+    background: rgba(25, 118, 210, 0.08);
+    color: #000;
+    display: flex;
+    width: 100%;
+    box-sizing: border-box;
+    margin-top: 0.75rem;
+
+    span {
+      flex: 1;
+    }
+  }
+}
+
+.stock-alert__action {
+  flex-shrink: 0;
+  padding: 0.25rem 0.75rem;
+  border: 1px solid #1976d2;
+  border-radius: 4px;
+  background: #1976d2;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:hover {
+    background: #1565c0;
+    border-color: #1565c0;
+  }
 }
 
 .master-page__table-shell {
@@ -101,6 +133,261 @@
     margin: theme.get-spacing(xxs) 0 0;
     color: theme.get-text(default-light);
   }
+}
+
+.stock-history-details {
+  margin-top: theme.get-spacing(sm);
+  border: theme.get-border-size(hairline) solid theme.get-border(standard);
+  border-radius: theme.get-radius(md);
+  padding: theme.get-spacing(sm);
+  background: rgba(25, 118, 210, 0.03);
+}
+
+.stock-history-details__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: theme.get-gap(sm);
+  margin-bottom: theme.get-spacing(sm);
+
+  h4 {
+    margin: 0;
+    @include theme.typography-heading(sm);
+  }
+
+  p {
+    margin: theme.get-spacing(xxs) 0 0;
+    color: theme.get-text(default-light);
+    font-size: 0.85rem;
+  }
+}
+
+.stock-history-details__cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: theme.get-gap(sm);
+}
+
+.stock-history-details__card {
+  border: theme.get-border-size(hairline) solid theme.get-border(standard);
+  border-radius: theme.get-radius(sm);
+  padding: theme.get-spacing(sm);
+  background: theme.get-background(standard);
+}
+
+.stock-history-details__label {
+  display: block;
+  margin-bottom: theme.get-spacing(xxs);
+  color: theme.get-text(default-light);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.stock-history-details__formula {
+  margin: 0;
+  font-size: 0.92rem;
+  color: theme.get-text(default);
+}
+
+.stock-history-details__summary {
+  margin-top: theme.get-spacing(sm);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: theme.get-gap(sm);
+
+  > div {
+    border: theme.get-border-size(hairline) solid theme.get-border(standard);
+    border-radius: theme.get-radius(sm);
+    padding: theme.get-spacing(xs) theme.get-spacing(sm);
+    background: theme.get-background(standard);
+  }
+
+  strong {
+    font-size: 1rem;
+    color: theme.get-text(primary);
+  }
+}
+
+.stock-history-details__components {
+  margin-top: theme.get-spacing(sm);
+  border: theme.get-border-size(hairline) solid theme.get-border(standard);
+  border-radius: theme.get-radius(sm);
+  padding: theme.get-spacing(sm);
+  background: theme.get-background(standard);
+
+  ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: theme.get-gap(xs);
+  }
+
+  li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: theme.get-gap(sm);
+    padding-bottom: theme.get-spacing(xxs);
+    border-bottom: theme.get-border-size(hairline) solid theme.get-border(standard);
+  }
+
+  li:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+}
+
+.stock-history-details__pricing-impact {
+  margin-top: theme.get-spacing(sm);
+  border: theme.get-border-size(hairline) solid theme.get-border(standard);
+  border-radius: theme.get-radius(sm);
+  padding: theme.get-spacing(sm);
+  background: theme.get-background(standard);
+
+  ul {
+    margin: theme.get-spacing(xs) 0 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: theme.get-gap(sm);
+  }
+
+  li {
+    padding-bottom: theme.get-spacing(sm);
+    border-bottom: theme.get-border-size(hairline) solid theme.get-border(standard);
+  }
+
+  li:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  p {
+    margin: theme.get-spacing(xxs) 0 0;
+    color: theme.get-text(default-light);
+    font-size: 0.85rem;
+  }
+}
+
+.stock-history-details__impact-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stock-history-details__group-impact {
+  margin-top: theme.get-spacing(xs);
+  margin-bottom: theme.get-spacing(sm);
+  padding: theme.get-spacing(xs);
+  border: theme.get-border-size(hairline) solid theme.get-border(standard);
+  border-radius: theme.get-radius(sm);
+  background: theme.get-background(secondary);
+}
+
+.stock-history-details__group-impact-count {
+  @include theme.typography-label;
+  color: theme.get-text(default-light);
+}
+
+.stock-history-details__variant-impact-accordion {
+  margin-top: theme.get-spacing(md);
+}
+
+.stock-history-details__impact-item {
+  display: grid;
+  gap: theme.get-gap(xs);
+  padding: theme.get-spacing(xs);
+  border: theme.get-border-size(hairline) solid theme.get-border(standard);
+  border-radius: theme.get-radius(sm);
+  background: theme.get-background(secondary);
+}
+
+.impact-item__header {
+  display: flex;
+  align-items: center;
+  gap: theme.get-gap(xs);
+  
+  strong {
+    @include theme.typography-body;
+    font-weight: 600;
+    color: theme.get-text(default);
+  }
+}
+
+.impact-item__prices {
+  display: grid;
+  gap: theme.get-gap(xs);
+}
+
+.impact-item__price-row {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: theme.get-gap(sm);
+  align-items: center;
+  font-size: 0.9rem;
+}
+
+.impact-item__label {
+  @include theme.typography-label;
+  color: theme.get-text(default-light);
+  font-weight: 500;
+}
+
+.impact-item__value {
+  display: flex;
+  align-items: center;
+  gap: theme.get-gap(xs);
+  flex-wrap: wrap;
+  
+  i {
+    color: theme.get-text(default-light);
+    font-size: 0.75rem;
+    flex-shrink: 0;
+  }
+
+  .old-value {
+    color: theme.get-text(default-light);
+    text-decoration: line-through;
+  }
+
+  .new-value {
+    @include theme.typography-body;
+    color: theme.get-text(default);
+    font-weight: 600;
+  }
+
+  .delta {
+    @include theme.typography-label;
+    color: theme.get-text(warning);
+    font-weight: 500;
+    
+    &.positive {
+      color: theme.get-text(success);
+    }
+  }
+}
+
+.impact-item__formula-note {
+  @include theme.typography-label;
+  color: theme.get-text(default-light);
+  padding-top: theme.get-spacing(xxs);
+  border-top: theme.get-border-size(hairline) solid theme.get-border(standard);
+}
+
+.stock-history-details__impact-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: theme.get-gap(xs);
+  color: theme.get-text(default-light);
+  font-size: 0.82rem;
+}
+
+.stock-history-details__empty {
+  margin: 0;
+  color: theme.get-text(default-light);
 }
 
 .form-grid {
@@ -128,8 +415,95 @@
     grid-template-columns: 1fr;
   }
 
+  .stock-history-details__header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .stock-history-details__cards,
+  .stock-history-details__summary {
+    grid-template-columns: 1fr;
+  }
+
   .modal-actions {
     display: grid;
     grid-template-columns: 1fr;
   }
+}
+
+// Pending price approvals accordion inbox
+.stock-pending-inbox {
+  display: block;
+  margin-top: theme.get-spacing(sm);
+  width: 100%;
+}
+
+.stock-pending-inbox__body {
+  display: flex;
+  flex-direction: column;
+  gap: theme.get-gap(xs);
+  padding: theme.get-spacing(xs) 0;
+}
+
+.stock-pending-inbox__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: theme.get-gap(sm);
+  padding: theme.get-spacing(xs) theme.get-spacing(sm);
+  border-radius: theme.get-radius(sm);
+  border: theme.get-border-size(hairline) solid theme.get-border(standard);
+  background: theme.get-background(standard);
+}
+
+.stock-pending-inbox__row-info {
+  display: flex;
+  align-items: center;
+  gap: theme.get-gap(sm);
+  flex: 1;
+  min-width: 0;
+}
+
+.stock-pending-inbox__group-name {
+  display: flex;
+  align-items: center;
+  gap: theme.get-gap(xs);
+  font-weight: 600;
+  color: theme.get-text(default);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  i {
+    color: #1976d2;
+    flex-shrink: 0;
+  }
+}
+
+.stock-pending-inbox__badge {
+  flex-shrink: 0;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(25, 118, 210, 0.1);
+  color: #000;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.stock-pending-inbox__loading {
+  display: flex;
+  align-items: center;
+  gap: theme.get-gap(xs);
+  padding: theme.get-spacing(xs) theme.get-spacing(sm);
+  color: theme.get-text(default-light);
+  font-size: 0.875rem;
+
+  i {
+    animation: spin 1s linear infinite;
+  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }

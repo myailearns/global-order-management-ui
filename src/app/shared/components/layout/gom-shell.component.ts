@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
@@ -9,6 +10,7 @@ import { GomAlertToastComponent, GomSelectComponent, GomSelectOption } from '@go
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { AppLanguage, I18nService } from '../../../core/i18n/i18n.service';
 import { AppCapability, UserActor } from '../../../core/auth/auth-session.model';
+import { environment } from '../../../../environments/environment';
 
 interface NavItem {
   label: string;
@@ -38,15 +40,17 @@ interface NavItem {
   templateUrl: './gom-shell.component.html',
   styleUrl: './gom-shell.component.scss',
 })
-export class GomShellComponent {
+export class GomShellComponent implements OnInit {
   private readonly i18n = inject(I18nService);
   private readonly router = inject(Router);
   private readonly authSession = inject(AuthSessionService);
+  private readonly http = inject(HttpClient);
 
   readonly menuOpen = signal(false);
   readonly desktopNavCollapsed = signal(false);
   readonly currentLanguage = signal<AppLanguage>(this.i18n.currentLanguage());
   readonly currentSession = this.authSession.session;
+  readonly pendingPricingCount = signal(0);
   private readonly currentUrl = toSignal(
     this.router.events.pipe(
       filter((event): event is NavigationEnd => event instanceof NavigationEnd),
@@ -152,6 +156,29 @@ export class GomShellComponent {
 
   toggleMenu(): void {
     this.menuOpen.update((open) => !open);
+  }
+
+  ngOnInit(): void {
+    this.loadPendingPricingCount();
+
+    this.router.events
+      .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
+      .subscribe(() => this.loadPendingPricingCount());
+  }
+
+  loadPendingPricingCount(): void {
+    const session = this.authSession.session();
+    if (session?.actorType !== 'tenant') return;
+    const headers = this.authSession.getTenantHeaders();
+    this.http
+      .get<{ success: boolean; data: { totalPending: number; groups: Array<{ groupId: string; pendingCount: number }> } }>(
+        `${environment.apiBaseUrl}/groups/pricing-refresh-suggestions/pending-groups`,
+        { headers }
+      )
+      .subscribe({
+        next: (res) => this.pendingPricingCount.set(Array.isArray(res?.data?.groups) ? res.data.groups.length : 0),
+        error: () => this.pendingPricingCount.set(0),
+      });
   }
 
   closeMenu(): void {

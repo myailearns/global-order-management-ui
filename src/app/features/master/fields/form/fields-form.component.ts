@@ -273,6 +273,40 @@ export class FieldsFormComponent implements OnInit, OnChanges {
     this.syncKeyGenerationMode();
   }
 
+  /**
+   * Public method to reset form to empty state for creating a new entry.
+   * Scrolls to top and focuses on the first input field.
+   */
+  resetForNewEntry(): void {
+    this.form.reset({
+      name: '',
+      key: '',
+      type: this.defaultType,
+      valueFormat: 'CURRENCY',
+      defaultValue: '',
+      isRequired: 'false',
+      status: this.defaultStatus,
+    });
+    this.selectedFieldGroupIds = [];
+    this.updateFormFieldVisibility(this.defaultType);
+    this.form.markAsPristine();
+    this.form.markAsUntouched();
+    
+    // Scroll to top and focus on first field
+    setTimeout(() => {
+      const modalElement = document.querySelector('.gom-modal__content');
+      if (modalElement) {
+        modalElement.scrollTop = 0;
+      }
+      
+      // Focus on first input (Field Name)
+      const firstInput = document.querySelector('.fields-form input[name="name"]') as HTMLInputElement;
+      if (firstInput) {
+        firstInput.focus();
+      }
+    }, 100);
+  }
+
   private resetFormState(): void {
     this.patchFormFromInitialData();
     this.selectedFieldGroupIds = [...this.initialAssignedFieldGroupIds];

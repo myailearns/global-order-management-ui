@@ -445,47 +445,202 @@
 
       <gom-lib-tab-content tabId="commerce" [activeTab]="activeTab()">
         <fieldset class="settings-section">
-          <legend>Delivery Settings</legend>
-          <div class="settings-grid">
+          <legend>Fulfillment Mode</legend>
+          <p class="section-hint">Choose how customers receive orders.</p>
+          <p class="section-hint">Delivery Settings appear only when delivery is enabled. Pickup Details appear only when pickup is enabled.</p>
+          <p class="section-hint">Support Contact and Payment Methods apply to all fulfillment modes.</p>
+          <div class="fulfillment-chip-row">
+            @for (option of fulfillmentOptions; track option.value) {
+              <button
+                type="button"
+                class="fulfillment-chip-button"
+                [disabled]="!canWrite()"
+                (click)="setFulfillmentMode($any(option.value))"
+              >
+                <gom-lib-chip [tone]="getFulfillmentChipTone($any(option.value))">
+                  {{ option.label }}
+                </gom-lib-chip>
+              </button>
+            }
+          </div>
+        </fieldset>
+
+        @if (shouldShowDeliveryFields()) {
+          <fieldset class="settings-section">
+            <legend>Delivery Settings (Delivery Modes Only)</legend>
+            <gom-lib-card class="fulfillment-summary-card">
+              <div class="fulfillment-summary-card__header">
+                <div>
+                  <h4>Delivery Settings</h4>
+                  <p>Summary of your current delivery setup.</p>
+                </div>
+                <gom-lib-button
+                  type="button"
+                  variant="secondary"
+                  [gomDisableIfNoCapability]="'tenant-admin'"
+                  [disabled]="!canWrite()"
+                  (buttonClick)="openDeliveryEditor()">
+                  Edit
+                </gom-lib-button>
+              </div>
+
+              <div class="fulfillment-summary-card__grid">
+                <div>
+                  <span>Delivery Charge</span>
+                  <strong>{{ configForm.controls.deliveryCharge.value || 0 }}</strong>
+                </div>
+                <div>
+                  <span>Estimated Days</span>
+                  <strong>{{ configForm.controls.estimatedDeliveryDays.value || 0 }}</strong>
+                </div>
+                <div>
+                  <span>Minimum Order</span>
+                  <strong>{{ configForm.controls.minimumOrderValue.value || 0 }}</strong>
+                </div>
+              </div>
+
+              @if (configForm.controls.deliveryChargeNote.value) {
+                <p class="fulfillment-summary-card__note">{{ configForm.controls.deliveryChargeNote.value }}</p>
+              }
+            </gom-lib-card>
+          </fieldset>
+        }
+
+        @if (shouldShowPickupFields()) {
+          <fieldset class="settings-section">
+            <legend>Store Pickup Details (Pickup Modes Only)</legend>
+            <p class="section-hint">Manage one or more pickup addresses.</p>
+
+            <div class="section-actions section-actions--start">
+              <gom-lib-button
+                type="button"
+                variant="secondary"
+                [gomDisableIfNoCapability]="'tenant-admin'"
+                [disabled]="!canWrite()"
+                (buttonClick)="openPickupEditor()">
+                + Add New Address
+              </gom-lib-button>
+            </div>
+
+            <div class="pickup-location-list">
+              @for (location of pickupLocations.controls; track $index; let i = $index) {
+                <gom-lib-card class="pickup-location-card pickup-location-card--summary" [formGroup]="$any(location)">
+                  <div class="pickup-location-card__header">
+                    <h4>{{ getPickupLocationTitle($any(location), i) }}</h4>
+                    <div class="pickup-location-card__actions">
+                      <button type="button" class="btn-icon-neutral" (click)="openPickupEditor(i)">
+                        <i class="ri-edit-line"></i>
+                      </button>
+                      @if (pickupLocations.length > 1) {
+                        <button type="button" class="btn-icon-danger" (click)="removePickupLocation(i)">
+                          <i class="ri-delete-bin-line"></i>
+                        </button>
+                      }
+                    </div>
+                  </div>
+                  <p class="pickup-location-card__summary">{{ getPickupAddressSummary($any(location)) }}</p>
+                  @if ($any(location).controls.pickupTimingText.value) {
+                    <p class="pickup-location-card__meta">Pickup: {{ $any(location).controls.pickupTimingText.value }}</p>
+                  }
+                </gom-lib-card>
+              }
+            </div>
+          </fieldset>
+
+          <fieldset class="settings-section">
+            <legend>Pickup Booking Window (Pickup Modes Only)</legend>
+            <p class="section-hint">Set how far ahead customers can book a pickup slot, and the minimum notice for same-day orders.</p>
+
+            <div class="settings-grid settings-grid--2col">
+              <gom-lib-input
+                label="Advance days (0 = today only, 1 = tomorrow too, …)"
+                type="number"
+                [formControl]="$any(configForm.controls.pickupAdvanceDays)"
+              ></gom-lib-input>
+
+              <gom-lib-input
+                label="Same-day lead time (minutes, 0 = no restriction)"
+                type="number"
+                [formControl]="$any(configForm.controls.pickupSameDayLeadMinutes)"
+              ></gom-lib-input>
+            </div>
+
+            <p class="section-hint--compact">
+              @if ((configForm.controls.pickupAdvanceDays.value ?? 0) === 0) {
+                Customers can only book pickup for <strong>today</strong>.
+              } @else {
+                Customers can book up to <strong>{{ configForm.controls.pickupAdvanceDays.value }} day(s) ahead</strong>.
+              }
+              @if ((configForm.controls.pickupSameDayLeadMinutes.value ?? 0) > 0) {
+                For same-day orders, at least
+                @if ((configForm.controls.pickupSameDayLeadMinutes.value ?? 0) >= 60) {
+                  <strong>{{ ((configForm.controls.pickupSameDayLeadMinutes.value ?? 0) / 60) | number:'1.0-1' }} hr(s)</strong>
+                } @else {
+                  <strong>{{ configForm.controls.pickupSameDayLeadMinutes.value }} min(s)</strong>
+                }
+                notice required.
+              }
+            </p>
+          </fieldset>
+        }
+
+        <fieldset class="settings-section">
+          <legend>Support Contact (All Fulfillment Modes)</legend>
+          <p class="section-hint">Used for customer order share and quick support chat.</p>
+          <div class="settings-grid settings-grid--2col">
             <gom-lib-input
-              label="Delivery Charge"
-              type="number"
-              [formControl]="configForm.controls.deliveryCharge"
-            ></gom-lib-input>
-            <gom-lib-input
-              label="Delivery Charge Note"
-              placeholder="Free delivery on orders above 500"
-              [formControl]="configForm.controls.deliveryChargeNote"
-            ></gom-lib-input>
-            <gom-lib-input
-              label="Estimated Delivery Days"
-              type="number"
-              [formControl]="configForm.controls.estimatedDeliveryDays"
-              hint="Set to 0 to hide delivery estimate from customers. Per-order estimates can be set at dispatch."
-            ></gom-lib-input>
-            <gom-lib-input
-              label="Minimum Order Value"
-              type="number"
-              [formControl]="configForm.controls.minimumOrderValue"
-            ></gom-lib-input>
-            <gom-lib-input
-              label="WhatsApp Support Number"
-              placeholder="+919876543210"
+              label="Order Support WhatsApp"
               [formControl]="configForm.controls.whatsappNumber"
             ></gom-lib-input>
           </div>
         </fieldset>
 
         <fieldset class="settings-section">
-          <legend>Payment Methods</legend>
+          <legend>Payment Methods (All Fulfillment Modes)</legend>
+          @if (selectedFulfillmentMode() === 'PICKUP') {
+            <p class="section-hint">For pickup-only mode, COD is shown to customers as Pay at Pickup.</p>
+          }
           <div class="settings-grid settings-grid--2col">
             @for (pm of paymentOptions; track pm.value) {
               <gom-lib-checkbox
-                [label]="pm.label"
+                [label]="getPaymentOptionLabel(pm.value)"
                 [formControl]="$any(configForm.get('payment' + pm.value))"
               ></gom-lib-checkbox>
             }
           </div>
+        </fieldset>
+
+        <fieldset class="settings-section">
+          <legend>Order Cancellation Policy (All Fulfillment Modes)</legend>
+          <p class="section-hint">Control whether customers can cancel placed orders and for how long.</p>
+
+          <div class="settings-grid settings-grid--2col">
+            <gom-lib-checkbox
+              label="Allow customers to cancel orders"
+              [formControl]="$any(configForm.controls.allowCustomerCancellation)"
+            ></gom-lib-checkbox>
+          </div>
+
+          @if (configForm.controls.allowCustomerCancellation.value) {
+            <div class="settings-grid settings-grid--2col" style="margin-top: 0.75rem">
+              <gom-lib-input
+                label="Cancellation window (minutes, 0 = no limit)"
+                type="number"
+                [formControl]="$any(configForm.controls.cancellationWindowMinutes)"
+              ></gom-lib-input>
+            </div>
+            <p class="section-hint--compact">
+              @if ((configForm.controls.cancellationWindowMinutes.value ?? 0) === 0) {
+                Customers can cancel anytime while the order is in <strong>Placed</strong> status.
+              } @else if ((configForm.controls.cancellationWindowMinutes.value ?? 0) < 60) {
+                Customers can cancel within <strong>{{ configForm.controls.cancellationWindowMinutes.value }} minute(s)</strong> of placing the order.
+              } @else {
+                Customers can cancel within <strong>{{ (configForm.controls.cancellationWindowMinutes.value! / 60) | number:'1.0-1' }} hour(s)</strong> of placing the order.
+              }
+            </p>
+          } @else {
+            <p class="section-hint--compact">Cancel button will be <strong>hidden</strong> from customers.</p>
+          }
         </fieldset>
       </gom-lib-tab-content>
     </gom-lib-tabs>
@@ -500,5 +655,139 @@
         {{ saving() ? 'Saving...' : 'Save Storefront Settings' }}
       </gom-lib-button>
     </div>
+
+    <gom-lib-modal
+      title="Edit Delivery Settings"
+      [(show)]="showDeliveryModal"
+      size="small">
+      <div class="settings-grid">
+        <gom-lib-input
+          label="Delivery Charge"
+          type="number"
+          [formControl]="deliveryEditorForm.controls.deliveryCharge"
+        ></gom-lib-input>
+
+        <gom-lib-input
+          label="Delivery Charge Note"
+          [formControl]="deliveryEditorForm.controls.deliveryChargeNote"
+        ></gom-lib-input>
+
+        <gom-lib-input
+          label="Estimated Delivery Days"
+          type="number"
+          [formControl]="deliveryEditorForm.controls.estimatedDeliveryDays"
+        ></gom-lib-input>
+
+        <gom-lib-input
+          label="Minimum Order Value"
+          type="number"
+          [formControl]="deliveryEditorForm.controls.minimumOrderValue"
+        ></gom-lib-input>
+      </div>
+
+      <footer class="gom-modal__action-layout" gom-modal-actions>
+        <div class="gom-modal__action-layout-start"></div>
+        <div class="gom-modal__action-layout-end">
+          <gom-lib-button type="button" variant="secondary" (buttonClick)="closeDeliveryEditor()">Cancel</gom-lib-button>
+          <gom-lib-button type="button" variant="primary" (buttonClick)="saveDeliveryEditor()">Apply</gom-lib-button>
+        </div>
+      </footer>
+    </gom-lib-modal>
+
+    <gom-lib-modal
+      [title]="editingPickupIndex() === null ? 'Add Pickup Address' : 'Edit Pickup Address'"
+      [(show)]="showPickupModal"
+      size="large">
+      <div class="settings-grid">
+        <gom-lib-textarea
+          label="Complete Pickup Address"
+          [rows]="4"
+          placeholder="Shop 14, Lakshmi Arcade, Near Bus Stand, MG Road, Coimbatore, Tamil Nadu 641001"
+          [formControl]="pickupEditorForm.controls.completeAddress"
+        ></gom-lib-textarea>
+
+        <div class="pickup-map-helper">
+          <gom-lib-input
+            label="Google Maps Location Link"
+            placeholder="https://maps.google.com/..."
+            [formControl]="pickupEditorForm.controls.mapUrl"
+          ></gom-lib-input>
+
+          <p class="section-hint section-hint--compact">
+            Open Google Maps, search your shop, tap Share, and paste the link here.
+          </p>
+
+          @if (canOpenPickupMap()) {
+            <gom-lib-button type="button" variant="secondary" (buttonClick)="openPickupMapLink()">
+              Open Map
+            </gom-lib-button>
+          }
+        </div>
+
+        <div class="pickup-schedule-card">
+          <div class="pickup-schedule-card__header">
+            <div>
+              <h4>Pickup Timing</h4>
+              <p class="section-hint section-hint--compact">Set 24x7 or configure different timings for each day.</p>
+            </div>
+            <div class="pickup-schedule-card__toggle">
+              <span>Open 24x7</span>
+              <gom-lib-switch
+                [checked]="isPickupAlwaysOpen"
+                (checkedChange)="setPickupAlwaysOpen($event)">
+              </gom-lib-switch>
+            </div>
+          </div>
+
+          <div class="pickup-schedule-grid">
+            @for (row of pickupScheduleRows.controls; track $index; let i = $index) {
+              <div class="pickup-schedule-row" [formGroup]="$any(row)">
+                <div class="pickup-schedule-row__day">
+                  <span>{{ pickupWeekDays[i] }}</span>
+                  <gom-lib-switch
+                    [checked]="isPickupDayEnabled(i)"
+                    [leftText]="''"
+                    [rightText]="''"
+                    [ariaLabel]="'Toggle ' + pickupWeekDays[i] + ' pickup availability'"
+                    (checkedChange)="setPickupDayEnabled(i, $event)">
+                  </gom-lib-switch>
+                </div>
+
+                <div class="pickup-schedule-row__time">
+                  <gom-lib-input
+                    type="text"
+                    label="Open"
+                    placeholder="09:00"
+                    [disabled]="!isPickupDayEnabled(i)"
+                    [formControl]="$any(row).controls.open">
+                  </gom-lib-input>
+
+                  <gom-lib-input
+                    type="text"
+                    label="Close"
+                    placeholder="21:00"
+                    [disabled]="!isPickupDayEnabled(i)"
+                    [formControl]="$any(row).controls.close">
+                  </gom-lib-input>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <gom-lib-input
+          label="Pickup Instructions"
+          [formControl]="pickupEditorForm.controls.pickupInstructions"
+        ></gom-lib-input>
+      </div>
+
+      <footer class="gom-modal__action-layout" gom-modal-actions>
+        <div class="gom-modal__action-layout-start"></div>
+        <div class="gom-modal__action-layout-end">
+          <gom-lib-button type="button" variant="secondary" (buttonClick)="closePickupEditor()">Cancel</gom-lib-button>
+          <gom-lib-button type="button" variant="primary" (buttonClick)="savePickupEditor()">Save Address</gom-lib-button>
+        </div>
+      </footer>
+    </gom-lib-modal>
   </form>
 </section>

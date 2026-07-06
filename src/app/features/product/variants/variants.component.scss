@@ -1,4 +1,4 @@
-@use "theme" as theme;
+﻿@use "theme" as theme;
 
 .master-page {
   display: grid;
@@ -43,267 +43,1058 @@
   background: theme.get-background(standard);
 }
 
-.form-grid {
-  display: grid;
-  gap: theme.get-gap(md);
-}
+// â”€â”€â”€ Variant Workspace Shell â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-.variants-form__actions {
-  width: 100%;
-}
-
-.variants-form__action {
-  justify-content: center;
-}
-
-// ── Form sections ──────────────────────────────────────────────────
-.form-section {
+.variant-workspace-shell {
+  margin: theme.get-spacing(xs) 0;
   border: theme.get-border-size(hairline) solid theme.get-border(standard);
   border-radius: theme.get-radius(md);
-  overflow: visible;
+  background: theme.get-background(standard);
+  overflow: hidden;
 }
 
-.form-section__header {
+// Header bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+.vws-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: theme.get-gap(sm);
+  padding: theme.get-spacing(sm) theme.get-spacing(md);
+  border-bottom: theme.get-border-size(hairline) solid theme.get-border(light);
+  background: theme.get-background(secondary);
+}
+
+.vws-header__info {
+  display: grid;
+  gap: theme.get-gap(xs);
+}
+
+.vws-header__title {
+  margin: 0;
+  @include theme.typography-heading(sm);
   display: flex;
   align-items: center;
   gap: theme.get-gap(xs);
-  padding: theme.get-spacing(xs) theme.get-spacing(sm);
+  color: theme.get-text(primary);
+
+  i { color: theme.get-text(primary); }
+}
+
+.vws-header__subtitle {
+  margin: 0;
+  @include theme.typography-body;
+  color: theme.get-text(hint);
+}
+
+.vws-header__actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: theme.get-gap(xs);
+}
+
+.vws-header__sep {
+  width: 1px;
+  height: 1.5rem;
+  background: theme.get-border(standard);
+  align-self: center;
+}
+
+.vws-bulk-toggle--active {
+  background: rgba(59, 130, 246, 0.1) !important;
+  border-color: theme.get-border(info) !important;
+  color: theme.get-text(info) !important;
+}
+
+// Stats chips â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+.vws-stats-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: theme.get-gap(xs);
+  padding: theme.get-spacing(xs) theme.get-spacing(md);
+  border-bottom: theme.get-border-size(hairline) solid theme.get-border(light);
+}
+
+.vws-stat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: theme.get-gap(xs);
+  padding: 0.2rem 0.55rem;
+  border-radius: theme.get-radius(full);
+  border: theme.get-border-size(hairline) solid theme.get-border(light);
+  font-size: theme.get-font-size(xs);
+  color: theme.get-text(hint);
   background: theme.get-background(secondary);
-  border-bottom: theme.get-border-size(hairline) solid theme.get-border(standard);
+}
+
+.vws-stat-chip--info {
+  border-color: theme.get-border(primary);
+  color: theme.get-text(primary);
+  background: theme.get-background(primary-light);
+}
+
+.vws-stat-chip--ok {
+  border-color: theme.get-border(success);
+  color: theme.get-text(success);
+  background: rgba(16, 185, 129, 0.07);
+}
+
+.vws-stat-chip--error {
+  border-color: theme.get-border(danger);
+  color: theme.get-text(danger);
+  background: rgba(239, 68, 68, 0.07);
+}
+
+// Collapsible bulk panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+.vws-bulk-panel {
+  display: grid;
+  gap: theme.get-gap(sm);
+  padding: theme.get-spacing(sm) theme.get-spacing(md);
+  border-bottom: theme.get-border-size(hairline) solid theme.get-border(light);
+  background: theme.get-background(tertiary);
+}
+
+.vws-bulk-panel__title {
+  display: flex;
+  align-items: center;
+  gap: theme.get-gap(xs);
   @include theme.typography-body;
   font-weight: 600;
   color: theme.get-text(primary);
 
-  i {
-    color: theme.get-text(hint);
-    font-size: 1rem;
+  i { color: theme.get-text(info); }
+}
+
+.vws-bulk-panel__hint {
+  font-weight: 400;
+  color: theme.get-text(hint);
+  font-size: theme.get-font-size(xs);
+}
+
+.vws-bulk-panel__cols {
+  display: grid;
+  grid-template-columns: minmax(16rem, 22rem);
+  gap: theme.get-gap(sm);
+}
+
+.vws-bulk-card--grow {
+  min-width: 0;
+}
+
+.vws-bulk-panel__cols:has(.vws-bulk-card--grow) {
+  grid-template-columns: minmax(16rem, 20rem) minmax(0, 1fr);
+}
+
+.vws-bulk-card {
+  display: grid;
+  gap: theme.get-gap(sm);
+  padding: theme.get-spacing(sm);
+  border-radius: theme.get-radius(md);
+  border: theme.get-border-size(hairline) solid theme.get-border(standard);
+  background: theme.get-background(standard);
+}
+
+.vws-bulk-card--compact {
+  align-content: start;
+}
+
+.vws-bulk-card--grow {
+  min-width: 0;
+}
+
+.vws-bulk-card__head {
+  font-size: theme.get-font-size(xs);
+  font-weight: 700;
+  color: theme.get-text(default);
+}
+
+.vws-bulk-card__copy {
+  margin: 0;
+  @include theme.typography-body;
+  font-size: theme.get-font-size(xs);
+  color: theme.get-text(hint);
+}
+
+.vws-bulk-card__controls {
+  display: flex;
+  align-items: flex-start;
+  gap: theme.get-gap(xs);
+
+  gom-lib-input,
+  gom-lib-textarea,
+  input[type="number"] { flex: 1 1 0; }
+}
+
+.vws-bulk-card__controls--stack {
+  flex-direction: column;
+}
+
+.vws-bulk-card__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (max-width: 980px) {
+  .vws-bulk-panel__cols {
+    grid-template-columns: 1fr;
+  }
+
+  .vws-bulk-card__controls {
+    flex-direction: column;
+  }
+
+  .vws-bulk-card__actions {
+    justify-content: flex-start;
   }
 }
 
-.form-section__badge {
-  display: inline-block;
-  margin-left: theme.get-gap(xs);
-  padding: 0 theme.get-spacing(xs);
-  border-radius: theme.get-radius(sm);
-  background: theme.get-background(standard);
-  border: theme.get-border-size(hairline) solid theme.get-border(standard);
-  @include theme.typography-body;
-  font-size: 0.7rem;
-  font-weight: 500;
+// Empty state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+.vws-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: theme.get-gap(sm);
+  padding: theme.get-spacing(xl) theme.get-spacing(md);
   color: theme.get-text(hint);
+
+  i {
+    font-size: 2.5rem;
+    opacity: 0.4;
+  }
+
+  p {
+    margin: 0;
+    @include theme.typography-body;
+    text-align: center;
+  }
+}
+
+// Table shell â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+.vws-table-shell {
+  overflow-x: auto;
+}
+
+.vws-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.vws-thead-row th {
+  padding: theme.get-spacing(xs) theme.get-spacing(sm);
+  background: theme.get-background(secondary);
+  border-bottom: theme.get-border-size(hairline) solid theme.get-border(standard);
+  color: theme.get-text(hint);
+  font-size: theme.get-font-size(xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.vws-row td {
+  padding: theme.get-spacing(xs) theme.get-spacing(sm);
+  border-bottom: theme.get-border-size(hairline) solid theme.get-border(light);
+  vertical-align: top;
+}
+
+.vws-row:last-child td {
+  border-bottom: none;
+}
+
+.vws-row--has-error td {
+  background: rgba(239, 68, 68, 0.04);
+}
+
+// Column widths
+
+.vws-col--check  { width: 2.25rem; }
+.vws-col--qty    { width: 6rem; }
+.vws-col--unit   { width: 8rem; }
+.vws-col--options { width: 10rem; }
+.vws-col--base-cost { width: 8rem; }
+.vws-col--charge { width: 7rem; }
+.vws-col--name   { min-width: 12rem; }
+.vws-col--price  { width: 7rem; }
+.vws-col--status { width: 6rem; }
+.vws-col--actions { width: 5.5rem; }
+
+// Option pills â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+.vws-option-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: theme.get-gap(xs);
+  align-items: center;
+  min-height: 2.25rem;
+}
+
+.vws-td--options {
   vertical-align: middle;
 }
 
-.form-section__body {
-  display: grid;
+.vws-option-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.35rem 0.2rem 0.45rem;
+  border-radius: theme.get-radius(full);
+  background: theme.get-background(secondary);
+  border: theme.get-border-size(hairline) solid theme.get-border(light);
+  font-size: theme.get-font-size(xs);
+  color: theme.get-text(default);
+  white-space: nowrap;
+}
+
+.vws-option-pill__label {
+  font-weight: 600;
+  color: theme.get-text(hint);
+  letter-spacing: 0.01em;
+
+  &::after { content: ':'; margin-right: 0.15rem; }
+}
+
+.vws-option-pill__value {
+  color: theme.get-text(primary);
+}
+
+.vws-dim {
+  color: theme.get-text(hint);
+  opacity: 0.5;
+}
+
+.vws-qty-input,
+.vws-base-cost-input {
+  width: 100%;
+  min-width: 0;
+  height: 2.25rem;
+  border: theme.get-border-size(hairline) solid theme.get-border(standard);
+  border-radius: theme.get-radius(sm);
+  background: theme.get-background(standard);
+  color: theme.get-text(primary);
+  padding: 0.52rem 0.65rem;
+  font-size: theme.get-font-size(sm);
+  @include theme.typography-body;
+  box-sizing: border-box;
+
+  &::placeholder {
+    color: theme.get-text(placeholder);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: theme.get-border(info);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+  }
+}
+
+// Field override chips â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+.vws-override-stack {
+  display: flex;
+  flex-direction: column;
+  gap: theme.get-gap(xs);
+}
+
+.vws-override-stack--bulk {
+  width: 100%;
+  max-width: 38rem;
+}
+
+.vws-override-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  border: theme.get-border-size(hairline) solid theme.get-border(standard);
+  border-radius: theme.get-radius(sm);
+  background: theme.get-background(secondary);
+  padding: 0.15rem 0.35rem;
+  min-width: 0;
+}
+
+.vws-override-chip__key,
+.vws-override-chip__val {
+  border: none;
+  background: transparent;
+  color: theme.get-text(primary);
+  font-size: theme.get-font-size(xs);
+  outline: none;
+  min-width: 0;
+
+  &::placeholder { color: theme.get-text(hint); }
+}
+
+.vws-override-chip__key {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  cursor: pointer;
+}
+
+.vws-override-chip__key { width: 6.25rem; }
+.vws-override-chip__val { width: 4rem; }
+
+.vws-override-chip__sep {
+  color: theme.get-text(hint);
+  font-size: theme.get-font-size(xs);
+  flex-shrink: 0;
+}
+
+.vws-override-chip__x {
+  border: none;
+  background: transparent;
+  color: theme.get-text(hint);
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  font-size: theme.get-font-size(xs);
+  flex-shrink: 0;
+
+  &:hover { color: theme.get-text(danger); }
+}
+
+.vws-override-add {
+  border: theme.get-border-size(hairline) dashed theme.get-border(standard);
+  border-radius: theme.get-radius(sm);
+  background: transparent;
+  color: theme.get-text(hint);
+  font-size: theme.get-font-size(xs);
+  padding: 0.2rem 0.5rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: theme.get-gap(xs);
+  align-self: flex-start;
+  transition: border-color 0.15s, color 0.15s;
+
+  &:hover {
+    border-color: theme.get-border(info);
+    color: theme.get-text(info);
+  }
+}
+
+// Price chip â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+.vws-price-chip {
+  display: inline-block;
+  font-weight: 700;
+  @include theme.typography-body;
+  color: theme.get-text(primary);
+}
+
+// Status pills â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+.vws-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: theme.get-gap(xs);
+  padding: 0.2rem 0.5rem;
+  border-radius: theme.get-radius(full);
+  font-size: theme.get-font-size(xs);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.vws-status-pill--ok {
+  background: rgba(16, 185, 129, 0.1);
+  border: theme.get-border-size(hairline) solid theme.get-border(success);
+  color: theme.get-text(success);
+}
+
+.vws-status-pill--error {
+  background: rgba(239, 68, 68, 0.1);
+  border: theme.get-border-size(hairline) solid theme.get-border(danger);
+  color: theme.get-text(danger);
+}
+
+// Icon action buttons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+.vws-td--actions {
+  white-space: nowrap;
+}
+
+.vws-icon-btn {
+  border: theme.get-border-size(hairline) solid theme.get-border(standard);
+  border-radius: theme.get-radius(sm);
+  background: theme.get-background(secondary);
+  color: theme.get-text(default);
+  width: 1.875rem;
+  height: 1.875rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+
+  & + & { margin-left: 0.25rem; }
+
+  &:hover {
+    border-color: theme.get-border(info);
+    color: theme.get-text(info);
+    background: rgba(59, 130, 246, 0.08);
+  }
+}
+
+.vws-icon-btn--danger {
+  &:hover {
+    border-color: theme.get-border(danger);
+    color: theme.get-text(danger);
+    background: rgba(239, 68, 68, 0.08);
+  }
+}
+
+// Accessibility â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.pricing-notification {
+  margin: theme.get-spacing(xs) 0;
+  border: theme.get-border-size(hairline) solid theme.get-border(info);
+  border-radius: theme.get-radius(md);
+  background: rgba(59, 130, 246, 0.05);
+
+  &::part(accordion-title) {
+    color: theme.get-text(info);
+    font-weight: 600;
+  }
+}
+
+.pricing-notification__body {
+  display: flex;
+  flex-direction: column;
   gap: theme.get-gap(sm);
   padding: theme.get-spacing(sm);
 }
 
-// ── Weight + Unit side by side ────────────────────────────────────
-.form-row {
+.pricing-notification__message {
+  display: flex;
+  align-items: center;
+  gap: theme.get-gap(xs);
+  margin: 0;
+  @include theme.typography-body;
+  color: theme.get-text(info);
+
+  i {
+    font-size: 1.25rem;
+    flex-shrink: 0;
+  }
+}
+
+.pricing-notification__warning {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: theme.get-radius(sm);
+  background: rgba(239, 68, 68, 0.1);
+  color: theme.get-text(danger);
+  font-weight: 600;
+
+  i {
+    font-size: 1rem;
+  }
+}
+
+.pricing-notification__actions {
+  display: flex;
+  gap: theme.get-gap(xs);
+  flex-wrap: wrap;
+}
+
+// ── Variant Form (Add/Edit Modal) ────────────────────────────────────────────
+
+.variant-form {
+  display: grid;
+  gap: theme.get-gap(lg);
+}
+
+.variant-form__section {
+  display: grid;
+  gap: theme.get-gap(sm);
+}
+
+.variant-form__section-title {
+  margin: 0;
+  @include theme.typography-heading(sm);
+  color: theme.get-text(primary);
+  font-weight: 600;
+  padding-bottom: theme.get-spacing(xs);
+  border-bottom: theme.get-border-size(hairline) solid theme.get-border(standard);
+}
+
+.variant-form__section-subtitle {
+  @include theme.typography-body;
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: theme.get-text(hint);
+  margin-left: theme.get-spacing(xs);
+}
+
+.variant-form__card {
+  display: grid;
+  gap: theme.get-gap(md);
+  padding: theme.get-spacing(md);
+  border-radius: theme.get-radius(md);
+  border: theme.get-border-size(hairline) solid theme.get-border(standard);
+  background: theme.get-background(standard);
+}
+
+.variant-form__row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: theme.get-gap(sm);
+  gap: theme.get-gap(md);
   align-items: start;
 }
 
-.total-weight-line {
+.variant-form__row--options {
+  grid-template-columns: repeat(auto-fit, minmax(45%, 1fr));
+}
+
+.variant-form__summary {
   display: flex;
   align-items: center;
   gap: theme.get-gap(xs);
   padding: theme.get-spacing(xs) theme.get-spacing(sm);
-  border: theme.get-border-size(hairline) solid theme.get-border(primary);
+  border: theme.get-border-size(hairline) solid theme.get-border(info);
   border-radius: theme.get-radius(sm);
-  background: theme.get-background(secondary);
+  background: rgba(59, 130, 246, 0.05);
   @include theme.typography-body;
-  color: theme.get-text(primary);
-  font-size: 0.82rem;
+  color: theme.get-text(info);
+  font-size: 0.875rem;
 
   i {
-    font-size: 0.95rem;
+    font-size: 1rem;
   }
 }
 
-// ── Pricing mode context hint ─────────────────────────────────────
-.pricing-mode-hint {
+.variant-form__hint {
   display: flex;
   align-items: flex-start;
   gap: theme.get-gap(xs);
   padding: theme.get-spacing(xs) theme.get-spacing(sm);
   border-radius: theme.get-radius(sm);
-  background: theme.get-background(secondary);
-  border: theme.get-border-size(hairline) solid theme.get-border(standard);
+  background: rgba(59, 130, 246, 0.05);
   @include theme.typography-body;
-  font-size: 0.8rem;
+  font-size: 0.8125rem;
   color: theme.get-text(hint);
 
   i {
     flex-shrink: 0;
-    font-size: 0.9rem;
-    margin-top: 0.1em;
+    font-size: 0.875rem;
+    margin-top: 0.125rem;
+    color: theme.get-text(info);
   }
 }
 
-// ── Override sub-section ──────────────────────────────────────────
-.override-section {
+.variant-form__overrides-list {
   display: grid;
   gap: theme.get-gap(sm);
-  padding: theme.get-spacing(sm);
-  border-radius: theme.get-radius(sm);
-  border: theme.get-border-size(hairline) solid theme.get-border(standard);
-  background: theme.get-background(secondary);
 }
 
-.override-section__header {
-  @include theme.typography-body;
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: theme.get-text(hint);
-}
-
-// ── Price summary banner ──────────────────────────────────────────
-.price-summary-banner {
+.variant-form__field-row {
   display: grid;
-  gap: theme.get-gap(xs);
-  padding: theme.get-spacing(sm);
-  border-radius: theme.get-radius(md);
-  border: theme.get-border-size(thin) solid theme.get-border(primary);
-  background: theme.get-background(secondary);
+  grid-template-columns: 10rem 1fr auto;
+  gap: theme.get-gap(sm);
+  align-items: center;
 }
 
-.price-summary-banner__breakdown {
+.variant-form__field-label {
+  @include theme.typography-body;
+  font-weight: 600;
+  color: theme.get-text(primary);
+  padding: theme.get-spacing(xs);
+  background: theme.get-background(secondary);
+  border-radius: theme.get-radius(sm);
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 2.5rem;
+}
+
+.variant-form__field-select {
+  ::ng-deep gom-lib-select {
+    margin-bottom: 0 !important;
+  }
+}
+
+.variant-form__field-input {
+  height: 2.5rem;
+  padding: 0 theme.get-spacing(sm);
+  border: theme.get-border-size(hairline) solid theme.get-border(standard);
+  border-radius: theme.get-radius(sm);
+  @include theme.typography-body;
+  color: theme.get-text(primary);
+  background: theme.get-background(standard);
+  box-sizing: border-box;
+
+  &:focus {
+    outline: none;
+    border-color: theme.get-border(info);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+
+  &::placeholder {
+    color: theme.get-text(hint);
+  }
+}
+
+.variant-form__field-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border: theme.get-border-size(hairline) solid theme.get-border(standard);
+  background: theme.get-background(standard);
+  color: theme.get-text(primary);
+  border-radius: theme.get-radius(sm);
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover:not(:disabled) {
+    background: theme.get-background(secondary);
+    border-color: theme.get-border(primary);
+  }
+
+  &:active:not(:disabled) {
+    background: theme.get-background(standard);
+    border-color: theme.get-border(primary);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  i {
+    font-size: 1.25rem;
+  }
+}
+
+.variant-form__field-remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border: theme.get-border-size(hairline) solid theme.get-border(standard);
+  background: theme.get-background(standard);
+  color: theme.get-text(primary);
+  border-radius: theme.get-radius(sm);
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background: theme.get-background(secondary);
+    border-color: theme.get-border(primary);
+  }
+
+  &:active {
+    background: theme.get-background(standard);
+    border-color: theme.get-border(primary);
+  }
+
+  i {
+    font-size: 1.125rem;
+  }
+}
+
+// ── Price Preview ─────────────────────────────────────────────────────────────
+
+.variant-form__preview {
+  display: grid;
+  gap: theme.get-gap(sm);
+  padding: theme.get-spacing(md);
+  border-radius: theme.get-radius(md);
+  border: theme.get-border-size(thin) solid theme.get-border(success);
+  background: rgba(34, 197, 94, 0.03);
+}
+
+.variant-form__preview-breakdown {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: theme.get-gap(sm);
+  gap: theme.get-gap(md);
 }
 
-.price-summary-banner__breakdown-item {
+.variant-form__preview-item {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 0.125rem;
 }
 
-.price-summary-banner__breakdown-label {
+.variant-form__preview-label {
   @include theme.typography-body;
-  font-size: 0.7rem;
+  font-size: 0.6875rem;
   color: theme.get-text(hint);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
 }
 
-.price-summary-banner__breakdown-value {
+.variant-form__preview-value {
   @include theme.typography-body;
-  font-size: 0.9rem;
+  font-size: 0.9375rem;
   font-weight: 600;
   color: theme.get-text(primary);
 }
 
-.price-summary-banner__breakdown-sep {
+.variant-form__preview-sep {
   @include theme.typography-body;
-  font-size: 1rem;
+  font-size: 1.125rem;
   font-weight: 700;
   color: theme.get-text(hint);
-  padding: 0 theme.get-spacing(xs);
   align-self: flex-end;
-  margin-bottom: 0.1em;
+  padding-bottom: 0.125rem;
 }
 
-.price-summary-banner__final {
+.variant-form__preview-final {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: theme.get-gap(sm);
-  padding: theme.get-spacing(xs) theme.get-spacing(sm);
+  gap: theme.get-gap(md);
+  padding: theme.get-spacing(sm);
   border-radius: theme.get-radius(sm);
   background: theme.get-background(standard);
-  border: theme.get-border-size(thin) solid theme.get-border(primary);
+  border: theme.get-border-size(thin) solid theme.get-border(success);
 }
 
-.price-summary-banner__final-label {
+.variant-form__preview-final-label {
   @include theme.typography-body;
-  font-size: 0.85rem;
   font-weight: 600;
-  color: theme.get-text(primary);
+  color: theme.get-text(success);
 }
 
-.price-summary-banner__final-value {
+.variant-form__preview-final-value {
   @include theme.typography-body;
-  font-size: 1.35rem;
+  font-size: 1.5rem;
   font-weight: 800;
-  color: theme.get-text(primary);
+  color: theme.get-text(success);
 }
 
-.price-summary-banner__anchor {
+.variant-form__preview-anchor {
   display: flex;
   align-items: center;
   gap: theme.get-gap(xs);
   @include theme.typography-body;
-  font-size: 0.78rem;
+  font-size: 0.875rem;
   color: theme.get-text(hint);
 
   i {
-    font-size: 0.85rem;
+    font-size: 0.875rem;
   }
 }
 
-.impact-panel {
+// ── Price Impact ──────────────────────────────────────────────────────────────
+
+.variant-form__impact {
   display: grid;
-  gap: theme.get-gap(xs);
-  padding: theme.get-spacing(sm);
+  gap: theme.get-gap(sm);
+  padding: theme.get-spacing(md);
   border-radius: theme.get-radius(md);
   border: theme.get-border-size(hairline) solid theme.get-border(standard);
   background: theme.get-background(standard);
 }
 
-.impact-panel--positive {
+.variant-form__impact--positive {
   border-color: theme.get-border(success);
+  background: rgba(34, 197, 94, 0.03);
 }
 
-.impact-panel--negative {
+.variant-form__impact--negative {
   border-color: theme.get-border(danger);
+  background: rgba(239, 68, 68, 0.03);
 }
 
-.impact-panel__header {
+.variant-form__impact-header {
   display: flex;
   align-items: center;
   gap: theme.get-gap(xs);
   @include theme.typography-body;
-  font-weight: 700;
+  font-weight: 600;
+  font-size: 0.875rem;
   color: theme.get-text(primary);
+
+  i {
+    font-size: 1rem;
+  }
 }
 
-.impact-panel__grid {
+.variant-form__impact-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: theme.get-gap(sm);
+  gap: theme.get-gap(md);
 }
 
-.impact-panel__item {
+.variant-form__impact-item {
   display: grid;
-  gap: 0.2rem;
+  gap: 0.125rem;
 }
 
-.impact-panel__item--wide {
+.variant-form__impact-item--wide {
   grid-column: 1 / -1;
 }
 
-.impact-panel__label {
+.variant-form__impact-label {
   @include theme.typography-body;
-  font-size: 0.72rem;
+  font-size: 0.6875rem;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
   color: theme.get-text(hint);
 }
 
-.impact-panel__value {
+.variant-form__impact-value {
   @include theme.typography-body;
   font-size: 1rem;
   font-weight: 700;
   color: theme.get-text(primary);
+}
+
+// ── Variant Media Section ─────────────────────────────────────────────────────
+
+.variant-form__media-section {
+  border-top: 1px solid theme.get-border(light);
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.variant-form__media-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.variant-form__media-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: theme.get-text(primary);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+}
+
+.variant-form__media-sublabel {
+  color: theme.get-text(hint);
+  margin: 0 0 0.5rem;
+  font-size: 0.75rem;
+}
+
+.variant-form__media-group { display: flex; flex-direction: column; }
+
+.variant-form__media-grid { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+.variant-form__media-card {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid theme.get-border(standard);
+  &--group { opacity: 0.8; pointer-events: none; }
+}
+
+.variant-form__media-thumb { width: 100%; height: 100%; object-fit: cover; }
+
+.variant-form__media-badge {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  background: #1d4ed8;
+  color: #fff;
+  font-size: 0.6rem;
+  padding: 1px 5px;
+  border-radius: 3px;
+  text-transform: uppercase;
+}
+
+.variant-form__media-remove {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(0,0,0,.6);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  padding: 0;
+  &:hover { background: rgba(220,50,50,.85); }
+}
+
+.variant-form__media-empty {
+  color: theme.get-text(hint);
+  text-align: center;
+  padding: 1rem 0;
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+// ── Form Actions ──────────────────────────────────────────────────────────────
+
+.variants-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: theme.get-gap(sm);
+}
+
+.variants-form__action {
+  min-width: 7rem;
+}
+
+// ── Responsive ────────────────────────────────────────────────────────────────
+
+@include theme.breakpoint-down(md) {
+  .variant-form__row {
+    grid-template-columns: 1fr;
+  }
+
+  .variant-form__row--options {
+    grid-template-columns: 1fr;
+  }
+
+  .variant-form__preview-breakdown {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .variant-form__preview-final-value {
+    font-size: 1.25rem;
+  }
+
+  .variant-form__impact-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .modal-actions {
@@ -329,6 +1120,17 @@
     font-size: 1.15rem;
   }
 
+  .variant-workspace-table thead {
+    display: none;
+  }
+
+  .variant-workspace-table,
+  .variant-workspace-table tbody,
+  .variant-workspace-table tr,
+  .variant-workspace-table td {
+    display: block;
+  }
+
   .impact-panel__grid {
     grid-template-columns: 1fr;
   }
@@ -338,3 +1140,5 @@
     grid-template-columns: 1fr;
   }
 }
+
+
