@@ -1,0 +1,146 @@
+<section class="settings-page">
+  <header class="settings-page__header">
+    <h2>Notification Operations</h2>
+    <p>Monitor channel health, inspect failures, and manually retry failed notification sends.</p>
+  </header>
+
+  <div class="settings-card">
+    <div class="ops-filters">
+      <label>
+        <span>Channel</span>
+        <select [ngModel]="selectedChannel()" (ngModelChange)="selectedChannel.set($event)">
+          <option value="">All</option>
+          <option value="PUSH">PUSH</option>
+          <option value="IN_APP">IN_APP</option>
+          <option value="WHATSAPP">WHATSAPP</option>
+        </select>
+      </label>
+
+      <label>
+        <span>Status</span>
+        <select [ngModel]="selectedStatus()" (ngModelChange)="selectedStatus.set($event)">
+          <option value="">All</option>
+          <option value="PENDING">PENDING</option>
+          <option value="SENT">SENT</option>
+          <option value="FAILED">FAILED</option>
+          <option value="SKIPPED">SKIPPED</option>
+        </select>
+      </label>
+
+      <label>
+        <span>From</span>
+        <input type="date" [ngModel]="fromDate()" (ngModelChange)="fromDate.set($event)" />
+      </label>
+
+      <label>
+        <span>To</span>
+        <input type="date" [ngModel]="toDate()" (ngModelChange)="toDate.set($event)" />
+      </label>
+
+      <div class="ops-filter-actions">
+        <gom-lib-button type="button" variant="primary" (buttonClick)="onApplyFilters()">Apply</gom-lib-button>
+        <gom-lib-button type="button" variant="secondary" (buttonClick)="onResetFilters()">Reset</gom-lib-button>
+      </div>
+    </div>
+  </div>
+
+  @if (sla(); as m) {
+    <div class="ops-metrics-grid">
+      <article class="ops-metric-card">
+        <p class="ops-metric-label">Total</p>
+        <p class="ops-metric-value">{{ m.totals.total }}</p>
+      </article>
+      <article class="ops-metric-card">
+        <p class="ops-metric-label">Success Rate</p>
+        <p class="ops-metric-value">{{ m.totals.successRate }}%</p>
+      </article>
+      <article class="ops-metric-card">
+        <p class="ops-metric-label">Failed</p>
+        <p class="ops-metric-value ops-metric-value--danger">{{ m.totals.FAILED }}</p>
+      </article>
+      <article class="ops-metric-card">
+        <p class="ops-metric-label">Avg Latency</p>
+        <p class="ops-metric-value">{{ m.latency.avgLatencyMs }} ms</p>
+      </article>
+    </div>
+
+    <div class="settings-card">
+      <h3 class="ops-subtitle">Failure Categories</h3>
+      @if (m.failureCategories.length === 0) {
+        <p class="ops-muted">No failure category data for current filter.</p>
+      } @else {
+        <ul class="ops-failure-list">
+          @for (f of m.failureCategories; track f.category) {
+            <li><strong>{{ f.category }}</strong><span>{{ f.count }}</span></li>
+          }
+        </ul>
+      }
+    </div>
+  }
+
+  <div class="settings-card">
+    <div class="ops-table-head">
+      <h3 class="ops-subtitle">Dispatch Records</h3>
+      <p class="ops-muted">{{ total() }} records</p>
+    </div>
+
+    @if (loading()) {
+      <p class="ops-muted">Loading dispatch records...</p>
+    } @else if (dispatches().length === 0) {
+      <p class="ops-muted">No records found for selected filters.</p>
+    } @else {
+      <div class="ops-table-wrap">
+        <table class="ops-table">
+          <thead>
+            <tr>
+              <th>Created</th>
+              <th>Order</th>
+              <th>Channel</th>
+              <th>State</th>
+              <th>Status</th>
+              <th>Attempts</th>
+              <th>Error</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of dispatches(); track row._id) {
+              <tr>
+                <td>{{ row.createdAt | date: 'd MMM y, h:mm a' }}</td>
+                <td>{{ row.orderNo || '-' }}</td>
+                <td>{{ row.channel }}</td>
+                <td>
+                  <gom-lib-chip [tone]="toneForState(row.state)">{{ row.state }}</gom-lib-chip>
+                </td>
+                <td>{{ row.toStatus }}</td>
+                <td>{{ row.attempts }} / {{ row.maxAttempts }}</td>
+                <td class="ops-error-cell">{{ row.lastError || '-' }}</td>
+                <td>
+                  @if (row.state === 'FAILED' || row.state === 'PENDING') {
+                    <gom-lib-button
+                      type="button"
+                      variant="secondary"
+                      size="default"
+                      [disabled]="retryingId() === row._id || !canWrite()"
+                      (buttonClick)="retry(row._id)"
+                    >
+                      {{ retryingId() === row._id ? 'Retrying...' : 'Retry' }}
+                    </gom-lib-button>
+                  } @else {
+                    <span class="ops-muted">-</span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="ops-pager">
+        <gom-lib-button type="button" variant="secondary" [disabled]="page() <= 1" (buttonClick)="prevPage()">Previous</gom-lib-button>
+        <span>Page {{ page() }}</span>
+        <gom-lib-button type="button" variant="secondary" [disabled]="!hasMore()" (buttonClick)="nextPage()">Next</gom-lib-button>
+      </div>
+    }
+  </div>
+</section>

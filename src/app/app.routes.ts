@@ -19,6 +19,7 @@ import { ServiceablePincodesConfigComponent } from './features/settings/servicea
 import { StorefrontConfigComponent } from './features/settings/storefront-config';
 import { ReturnPolicyConfigComponent } from './features/settings/return-policy-config';
 import { PushNotificationsComponent } from './features/settings/push-notifications/push-notifications.component';
+import { NotificationOpsComponent } from './features/settings/notification-ops/notification-ops.component';
 import { PinSecurityConfigComponent } from './features/settings/pin-security-config';
 import { CustomersComponent } from './features/customer/customers';
 import { CustomerGroupsComponent } from './features/customer/customer-groups';
@@ -290,6 +291,16 @@ export const routes: Routes = [
 					featureKeys: ['order.list', 'order.create', 'order.update'],
 					title: 'Push Notifications',
 					description: 'Broadcast offers and announcements to all subscribed customers.',
+				},
+			},
+			{
+				path: 'settings/notification-ops',
+				component: NotificationOpsComponent,
+				data: {
+					actor: 'tenant',
+					capability: 'tenant-admin',
+					title: 'Notification Operations',
+					description: 'Monitor delivery status, SLA metrics, and manually retry failed notifications across channels.',
 				},
 			},
 			{
