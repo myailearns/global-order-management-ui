@@ -476,3 +476,171 @@
     height: 2.25rem;
   }
 }
+
+// ─── Admin Notification Bell & Panel ─────────────────────────────────────────
+
+.gom-shell__notif-wrap {
+  position: relative;
+}
+
+.gom-shell__notif-bell {
+  position: relative;
+}
+
+.gom-shell__notif-badge {
+  position: absolute;
+  top: -0.3rem;
+  right: -0.3rem;
+  min-width: 1.1rem;
+  height: 1.1rem;
+  padding: 0 0.25rem;
+  border-radius: 0.55rem;
+  background-color: var(--color-danger);
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 700;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.gom-shell__notif-panel {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  z-index: 30;
+  width: min(22rem, 90vw);
+  max-height: 26rem;
+  display: flex;
+  flex-direction: column;
+  border-radius: theme.get-radius(md);
+  border: theme.get-border-size(thin) solid theme.get-border(standard);
+  background: theme.get-background(standard);
+  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.14);
+  overflow: hidden;
+}
+
+.gom-shell__notif-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: theme.get-spacing(sm) theme.get-spacing(sm) theme.get-spacing(xs);
+  border-bottom: theme.get-border-size(hairline) solid theme.get-border(standard);
+  flex-shrink: 0;
+
+  h2 {
+    margin: 0;
+    @include theme.typography-heading(sm);
+    color: theme.get-text(primary);
+  }
+}
+
+.gom-shell__notif-mark-all {
+  background: none;
+  border: none;
+  padding: 0;
+  @include theme.typography-caption;
+  color: theme.get-text(primary);
+  text-decoration: underline;
+  cursor: pointer;
+
+  &:hover {
+    color: theme.get-text(hint);
+  }
+}
+
+.gom-shell__notif-loading,
+.gom-shell__notif-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: theme.get-gap(xs);
+  padding: theme.get-spacing(lg);
+  @include theme.typography-caption;
+  color: theme.get-text(hint);
+
+  i {
+    font-size: 1.2rem;
+  }
+}
+
+.gom-shell__notif-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.gom-shell__notif-item {
+  display: flex;
+  align-items: flex-start;
+  gap: theme.get-gap(xs);
+  padding: theme.get-spacing(sm);
+  border-bottom: theme.get-border-size(hairline) solid theme.get-border(standard);
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+
+  &:last-child {
+    border-bottom: 0;
+  }
+
+  &:hover {
+    background: theme.get-background(secondary);
+  }
+
+  &--unread {
+    background: theme.get-background(primary-light);
+
+    &:hover {
+      background: theme.get-background(secondary);
+    }
+  }
+}
+
+.gom-shell__notif-dot {
+  flex-shrink: 0;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  margin-top: 0.35rem;
+  background-color: var(--color-primary);
+
+  .gom-shell__notif-item:not(.gom-shell__notif-item--unread) & {
+    background-color: transparent;
+  }
+}
+
+.gom-shell__notif-content {
+  min-width: 0;
+}
+
+.gom-shell__notif-title {
+  margin: 0;
+  @include theme.typography-label;
+  color: theme.get-text(primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gom-shell__notif-body {
+  margin: 0.15rem 0 0;
+  @include theme.typography-caption;
+  color: theme.get-text(default);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.gom-shell__notif-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 29;
+  background: transparent;
+  border: 0;
+  cursor: default;
+}

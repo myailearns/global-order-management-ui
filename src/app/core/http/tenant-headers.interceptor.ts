@@ -37,7 +37,8 @@ function isTenantApiRequest(url: string): boolean {
   const path = url.slice(baseUrl.length);
   return (
     TENANT_ROUTE_PREFIXES.some((prefix) => path.startsWith(prefix)) ||
-    path.startsWith('/notifications')
+    path.startsWith('/notifications') ||
+    path.startsWith('/admin-notifications')
   );
 }
 

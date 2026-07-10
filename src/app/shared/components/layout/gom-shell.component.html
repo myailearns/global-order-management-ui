@@ -40,9 +40,57 @@
         ></gom-lib-select>
       </label>
 
-      <button type="button" class="gom-shell__action-button" [attr.aria-label]="'app.actions.notifications' | translate">
-        <i class="ri-notification-3-line" aria-hidden="true"></i>
-      </button>
+      <!-- Notification Bell -->
+      @if (currentSession()?.actorType === 'tenant') {
+        <div class="gom-shell__notif-wrap">
+          <button
+            type="button"
+            class="gom-shell__action-button gom-shell__notif-bell"
+            [attr.aria-label]="'app.actions.notifications' | translate"
+            [attr.aria-expanded]="notifPanelOpen()"
+            (click)="toggleNotifPanel()"
+          >
+            <i class="ri-notification-3-line" aria-hidden="true"></i>
+            @if (unreadNotifCount() > 0) {
+              <span class="gom-shell__notif-badge" aria-live="polite">{{ unreadNotifCount() > 99 ? '99+' : unreadNotifCount() }}</span>
+            }
+          </button>
+
+          @if (notifPanelOpen()) {
+            <div class="gom-shell__notif-panel" role="dialog" aria-label="Notifications">
+              <div class="gom-shell__notif-panel-head">
+                <h2>Notifications</h2>
+                @if (unreadNotifCount() > 0) {
+                  <button type="button" class="gom-shell__notif-mark-all" (click)="markAllNotifsRead()">Mark all read</button>
+                }
+              </div>
+              @if (notifLoading()) {
+                <div class="gom-shell__notif-loading"><i class="ri-loader-4-line" aria-hidden="true"></i> Loading…</div>
+              } @else if (notifications().length === 0) {
+                <div class="gom-shell__notif-empty"><i class="ri-notification-off-line" aria-hidden="true"></i><span>No notifications yet</span></div>
+              } @else {
+                <ul class="gom-shell__notif-list">
+                  @for (notif of notifications(); track notif._id) {
+                    <li
+                      class="gom-shell__notif-item"
+                      [class.gom-shell__notif-item--unread]="!notif.readAt"
+                      (click)="markNotifRead(notif)"
+                    >
+                      <div class="gom-shell__notif-dot" aria-hidden="true"></div>
+                      <div class="gom-shell__notif-content">
+                        <p class="gom-shell__notif-title">{{ notif.title }}</p>
+                        <p class="gom-shell__notif-body">{{ notif.body }}</p>
+                      </div>
+                    </li>
+                  }
+                </ul>
+              }
+            </div>
+            <!-- Click-outside backdrop -->
+            <button type="button" class="gom-shell__notif-backdrop" aria-hidden="true" (click)="closeNotifPanel()"></button>
+          }
+        </div>
+      }
       <button type="button" class="gom-shell__action-button" [attr.aria-label]="'app.actions.logout' | translate" (click)="logout()">
         <i class="ri-logout-box-r-line" aria-hidden="true"></i>
       </button>

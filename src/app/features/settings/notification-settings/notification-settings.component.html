@@ -1,0 +1,56 @@
+<section class="settings-page">
+  <header class="settings-page__header">
+    <h2>Notification Settings</h2>
+    <p>Manage how order updates are sent to your admin team.</p>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="settings-page__error">{{ errorMessage() }}</div>
+  }
+
+  <nav class="settings-tabs" aria-label="Notification settings tabs">
+    @for (tab of tabs; track tab.id) {
+      <button
+        type="button"
+        class="settings-tabs__item"
+        [class.settings-tabs__item--active]="activeTab() === tab.id"
+        (click)="switchTab(tab.id)"
+      >
+        {{ tab.label }}
+      </button>
+    }
+  </nav>
+
+  @if (activeTab() === 'orders') {
+      <form class="settings-card" [formGroup]="form" (ngSubmit)="save()">
+        <fieldset class="settings-section">
+          <legend>Order Email Notifications</legend>
+          <div class="settings-grid">
+            <gom-lib-checkbox
+              label="Enable email notifications for order updates"
+              hint="When enabled, admin email alerts are sent on order placed, cancelled, return requested, returned, and refunded events."
+              [formControl]="form.controls.adminEmailEnabled"
+            ></gom-lib-checkbox>
+
+            <gom-lib-input
+              label="Notification Email"
+              type="email"
+              hint="Suggested from your SaaS account contact email. You can override it here anytime."
+              [formControl]="form.controls.adminEmail"
+            ></gom-lib-input>
+          </div>
+        </fieldset>
+
+        <div class="settings-page__actions">
+          <gom-lib-button
+            type="submit"
+            variant="primary"
+            [gomDisableIfNoCapability]="'tenant-admin'"
+            [disabled]="loading() || saving() || !canWrite()"
+          >
+            {{ saving() ? 'Saving...' : 'Save Notification Settings' }}
+          </gom-lib-button>
+        </div>
+      </form>
+  }
+</section>

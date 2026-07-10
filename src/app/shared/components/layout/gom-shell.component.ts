@@ -1,16 +1,17 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, OnDestroy, computed, inject, OnInit, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
-import { filter, map, startWith } from 'rxjs';
+import { Subscription, filter, interval, map, startWith } from 'rxjs';
 import { GomAlertToastComponent, GomSelectComponent, GomSelectOption } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { AppLanguage, I18nService } from '../../../core/i18n/i18n.service';
 import { AppCapability, UserActor } from '../../../core/auth/auth-session.model';
 import { environment } from '../../../../environments/environment';
+import { AdminNotification, AdminNotificationService } from './admin-notification.service';
 
 interface NavItem {
   label: string;
@@ -40,17 +41,32 @@ interface NavItem {
   templateUrl: './gom-shell.component.html',
   styleUrl: './gom-shell.component.scss',
 })
-export class GomShellComponent implements OnInit {
+export class GomShellComponent implements OnInit, OnDestroy {
   private readonly i18n = inject(I18nService);
   private readonly router = inject(Router);
   private readonly authSession = inject(AuthSessionService);
   private readonly http = inject(HttpClient);
+  private readonly adminNotifService = inject(AdminNotificationService);
 
   readonly menuOpen = signal(false);
   readonly desktopNavCollapsed = signal(false);
   readonly currentLanguage = signal<AppLanguage>(this.i18n.currentLanguage());
   readonly currentSession = this.authSession.session;
   readonly pendingPricingCount = signal(0);
+
+  // Admin in-app notifications
+  readonly notifPanelOpen = signal(false);
+  readonly unreadNotifCount = signal(0);
+  readonly notifications = signal<AdminNotification[]>([]);
+  readonly notifLoading = signal(false);
+  private pollSub?: Subscription;
+  /** -1 = baseline not yet set; avoids beeping on first load */
+  private _lastKnownUnreadCount = -1;
+  private audioCtx: AudioContext | null = null;
+  private audioPrimed = false;
+  private readonly primeAudioHandler = () => {
+    void this.primeAudioContext();
+  };
   private readonly currentUrl = toSignal(
     this.router.events.pipe(
       filter((event): event is NavigationEnd => event instanceof NavigationEnd),
@@ -96,6 +112,7 @@ export class GomShellComponent implements OnInit {
     { label: 'Return & Exchange Policy', route: '/settings/return-policy', icon: 'ri-arrow-go-back-line', translationKey: 'app.navigation.returnPolicy', section: 'Settings', actor: 'tenant', capability: 'tenant-admin' },
     { label: 'PIN Security Policy', route: '/settings/pin-security', icon: 'ri-lock-line', translationKey: 'app.navigation.pinSecurityPolicy', section: 'Settings', actor: 'tenant', capability: 'tenant-admin' },
     { label: 'Push Notifications', route: '/settings/push-notifications', icon: 'ri-notification-3-line', translationKey: 'app.navigation.pushNotifications', section: 'Settings', actor: 'tenant', capability: 'tenant-admin', featureKeys: ['order.list', 'order.create', 'order.update'] },
+    { label: 'Notification Settings', route: '/settings/notification-settings', icon: 'ri-mail-settings-line', translationKey: 'app.navigation.notificationSettings', section: 'Settings', actor: 'tenant', capability: 'tenant-admin' },
     { label: 'Notification Operations', route: '/settings/notification-ops', icon: 'ri-dashboard-3-line', translationKey: 'app.navigation.notificationOps', section: 'Settings', actor: 'tenant', capability: 'tenant-admin' },
     { label: 'SaaS Accounts', route: '/settings/saas-accounts', icon: 'ri-building-2-line', translationKey: 'app.navigation.saasAccounts', section: 'Settings', actor: 'platform', capability: 'platform-admin' },
     { label: 'SaaS Packages', route: '/settings/saas-packages', icon: 'ri-stack-line', translationKey: 'app.navigation.saasPackages', section: 'Settings', actor: 'platform', capability: 'platform-admin' },
@@ -165,6 +182,135 @@ export class GomShellComponent implements OnInit {
     this.router.events
       .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
       .subscribe(() => this.loadPendingPricingCount());
+
+    // Poll unread notification count every 30 seconds (tenant only)
+    this.pollSub = interval(30_000)
+      .pipe(startWith(0))
+      .subscribe(() => this.refreshUnreadCount());
+
+    // Prime browser audio permission on first interaction for reliable alert beeps.
+    if (typeof window !== 'undefined') {
+      window.addEventListener('pointerdown', this.primeAudioHandler, { once: true });
+      window.addEventListener('keydown', this.primeAudioHandler, { once: true });
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.pollSub?.unsubscribe();
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('pointerdown', this.primeAudioHandler);
+      window.removeEventListener('keydown', this.primeAudioHandler);
+    }
+    void this.audioCtx?.close();
+    this.audioCtx = null;
+  }
+
+  private async primeAudioContext(): Promise<void> {
+    try {
+      const ctx = this.getOrCreateAudioContext();
+      if (ctx.state === 'suspended') {
+        await ctx.resume();
+      }
+      this.audioPrimed = true;
+    } catch {
+      // Ignore browser autoplay-policy failures and retry on next interaction.
+    }
+  }
+
+  private getOrCreateAudioContext(): AudioContext {
+    this.audioCtx ??= new AudioContext();
+    return this.audioCtx;
+  }
+
+  refreshUnreadCount(): void {
+    const session = this.authSession.session();
+    if (session?.actorType !== 'tenant') return;
+    this.adminNotifService.getUnreadCount().subscribe((res) => {
+      const newCount = res.data?.count ?? 0;
+      const isFirstLoad = this._lastKnownUnreadCount === -1;
+      if (!isFirstLoad && newCount > this._lastKnownUnreadCount) {
+        this.playNewOrderAlert();
+      }
+      this._lastKnownUnreadCount = newCount;
+      this.unreadNotifCount.set(newCount);
+    });
+  }
+
+  /**
+   * Plays a short double-beep using the Web Audio API.
+   * No audio file needed — tones are synthesised in-browser.
+   */
+  private playNewOrderAlert(): void {
+    if (!this.audioPrimed) {
+      return;
+    }
+    try {
+      const ctx = this.getOrCreateAudioContext();
+      if (ctx.state === 'suspended') {
+        return;
+      }
+      const playTone = (startTime: number, freq: number, duration: number) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, startTime);
+        gain.gain.setValueAtTime(0.35, startTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+        osc.start(startTime);
+        osc.stop(startTime + duration);
+      };
+      playTone(ctx.currentTime, 880, 0.18);         // first beep  (A5)
+      playTone(ctx.currentTime + 0.22, 1046, 0.18); // second beep (C6)
+    } catch {
+      // Web Audio not available — fail silently
+    }
+  }
+
+  toggleNotifPanel(): void {
+    void this.primeAudioContext();
+    if (!this.notifPanelOpen()) {
+      this.openNotifPanel();
+    } else {
+      this.notifPanelOpen.set(false);
+    }
+  }
+
+  openNotifPanel(): void {
+    this.notifPanelOpen.set(true);
+    this.notifLoading.set(true);
+    this.adminNotifService.listNotifications(1, 20).subscribe((res) => {
+      this.notifications.set(res.data ?? []);
+      this.notifLoading.set(false);
+    });
+  }
+
+  closeNotifPanel(): void {
+    this.notifPanelOpen.set(false);
+  }
+
+  markNotifRead(notif: AdminNotification): void {
+    if (notif.readAt) return;
+    this.adminNotifService.markAsRead(notif._id).subscribe(() => {
+      this.notifications.update((list) =>
+        list.map((n) => (n._id === notif._id ? { ...n, readAt: new Date().toISOString() } : n)),
+      );
+      this.unreadNotifCount.update((c) => Math.max(0, c - 1));
+    });
+    if (notif.route) {
+      void this.router.navigateByUrl(notif.route);
+      this.notifPanelOpen.set(false);
+    }
+  }
+
+  markAllNotifsRead(): void {
+    this.adminNotifService.markAllAsRead().subscribe(() => {
+      this.notifications.update((list) =>
+        list.map((n) => ({ ...n, readAt: n.readAt ?? new Date().toISOString() })),
+      );
+      this.unreadNotifCount.set(0);
+    });
   }
 
   loadPendingPricingCount(): void {

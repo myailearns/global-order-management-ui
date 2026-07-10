@@ -57,6 +57,15 @@ export interface AuthSecurityConfig {
   unlockWindowMinutes: number;
 }
 
+export interface OrderNotificationSettings {
+  adminEmailEnabled: boolean;
+  adminEmail: string;
+}
+
+export interface NotificationSettings {
+  orderNotifications?: OrderNotificationSettings;
+}
+
 export interface TenantConfig {
   tenantId: string;
   employeeCodeConfig: EmployeeCodeConfig;
@@ -65,6 +74,7 @@ export interface TenantConfig {
   storefrontShare?: StorefrontShare;
   returnPolicy?: ReturnPolicy;
   authSecurityConfig?: AuthSecurityConfig;
+  notificationSettings?: NotificationSettings;
 }
 
 export interface StorefrontPlanSummary {
@@ -312,6 +322,14 @@ export class DeliveryService {
     return this.http.patch<ApiSuccess<TenantConfig>>(this.tenantConfigUrl, {
       authSecurityConfig: {
         pinPolicy: config,
+      },
+    });
+  }
+
+  updateOrderNotificationSettings(config: Partial<OrderNotificationSettings>): Observable<ApiSuccess<TenantConfig>> {
+    return this.http.patch<ApiSuccess<TenantConfig>>(this.tenantConfigUrl, {
+      notificationSettings: {
+        orderNotifications: config,
       },
     });
   }
