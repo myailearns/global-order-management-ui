@@ -1,48 +1,795 @@
 <section class="tenant-dashboard">
   <header class="tenant-dashboard__header">
-    <h1>{{ 'saas.admin.dashboard.title' | translate }}</h1>
-    <p>{{ 'saas.admin.dashboard.subtitle' | translate }}</p>
+    <div class="tenant-dashboard__header-title">
+      <h1>Dashboard</h1>
+      @if (summaryLastUpdated()) {
+        <p class="tenant-dashboard__last-updated">Last updated: {{ summaryLastUpdated() | date:'HH:mm:ss' }}</p>
+      }
+    </div>
+    <div class="tenant-dashboard__header-actions">
+      <gom-lib-select
+        class="tenant-dashboard__filter-control"
+        label="Date Range"
+        [ngModel]="dashboardDateRange()"
+        (ngModelChange)="setDashboardDateRange($event)"
+        [options]="dashboardDateRangeOptions"
+      ></gom-lib-select>
+
+      @if (dashboardDateRange() === 'CUSTOM') {
+        <gom-lib-input
+          class="tenant-dashboard__filter-control"
+          label="From"
+          type="date"
+          [ngModel]="dashboardCustomFromDate()"
+          (ngModelChange)="dashboardCustomFromDate.set($event)"
+        ></gom-lib-input>
+
+        <gom-lib-input
+          class="tenant-dashboard__filter-control"
+          label="To"
+          type="date"
+          [min]="dashboardCustomFromDate()"
+          [ngModel]="dashboardCustomToDate()"
+          (ngModelChange)="dashboardCustomToDate.set($event)"
+        ></gom-lib-input>
+
+        <gom-lib-button variant="secondary" (buttonClick)="applyCustomDateRange()">Apply</gom-lib-button>
+      }
+
+      @if (dashboardLoading()) {
+        <span class="tenant-dashboard__refreshing">Refreshing…</span>
+      }
+      <gom-lib-button variant="secondary" (buttonClick)="refreshDashboard()">↻ Refresh</gom-lib-button>
+    </div>
   </header>
 
-  @if (loading()) {
-    <div class="tenant-dashboard__loading">{{ 'saas.admin.dashboard.msg_loading' | translate }}</div>
+  @if (dashboardFilterError()) {
+    <div class="tenant-dashboard__error">{{ dashboardFilterError() }}</div>
   }
 
-  @if (summary(); as summaryData) {
-    <section class="tenant-dashboard__summary">
-      <article class="tenant-dashboard__summary-card">
-        <h2>{{ 'saas.admin.dashboard.lbl_purchased_package' | translate }}</h2>
-        @if (summaryData.package) {
-          <p><strong>{{ summaryData.package.name }}</strong> ({{ summaryData.package.planId }})</p>
-          <p>{{ 'saas.admin.dashboard.lbl_tier' | translate }}: {{ summaryData.package.tier }}</p>
-          <p>{{ 'saas.admin.dashboard.lbl_status' | translate }}: {{ summaryData.package.status }}</p>
-        } @else {
-          <p>{{ 'saas.admin.dashboard.msg_no_package' | translate }}</p>
-        }
-      </article>
+  <section class="tenant-dashboard__tabs" aria-label="Dashboard tabs">
+    <button
+      type="button"
+      class="tenant-dashboard__tab"
+      [class.tenant-dashboard__tab--active]="activeTab() === 'OPERATIONS'"
+      (click)="setTab('OPERATIONS')"
+    >
+      Operations
+    </button>
+    <button
+      type="button"
+      class="tenant-dashboard__tab"
+      [class.tenant-dashboard__tab--active]="activeTab() === 'ANALYTICS'"
+      (click)="setTab('ANALYTICS')"
+    >
+      Analytics
+    </button>
+  </section>
 
-      <article class="tenant-dashboard__summary-card">
-        <h2>{{ 'saas.admin.dashboard.lbl_entitled_features' | translate }}</h2>
-        @if (summaryData.entitledFeatures.length) {
-          <ul class="tenant-dashboard__feature-list">
-            @for (feature of summaryData.entitledFeatures; track feature.featureKey) {
-              <li>{{ feature.displayName }} ({{ feature.module }})</li>
-            }
-          </ul>
-        } @else {
-          <p>{{ 'saas.admin.dashboard.msg_no_features' | translate }}</p>
+  @if (dashboardLoading()) {
+    <div class="tenant-dashboard__loading">Loading dashboard cards...</div>
+  }
+
+  @if (dashboardError()) {
+    <div class="tenant-dashboard__error">{{ dashboardError() }}</div>
+  }
+
+  @if (activeTab() === 'OPERATIONS') {
+    <section class="tenant-dashboard__operations">
+      <div class="tenant-dashboard__section-header">
+        <h2>Live Operations</h2>
+        <p>Priority signals and immediate actions</p>
+      </div>
+
+      <div class="tenant-dashboard__critical-alerts" aria-label="Critical alerts">
+        @for (alert of criticalAlerts(); track alert.key) {
+          <button
+            type="button"
+            class="tenant-dashboard__alert"
+            [class.tenant-dashboard__alert--danger]="alert.tone === 'danger'"
+            [class.tenant-dashboard__alert--warning]="alert.tone === 'warning'"
+            (click)="alert.action()"
+          >
+            <div class="tenant-dashboard__alert-content">
+              <i [class]="alert.iconClass" aria-hidden="true"></i>
+              <span class="tenant-dashboard__alert-value">{{ alert.value }}</span>
+              <span class="tenant-dashboard__alert-label">{{ alert.label }}</span>
+            </div>
+            <span class="tenant-dashboard__alert-action" aria-hidden="true"><i class="ri-arrow-right-s-line"></i></span>
+          </button>
         }
-      </article>
+      </div>
+
+      <div class="tenant-dashboard__top-row-cards">
+        @for (card of operationsCards(); track card.key) {
+          <button
+            type="button"
+            class="tenant-dashboard__card tenant-dashboard__card--kpi"
+            [class.tenant-dashboard__card--danger]="card.tone === 'danger'"
+            [class.tenant-dashboard__card--warning]="card.tone === 'warning'"
+            [class.tenant-dashboard__card--success]="card.tone === 'success'"
+            [class.tenant-dashboard__card--featured]="!!card.featured"
+            (click)="card.action()"
+          >
+            <div class="tenant-dashboard__kpi-head">
+              <h2 class="tenant-dashboard__kpi-title">{{ card.label }}</h2>
+              <span class="tenant-dashboard__kpi-icon" aria-hidden="true"><i [class]="card.iconClass"></i></span>
+            </div>
+            <p class="tenant-dashboard__value tenant-dashboard__value--top">{{ card.value }}</p>
+            <p class="tenant-dashboard__compare-label">{{ operationsCompareLabel() }}</p>
+            @if (card.trendText) {
+              <p
+                class="tenant-dashboard__trend-chip"
+                [class.tenant-dashboard__trend-chip--up]="card.trendDirection === 'up'"
+                [class.tenant-dashboard__trend-chip--down]="card.trendDirection === 'down'"
+              >
+                {{ card.trendText }}
+              </p>
+            } @else {
+              <p class="tenant-dashboard__trend-chip tenant-dashboard__trend-chip--flat">--</p>
+            }
+            <span class="tenant-dashboard__card-link">View details <i class="ri-arrow-right-line" aria-hidden="true"></i></span>
+          </button>
+        }
+      </div>
+
+      <div class="tenant-dashboard__execution-layout">
+        <article class="tenant-dashboard__card tenant-dashboard__execution-panel">
+          <div class="tenant-dashboard__execution-title-row">
+            <h3>Order Status Funnel</h3>
+            <i class="ri-information-line" aria-hidden="true"></i>
+          </div>
+
+          @if (funnelVisualStages().length) {
+            <div class="tenant-dashboard__funnel-wrap">
+              <div class="tenant-dashboard__funnel-shape" aria-hidden="true">
+                @for (stage of funnelVisualStages(); track stage.status) {
+                  <div class="tenant-dashboard__funnel-segment" [style.width.%]="stage.widthPercent"></div>
+                }
+              </div>
+              <div class="tenant-dashboard__funnel-list">
+                <div class="tenant-dashboard__funnel-row tenant-dashboard__funnel-row--head" aria-hidden="true">
+                  <span>Stage</span>
+                  <span>Orders</span>
+                  <span>Conversion</span>
+                  <span></span>
+                </div>
+                @for (stage of funnelVisualStages(); track stage.status) {
+                  <div class="tenant-dashboard__funnel-row">
+                    <span>{{ stage.label || stage.status }}</span>
+                    <span>{{ stage.adjustedCount }}</span>
+                    <span>
+                      <strong>{{ stage.conversionDisplay }}</strong>
+                      <small>{{ stage.conversionContext }}</small>
+                    </span>
+                    <span class="tenant-dashboard__funnel-row-chevron" aria-hidden="true"><i class="ri-arrow-right-s-line"></i></span>
+                  </div>
+                }
+              </div>
+            </div>
+
+            @if (largestFunnelDrop(); as drop) {
+              <p class="tenant-dashboard__funnel-drop-note">
+                Largest drop-off: {{ drop.fromLabel }} -> {{ drop.toLabel }} ({{ drop.dropPercent.toFixed(1) }}%)
+              </p>
+            }
+          } @else {
+            <p class="tenant-dashboard__helper-text">No funnel stages available</p>
+          }
+        </article>
+
+        <article class="tenant-dashboard__card tenant-dashboard__execution-panel tenant-dashboard__execution-panel--stack">
+          <button type="button" class="tenant-dashboard__mini-kpi" (click)="openDrillDown('OUT_OF_STOCK')">
+            <div class="tenant-dashboard__mini-kpi-head">
+              <span class="tenant-dashboard__mini-kpi-icon"><i class="ri-close-circle-line" aria-hidden="true"></i></span>
+              <span>Out-of-Stock Count</span>
+            </div>
+            <p class="tenant-dashboard__mini-kpi-value">{{ dashboardSummary()?.data?.outOfStock?.count ?? 0 }}</p>
+            <p class="tenant-dashboard__mini-kpi-sub">View details</p>
+          </button>
+
+          <button type="button" class="tenant-dashboard__mini-kpi" (click)="openDrillDown('TOP_PRODUCTS')">
+            <div class="tenant-dashboard__mini-kpi-head">
+              <span class="tenant-dashboard__mini-kpi-icon"><i class="ri-trophy-line" aria-hidden="true"></i></span>
+              <span>Top Selling Products</span>
+            </div>
+            <div class="tenant-dashboard__product-mini-list">
+              @if (topProductsItems().length) {
+                @for (item of topProductsItems().slice(0, 5); track item.variantId) {
+                  <div class="tenant-dashboard__product-mini-row">
+                    <span class="tenant-dashboard__product-mini-name">{{ item.productName }}</span>
+                    <span class="tenant-dashboard__product-mini-bar"><span [style.width.%]="(item.quantitySold / topProductsMaxQuantitySold()) * 100"></span></span>
+                    <span class="tenant-dashboard__product-mini-val">{{ item.quantitySold }}</span>
+                  </div>
+                }
+              } @else {
+                <p class="tenant-dashboard__helper-text">No top product data yet</p>
+              }
+            </div>
+          </button>
+        </article>
+
+        <article class="tenant-dashboard__card tenant-dashboard__execution-panel">
+          <div class="tenant-dashboard__execution-title-row">
+            <h3>Quick Actions</h3>
+          </div>
+          <div class="tenant-dashboard__quick-actions-grid tenant-dashboard__quick-actions-grid--compact">
+            @for (action of quickActions(); track action.code) {
+              <button
+                type="button"
+                class="tenant-dashboard__quick-action tenant-dashboard__quick-action--compact"
+                [class.tenant-dashboard__quick-action--priority]="action.code === 'CREATE_ORDER' || action.code === 'OPEN_PENDING_ACTIONS' || action.code === 'ADD_STOCK'"
+                (click)="openQuickAction(action.route)"
+              >
+                <span class="tenant-dashboard__quick-action-label-wrap">
+                  <span class="tenant-dashboard__quick-action-icon" aria-hidden="true"><i [class]="quickActionGlyph(action.code)"></i></span>
+                  <span class="tenant-dashboard__quick-action-label">{{ action.label }}</span>
+                </span>
+                @if (action.count !== null) {
+                  <span class="tenant-dashboard__quick-action-count">{{ action.count }}</span>
+                }
+              </button>
+            }
+          </div>
+        </article>
+      </div>
+
+      <!-- Bottom Row: Business Optimization -->
+      <div class="tenant-dashboard__section-header">
+        <h2>Business Optimization</h2>
+        <p>Performance, retention, and quality signals</p>
+      </div>
+
+      <div class="tenant-dashboard__bottom-row-cards">
+        @for (card of bottomRowCards(); track card.key) {
+          <button type="button" class="tenant-dashboard__card tenant-dashboard__card--kpi tenant-dashboard__card--bottom">
+            <div class="tenant-dashboard__kpi-head">
+              <h2 class="tenant-dashboard__kpi-title">{{ card.label }}</h2>
+              <span class="tenant-dashboard__kpi-icon" aria-hidden="true"><i [class]="card.iconClass"></i></span>
+            </div>
+            <p class="tenant-dashboard__value">{{ card.value }}</p>
+            <p class="tenant-dashboard__sub-label">{{ card.subLabel }}</p>
+          </button>
+        }
+      </div>
+
+      <!-- Entitlement Usage -->
+      @if (entitlementItems().length > 0) {
+        <article class="tenant-dashboard__card">
+          <h2>Plan Usage</h2>
+          <div class="tenant-dashboard__entitlement-list">
+            @for (item of entitlementItems(); track item.featureKey) {
+              <div class="tenant-dashboard__entitlement-item" [class.tenant-dashboard__entitlement-item--near-limit]="item.isNearLimit">
+                <span class="tenant-dashboard__entitlement-label">{{ item.featureKey }}</span>
+                <span class="tenant-dashboard__entitlement-bar">
+                  <span class="tenant-dashboard__entitlement-fill" [style.width.%]="item.usagePercent"></span>
+                </span>
+                <span class="tenant-dashboard__entitlement-pct">{{ item.usagePercent.toFixed(0) }}%</span>
+              </div>
+            }
+          </div>
+        </article>
+      }
     </section>
   }
 
-  <div class="tenant-dashboard__cards">
-    @for (card of cards(); track card.title) {
-      <article class="tenant-dashboard__card">
-        <h2>{{ card.title }}</h2>
-        <p class="tenant-dashboard__value">{{ card.value }}</p>
-        <gom-lib-button variant="secondary" (buttonClick)="card.action()">{{ 'saas.admin.dashboard.btn_open' | translate }}</gom-lib-button>
-      </article>
-    }
-  </div>
+
+  @if (activeTab() === 'ANALYTICS') {
+    <section class="tenant-dashboard__analytics">
+
+      <!-- Analytics Header -->
+      <div class="tenant-dashboard__analytics-header">
+        <div>
+          <h2>Analytics Workspace</h2>
+          @if (analyticsLastUpdated()) {
+            <p class="tenant-dashboard__last-updated">Last updated: {{ analyticsLastUpdated() | date:'HH:mm:ss' }}</p>
+          }
+        </div>
+        <gom-lib-button variant="secondary" (buttonClick)="loadAllAnalytics()">↻ Load All</gom-lib-button>
+      </div>
+
+      <!-- Applied Filters Bar -->
+      <div class="tenant-dashboard__applied-filters">
+        <span class="tenant-dashboard__filter-label">Applied Filters:</span>
+        <span class="tenant-dashboard__filter-chip">Date: {{ appliedFilterDateLabel() }}</span>
+        <span class="tenant-dashboard__filter-chip">Granularity: {{ analyticsGranularity() | titlecase }}</span>
+      </div>
+
+      <!-- ROW A + B: Sales Trend + Contribution -->
+      <div class="tenant-dashboard__analytics-row">
+
+        <!-- A. Sales Trend Analytics -->
+        <article class="tenant-dashboard__analytics-section-card">
+          <div class="tenant-dashboard__analytics-section-header">
+            <h3 class="tenant-dashboard__analytics-section-title">
+              <span class="tenant-dashboard__section-tag">A</span>Sales Trend Analytics
+            </h3>
+            <div class="tenant-dashboard__section-actions">
+              <gom-lib-button variant="secondary" (buttonClick)="loadSalesTrends()">↻ Refresh</gom-lib-button>
+            </div>
+          </div>
+          @if (analyticsLoading()) {
+            <div class="tenant-dashboard__loading">Loading...</div>
+          } @else if (salesTrendsChart(); as chart) {
+            <div class="tenant-dashboard__chart-kpi-row">
+              <div class="tenant-dashboard__chart-kpi-block">
+                <span class="tenant-dashboard__chart-kpi-label">Total Net Sales</span>
+                <span class="tenant-dashboard__chart-kpi-value">{{ salesTrendsTotal() }}</span>
+                @if (salesTrendsTrendPct() !== null) {
+                  <span class="tenant-dashboard__trend-badge"
+                    [class.tenant-dashboard__trend-badge--up]="(salesTrendsTrendPct() ?? 0) >= 0"
+                    [class.tenant-dashboard__trend-badge--down]="(salesTrendsTrendPct() ?? 0) < 0">
+                    {{ (salesTrendsTrendPct() ?? 0) >= 0 ? '↑' : '↓' }} {{ ((salesTrendsTrendPct() ?? 0) | number:'1.1-1') }}%
+                    <span class="tenant-dashboard__trend-context">vs previous period</span>
+                  </span>
+                }
+              </div>
+              <div class="tenant-dashboard__granularity-tabs">
+                @for (g of ['DAILY', 'WEEKLY', 'MONTHLY']; track g) {
+                  <button type="button" class="tenant-dashboard__gran-tab"
+                    [class.active]="analyticsGranularity() === g"
+                    (click)="setGranularityAndReload(g)">{{ g | titlecase }}</button>
+                }
+              </div>
+            </div>
+            <apx-chart
+              [series]="chart.series"
+              [chart]="chart.chart"
+              [xaxis]="chart.xaxis"
+              [stroke]="chart.stroke"
+              [colors]="chart.colors"
+              [dataLabels]="chart.dataLabels"
+              [tooltip]="chart.tooltip"
+              [grid]="chart.grid"
+              [legend]="chart.legend"
+              [yaxis]="chart.yaxis"
+            ></apx-chart>
+          } @else {
+            <div class="tenant-dashboard__analytics-empty">
+              <i class="ri-line-chart-line"></i>
+              <p>No sales trend data. Click <strong>↻ Refresh</strong> to load.</p>
+            </div>
+          }
+        </article>
+
+        <!-- B. Contribution Analytics -->
+        <article class="tenant-dashboard__analytics-section-card">
+          <div class="tenant-dashboard__analytics-section-header">
+            <h3 class="tenant-dashboard__analytics-section-title">
+              <span class="tenant-dashboard__section-tag">B</span>Contribution Analytics
+            </h3>
+            <div class="tenant-dashboard__section-actions">
+              <gom-lib-button variant="secondary" (buttonClick)="loadAnalyticsContribution()">↻ Refresh</gom-lib-button>
+            </div>
+          </div>
+          @if (analyticsContributionLoading()) {
+            <div class="tenant-dashboard__loading">Loading...</div>
+          } @else if (categoryDonutChart(); as chart) {
+            <div class="tenant-dashboard__two-panel">
+              <div class="tenant-dashboard__donut-panel">
+                <p class="tenant-dashboard__panel-label">Category Contribution (by Net Sales)</p>
+                <apx-chart [series]="chart.series" [chart]="chart.chart" [labels]="chart.labels"
+                  [colors]="chart.colors" [legend]="chart.legend" [dataLabels]="chart.dataLabels"
+                  [tooltip]="chart.tooltip" [plotOptions]="chart.plotOptions"></apx-chart>
+              </div>
+              <div class="tenant-dashboard__table-panel">
+                <p class="tenant-dashboard__panel-label">Top Variant Contribution</p>
+                @if (analyticsContribution(); as contrib) {
+                  <table class="tenant-dashboard__analytics-table">
+                    <thead><tr><th>Variant</th><th>Net Sales</th><th>%</th></tr></thead>
+                    <tbody>
+                      @for (v of contrib.data.topVariants.slice(0, 6); track v.variantId) {
+                        <tr>
+                          <td>{{ v.variantName }}</td>
+                          <td>{{ contrib.data.currency }} {{ v.netSales.toLocaleString('en-IN') }}</td>
+                          <td>{{ v.contributionPercent.toFixed(1) }}%</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                }
+              </div>
+            </div>
+          } @else {
+            <div class="tenant-dashboard__analytics-empty">
+              <i class="ri-pie-chart-line"></i>
+              <p>No contribution data. Click <strong>↻ Refresh</strong> to load.</p>
+            </div>
+          }
+        </article>
+
+      </div>
+
+      <!-- ROW C + D: Customer Analytics + Promotion Analytics -->
+      <div class="tenant-dashboard__analytics-row">
+
+        <!-- C. Customer Analytics -->
+        <article class="tenant-dashboard__analytics-section-card">
+          <div class="tenant-dashboard__analytics-section-header">
+            <h3 class="tenant-dashboard__analytics-section-title">
+              <span class="tenant-dashboard__section-tag">C</span>Customer Analytics
+            </h3>
+            <gom-lib-button variant="secondary" (buttonClick)="loadAnalyticsCustomerMix()">↻ Refresh</gom-lib-button>
+          </div>
+          @if (analyticsCustomerMixLoading()) {
+            <div class="tenant-dashboard__loading">Loading...</div>
+          } @else if (customerDonutChart(); as chart) {
+            <div class="tenant-dashboard__two-panel">
+              <div class="tenant-dashboard__donut-panel">
+                <p class="tenant-dashboard__panel-label">New vs Repeat Customers</p>
+                <apx-chart [series]="chart.series" [chart]="chart.chart" [labels]="chart.labels"
+                  [colors]="chart.colors" [legend]="chart.legend" [dataLabels]="chart.dataLabels"
+                  [plotOptions]="chart.plotOptions"></apx-chart>
+              </div>
+              <div class="tenant-dashboard__trend-panel">
+                <p class="tenant-dashboard__panel-label">Repeat Customer Share Trend</p>
+                @if (analyticsCustomerMix(); as mix) {
+                  <div class="tenant-dashboard__repeat-kpi">
+                    <span class="tenant-dashboard__repeat-pct">{{ mix.data.repeatSharePercent.toFixed(1) }}%</span>
+                    <span class="tenant-dashboard__repeat-sub">Repeat Share</span>
+                  </div>
+                }
+                @if (repeatTrendChart(); as trendChart) {
+                  <apx-chart [series]="trendChart.series" [chart]="trendChart.chart" [xaxis]="trendChart.xaxis"
+                    [stroke]="trendChart.stroke" [colors]="trendChart.colors" [dataLabels]="trendChart.dataLabels"
+                    [fill]="trendChart.fill" [tooltip]="trendChart.tooltip" [grid]="trendChart.grid"
+                    [yaxis]="trendChart.yaxis"></apx-chart>
+                }
+              </div>
+            </div>
+          } @else {
+            <div class="tenant-dashboard__analytics-empty">
+              <i class="ri-user-3-line"></i>
+              <p>No customer data. Click <strong>↻ Refresh</strong> to load.</p>
+            </div>
+          }
+        </article>
+
+        <!-- D. Promotion Analytics -->
+        <article class="tenant-dashboard__analytics-section-card">
+          <div class="tenant-dashboard__analytics-section-header">
+            <h3 class="tenant-dashboard__analytics-section-title">
+              <span class="tenant-dashboard__section-tag">D</span>Promotion Analytics
+            </h3>
+            <gom-lib-button variant="secondary" (buttonClick)="loadAnalyticsPromotion()">↻ Refresh</gom-lib-button>
+          </div>
+          @if (analyticsPromotionLoading()) {
+            <div class="tenant-dashboard__loading">Loading...</div>
+          } @else if (analyticsPromotion(); as promo) {
+            <div class="tenant-dashboard__promo-grid">
+              <div class="tenant-dashboard__promo-kpi">
+                <div class="tenant-dashboard__promo-kpi-icon"><i class="ri-coupon-2-line"></i></div>
+                <div class="tenant-dashboard__promo-kpi-body">
+                  <div class="tenant-dashboard__promo-kpi-label">Offers Used</div>
+                  <div class="tenant-dashboard__promo-kpi-value">{{ promo.data.offersUsed | number }}</div>
+                  @if (promo.data.offersUsedTrendPct !== null) {
+                    <div class="tenant-dashboard__promo-trend"
+                      [class.up]="(promo.data.offersUsedTrendPct ?? 0) >= 0"
+                      [class.down]="(promo.data.offersUsedTrendPct ?? 0) < 0">
+                      {{ (promo.data.offersUsedTrendPct ?? 0) >= 0 ? '↑' : '↓' }} {{ (promo.data.offersUsedTrendPct ?? 0 | number:'1.1-1') }}%
+                    </div>
+                  }
+                </div>
+              </div>
+              <div class="tenant-dashboard__promo-kpi">
+                <div class="tenant-dashboard__promo-kpi-icon"><i class="ri-price-tag-3-line"></i></div>
+                <div class="tenant-dashboard__promo-kpi-body">
+                  <div class="tenant-dashboard__promo-kpi-label">Discount Amount</div>
+                  <div class="tenant-dashboard__promo-kpi-value">{{ promo.data.currency }} {{ promo.data.discountAmount | number:'1.0-0' }}</div>
+                  @if (promo.data.discountAmountTrendPct !== null) {
+                    <div class="tenant-dashboard__promo-trend"
+                      [class.up]="(promo.data.discountAmountTrendPct ?? 0) >= 0"
+                      [class.down]="(promo.data.discountAmountTrendPct ?? 0) < 0">
+                      {{ (promo.data.discountAmountTrendPct ?? 0) >= 0 ? '↑' : '↓' }} {{ (promo.data.discountAmountTrendPct ?? 0 | number:'1.1-1') }}%
+                    </div>
+                  }
+                </div>
+              </div>
+              <div class="tenant-dashboard__promo-kpi">
+                <div class="tenant-dashboard__promo-kpi-icon"><i class="ri-funds-box-line"></i></div>
+                <div class="tenant-dashboard__promo-kpi-body">
+                  <div class="tenant-dashboard__promo-kpi-label">Attributable Net Sales</div>
+                  <div class="tenant-dashboard__promo-kpi-value">{{ promo.data.currency }} {{ promo.data.attributableNetSales | number:'1.0-0' }}</div>
+                </div>
+              </div>
+              <div class="tenant-dashboard__promo-kpi">
+                <div class="tenant-dashboard__promo-kpi-icon"><i class="ri-percent-line"></i></div>
+                <div class="tenant-dashboard__promo-kpi-body">
+                  <div class="tenant-dashboard__promo-kpi-label">Discount-to-Sales Ratio</div>
+                  <div class="tenant-dashboard__promo-kpi-value">{{ promo.data.discountToSalesRatio | number:'1.2-2' }}%</div>
+                </div>
+              </div>
+            </div>
+          } @else {
+            <div class="tenant-dashboard__analytics-empty">
+              <i class="ri-coupon-line"></i>
+              <p>No promotion data. Click <strong>↻ Refresh</strong> to load.</p>
+            </div>
+          }
+        </article>
+
+      </div>
+
+      <!-- ROW E + F: Loss Analytics + Channel Analytics -->
+      <div class="tenant-dashboard__analytics-row">
+
+        <!-- E. Loss Analytics -->
+        <article class="tenant-dashboard__analytics-section-card">
+          <div class="tenant-dashboard__analytics-section-header">
+            <h3 class="tenant-dashboard__analytics-section-title">
+              <span class="tenant-dashboard__section-tag">E</span>Loss Analytics
+            </h3>
+            <gom-lib-button variant="secondary" (buttonClick)="loadAnalyticsReasonSplits()">↻ Refresh</gom-lib-button>
+          </div>
+          @if (analyticsReasonSplitsLoading()) {
+            <div class="tenant-dashboard__loading">Loading...</div>
+          } @else if (cancellationDonutChart() || refundDonutChart()) {
+            <div class="tenant-dashboard__two-panel">
+              <div class="tenant-dashboard__donut-panel">
+                <p class="tenant-dashboard__panel-label">Cancellation Reasons (by Count)</p>
+                @if (cancellationDonutChart(); as chart) {
+                  <apx-chart [series]="chart.series" [chart]="chart.chart" [labels]="chart.labels"
+                    [colors]="chart.colors" [legend]="chart.legend" [dataLabels]="chart.dataLabels"
+                    [tooltip]="chart.tooltip" [plotOptions]="chart.plotOptions"></apx-chart>
+                } @else {
+                  <p class="tenant-dashboard__analytics-empty-small">No cancellation data.</p>
+                }
+              </div>
+              <div class="tenant-dashboard__donut-panel">
+                <p class="tenant-dashboard__panel-label">Refund Reasons (by Count)</p>
+                @if (refundDonutChart(); as chart) {
+                  <apx-chart [series]="chart.series" [chart]="chart.chart" [labels]="chart.labels"
+                    [colors]="chart.colors" [legend]="chart.legend" [dataLabels]="chart.dataLabels"
+                    [tooltip]="chart.tooltip" [plotOptions]="chart.plotOptions"></apx-chart>
+                } @else {
+                  <p class="tenant-dashboard__analytics-empty-small">No refund data.</p>
+                }
+              </div>
+            </div>
+          } @else {
+            <div class="tenant-dashboard__analytics-empty">
+              <i class="ri-close-circle-line"></i>
+              <p>No loss data. Click <strong>↻ Refresh</strong> to load.</p>
+            </div>
+          }
+        </article>
+
+        <!-- F. Channel Analytics -->
+        <article class="tenant-dashboard__analytics-section-card">
+          <div class="tenant-dashboard__analytics-section-header">
+            <h3 class="tenant-dashboard__analytics-section-title">
+              <span class="tenant-dashboard__section-tag">F</span>Channel Analytics
+            </h3>
+            <gom-lib-button variant="secondary" (buttonClick)="loadAnalyticsChannelSplits()">↻ Refresh</gom-lib-button>
+          </div>
+          @if (analyticsChannelSplitsLoading()) {
+            <div class="tenant-dashboard__loading">Loading...</div>
+          } @else if (paymentDonutChart() || sourceDonutChart()) {
+            <div class="tenant-dashboard__two-panel">
+              <div class="tenant-dashboard__donut-panel">
+                <p class="tenant-dashboard__panel-label">Payment Method Split</p>
+                @if (paymentDonutChart(); as chart) {
+                  <apx-chart [series]="chart.series" [chart]="chart.chart" [labels]="chart.labels"
+                    [colors]="chart.colors" [legend]="chart.legend" [dataLabels]="chart.dataLabels"
+                    [plotOptions]="chart.plotOptions"></apx-chart>
+                }
+              </div>
+              <div class="tenant-dashboard__donut-panel">
+                <p class="tenant-dashboard__panel-label">Order Source Split</p>
+                @if (sourceDonutChart(); as chart) {
+                  <apx-chart [series]="chart.series" [chart]="chart.chart" [labels]="chart.labels"
+                    [colors]="chart.colors" [legend]="chart.legend" [dataLabels]="chart.dataLabels"
+                    [plotOptions]="chart.plotOptions"></apx-chart>
+                }
+              </div>
+            </div>
+          } @else {
+            <div class="tenant-dashboard__analytics-empty">
+              <i class="ri-bar-chart-2-line"></i>
+              <p>No channel data. Click <strong>↻ Refresh</strong> to load.</p>
+            </div>
+          }
+        </article>
+
+      </div>
+
+      <!-- ROW G: Demand Heatmap (full width) -->
+      <div class="tenant-dashboard__analytics-row tenant-dashboard__analytics-row--full">
+        <article class="tenant-dashboard__analytics-section-card">
+          <div class="tenant-dashboard__analytics-section-header">
+            <h3 class="tenant-dashboard__analytics-section-title">
+              <span class="tenant-dashboard__section-tag">G</span>Demand Heatmap
+              @if (analyticsDemandHeatmap(); as hm) {
+                <span class="tenant-dashboard__section-sub">({{ hm.data.timezone }})</span>
+              }
+            </h3>
+            <gom-lib-button variant="secondary" (buttonClick)="loadAnalyticsDemandHeatmap()">↻ Refresh</gom-lib-button>
+          </div>
+          @if (analyticsDemandHeatmapLoading()) {
+            <div class="tenant-dashboard__loading">Loading...</div>
+          } @else if (analyticsDemandHeatmap(); as heatmap) {
+            <div class="tenant-dashboard__heatmap-layout">
+              <div class="tenant-dashboard__heatmap-main">
+                @if (heatmap.data.dayMatrix?.length) {
+                  <div class="tenant-dashboard__heatmap-matrix">
+                    <div class="tenant-dashboard__heatmap-header">
+                      <div class="tenant-dashboard__heatmap-day-col"></div>
+                      @for (hl of heatmapHourLabels; track hl.hour) {
+                        <div class="tenant-dashboard__heatmap-hour-label">{{ hl.label }}</div>
+                      }
+                    </div>
+                    @for (dayRow of heatmap.data.dayMatrix; track dayRow.day) {
+                      <div class="tenant-dashboard__heatmap-day-row">
+                        <div class="tenant-dashboard__heatmap-day-label">{{ dayRow.day }}</div>
+                        @for (cell of dayRow.hours; track cell.hour) {
+                          <div
+                            class="tenant-dashboard__heatmap-matrix-cell"
+                            [style.background]="cell.orderCount > 0 ? 'rgba(12,63,117,' + (heatmapCellIntensity(cell.orderCount) / 100).toFixed(2) + ')' : '#f1f5f9'"
+                            [title]="dayRow.day + ' ' + cell.hour.toString().padStart(2,'0') + ':00 — ' + cell.orderCount + ' orders'"
+                          ></div>
+                        }
+                      </div>
+                    }
+                  </div>
+                } @else {
+                  <div class="tenant-dashboard__heatmap-grid">
+                    @for (bucket of heatmap.data.hourlyBuckets; track bucket.hour) {
+                      <div
+                        class="tenant-dashboard__heatmap-cell"
+                        [class.tenant-dashboard__heatmap-cell--active]="bucket.orderCount > 0"
+                        [style.background]="bucket.orderCount > 0 ? 'rgba(12,63,117,' + (heatmapIntensity(bucket.orderCount) / 100).toFixed(2) + ')' : '#f9fafc'"
+                        [title]="bucket.hour.toString().padStart(2,'0') + ':00 — ' + bucket.orderCount + ' orders'"
+                      >
+                        <span class="tenant-dashboard__heatmap-hour" [style.color]="heatmapIntensity(bucket.orderCount) > 50 ? '#fff' : '#333'">{{ bucket.hour.toString().padStart(2,'0') }}:00</span>
+                        <span class="tenant-dashboard__heatmap-count" [style.color]="heatmapIntensity(bucket.orderCount) > 50 ? '#fff' : '#111'">{{ bucket.orderCount }}</span>
+                      </div>
+                    }
+                  </div>
+                }
+
+                <div class="tenant-dashboard__heatmap-peak-row">
+                  <div class="tenant-dashboard__heatmap-peak-card">
+                    <span class="tenant-dashboard__heatmap-peak-label">All times shown</span>
+                    <span class="tenant-dashboard__heatmap-peak-value">{{ heatmap.data.timezone }}</span>
+                  </div>
+                  <div class="tenant-dashboard__heatmap-legend">
+                    <span class="tenant-dashboard__heatmap-legend-label">Low</span>
+                    <div class="tenant-dashboard__heatmap-legend-bar"></div>
+                    <span class="tenant-dashboard__heatmap-legend-label">High</span>
+                  </div>
+                </div>
+              </div>
+
+              <aside class="tenant-dashboard__demand-insights">
+                <div class="tenant-dashboard__demand-insight-card">
+                  <span class="tenant-dashboard__demand-insight-label">Peak Demand Window</span>
+                  <span class="tenant-dashboard__demand-insight-value">{{ peakDemandWindow() }}</span>
+                </div>
+                <div class="tenant-dashboard__demand-insight-card">
+                  <span class="tenant-dashboard__demand-insight-label">Daily Avg Orders</span>
+                  <span class="tenant-dashboard__demand-insight-value">{{ dailyAvgOrders() }}</span>
+                </div>
+                <div class="tenant-dashboard__demand-insight-card">
+                  <span class="tenant-dashboard__demand-insight-label">Top Peak Days (by Orders)</span>
+                  <div class="tenant-dashboard__peak-days-list">
+                    @for (day of topPeakDays(); track day.day; let idx = $index) {
+                      <div class="tenant-dashboard__peak-day-row">
+                        <span class="tenant-dashboard__peak-day-rank">{{ idx + 1 }}.</span>
+                        <span class="tenant-dashboard__peak-day-name">{{ day.day }}</span>
+                        <div class="tenant-dashboard__peak-day-bar-track">
+                          <div class="tenant-dashboard__peak-day-bar" [style.width.%]="(day.orders / topPeakDayMax()) * 100"></div>
+                        </div>
+                        <span class="tenant-dashboard__peak-day-orders">{{ day.orders }}</span>
+                      </div>
+                    }
+                  </div>
+                </div>
+              </aside>
+            </div>
+          } @else {
+            <div class="tenant-dashboard__analytics-empty">
+              <i class="ri-calendar-2-line"></i>
+              <p>No heatmap data. Click <strong>↻ Refresh</strong> to load.</p>
+            </div>
+          }
+        </article>
+      </div>
+
+    </section>
+  }
+
+  <!-- Drill-down Modal -->
+  <gom-lib-modal
+    [show]="!!drillDownType()"
+    [title]="drillDownType() === 'ORDERS_NEEDING_ACTION' ? 'Orders Needing Action' :
+             drillDownType() === 'LOW_STOCK' ? 'Low Stock Items' :
+             drillDownType() === 'OUT_OF_STOCK' ? 'Out-of-Stock Items' :
+             drillDownType() === 'TOP_PRODUCTS' ? 'Top Products' :
+             drillDownType() === 'SLOW_PRODUCTS' ? 'Slow Products' : ''"
+    size="large"
+    [closeOnBackdropClick]="true"
+    (closed)="openDrillDown(null)"
+  >
+    <div class="tenant-dashboard__modal-body">
+      @if (drillDownLoading()) {
+        <div class="tenant-dashboard__loading">Loading details...</div>
+      } @else if (drillDownData(); as data) {
+        @switch (drillDownType()) {
+          @case ('ORDERS_NEEDING_ACTION') {
+            <table class="tenant-dashboard__table">
+              <thead>
+                <tr><th>Order No</th><th>Status</th><th>Amount</th><th>Placed At</th></tr>
+              </thead>
+              <tbody>
+                @for (item of $any(data).data.items; track $index) {
+                  <tr>
+                    <td>{{ item.orderNo }}</td>
+                    <td>{{ item.status }}</td>
+                    <td>{{ item.currency }} {{ item.payableAmount.toFixed(2) }}</td>
+                    <td>{{ item.placedAt | date: 'short' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+          @case ('LOW_STOCK') {
+            <table class="tenant-dashboard__table">
+              <thead>
+                <tr><th>Product Name</th><th>Current Stock</th><th>Reorder Threshold</th></tr>
+              </thead>
+              <tbody>
+                @for (item of $any(data).data.items; track $index) {
+                  <tr>
+                    <td>{{ item.productName }}</td>
+                    <td>{{ item.currentStock }}</td>
+                    <td>{{ item.reorderThreshold }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+          @case ('OUT_OF_STOCK') {
+            <gom-lib-table
+              [columns]="outOfStockTableColumns"
+              [rows]="outOfStockTableRows()"
+              [loading]="drillDownLoading()"
+              [showPagination]="false"
+              [emptyMessage]="'No out-of-stock items found.'"
+            ></gom-lib-table>
+          }
+          @case ('TOP_PRODUCTS') {
+            <gom-lib-table
+              [columns]="topProductsTableColumns"
+              [rows]="topProductsTableRows()"
+              [loading]="drillDownLoading()"
+              [showPagination]="false"
+              [emptyMessage]="'No top products found.'"
+            ></gom-lib-table>
+          }
+          @case ('SLOW_PRODUCTS') {
+            <table class="tenant-dashboard__table">
+              <thead>
+                <tr><th>Product Name</th><th>Units Sold</th><th>Net Sales</th></tr>
+              </thead>
+              <tbody>
+                @for (item of $any(data).data.items; track $index) {
+                  <tr>
+                    <td>{{ item.productName }}</td>
+                    <td>{{ item.unitsSold }}</td>
+                    <td>{{ item.currency }} {{ item.netSalesAmount.toFixed(2) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+        }
+      } @else {
+        <p>No data available</p>
+      }
+    </div>
+
+    <div gom-modal-actions>
+      <gom-lib-button variant="secondary" (buttonClick)="openDrillDown(null)">Close</gom-lib-button>
+    </div>
+  </gom-lib-modal>
 </section>
