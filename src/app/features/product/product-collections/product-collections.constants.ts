@@ -1,0 +1,16 @@
+export const PRODUCT_COLLECTIONS_TEXT = {
+  title: 'productCollections.title',
+  create: 'productCollections.actions.create',
+  edit: 'productCollections.actions.edit',
+  delete: 'productCollections.actions.delete',
+  save: 'productCollections.actions.save',
+  cancel: 'common.btn_cancel',
+  confirmDeleteTitle: 'productCollections.delete.title',
+  confirmDeleteMessage: 'productCollections.delete.message',
+  successCreated: 'productCollections.toast.created',
+  successUpdated: 'productCollections.toast.updated',
+  successDeleted: 'productCollections.toast.deleted',
+  errorLoad: 'productCollections.toast.errorLoad',
+  errorSave: 'productCollections.toast.errorSave',
+  errorDelete: 'productCollections.toast.errorDelete',
+};

@@ -4,12 +4,27 @@
     "module": "ప్రోడక్ట్ క్రియేషన్ మాడ్యూల్",
     "navigation": {
       "toggle": "నావిగేషన్ మార్చు",
+        "groupSearch": "Search groups",
+        "tabsAria": "Collection mapping tabs",
+        "allTab": "All",
+        "allVariantsTitle": "All Variants",
+        "groupVariantsTitle": "Group Variants",
       "close": "మెను మూసివేయి",
       "workspace": "వర్క్‌స్పేస్",
       "menu": "నావిగేషన్",
       "expand": "{{section}} విస్తరించు",
       "collapse": "{{section}} కుదించు",
       "expandSidebar": "సైడ్‌బార్ విస్తరించు",
+        "remove": "Remove",
+        "addGroup": "Add Group",
+        "removeGroup": "Remove Group",
+        "addAgain": "Add Again",
+        "selectGroupToManage": "Select Add Group first to manage exclusions for this group.",
+        "recentlyRemovedGroups": "Recently Removed Groups",
+        "removedVariants": "Removed Variants",
+        "noRemovedGroups": "No removed groups.",
+        "noRemovedVariants": "No removed variants.",
+        "noVisibleVariants": "No visible variants in this tab.",
       "collapseSidebar": "సైడ్‌బార్ కుదించు",
       "masterSetup": "మాస్టర్ సెటప్",
       "productSetup": "ప్రొడక్ట్ సెటప్",
@@ -23,6 +38,7 @@
       "variants": "వేరియంట్లు",
       "packs": "ప్యాక్స్",
       "mediaLibrary": "మీడియా లైబ్రరీ",
+      "productCollections": "ప్రోడక్ట్ కలెక్షన్స్",
       "orders": "ఆర్డర్లు",
       "orderManagement": "ఆర్డర్ మేనేజ్‌మెంట్",
       "riders": "రైడర్స్",
@@ -92,6 +108,92 @@
     },
     "messages": {
       "closeErrorBanner": "లోపపు బ్యానర్ మూసివేయి"
+    }
+  },
+  "productCollections": {
+    "title": "ప్రోడక్ట్ కలెక్షన్స్",
+    "actions": {
+      "create": "కలెక్షన్ సృష్టించండి",
+      "edit": "కలెక్షన్ సవరించండి",
+      "delete": "కలెక్షన్ తొలగించండి",
+      "save": "కలెక్షన్ సేవ్ చేయండి",
+      "apply": "వర్తించు",
+      "clear": "క్లియర్ చేయి",
+      "prev": "మునుపటి",
+      "next": "తదుపరి"
+    },
+    "labels": {
+      "page": "పేజీ",
+      "total": "మొత్తం"
+    },
+    "filters": {
+      "search": "శోధన",
+      "status": "స్థితి"
+    },
+    "form": {
+      "name": "కలెక్షన్ పేరు",
+      "description": "వివరణ",
+      "status": "స్థితి",
+      "assignmentType": "అసైన్‌మెంట్ రకం"
+    },
+    "mapping": {
+      "title": "కేటగిరీ-ఫస్ట్ మ్యాపింగ్",
+      "category": "కేటగిరీ",
+      "categoryPlaceholder": "కేటగిరీని ఎంచుకోండి",
+      "search": "పేరుతో ప్రోడక్ట్‌ను వెతకండి",
+      "searchVariants": "వేరియంట్లను వెతకండి",
+      "groupSearch": "గ్రూపులను వెతకండి",
+      "tabsAria": "కలెక్షన్ మ్యాపింగ్ ట్యాబ్స్",
+      "allTab": "All",
+      "allVariantsTitle": "All Variants",
+      "groupVariantsTitle": "Group Variants",
+      "groups": "గ్రూపులు",
+      "groupsPlaceholder": "ఒకటి లేదా అంతకంటే ఎక్కువ గ్రూపులను ఎంచుకోండి",
+      "variants": "వేరియంట్లు",
+      "variantsPlaceholder": "ఒకటి లేదా అంతకంటే ఎక్కువ వేరియంట్లను ఎంచుకోండి",
+      "selectAllGroups": "అన్ని గ్రూపులను ఎంచుకోండి",
+      "selectAllVariants": "అన్ని వేరియంట్లను ఎంచుకోండి",
+      "remove": "Remove",
+      "addGroup": "Add Group",
+      "removeGroup": "Remove Group",
+      "addAgain": "Add Again",
+      "selectGroupToManage": "ఈ గ్రూప్ కోసం మినహాయింపులను నిర్వహించాలంటే ముందుగా Add Group ఎంచుకోండి.",
+      "recentlyRemovedGroups": "Recently Removed Groups",
+      "removedVariants": "Removed Variants",
+      "noRemovedGroups": "No removed groups.",
+      "noRemovedVariants": "No removed variants.",
+      "noVisibleVariants": "No visible variants in this tab.",
+      "selectedItems": "ఎంచుకున్న అసైన్‌మెంట్లు",
+      "noSelections": "ఇప్పటివరకు ఎలాంటి గ్రూపులు లేదా వేరియంట్లు ఎంచుకోలేదు."
+    },
+    "summary": {
+      "categories": "ఎంచుకున్న కేటగిరీలు",
+      "groups": "ఎంచుకున్న గ్రూపులు",
+      "variants": "ఎంచుకున్న వేరియంట్లు",
+      "resolvedVariants": "రిసాల్వ్ అయిన వేరియంట్లు",
+      "totalVariantsAdded": "మొత్తం జోడించిన వేరియంట్లు"
+    },
+    "details": {
+      "title": "కలెక్షన్ వివరాలు",
+      "categories": "కేటగిరీ సందర్భం",
+      "totalResolved": "మొత్తం రిసాల్వ్ అయిన వేరియంట్లు",
+      "groups": "అసైన్ చేసిన గ్రూపులు",
+      "groupVariants": "రిసాల్వ్ అయిన వేరియంట్లు",
+      "directVariants": "డైరెక్ట్ వేరియంట్లు",
+      "noGroups": "ఏ గ్రూపులు అసైన్ కాలేదు.",
+      "noVariants": "ఏ డైరెక్ట్ వేరియంట్లు అసైన్ కాలేదు."
+    },
+    "delete": {
+      "title": "కలెక్షన్ తొలగించండి",
+      "message": "మీరు ఈ కలెక్షన్ తొలగించాలనుకుంటున్నారా: {{name}}?"
+    },
+    "toast": {
+      "created": "కలెక్షన్ విజయవంతంగా సృష్టించబడింది.",
+      "updated": "కలెక్షన్ విజయవంతంగా నవీకరించబడింది.",
+      "deleted": "కలెక్షన్ విజయవంతంగా తొలగించబడింది.",
+      "errorLoad": "ప్రోడక్ట్ కలెక్షన్స్ లోడ్ కాలేదు.",
+      "errorSave": "ప్రోడక్ట్ కలెక్షన్ సేవ్ కాలేదు.",
+      "errorDelete": "ప్రోడక్ట్ కలెక్షన్ తొలగించలేకపోయాము."
     }
   },
   "storefrontConfig": {

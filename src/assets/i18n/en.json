@@ -23,6 +23,7 @@
                                    "variants":  "Variants",
                                    "packs":  "Packs",
                                    "mediaLibrary":  "Media Library",
+                                   "productCollections":  "Product Collections",
                                    "orders":  "Orders",
                                    "orderManagement":  "Order Management",
                                    "riders":  "Riders",
@@ -776,6 +777,92 @@
                                                    }
                               }
              },
+    "productCollections":  {
+                               "title":  "Product Collections",
+                               "actions":  {
+                                               "create":  "Create Collection",
+                                               "edit":  "Edit Collection",
+                                               "delete":  "Delete Collection",
+                                               "save":  "Save Collection",
+                                               "apply":  "Apply",
+                                               "clear":  "Clear",
+                                               "prev":  "Previous",
+                                               "next":  "Next"
+                                           },
+                               "labels":  {
+                                              "page":  "Page",
+                                              "total":  "Total"
+                                          },
+                               "filters":  {
+                                               "search":  "Search",
+                                               "status":  "Status"
+                                           },
+                               "form":  {
+                                            "name":  "Collection Name",
+                                            "description":  "Description",
+                                            "status":  "Status",
+                                            "assignmentType":  "Assignment Type"
+                                        },
+                               "mapping":  {
+                                               "title":  "Category-first Mapping",
+                                               "category":  "Category",
+                                               "categoryPlaceholder":  "Select category",
+                                               "search":  "Search products by name",
+                                               "searchVariants":  "Search variants",
+                                               "groupSearch":  "Search groups",
+                                               "tabsAria":  "Collection mapping tabs",
+                                               "allTab":  "All",
+                                               "allVariantsTitle":  "All Variants",
+                                               "groupVariantsTitle":  "Group Variants",
+                                               "groups":  "Groups",
+                                               "groupsPlaceholder":  "Select one or more groups",
+                                               "variants":  "Variants",
+                                               "variantsPlaceholder":  "Select one or more variants",
+                                               "selectAllGroups":  "Select all groups",
+                                               "selectAllVariants":  "Select all variants",
+                                               "remove":  "Remove",
+                                               "addGroup":  "Add Group",
+                                               "removeGroup":  "Remove Group",
+                                               "addAgain":  "Add",
+                                               "selectGroupToManage":  "Select Add Group first to manage exclusions for this group.",
+                                               "recentlyRemovedGroups":  "Recently Removed Groups",
+                                               "removedVariants":  "Removed Variants",
+                                               "noRemovedGroups":  "No removed groups.",
+                                               "noRemovedVariants":  "No removed variants.",
+                                               "noVisibleVariants":  "No visible variants in this tab.",
+                                               "selectedItems":  "Selected assignments",
+                                               "noSelections":  "No groups or variants selected yet."
+                                           },
+                               "summary":  {
+                                               "categories":  "Selected categories",
+                                               "groups":  "Selected groups",
+                                               "variants":  "Selected variants",
+                                               "resolvedVariants":  "Resolved variants",
+                                               "totalVariantsAdded":  "Total variants added"
+                                           },
+                               "details":  {
+                                               "title":  "Collection Details",
+                                               "categories":  "Category context",
+                                               "totalResolved":  "Total resolved variants",
+                                               "groups":  "Assigned groups",
+                                               "groupVariants":  "Resolved variants",
+                                               "directVariants":  "Direct variants",
+                                               "noGroups":  "No groups assigned.",
+                                               "noVariants":  "No direct variants assigned."
+                                           },
+                               "delete":  {
+                                              "title":  "Delete Collection",
+                                              "message":  "Are you sure you want to delete collection: {{name}}?"
+                                          },
+                               "toast":  {
+                                            "created":  "Collection created successfully.",
+                                            "updated":  "Collection updated successfully.",
+                                            "deleted":  "Collection deleted successfully.",
+                                            "errorLoad":  "Failed to load product collections.",
+                                            "errorSave":  "Failed to save product collection.",
+                                            "errorDelete":  "Failed to delete product collection."
+                                        }
+                           },
     "auth":  {
                  "entry":  {
                                "eyebrow":  "Access Validation",

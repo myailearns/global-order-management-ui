@@ -129,6 +129,12 @@ export interface Group {
   updatedAt: string;
 }
 
+export interface GroupDeleteResult {
+  id: string;
+  unmappedFromCollections?: number;
+  removedVariantCount?: number;
+}
+
 export interface GroupPayload {
   name: string;
   description?: string;
@@ -199,6 +205,10 @@ export class GroupsService {
 
   updateGroup(id: string, payload: GroupPayload): Observable<ApiSuccess<Group>> {
     return this.http.put<ApiSuccess<Group>>(`${this.groupsUrl}/${id}`, payload);
+  }
+
+  deleteGroup(id: string): Observable<ApiSuccess<GroupDeleteResult>> {
+    return this.http.delete<ApiSuccess<GroupDeleteResult>>(`${this.groupsUrl}/${id}`);
   }
 
   patchGroupStatus(id: string, status: 'ACTIVE' | 'INACTIVE'): Observable<ApiSuccess<Group>> {

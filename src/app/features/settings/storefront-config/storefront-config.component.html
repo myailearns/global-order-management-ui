@@ -15,7 +15,7 @@
       <span class="chip chip--soft">Slug and colors are prefilled with defaults</span>
     </div>
 
-    <gom-lib-tabs [tabs]="tabs" [activeTab]="activeTab()" (tabChange)="switchTab($event)">
+    <gom-lib-tabs [tabs]="tabs()" [activeTab]="activeTab()" (tabChange)="switchTab($event)">
       <gom-lib-tab-content tabId="basic" [activeTab]="activeTab()">
         <fieldset class="settings-section">
           <legend>Store Access</legend>
@@ -643,6 +643,42 @@
           }
         </fieldset>
       </gom-lib-tab-content>
+
+      <gom-lib-tab-content tabId="productSet" [activeTab]="activeTab()">
+        <fieldset class="settings-section">
+          <legend>Product Set Settings</legend>
+          <p class="section-hint">Enable or disable Products tab in customer mobile navigation.</p>
+          <p class="section-hint">Changes are saved now and apply on next customer refresh/load.</p>
+
+          <div class="settings-grid settings-grid--2col">
+            <gom-lib-switch
+              label="Enable Products tab"
+              [checked]="configForm.controls.productsTabEnabled.value !== false"
+              (checkedChange)="configForm.controls.productsTabEnabled.setValue($event)">
+            </gom-lib-switch>
+          </div>
+        </fieldset>
+
+        @if (configForm.controls.productsTabEnabled.value) {
+          <fieldset class="settings-section">
+            <legend>Products Layout</legend>
+
+            @if (hasProductSetSettingsAccess()) {
+              <p class="section-hint">Collection-enabled plan: both Layout 1 and Layout 2 are available.</p>
+            } @else {
+              <p class="section-hint">Current plan supports only default category-based layout.</p>
+            }
+
+            <div class="settings-grid settings-grid--2col">
+              <gom-lib-select
+                label="Products tab layout"
+                [options]="productsTabLayoutOptionsForTenant()"
+                [formControl]="$any(configForm.controls.productsTabLayout)"
+              ></gom-lib-select>
+            </div>
+          </fieldset>
+        }
+      </gom-lib-tab-content>
     </gom-lib-tabs>
 
     <!-- ─── Actions ──────────────────────────────── -->
@@ -655,6 +691,21 @@
         {{ saving() ? 'Saving...' : 'Save Storefront Settings' }}
       </gom-lib-button>
     </div>
+
+    <gom-lib-modal
+      title="Apply Products Tab Layout Change"
+      [(show)]="showProductsLayoutConfirm"
+      size="small">
+      <p>This change will be saved now and customers will see the new Products layout on next refresh/load.</p>
+
+      <footer class="gom-modal__action-layout" gom-modal-actions>
+        <div class="gom-modal__action-layout-start"></div>
+        <div class="gom-modal__action-layout-end">
+          <gom-lib-button type="button" variant="secondary" (buttonClick)="cancelProductsTabLayoutChange()">Cancel</gom-lib-button>
+          <gom-lib-button type="button" variant="primary" (buttonClick)="confirmProductsTabLayoutChange()">Apply</gom-lib-button>
+        </div>
+      </footer>
+    </gom-lib-modal>
 
     <gom-lib-modal
       title="Edit Delivery Settings"

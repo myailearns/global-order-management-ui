@@ -288,6 +288,51 @@
     "actions": ["delete"]
   },
   {
+    "featureKey": "productCollection.list",
+    "displayName": "View Product Collections",
+    "module": "product",
+    "description": "List and view product collections",
+    "planAvailability": ["GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["view", "search", "filter"]
+  },
+  {
+    "featureKey": "productCollection.create",
+    "displayName": "Create Product Collection",
+    "module": "product",
+    "description": "Create new product collections",
+    "planAvailability": ["GROWTH", "SCALE"],
+    "dependencies": ["productCollection.list"],
+    "actions": ["create"]
+  },
+  {
+    "featureKey": "productCollection.edit",
+    "displayName": "Edit Product Collection",
+    "module": "product",
+    "description": "Edit product collections",
+    "planAvailability": ["GROWTH", "SCALE"],
+    "dependencies": ["productCollection.list"],
+    "actions": ["edit", "update"]
+  },
+  {
+    "featureKey": "productCollection.delete",
+    "displayName": "Delete Product Collection",
+    "module": "product",
+    "description": "Delete product collections",
+    "planAvailability": ["GROWTH", "SCALE"],
+    "dependencies": ["productCollection.list"],
+    "actions": ["delete"]
+  },
+  {
+    "featureKey": "productCollection.assign",
+    "displayName": "Assign Product Collections",
+    "module": "product",
+    "description": "Assign and unassign groups or variants in collections",
+    "planAvailability": ["GROWTH", "SCALE"],
+    "dependencies": ["productCollection.list"],
+    "actions": ["assign", "remove"]
+  },
+  {
     "featureKey": "stock.list",
     "displayName": "View Stock",
     "module": "product",

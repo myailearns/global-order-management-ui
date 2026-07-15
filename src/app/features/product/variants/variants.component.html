@@ -838,6 +838,62 @@
   (decisionsCompleted)="onPriceApprovalCompleted()"
 ></gom-price-approval-modal>
 
+<gom-lib-modal
+  [title]="'Variant Collections'"
+  [(show)]="variantCollectionsModalOpen"
+  (closed)="closeVariantCollectionsModal()"
+  size="medium"
+>
+  <section class="variant-collections-modal">
+    @if (currentVariantForCollections()) {
+      <p><strong>Variant:</strong> {{ currentVariantForCollections()?.name }}</p>
+    }
+
+    <gom-lib-select
+      label="Add to Collection"
+      placeholder="Select collection"
+      [options]="variantCollectionOptions()"
+      [formControl]="variantCollectionForm.controls.collectionId"
+    ></gom-lib-select>
+
+    <div class="variant-collections-modal__actions">
+      <gom-lib-button
+        type="button"
+        variant="primary"
+        [disabled]="loadingVariantCollections() || !variantCollectionForm.controls.collectionId.value"
+        (buttonClick)="addCurrentVariantToCollection()"
+      >
+        Add to Collection
+      </gom-lib-button>
+    </div>
+
+    <div class="variant-collections-modal__list">
+      <h4>Current Collections</h4>
+      @if (loadingVariantCollections()) {
+        <p>Loading...</p>
+      } @else if (variantCollectionMemberships().length) {
+        <ul>
+          @for (item of variantCollectionMemberships(); track item.collectionId) {
+            <li>
+              <span>{{ item.name }}</span>
+              <small>{{ item.sourceLabel }}</small>
+            </li>
+          }
+        </ul>
+      } @else {
+        <p>This variant is not mapped to any collection.</p>
+      }
+    </div>
+  </section>
+
+  <footer class="gom-modal__action-layout" gom-modal-actions>
+    <div class="gom-modal__action-layout-start"></div>
+    <div class="gom-modal__action-layout-end">
+      <gom-lib-button type="button" variant="secondary" (buttonClick)="closeVariantCollectionsModal()">Close</gom-lib-button>
+    </div>
+  </footer>
+</gom-lib-modal>
+
 <gom-image-picker
   [(show)]="pickerOpen"
   [existingImageIds]="existingVariantImageIds()"

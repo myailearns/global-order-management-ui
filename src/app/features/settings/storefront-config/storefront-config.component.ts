@@ -26,6 +26,7 @@ import {
   LayoutMode,
   PaymentMethod,
   PickupConfig,
+  ProductsTabLayout,
   StorefrontConfig,
   StorefrontShare,
   StorefrontShareEventPayload,
@@ -78,17 +79,27 @@ export class StorefrontConfigComponent implements OnInit {
   readonly storefrontShare = signal<StorefrontShare | null>(null);
   readonly shareBusy = signal<'copy' | 'whatsapp' | 'download' | null>(null);
   readonly hasStorefrontShareAccess = computed(() => this.authSession.hasFeature('storefront.share'));
+  readonly hasProductSetSettingsAccess = computed(() => this.authSession.hasFeature('productCollection.create'));
 
-  readonly tabs: TabItem[] = [
-    { id: 'basic', label: 'Basic Settings' },
-    { id: 'branding', label: 'Branding & Content' },
-    { id: 'catalog', label: 'Catalog & Banners' },
-    { id: 'commerce', label: 'Delivery/Payments' },
-  ];
+  readonly tabs = computed<TabItem[]>(() => {
+    const items: TabItem[] = [
+      { id: 'basic', label: 'Basic Settings' },
+      { id: 'branding', label: 'Branding & Content' },
+      { id: 'catalog', label: 'Catalog & Banners' },
+      { id: 'commerce', label: 'Delivery/Payments' },
+    ];
 
-  readonly activeTab = signal<'basic' | 'branding' | 'catalog' | 'commerce'>('basic');
+    items.push({ id: 'productSet', label: 'Product Set Settings' });
+
+    return items;
+  });
+
+  readonly activeTab = signal<'basic' | 'branding' | 'catalog' | 'commerce' | 'productSet'>('basic');
+  readonly showProductsLayoutConfirm = signal(false);
+  readonly initialProductsTabLayout = signal<ProductsTabLayout>('LAYOUT_1_CATEGORY_FIRST');
 
   private shareCenterViewTracked = false;
+  private bypassProductsLayoutConfirm = false;
 
   private readonly defaultTheme = {
     primaryColor: '#0a5d8b',
@@ -124,6 +135,17 @@ export class StorefrontConfigComponent implements OnInit {
     { value: 'BOTH', label: 'Both Delivery and Collect' },
   ];
 
+  readonly productsTabLayoutOptions = [
+    { value: 'LAYOUT_1_CATEGORY_FIRST', label: 'Layout 1 - Category first' },
+    { value: 'LAYOUT_2_COLLECTION_FIRST', label: 'Layout 2 - Collection first' },
+  ];
+
+  readonly productsTabLayoutOptionsForTenant = computed(() =>
+    this.hasProductSetSettingsAccess()
+      ? this.productsTabLayoutOptions
+      : [this.productsTabLayoutOptions[0]]
+  );
+
   readonly showDeliveryModal = signal(false);
   readonly showPickupModal = signal(false);
   readonly editingPickupIndex = signal<number | null>(null);
@@ -151,6 +173,8 @@ export class StorefrontConfigComponent implements OnInit {
     secondaryColor: [this.defaultTheme.secondaryColor],
     accentColor: [this.defaultTheme.accentColor],
     layoutMode: ['GRID'],
+    productsTabEnabled: [true],
+    productsTabLayout: ['LAYOUT_1_CATEGORY_FIRST'],
     b1g1HomeCardsPerRow: [3, [Validators.min(1), Validators.max(8)]],
     catalogInitialCategoryCount: [3, [Validators.min(1), Validators.max(10)]],
     catalogGroupsPerCategoryPage: [10, [Validators.min(2), Validators.max(50)]],
@@ -223,7 +247,7 @@ export class StorefrontConfigComponent implements OnInit {
   }
 
   switchTab(tab: string | number): void {
-    if (tab === 'basic' || tab === 'branding' || tab === 'catalog' || tab === 'commerce') {
+    if (tab === 'basic' || tab === 'branding' || tab === 'catalog' || tab === 'commerce' || tab === 'productSet') {
       this.activeTab.set(tab);
     }
   }
@@ -271,7 +295,10 @@ export class StorefrontConfigComponent implements OnInit {
               primaryColor: this.defaultTheme.primaryColor,
               secondaryColor: this.defaultTheme.secondaryColor,
               accentColor: this.defaultTheme.accentColor,
+              productsTabEnabled: true,
+              productsTabLayout: 'LAYOUT_1_CATEGORY_FIRST',
             });
+            this.initialProductsTabLayout.set('LAYOUT_1_CATEGORY_FIRST');
           }
           this.loading.set(false);
         },
@@ -304,6 +331,8 @@ export class StorefrontConfigComponent implements OnInit {
       secondaryColor: hasCustomColors ? secondary : this.defaultTheme.secondaryColor,
       accentColor: hasCustomColors ? accent : this.defaultTheme.accentColor,
       layoutMode: cfg.layoutMode || 'GRID',
+      productsTabEnabled: cfg.productsTabEnabled !== false,
+      productsTabLayout: cfg.productsTabLayout || 'LAYOUT_1_CATEGORY_FIRST',
       b1g1HomeCardsPerRow: Number(cfg.b1g1HomeCardsPerRow ?? 3),
       catalogInitialCategoryCount: Number(cfg.catalogInitialCategoryCount ?? 3),
       catalogGroupsPerCategoryPage: Number(cfg.catalogGroupsPerCategoryPage ?? 10),
@@ -330,6 +359,12 @@ export class StorefrontConfigComponent implements OnInit {
       allowCustomerCancellation: cfg.allowCustomerCancellation !== false,
       cancellationWindowMinutes: cfg.cancellationWindowMinutes ?? 0,
     });
+
+    this.initialProductsTabLayout.set(
+      cfg.productsTabLayout === 'LAYOUT_2_COLLECTION_FIRST'
+        ? 'LAYOUT_2_COLLECTION_FIRST'
+        : 'LAYOUT_1_CATEGORY_FIRST'
+    );
 
     // Rebuild banners FormArray
     this.banners.clear();
@@ -968,11 +1003,23 @@ export class StorefrontConfigComponent implements OnInit {
     }
 
     if (this.configForm.invalid) {
+      this.bypassProductsLayoutConfirm = false;
       this.configForm.markAllAsTouched();
       this.errorMessage.set(this.t('storefrontConfig.shareCenter.messages.validationError'));
       this.toast.error(this.t('storefrontConfig.shareCenter.messages.validationError'));
       return;
     }
+
+    if (
+      this.hasProductSetSettingsAccess() &&
+      this.hasProductsTabLayoutChanged() &&
+      !this.bypassProductsLayoutConfirm
+    ) {
+      this.showProductsLayoutConfirm.set(true);
+      return;
+    }
+
+    this.bypassProductsLayoutConfirm = false;
 
     const raw = this.configForm.getRawValue();
     const resolvedStoreSlug = this.toSlug(raw.storeSlug || this.tenantCode() || '');
@@ -1013,6 +1060,10 @@ export class StorefrontConfigComponent implements OnInit {
       secondaryColor,
       accentColor,
       layoutMode: (raw.layoutMode as LayoutMode) || 'GRID',
+      productsTabEnabled: this.normalizeBoolean(raw.productsTabEnabled, true),
+      productsTabLayout: this.hasProductSetSettingsAccess()
+        ? ((raw.productsTabLayout as ProductsTabLayout) || 'LAYOUT_1_CATEGORY_FIRST')
+        : 'LAYOUT_1_CATEGORY_FIRST',
       b1g1HomeCardsPerRow: Number(raw.b1g1HomeCardsPerRow ?? 3),
       catalogInitialCategoryCount: Number(raw.catalogInitialCategoryCount ?? 3),
       catalogGroupsPerCategoryPage: Number(raw.catalogGroupsPerCategoryPage ?? 10),
@@ -1077,11 +1128,30 @@ export class StorefrontConfigComponent implements OnInit {
           this.saving.set(false);
         },
         error: (err) => {
+          this.bypassProductsLayoutConfirm = false;
           const msg = (err as { error?: { message?: string } })?.error?.message;
           this.errorMessage.set(msg || this.t('storefrontConfig.shareCenter.messages.saveError'));
           this.saving.set(false);
         },
       });
+  }
+
+  hasProductsTabLayoutChanged(): boolean {
+    const value = this.configForm.controls.productsTabLayout.value;
+    const current = (value === 'LAYOUT_2_COLLECTION_FIRST'
+      ? 'LAYOUT_2_COLLECTION_FIRST'
+      : 'LAYOUT_1_CATEGORY_FIRST') as ProductsTabLayout;
+    return current !== this.initialProductsTabLayout();
+  }
+
+  confirmProductsTabLayoutChange(): void {
+    this.showProductsLayoutConfirm.set(false);
+    this.bypassProductsLayoutConfirm = true;
+    this.save();
+  }
+
+  cancelProductsTabLayoutChange(): void {
+    this.showProductsLayoutConfirm.set(false);
   }
 
   copyStorefrontLink(): void {

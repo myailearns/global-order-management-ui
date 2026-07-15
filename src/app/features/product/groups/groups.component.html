@@ -647,6 +647,59 @@
   </footer>
 </gom-lib-modal>
 
+<gom-lib-modal
+  [title]="'Group Collections'"
+  [(show)]="groupCollectionsModalOpen"
+  (closed)="closeGroupCollectionsModal()"
+  size="medium"
+>
+  <section class="group-collections-modal">
+    @if (currentGroupForCollections()) {
+      <p><strong>Group:</strong> {{ currentGroupForCollections()?.name }}</p>
+    }
+
+    <gom-lib-select
+      label="Add to Collection"
+      placeholder="Select collection"
+      [options]="groupCollectionOptions()"
+      [formControl]="groupCollectionForm.controls.collectionId"
+    ></gom-lib-select>
+
+    <div class="group-collections-modal__actions">
+      <gom-lib-button
+        type="button"
+        variant="primary"
+        [disabled]="loadingGroupCollections() || !groupCollectionForm.controls.collectionId.value"
+        (buttonClick)="addCurrentGroupToCollection()"
+      >
+        Add to Collection
+      </gom-lib-button>
+    </div>
+
+    <div class="group-collections-modal__list">
+      <h4>Current Collections</h4>
+      @if (loadingGroupCollections()) {
+        <p>Loading...</p>
+      } @else if (groupCollectionMemberships().length) {
+        <ul>
+          @for (item of groupCollectionMemberships(); track item._id) {
+            <li>{{ item.name }}</li>
+          }
+        </ul>
+      } @else {
+        <p>This group is not mapped to any collection.</p>
+      }
+    </div>
+  </section>
+
+  <footer class="gom-modal__action-layout" gom-modal-actions>
+    <div class="gom-modal__action-layout-start"></div>
+    <div class="gom-modal__action-layout-end">
+      <gom-lib-button type="button" variant="secondary" (buttonClick)="closeGroupCollectionsModal()">Close</gom-lib-button>
+    </div>
+  </footer>
+</gom-lib-modal>
+
 <!-- Image Picker -->
 <gom-image-picker
   [(show)]="pickerOpen"

@@ -1,0 +1,301 @@
+<section class="product-collections-page">
+  <header class="product-collections-page__header">
+    <h1>{{ text.title | translate }}</h1>
+    @if (canCreate()) {
+      <gom-lib-button (buttonClick)="openCreate()">{{ text.create | translate }}</gom-lib-button>
+    }
+  </header>
+
+  <gom-lib-modal
+    [show]="modalOpen"
+    (showChange)="modalOpen = $event"
+    [title]="(selected ? text.edit : text.create) | translate"
+    [closeOnBackdropClick]="true"
+    size="large"
+    (closed)="closeForm()"
+  >
+    <form class="product-collections-form" [formGroup]="form">
+      <gom-lib-input formControlName="name" [label]="'productCollections.form.name' | translate" [required]="true"></gom-lib-input>
+      <gom-lib-input formControlName="description" [label]="'productCollections.form.description' | translate"></gom-lib-input>
+      <gom-lib-select
+        formControlName="status"
+        [label]="'productCollections.form.status' | translate"
+        [options]="statusOptions"
+      ></gom-lib-select>
+
+      <div class="product-collections-form__toggle-row">
+        <label class="product-collections-form__toggle-label">
+          <input
+            type="checkbox"
+            class="product-collections-form__toggle-input"
+            formControlName="showOnHomeScreen"
+          />
+          <span>Show on Home Screen</span>
+        </label>
+        <p class="product-collections-form__toggle-hint">
+          When enabled, this collection will appear on the customer home screen (e.g. for festival or seasonal promotions).
+        </p>
+      </div>
+
+      <div class="product-collections-form__toggle-row">
+        <label class="product-collections-form__toggle-label">
+          <input
+            type="checkbox"
+            class="product-collections-form__toggle-input"
+            formControlName="autoSyncNewVariants"
+          />
+          <span>Auto-update new variants in assigned groups</span>
+        </label>
+        <p class="product-collections-form__toggle-hint">
+          When enabled, new variants added to an assigned group will automatically appear in this collection.
+          Disable to lock the collection to only variants selected at save time.
+        </p>
+      </div>
+
+      <div class="product-collections-mapper">
+        <h3>{{ 'productCollections.mapping.title' | translate }}</h3>
+
+        <gom-lib-select
+          formControlName="categoryIds"
+          [label]="'productCollections.mapping.category' | translate"
+          [placeholder]="'productCollections.mapping.categoryPlaceholder' | translate"
+          [multiple]="true"
+          [searchable]="true"
+          [options]="categoryOptions()"
+        ></gom-lib-select>
+
+        <div class="product-collections-mapper__layout">
+          <aside class="product-collections-mapper__rail" [attr.aria-label]="'productCollections.mapping.tabsAria' | translate">
+            <button
+              type="button"
+              class="product-collections-rail-all"
+              [class.product-collections-rail-all--active]="isScopeActive('all')"
+              (click)="selectScope('all')"
+            >
+              <span class="product-collections-rail-active-dot" [class.product-collections-rail-active-dot--on]="isScopeActive('all')" aria-hidden="true"></span>
+              {{ 'productCollections.mapping.allTab' | translate }}
+            </button>
+
+            <gom-lib-input
+              formControlName="groupTabSearch"
+              [label]="'productCollections.mapping.groupSearch' | translate"
+            ></gom-lib-input>
+
+            @for (group of filteredGroupRail(); track group.id) {
+              <div
+                class="product-collections-rail-item-wrap"
+                [class.product-collections-rail-item-wrap--active]="isScopeActive('group:' + group.id)"
+                [class.product-collections-rail-item-wrap--selected]="true"
+              >
+                <button
+                  type="button"
+                  class="product-collections-rail-label"
+                  [class.product-collections-rail-label--active]="isScopeActive('group:' + group.id)"
+                  (click)="selectScope('group:' + group.id)"
+                >
+                  <span class="product-collections-rail-active-dot" [class.product-collections-rail-active-dot--on]="isScopeActive('group:' + group.id)" aria-hidden="true"></span>
+                  <span class="product-collections-group-icon" aria-hidden="true">
+                    @if (group.hasCustomIcon) {
+                      <span class="product-collections-group-icon__glyph">G</span>
+                    } @else {
+                      {{ getGroupInitial(group.label) }}
+                    }
+                  </span>
+                  <span>{{ group.label }}</span>
+                </button>
+                <button type="button" class="product-collections-rail-action" (click)="toggleGroupSelection(group.id)">
+                  <span aria-hidden="true">x</span>
+                </button>
+              </div>
+            }
+
+            @if (removedGroupOptions().length) {
+              <div class="product-collections-rail-restore">
+                <gom-lib-select
+                  [label]="'Unmapped groups'"
+                  [placeholder]="'Select unmapped groups'"
+                  formControlName="removedGroupIds"
+                  [searchable]="true"
+                  [multiple]="true"
+                  [options]="removedGroupOptions()"
+                ></gom-lib-select>
+              </div>
+            }
+          </aside>
+
+          <section class="product-collections-mapper__content">
+            <h4>{{ activeScopeTitle() }}</h4>
+            <p class="product-collections-mapper__scope-subtitle">{{ activeScopeSubtitle() }}</p>
+            <gom-lib-input
+              formControlName="productSearch"
+              [label]="'productCollections.mapping.searchVariants' | translate"
+            ></gom-lib-input>
+            @if (!isActiveScopeSelectable() && activeMappingTab() !== 'all') {
+              <p class="product-collections-mapper__empty">{{ 'productCollections.mapping.selectGroupToManage' | translate }}</p>
+            }
+
+            <div class="product-collections-mapper__variant-grid">
+              @for (variant of visibleActiveScopeVariants(); track variant._id) {
+                <div class="product-collections-variant-card" [class.product-collections-variant-card--removed]="isVariantExcludedInActiveScope(variant._id)">
+                  <div class="product-collections-variant-title">
+                    <span class="product-collections-variant-icon" aria-hidden="true">{{ getGroupInitial(variant.name) }}</span>
+                    <strong>{{ variant.name }}</strong>
+                  </div>
+                  <gom-lib-button
+                    type="button"
+                    variant="secondary"
+                    class="product-collections-variant-action"
+                    [class.product-collections-variant-action--revert]="isVariantExcludedInActiveScope(variant._id)"
+                    [disabled]="!isActiveScopeSelectable() && activeMappingTab() !== 'all'"
+                    (buttonClick)="toggleVariantInActiveScope(variant._id)"
+                    [title]="isVariantExcludedInActiveScope(variant._id) ? ('productCollections.mapping.addAgain' | translate) : ('productCollections.mapping.remove' | translate)"
+                  >
+                    @if (isVariantExcludedInActiveScope(variant._id)) {
+                      <span>{{ 'productCollections.mapping.addAgain' | translate }}</span>
+                    } @else {
+                      <span aria-hidden="true">x</span>
+                    }
+                  </gom-lib-button>
+                </div>
+              } @empty {
+                <p class="product-collections-mapper__empty">{{ 'productCollections.mapping.noVisibleVariants' | translate }}</p>
+              }
+            </div>
+          </section>
+        </div>
+
+        <div class="product-collections-mapper__summary">
+          <span>{{ 'productCollections.summary.totalVariantsAdded' | translate }}: {{ assignmentSummary().resolvedVariants }}</span>
+        </div>
+
+        @if (assignmentError()) {
+          <p class="product-collections-mapper__error">{{ assignmentError() }}</p>
+        }
+      </div>
+
+      <div gom-modal-actions class="product-collections-inline-form__actions">
+        <gom-lib-button type="button" variant="secondary" (buttonClick)="closeForm()">{{ text.cancel | translate }}</gom-lib-button>
+        <gom-lib-button type="button" (buttonClick)="save()" [disabled]="loading()">{{ text.save | translate }}</gom-lib-button>
+      </div>
+    </form>
+  </gom-lib-modal>
+
+  <gom-lib-table
+    [columns]="columns()"
+    [rows]="rows()"
+    [loading]="loading()"
+    [totalItems]="rows().length"
+    (rowAction)="onRowAction($event)"
+  ></gom-lib-table>
+
+  <gom-lib-confirmation-modal
+    [(show)]="deleteConfirmOpen"
+    [title]="(text.confirmDeleteTitle | translate)"
+    [message]="getDeleteCollectionMessage()"
+    [confirmText]="('common.actions.delete' | translate)"
+    [cancelText]="('common.actions.cancel' | translate)"
+    confirmVariant="danger"
+    (confirmed)="confirmDeleteCollection()"
+    (cancelled)="cancelDeleteCollection()"
+  ></gom-lib-confirmation-modal>
+
+  <gom-lib-modal
+    [show]="detailsModalOpen"
+    (showChange)="detailsModalOpen = $event"
+    [title]="'productCollections.details.title' | translate"
+    [closeOnBackdropClick]="true"
+    size="large"
+    (closed)="closeDetails()"
+  >
+    <section class="product-collections-details">
+      @if (detailTarget) {
+        <h3>{{ detailTarget.name }}</h3>
+      }
+
+      @if (detailCategoryLabels().length) {
+        <p>{{ 'productCollections.details.categories' | translate }}: {{ detailCategoryLabels().join(', ') }}</p>
+      }
+
+      <p>{{ 'productCollections.details.totalResolved' | translate }}: {{ detailResolvedTotal() }}</p>
+
+      @if (detailLoading()) {
+        <p>{{ 'common.loading' | translate }}</p>
+      } @else {
+        <div class="product-collections-mapper__layout product-collections-details__mapper-layout">
+          <aside class="product-collections-mapper__rail" [attr.aria-label]="'productCollections.mapping.tabsAria' | translate">
+            <button
+              type="button"
+              class="product-collections-rail-all"
+              [class.product-collections-rail-all--active]="isDetailScopeActive('all')"
+              (click)="selectDetailScope('all')"
+            >
+              <span class="product-collections-rail-active-dot" [class.product-collections-rail-active-dot--on]="isDetailScopeActive('all')" aria-hidden="true"></span>
+              {{ 'productCollections.mapping.allTab' | translate }}
+            </button>
+
+            <label class="product-collections-details__search-label">
+              {{ 'productCollections.mapping.groupSearch' | translate }}
+              <input
+                type="text"
+                class="product-collections-details__search-input"
+                [value]="detailGroupSearch()"
+                (input)="onDetailGroupSearchChange($any($event.target).value)"
+              />
+            </label>
+
+            @for (group of detailGroupRail(); track group.id) {
+              <div
+                class="product-collections-rail-item-wrap"
+                [class.product-collections-rail-item-wrap--active]="isDetailScopeActive('group:' + group.id)"
+                [class.product-collections-rail-item-wrap--selected]="true"
+              >
+                <button
+                  type="button"
+                  class="product-collections-rail-label"
+                  [class.product-collections-rail-label--active]="isDetailScopeActive('group:' + group.id)"
+                  (click)="selectDetailScope('group:' + group.id)"
+                >
+                  <span class="product-collections-rail-active-dot" [class.product-collections-rail-active-dot--on]="isDetailScopeActive('group:' + group.id)" aria-hidden="true"></span>
+                  <span class="product-collections-group-icon" aria-hidden="true">{{ getGroupInitial(group.label) }}</span>
+                  <span>{{ group.label }}</span>
+                </button>
+              </div>
+            }
+          </aside>
+
+          <section class="product-collections-mapper__content">
+            <h4>{{ detailActiveScopeTitle() }}</h4>
+            <p class="product-collections-mapper__scope-subtitle">{{ detailActiveScopeSubtitle() }}</p>
+
+            <label class="product-collections-details__search-label">
+              {{ 'productCollections.mapping.searchVariants' | translate }}
+              <input
+                type="text"
+                class="product-collections-details__search-input"
+                [value]="detailVariantSearch()"
+                (input)="onDetailVariantSearchChange($any($event.target).value)"
+              />
+            </label>
+
+            <div class="product-collections-mapper__variant-grid">
+              @for (variant of detailVisibleVariants(); track variant._id) {
+                <div class="product-collections-variant-card product-collections-variant-card--readonly">
+                  <div class="product-collections-variant-title">
+                    <span class="product-collections-variant-icon" aria-hidden="true">{{ getGroupInitial(variant.name) }}</span>
+                    <strong>{{ variant.name }}</strong>
+                  </div>
+                </div>
+              } @empty {
+                <p class="product-collections-mapper__empty">{{ 'productCollections.mapping.noVisibleVariants' | translate }}</p>
+              }
+            </div>
+          </section>
+        </div>
+      }
+
+      <div gom-modal-actions class="product-collections-inline-form__actions">
+        <gom-lib-button type="button" variant="secondary" (buttonClick)="closeDetails()">{{ text.cancel | translate }}</gom-lib-button>
+      </div>
+    </section>
+  </gom-lib-modal>
+</section>

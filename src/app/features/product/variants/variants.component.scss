@@ -43,6 +43,36 @@
   background: theme.get-background(standard);
 }
 
+.variant-collections-modal {
+  display: grid;
+  gap: theme.get-gap(sm);
+}
+
+.variant-collections-modal p {
+  margin: 0;
+}
+
+.variant-collections-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.variant-collections-modal__list {
+  border-top: theme.get-border-size(hairline) solid theme.get-border(standard);
+  padding-top: theme.get-spacing(xs);
+}
+
+.variant-collections-modal__list ul {
+  margin: 0;
+  padding-left: 1rem;
+}
+
+.variant-collections-modal__list li {
+  display: flex;
+  justify-content: space-between;
+  gap: theme.get-gap(sm);
+}
+
 // â”€â”€â”€ Variant Workspace Shell â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 .variant-workspace-shell {

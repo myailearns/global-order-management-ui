@@ -103,6 +103,7 @@ export interface StorefrontShareEventPayload {
 }
 
 export type LayoutMode = 'GRID' | 'GRID3' | 'LIST';
+export type ProductsTabLayout = 'LAYOUT_1_CATEGORY_FIRST' | 'LAYOUT_2_COLLECTION_FIRST' | 'LAYOUT_3_CUSTOM';
 export type PaymentMethod = 'COD' | 'UPI' | 'CARD' | 'NET_BANKING';
 export type FulfillmentMode = 'DELIVERY' | 'PICKUP' | 'BOTH';
 
@@ -149,6 +150,8 @@ export interface StorefrontConfig {
   secondaryColor: string;
   accentColor: string;
   layoutMode: LayoutMode;
+  productsTabLayout?: ProductsTabLayout;
+  productsTabEnabled?: boolean;
   b1g1HomeCardsPerRow?: number;
   catalogInitialCategoryCount?: number;
   catalogGroupsPerCategoryPage?: number;

@@ -10,6 +10,7 @@ import { BulkUploadGroupsComponent } from './features/product/groups/bulk-upload
 import { StockComponent } from './features/product/stock';
 import { VariantsComponent } from './features/product/variants';
 import { PacksComponent } from './features/product/packs';
+import { ProductCollectionsComponent } from './features/product/product-collections';
 import { OrdersComponent } from './features/order/orders';
 import { CreateOrderComponent } from './features/order/create-order';
 import { RidersComponent } from './features/delivery/riders';
@@ -163,6 +164,21 @@ export const routes: Routes = [
 				path: 'product/packs',
 				component: PacksComponent,
 				data: { actor: 'tenant', capability: 'product' },
+			},
+			{
+				path: 'product/product-collections',
+				component: ProductCollectionsComponent,
+				data: {
+					actor: 'tenant',
+					capability: 'product',
+					featureKeys: [
+						'productCollection.list',
+						'productCollection.create',
+						'productCollection.edit',
+						'productCollection.delete',
+						'productCollection.assign',
+					],
+				},
 			},
 			{
 				path: 'product/media',

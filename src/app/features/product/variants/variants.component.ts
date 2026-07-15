@@ -29,6 +29,7 @@ import { GroupImage, GroupImageEntry } from '../../saas-platform/media/media-ass
 import { ImagePickerComponent, PickedImage } from '../../../shared/components/image-picker/image-picker.component';
 import { DisableIfNoFeatureDirective } from '../../../shared/directives/disable-if-no-feature.directive';
 import { PriceApprovalModalComponent } from '../pricing-approval/price-approval-modal.component';
+import { ProductCollection, ProductCollectionsService } from '../product-collections/product-collections.service';
 import {
   Group,
   PricingRefreshSuggestion,
@@ -86,6 +87,12 @@ interface DraftBulkApplyFormValue {
   additionalPrice: number | null;
 }
 
+interface VariantCollectionMembership {
+  collectionId: string;
+  name: string;
+  sourceLabel: 'DIRECT' | 'VIA_GROUP' | 'DIRECT + VIA_GROUP';
+}
+
 @Component({
   selector: 'gom-variants',
   standalone: true,
@@ -108,6 +115,7 @@ interface DraftBulkApplyFormValue {
 })
 export class VariantsComponent implements OnInit {
   private readonly service = inject(VariantsService);
+  private readonly productCollectionsService = inject(ProductCollectionsService);
   private readonly mediaService = inject(MediaAssetService);
   private readonly fb = inject(FormBuilder);
   private readonly toast = inject(GomAlertToastService);
@@ -122,6 +130,9 @@ export class VariantsComponent implements OnInit {
       || this.authSession.hasFeature('variant.update')
   );
   readonly canDeleteVariant = computed(() => this.authSession.hasFeature('variant.delete'));
+  readonly canManageProductCollections = computed(
+    () => this.authSession.hasFeature('productCollection.list') && this.authSession.hasFeature('productCollection.assign')
+  );
   readonly variantCreateLimit = computed(() => this.authSession.getFeatureConfigNumber('variant.create', 'max_count'));
   readonly variantCreateUsed = computed(() => this.variants().length);
   readonly variantCreateRemaining = computed(() => {
@@ -214,6 +225,11 @@ export class VariantsComponent implements OnInit {
   );
 
   readonly priceApprovalOpen = signal(false);
+  readonly variantCollectionsModalOpen = signal(false);
+  readonly loadingVariantCollections = signal(false);
+  readonly currentVariantForCollections = signal<Variant | null>(null);
+  readonly variantCollectionMemberships = signal<VariantCollectionMembership[]>([]);
+  readonly availableProductCollections = signal<ProductCollection[]>([]);
   readonly formOpen = signal(false);
   readonly pickerOpen = signal(false);
   // Media state
@@ -224,6 +240,8 @@ export class VariantsComponent implements OnInit {
   readonly deleteConfirmOpen = signal(false);
   readonly editingVariantId = signal<string | null>(null);
   readonly deletingVariantId = signal<string | null>(null);
+  readonly deletingVariantName = signal<string>('');
+  readonly deletingVariantImpactCount = signal<number | null>(null);
   readonly submitMode: GomButtonContentMode = getButtonContentMode('primary-action');
   readonly cancelMode: GomButtonContentMode = getButtonContentMode('dismiss');
   readonly editingOriginalPricingMode = signal<'FORMULA' | 'OVERRIDE' | null>(null);
@@ -258,6 +276,10 @@ export class VariantsComponent implements OnInit {
     quantity: [null as number | null],
     baseCost: [null as number | null],
     additionalPrice: [null as number | null],
+  });
+
+  readonly variantCollectionForm = this.fb.group({
+    collectionId: [''],
   });
 
   private readonly currentBasePrice = signal<VariantPricePreview | null>(null);
@@ -457,6 +479,12 @@ export class VariantsComponent implements OnInit {
           disabled: () => !this.canUpdateVariant(),
         },
         {
+          label: () => this.canManageProductCollections() ? 'Collections' : 'No permission for collections',
+          actionKey: 'collections',
+          variant: 'secondary',
+          disabled: () => !this.canManageProductCollections(),
+        },
+        {
           label: () => this.canDeleteVariant() ? 'Delete' : 'No permission to delete variants',
           actionKey: 'delete',
           variant: 'secondary',
@@ -468,6 +496,10 @@ export class VariantsComponent implements OnInit {
 
   readonly groupOptions = computed<GomSelectOption[]>(() =>
     this.groups().map((item) => ({ value: item._id, label: item.name }))
+  );
+
+  readonly variantCollectionOptions = computed<GomSelectOption[]>(() =>
+    this.availableProductCollections().map((item) => ({ value: item._id, label: item.name }))
   );
 
   readonly availableUnitOptions = computed<GomSelectOption[]>(() => {
@@ -1618,13 +1650,64 @@ export class VariantsComponent implements OnInit {
         return;
       }
       this.deletingVariantId.set(variant._id);
+      this.deletingVariantName.set(variant.name);
+      this.deletingVariantImpactCount.set(null);
       this.deleteConfirmOpen.set(true);
+      this.productCollectionsService.listCollectionsByVariant(variant._id).subscribe({
+        next: (response) => {
+          this.deletingVariantImpactCount.set((response.data || []).length);
+        },
+        error: () => {
+          this.deletingVariantImpactCount.set(0);
+        },
+      });
+      return;
     }
+
+    if (event.actionKey === 'collections') {
+      if (!this.canManageProductCollections()) {
+        return;
+      }
+      this.openVariantCollections(variant);
+    }
+  }
+
+  closeVariantCollectionsModal(): void {
+    this.variantCollectionsModalOpen.set(false);
+    this.currentVariantForCollections.set(null);
+    this.variantCollectionMemberships.set([]);
+    this.availableProductCollections.set([]);
+    this.variantCollectionForm.reset({ collectionId: '' });
+  }
+
+  addCurrentVariantToCollection(): void {
+    const variant = this.currentVariantForCollections();
+    const collectionId = String(this.variantCollectionForm.controls.collectionId.value || '');
+    if (!variant?._id || !collectionId) {
+      return;
+    }
+
+    this.loadingVariantCollections.set(true);
+    this.productCollectionsService.assignItems(collectionId, {
+      assignments: [{ type: 'VARIANT', referenceId: variant._id }],
+    }).subscribe({
+      next: () => {
+        this.variantCollectionForm.reset({ collectionId: '' });
+        this.toast.success('Variant added to collection.');
+        this.reloadVariantCollections(variant);
+      },
+      error: (error) => {
+        this.loadingVariantCollections.set(false);
+        this.toast.error(String(error?.error?.message || 'Failed to add variant to collection.'));
+      },
+    });
   }
 
   cancelDelete(): void {
     this.deleteConfirmOpen.set(false);
     this.deletingVariantId.set(null);
+    this.deletingVariantName.set('');
+    this.deletingVariantImpactCount.set(null);
   }
 
   confirmDelete(): void {
@@ -1637,9 +1720,16 @@ export class VariantsComponent implements OnInit {
     this.deleteConfirmOpen.set(false);
 
     this.service.deleteVariant(id).subscribe({
-      next: () => {
-        this.toast.success('Variant deleted successfully.');
+      next: (response) => {
+        const unmapped = Number(response.data?.unmappedFromCollections || 0);
+        if (unmapped > 0) {
+          this.toast.success(`Variant deleted successfully. Removed from ${unmapped} collections.`);
+        } else {
+          this.toast.success('Variant deleted successfully.');
+        }
         this.deletingVariantId.set(null);
+        this.deletingVariantName.set('');
+        this.deletingVariantImpactCount.set(null);
         this.loadVariants(this.selectedGroupId());
         this.loadPricingSuggestions(this.selectedGroupId());
         this.saving.set(false);
@@ -1652,7 +1742,18 @@ export class VariantsComponent implements OnInit {
   }
 
   getDeleteMessage(): string {
-    return 'Are you sure you want to delete this variant?';
+    const name = this.deletingVariantName();
+    const impactCount = this.deletingVariantImpactCount();
+
+    if ((impactCount || 0) > 0) {
+      return `Delete ${name || 'this variant'}? It is used in ${impactCount} collections and will be removed where applicable.`;
+    }
+
+    if (impactCount === null) {
+      return `Delete ${name || 'this variant'}? Checking collection impact...`;
+    }
+
+    return `Delete ${name || 'this variant'}?`;
   }
 
   loadPricingSuggestions(groupId: string): void {
@@ -2513,5 +2614,74 @@ export class VariantsComponent implements OnInit {
         return { key, label };
       })
       .filter((item) => !!item.key && item.key !== baseKey);
+  }
+
+  private openVariantCollections(variant: Variant): void {
+    this.currentVariantForCollections.set(variant);
+    this.variantCollectionsModalOpen.set(true);
+    this.loadingVariantCollections.set(true);
+    this.variantCollectionForm.reset({ collectionId: '' });
+    this.reloadVariantCollections(variant);
+  }
+
+  private reloadVariantCollections(variant: Variant): void {
+    forkJoin({
+      memberships: this.productCollectionsService.listCollectionsByVariant(variant._id),
+      all: this.productCollectionsService.list({ page: 1, limit: 500 }),
+    }).pipe(
+      switchMap(({ memberships, all }) => {
+        const rows = memberships.data || [];
+        this.availableProductCollections.set(all.data || []);
+        if (!rows.length) {
+          return of([] as VariantCollectionMembership[]);
+        }
+
+        return forkJoin(
+          rows.map((item) =>
+            this.productCollectionsService.getById(item._id).pipe(
+              catchError(() => of({ data: { assignments: [] } as any }))
+            )
+          )
+        ).pipe(
+          switchMap((details) => {
+            const mapped = rows.map((collection, index) => {
+              const assignments = details[index]?.data?.assignments || [];
+              const hasDirect = assignments.some(
+                (assignment: { type: string; referenceId: string }) =>
+                  assignment.type === 'VARIANT' && String(assignment.referenceId) === String(variant._id)
+              );
+              const hasViaGroup = assignments.some(
+                (assignment: { type: string; referenceId: string }) =>
+                  assignment.type === 'GROUP' && String(assignment.referenceId) === String(variant.groupId)
+              );
+
+              let sourceLabel: VariantCollectionMembership['sourceLabel'] = 'DIRECT';
+              if (hasDirect && hasViaGroup) {
+                sourceLabel = 'DIRECT + VIA_GROUP';
+              } else if (!hasDirect && hasViaGroup) {
+                sourceLabel = 'VIA_GROUP';
+              }
+
+              return {
+                collectionId: collection._id,
+                name: collection.name,
+                sourceLabel,
+              };
+            });
+
+            return of(mapped);
+          })
+        );
+      })
+    ).subscribe({
+      next: (memberships) => {
+        this.variantCollectionMemberships.set(memberships);
+        this.loadingVariantCollections.set(false);
+      },
+      error: () => {
+        this.loadingVariantCollections.set(false);
+        this.toast.error('Failed to load collection memberships.');
+      },
+    });
   }
 }

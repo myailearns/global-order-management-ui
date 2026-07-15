@@ -36,6 +36,7 @@ import { GroupImage, GroupImageEntry } from '../../saas-platform/media/media-ass
 import { ImagePickerComponent, PickedImage } from '../../../shared/components/image-picker/image-picker.component';
 import { RichTextEditorComponent } from '../../../shared/components/rich-text-editor/rich-text-editor.component';
 import { DisableIfNoFeatureDirective } from '../../../shared/directives/disable-if-no-feature.directive';
+import { ProductCollection, ProductCollectionsService } from '../product-collections/product-collections.service';
 import {
   Category,
   Field,
@@ -119,14 +120,19 @@ export class GroupsComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly authSession = inject(AuthSessionService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly productCollectionsService = inject(ProductCollectionsService);
   private readonly bulkRowEditContextStorageKey = 'gom.bulk.row.edit.context';
   private readonly groupFieldToggleControls = new Map<string, FormControl<boolean>>();
 
   readonly loading = signal(false);
   readonly canCreateGroup = computed(() => this.authSession.hasFeature('group.create') && (this.groupCreateRemaining() ?? Infinity) > 0);
   readonly canUpdateGroup = computed(() => this.authSession.hasFeature('group.edit') || this.authSession.hasFeature('group.update'));
+  readonly canDeleteGroup = computed(() => this.authSession.hasFeature('group.delete'));
   readonly canCreateStock = computed(() => this.authSession.hasFeature('stock.create'));
   readonly canCreateVariant = computed(() => this.authSession.hasFeature('variant.create'));
+  readonly canManageProductCollections = computed(
+    () => this.authSession.hasFeature('productCollection.list') && this.authSession.hasFeature('productCollection.assign')
+  );
   readonly groupCreateLimit = computed(() => this.authSession.getFeatureConfigNumber('group.create', 'max_count'));
   readonly groupCreateUsed = computed(() => this.groups().length);
   readonly groupCreateRemaining = computed(() => {
@@ -202,6 +208,10 @@ export class GroupsComponent implements OnInit {
     baseUnitId: ['', [Validators.required]],
   });
 
+  readonly groupCollectionForm = this.fb.group({
+    collectionId: [''],
+  });
+
   readonly allowedUnitIds = signal<string[]>([]);
 
   // --- Option Axes for ATTRIBUTE/HYBRID groups ---
@@ -229,6 +239,11 @@ export class GroupsComponent implements OnInit {
   readonly DEFAULT_MAX_VIDEOS = 1;
   readonly groupImages = signal<GroupImage[]>([]);
   readonly pickerOpen = signal(false);
+  readonly groupCollectionsModalOpen = signal(false);
+  readonly loadingGroupCollections = signal(false);
+  readonly currentGroupForCollections = signal<Group | null>(null);
+  readonly groupCollectionMemberships = signal<ProductCollection[]>([]);
+  readonly availableProductCollections = signal<ProductCollection[]>([]);
   readonly canUploadOwn = computed(() => {
     const session = this.authSession.session();
     if (session?.actorType !== 'tenant') return false;
@@ -294,11 +309,25 @@ export class GroupsComponent implements OnInit {
           disabled: () => !this.canCreateVariant(),
         },
         {
+          label: () => this.canManageProductCollections() ? 'Collections' : 'No permission for collections',
+          icon: 'ri-folders-line',
+          actionKey: 'collections',
+          variant: 'secondary',
+          disabled: () => !this.canManageProductCollections(),
+        },
+        {
           label: (row: GroupRow) => row.status === 'INACTIVE' ? 'Publish' : 'Unpublish',
           icon: (row: GroupRow) => row.status === 'INACTIVE' ? 'ri-toggle-fill' : 'ri-toggle-line',
           actionKey: 'publish',
           variant: 'primary',
           disabled: () => !this.canUpdateGroup(),
+        },
+        {
+          label: () => this.canDeleteGroup() ? 'Delete' : 'No permission to delete groups',
+          icon: 'ri-delete-bin-line',
+          actionKey: 'delete',
+          variant: 'danger',
+          disabled: () => !this.canDeleteGroup(),
         },
       ],
     },
@@ -332,6 +361,10 @@ export class GroupsComponent implements OnInit {
           value: item._id,
         };
       })
+  );
+
+  readonly groupCollectionOptions = computed<GomSelectOption[]>(() =>
+    this.availableProductCollections().map((item) => ({ value: item._id, label: item.name }))
   );
 
   readonly pricingRefreshModeOptions: GomSelectOption[] = [
@@ -815,6 +848,14 @@ export class GroupsComponent implements OnInit {
       return;
     }
 
+    if (event.actionKey === 'collections') {
+      if (!this.canManageProductCollections()) {
+        return;
+      }
+      this.openGroupCollections(existing);
+      return;
+    }
+
     if (event.actionKey === 'publish') {
       if (!this.canUpdateGroup()) {
         this.toast.warning('No permission to publish groups.');
@@ -842,6 +883,68 @@ export class GroupsComponent implements OnInit {
         },
         complete: () => this.saving.set(false),
       });
+      return;
+    }
+
+    if (event.actionKey === 'delete') {
+      if (!this.canDeleteGroup()) {
+        this.toast.warning('No permission to delete groups.');
+        return;
+      }
+
+      this.saving.set(true);
+      this.productCollectionsService.listCollectionsByGroup(existing._id).subscribe({
+        next: (response) => {
+          const impactCount = (response.data || []).length;
+          const warning = impactCount > 0
+            ? `Delete "${existing.name}"? It is used in ${impactCount} collections and will be unmapped from all of them.`
+            : `Delete "${existing.name}"?`;
+
+          const confirmed = window.confirm(warning);
+          if (!confirmed) {
+            this.saving.set(false);
+            return;
+          }
+
+          this.groupsService.deleteGroup(existing._id).subscribe({
+            next: (deleteResponse) => {
+              const unmapped = Number(deleteResponse.data?.unmappedFromCollections || 0);
+              if (unmapped > 0) {
+                this.toast.success(`"${existing.name}" deleted. Unmapped from ${unmapped} collections.`);
+              } else {
+                this.toast.success(`"${existing.name}" deleted successfully.`);
+              }
+              this.refreshGroupList(() => this.saving.set(false), () => this.saving.set(false));
+            },
+            error: (error) => {
+              this.toast.error(String(error?.error?.message || 'Failed to delete group.'));
+              this.saving.set(false);
+            },
+            complete: () => this.saving.set(false),
+          });
+        },
+        error: () => {
+          // Fall back to basic confirmation if impact lookup fails.
+          const confirmed = window.confirm(`Delete "${existing.name}"?`);
+          if (!confirmed) {
+            this.saving.set(false);
+            return;
+          }
+
+          this.groupsService.deleteGroup(existing._id).subscribe({
+            next: () => {
+              this.toast.success(`"${existing.name}" deleted successfully.`);
+              this.refreshGroupList(() => this.saving.set(false), () => this.saving.set(false));
+            },
+            error: (err) => {
+              this.toast.error(String(err?.error?.message || 'Failed to delete group.'));
+              this.saving.set(false);
+            },
+            complete: () => this.saving.set(false),
+          });
+        },
+      });
+
       return;
     }
 
@@ -1911,5 +2014,71 @@ export class GroupsComponent implements OnInit {
     );
 
     this.autoApplySimplePricingBuilder();
+  }
+
+  closeGroupCollectionsModal(): void {
+    this.groupCollectionsModalOpen.set(false);
+    this.currentGroupForCollections.set(null);
+    this.groupCollectionMemberships.set([]);
+    this.availableProductCollections.set([]);
+    this.groupCollectionForm.reset({ collectionId: '' });
+  }
+
+  addCurrentGroupToCollection(): void {
+    const group = this.currentGroupForCollections();
+    const collectionId = String(this.groupCollectionForm.controls.collectionId.value || '');
+    if (!group?._id || !collectionId) {
+      return;
+    }
+
+    this.loadingGroupCollections.set(true);
+    this.productCollectionsService.assignItems(collectionId, {
+      assignments: [{ type: 'GROUP', referenceId: group._id }],
+    }).subscribe({
+      next: () => {
+        this.groupCollectionForm.reset({ collectionId: '' });
+        this.toast.success('Group added to collection.');
+        this.reloadGroupCollectionMemberships(group._id);
+      },
+      error: (error) => {
+        this.loadingGroupCollections.set(false);
+        this.toast.error(String(error?.error?.message || 'Failed to add group to collection.'));
+      },
+    });
+  }
+
+  private openGroupCollections(group: Group): void {
+    this.currentGroupForCollections.set(group);
+    this.groupCollectionsModalOpen.set(true);
+    this.loadingGroupCollections.set(true);
+    this.groupCollectionForm.reset({ collectionId: '' });
+
+    forkJoin({
+      memberships: this.productCollectionsService.listCollectionsByGroup(group._id),
+      all: this.productCollectionsService.list({ page: 1, limit: 500 }),
+    }).subscribe({
+      next: ({ memberships, all }) => {
+        this.groupCollectionMemberships.set(memberships.data || []);
+        this.availableProductCollections.set(all.data || []);
+        this.loadingGroupCollections.set(false);
+      },
+      error: () => {
+        this.loadingGroupCollections.set(false);
+        this.toast.error('Failed to load collection memberships.');
+      },
+    });
+  }
+
+  private reloadGroupCollectionMemberships(groupId: string): void {
+    this.productCollectionsService.listCollectionsByGroup(groupId).subscribe({
+      next: (response) => {
+        this.groupCollectionMemberships.set(response.data || []);
+        this.loadingGroupCollections.set(false);
+      },
+      error: () => {
+        this.loadingGroupCollections.set(false);
+        this.toast.error('Failed to refresh collection memberships.');
+      },
+    });
   }
 }

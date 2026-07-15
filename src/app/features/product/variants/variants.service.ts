@@ -317,8 +317,8 @@ export class VariantsService {
     return this.http.put<ApiSuccess<Variant>>(`${this.variantsUrl}/${id}`, payload, { headers: this.tenantHeaders });
   }
 
-  deleteVariant(id: string): Observable<ApiSuccess<{ id: string }>> {
-    return this.http.delete<ApiSuccess<{ id: string }>>(`${this.variantsUrl}/${id}`, { headers: this.tenantHeaders });
+  deleteVariant(id: string): Observable<ApiSuccess<{ id: string; unmappedFromCollections?: number }>> {
+    return this.http.delete<ApiSuccess<{ id: string; unmappedFromCollections?: number }>>(`${this.variantsUrl}/${id}`, { headers: this.tenantHeaders });
   }
 
   previewVariantPrice(payload: {

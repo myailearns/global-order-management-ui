@@ -4,12 +4,27 @@
     "module": "प्रोडक्ट क्रिएशन मॉड्यूल",
     "navigation": {
       "toggle": "नेविगेशन बदलें",
+        "groupSearch": "Search groups",
+        "tabsAria": "Collection mapping tabs",
+        "allTab": "All",
+        "allVariantsTitle": "All Variants",
+        "groupVariantsTitle": "Group Variants",
       "close": "मेनू बंद करें",
       "workspace": "वर्कस्पेस",
       "menu": "नेविगेशन",
       "expand": "{{section}} खोलें",
       "collapse": "{{section}} बंद करें",
       "expandSidebar": "साइडबार खोलें",
+        "remove": "Remove",
+        "addGroup": "Add Group",
+        "removeGroup": "Remove Group",
+        "addAgain": "Add Again",
+        "selectGroupToManage": "Select Add Group first to manage exclusions for this group.",
+        "recentlyRemovedGroups": "Recently Removed Groups",
+        "removedVariants": "Removed Variants",
+        "noRemovedGroups": "No removed groups.",
+        "noRemovedVariants": "No removed variants.",
+        "noVisibleVariants": "No visible variants in this tab.",
       "collapseSidebar": "साइडबार बंद करें",
       "masterSetup": "मास्टर सेटअप",
       "productSetup": "प्रोडक्ट सेटअप",
@@ -23,6 +38,7 @@
       "variants": "वैरिएंट्स",
       "packs": "पैक्स",
       "mediaLibrary": "मीडिया लाइब्रेरी",
+      "productCollections": "प्रोडक्ट कलेक्शंस",
       "orders": "ऑर्डर्स",
       "orderManagement": "ऑर्डर प्रबंधन",
       "riders": "राइडर्स",
@@ -92,6 +108,92 @@
     },
     "messages": {
       "closeErrorBanner": "त्रुटि बैनर बंद करें"
+    }
+  },
+  "productCollections": {
+    "title": "प्रोडक्ट कलेक्शंस",
+    "actions": {
+      "create": "कलेक्शन बनाएं",
+      "edit": "कलेक्शन संपादित करें",
+      "delete": "कलेक्शन हटाएं",
+      "save": "कलेक्शन सेव करें",
+      "apply": "लागू करें",
+      "clear": "साफ करें",
+      "prev": "पिछला",
+      "next": "अगला"
+    },
+    "labels": {
+      "page": "पेज",
+      "total": "कुल"
+    },
+    "filters": {
+      "search": "खोजें",
+      "status": "स्थिति"
+    },
+    "form": {
+      "name": "कलेक्शन नाम",
+      "description": "विवरण",
+      "status": "स्थिति",
+      "assignmentType": "असाइनमेंट प्रकार"
+    },
+    "mapping": {
+      "title": "कैटेगरी-फर्स्ट मैपिंग",
+      "category": "कैटेगरी",
+      "categoryPlaceholder": "कैटेगरी चुनें",
+      "search": "नाम से प्रोडक्ट खोजें",
+      "searchVariants": "वेरिएंट खोजें",
+      "groupSearch": "ग्रुप खोजें",
+      "tabsAria": "कलेक्शन मैपिंग टैब्स",
+      "allTab": "All",
+      "allVariantsTitle": "All Variants",
+      "groupVariantsTitle": "Group Variants",
+      "groups": "ग्रुप्स",
+      "groupsPlaceholder": "एक या अधिक ग्रुप चुनें",
+      "variants": "वेरिएंट्स",
+      "variantsPlaceholder": "एक या अधिक वेरिएंट चुनें",
+      "selectAllGroups": "सभी ग्रुप चुनें",
+      "selectAllVariants": "सभी वेरिएंट चुनें",
+      "remove": "Remove",
+      "addGroup": "Add Group",
+      "removeGroup": "Remove Group",
+      "addAgain": "Add Again",
+      "selectGroupToManage": "इस ग्रुप के एक्सक्लूज़न मैनेज करने के लिए पहले Add Group चुनें।",
+      "recentlyRemovedGroups": "Recently Removed Groups",
+      "removedVariants": "Removed Variants",
+      "noRemovedGroups": "No removed groups.",
+      "noRemovedVariants": "No removed variants.",
+      "noVisibleVariants": "No visible variants in this tab.",
+      "selectedItems": "चयनित असाइनमेंट",
+      "noSelections": "अभी तक कोई ग्रुप या वेरिएंट चयनित नहीं है।"
+    },
+    "summary": {
+      "categories": "चयनित कैटेगरी",
+      "groups": "चयनित ग्रुप",
+      "variants": "चयनित वेरिएंट",
+      "resolvedVariants": "रिजॉल्व्ड वेरिएंट",
+      "totalVariantsAdded": "कुल जोड़े गए वेरिएंट"
+    },
+    "details": {
+      "title": "कलेक्शन विवरण",
+      "categories": "कैटेगरी संदर्भ",
+      "totalResolved": "कुल रिजॉल्व्ड वेरिएंट",
+      "groups": "असाइन किए गए ग्रुप",
+      "groupVariants": "रिजॉल्व्ड वेरिएंट",
+      "directVariants": "डायरेक्ट वेरिएंट",
+      "noGroups": "कोई ग्रुप असाइन नहीं है।",
+      "noVariants": "कोई डायरेक्ट वेरिएंट असाइन नहीं है।"
+    },
+    "delete": {
+      "title": "कलेक्शन हटाएं",
+      "message": "क्या आप कलेक्शन हटाना चाहते हैं: {{name}}?"
+    },
+    "toast": {
+      "created": "कलेक्शन सफलतापूर्वक बनाया गया।",
+      "updated": "कलेक्शन सफलतापूर्वक अपडेट हुआ।",
+      "deleted": "कलेक्शन सफलतापूर्वक हटाया गया।",
+      "errorLoad": "प्रोडक्ट कलेक्शंस लोड नहीं हो सके।",
+      "errorSave": "प्रोडक्ट कलेक्शन सेव नहीं हो सका।",
+      "errorDelete": "प्रोडक्ट कलेक्शन हटाया नहीं जा सका।"
     }
   },
   "storefrontConfig": {

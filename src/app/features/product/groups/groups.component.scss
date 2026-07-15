@@ -41,6 +41,30 @@
   background: theme.get-background(standard);
 }
 
+.group-collections-modal {
+  display: grid;
+  gap: theme.get-gap(sm);
+}
+
+.group-collections-modal p {
+  margin: 0;
+}
+
+.group-collections-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.group-collections-modal__list {
+  border-top: theme.get-border-size(hairline) solid theme.get-border(standard);
+  padding-top: theme.get-spacing(xs);
+}
+
+.group-collections-modal__list ul {
+  margin: 0;
+  padding-left: 1rem;
+}
+
 .bulk-selection-actions {
   display: flex;
   align-items: center;
