@@ -6,10 +6,12 @@ import { Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { interval } from 'rxjs';
 
-import { FormControlsModule, GomButtonComponent, GomModalComponent, GomTableColumn, GomTableComponent, GomTableRow } from '@gomlibs/ui';
+import { FormControlsModule, GomAlertToastService, GomButtonComponent, GomCardComponent, GomModalComponent, GomTableColumn, GomTableComponent, GomTableRow } from '@gomlibs/ui';
 import { NgApexchartsModule } from 'ng-apexcharts';
+import { environment } from '../../../../environments/environment';
 import { TenantAccessService } from '../services';
 import { 
+  TenantAdminSummary,
   TenantDashboardSummary,
   DashboardOrdersNeedingActionResponse,
   DashboardLowStockResponse,
@@ -33,7 +35,7 @@ type DashboardDateRange = 'TODAY' | 'LAST_7_DAYS' | 'LAST_30_DAYS' | 'THIS_MONTH
 @Component({
   selector: 'gom-tenant-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule, FormControlsModule, GomButtonComponent, GomModalComponent, GomTableComponent, NgApexchartsModule],
+  imports: [CommonModule, FormsModule, TranslateModule, FormControlsModule, GomButtonComponent, GomCardComponent, GomModalComponent, GomTableComponent, NgApexchartsModule],
   templateUrl: './tenant-dashboard.component.html',
   styleUrl: './tenant-dashboard.component.scss',
 })
@@ -43,9 +45,14 @@ export class TenantDashboardComponent implements OnInit {
   private readonly service = inject(TenantAccessService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly toast = inject(GomAlertToastService);
 
   readonly dashboardLoading = signal(false);
   readonly dashboardError = signal<string | null>(null);
+  readonly tenantAdminSummary = signal<TenantAdminSummary | null>(null);
+  readonly tenantSummaryLoading = signal(false);
+  readonly supportModalOpen = signal(false);
+  readonly supportRequestInFlight = signal(false);
   readonly activeTab = signal<DashboardTab>('OPERATIONS');
   readonly dashboardSummary = signal<TenantDashboardSummary | null>(null);
   readonly dashboardDateRange = signal<DashboardDateRange>('TODAY');
@@ -59,6 +66,30 @@ export class TenantDashboardComponent implements OnInit {
     { value: 'THIS_MONTH', label: 'This month' },
     { value: 'CUSTOM', label: 'Custom' },
   ];
+  readonly supportPhone = environment.paymentSupportPhone;
+  readonly supportEmail = environment.paymentSupportEmail;
+  readonly supportCallbackSla = environment.paymentSupportCallbackSla;
+
+  readonly trialActivationAlert = computed(() => {
+    const tenant = this.tenantAdminSummary()?.tenant;
+    if (!tenant || tenant.accountStatus !== 'TRIAL' || !tenant.trialEndAt) {
+      return null;
+    }
+
+    const daysRemaining = this._daysUntil(tenant.trialEndAt);
+    if (daysRemaining < 0 || daysRemaining > 10) {
+      return null;
+    }
+
+    return {
+      daysRemaining,
+      accountName: tenant.accountName,
+      urgency: daysRemaining <= 3 ? 'high' : 'normal',
+      title: daysRemaining === 0
+        ? 'Your trial ends today'
+        : `Your trial ends in ${daysRemaining} day${daysRemaining === 1 ? '' : 's'}`,
+    };
+  });
 
   // Drill-down state signals
   readonly drillDownType = signal<DrillDownType>(null);
@@ -707,6 +738,7 @@ export class TenantDashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadDashboardSummary();
+    this.loadTenantAdminSummary();
     this.startAutoRefresh();
   }
 
@@ -731,6 +763,40 @@ export class TenantDashboardComponent implements OnInit {
 
   refreshDashboard(): void {
     this.loadDashboardSummary();
+    this.loadTenantAdminSummary();
+  }
+
+  openSupportActivationModal(): void {
+    this.supportModalOpen.set(true);
+  }
+
+  closeSupportActivationModal(): void {
+    this.supportModalOpen.set(false);
+  }
+
+  requestSupportCallback(): void {
+    if (this.supportRequestInFlight()) {
+      return;
+    }
+
+    this.supportRequestInFlight.set(true);
+    this.service
+      .requestBillingSupportCallback({
+        source: 'TENANT_DASHBOARD_ALERT',
+        preferredChannel: 'CALL',
+        note: 'Tenant admin requested activation support from trial dashboard alert.',
+      })
+      .subscribe({
+        next: () => {
+          this.supportRequestInFlight.set(false);
+          this.supportModalOpen.set(false);
+          this.toast.success('Support request sent. Our billing team will call you back shortly.');
+        },
+        error: () => {
+          this.supportRequestInFlight.set(false);
+          this.toast.error('Unable to submit support request right now. Please call billing support directly.');
+        },
+      });
   }
 
   setDashboardDateRange(value: DashboardDateRange): void {
@@ -1022,6 +1088,7 @@ export class TenantDashboardComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         this.loadDashboardSummary();
+        this.loadTenantAdminSummary();
       });
 
     // Middle-row drill-down data: every 5 minutes
@@ -1132,6 +1199,31 @@ export class TenantDashboardComponent implements OnInit {
     const month = `${date.getMonth() + 1}`.padStart(2, '0');
     const day = `${date.getDate()}`.padStart(2, '0');
     return `${year}-${month}-${day}`;
+  }
+
+  private _daysUntil(dateValue: string): number {
+    const targetDate = new Date(dateValue);
+    if (Number.isNaN(targetDate.getTime())) {
+      return Number.MAX_SAFE_INTEGER;
+    }
+
+    const now = new Date();
+    const msPerDay = 24 * 60 * 60 * 1000;
+    return Math.ceil((targetDate.getTime() - now.getTime()) / msPerDay);
+  }
+
+  private loadTenantAdminSummary(): void {
+    this.tenantSummaryLoading.set(true);
+    this.service.getTenantAdminSummary().subscribe({
+      next: (summary) => {
+        this.tenantAdminSummary.set(summary);
+        this.tenantSummaryLoading.set(false);
+      },
+      error: () => {
+        this.tenantAdminSummary.set(null);
+        this.tenantSummaryLoading.set(false);
+      },
+    });
   }
 
   private loadDashboardSummary(): void {

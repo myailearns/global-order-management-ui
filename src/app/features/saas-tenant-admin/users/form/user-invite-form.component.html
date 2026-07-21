@@ -43,22 +43,6 @@
         }
       </div>
 
-      <!-- Phone Field -->
-      <div class="gom-user-invite-form__field">
-        <label for="phone" class="gom-user-invite-form__label">
-          {{ translationKeys.LBL_PHONE | translate }}
-        </label>
-        <gom-lib-input
-          id="phone"
-          formControlName="phone"
-          type="text"
-          [placeholder]="'+1-234-567-8900'">
-        </gom-lib-input>
-        @if (hasControlError('phone', 'pattern')) {
-          <span class="gom-user-invite-form__error">Please enter a valid phone number</span>
-        }
-      </div>
-
       <!-- Roles Field -->
       <div class="gom-user-invite-form__field">
         <fieldset class="gom-user-invite-form__roles">

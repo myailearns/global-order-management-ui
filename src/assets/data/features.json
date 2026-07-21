@@ -559,36 +559,36 @@
   },
   {
     "featureKey": "employee.list",
-    "displayName": "View Employees",
+    "displayName": "View Accounts",
     "module": "tenant-admin",
-    "description": "List and view all tenant employees",
+    "description": "List and view all tenant accounts",
     "planAvailability": ["STARTER", "GROWTH", "SCALE"],
     "dependencies": [],
     "actions": ["view", "search", "filter", "export"]
   },
   {
     "featureKey": "employee.create",
-    "displayName": "Create Employee",
+    "displayName": "Create Account",
     "module": "tenant-admin",
-    "description": "Create new tenant employees",
+    "description": "Create new tenant accounts",
     "planAvailability": ["STARTER", "GROWTH", "SCALE"],
     "dependencies": [],
     "actions": ["create"]
   },
   {
     "featureKey": "employee.edit",
-    "displayName": "Edit Employee",
+    "displayName": "Edit Account",
     "module": "tenant-admin",
-    "description": "Edit existing employee details",
+    "description": "Edit existing account details",
     "planAvailability": ["STARTER", "GROWTH", "SCALE"],
     "dependencies": ["employee.list"],
     "actions": ["edit", "update", "assign-role"]
   },
   {
     "featureKey": "employee.delete",
-    "displayName": "Delete Employee",
+    "displayName": "Delete Account",
     "module": "tenant-admin",
-    "description": "Delete tenant employees",
+    "description": "Delete tenant accounts",
     "planAvailability": ["GROWTH", "SCALE"],
     "dependencies": ["employee.list"],
     "actions": ["delete", "deactivate"]

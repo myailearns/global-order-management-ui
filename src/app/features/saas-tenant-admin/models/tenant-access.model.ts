@@ -4,10 +4,8 @@
  */
 
 export enum UserStatus {
-  INVITED = 'INVITED',
   ACTIVE = 'ACTIVE',
-  LOCKED = 'LOCKED',
-  DISABLED = 'DISABLED',
+  INACTIVE = 'INACTIVE',
 }
 
 export enum ScopeType {
@@ -39,7 +37,6 @@ export interface UserAccount {
   _id: string;
   tenantId: string;
   email: string;
-  phone?: string;
   fullName: string;
   status: UserStatus;
   mfaEnabled: boolean;
@@ -56,6 +53,7 @@ export interface EmployeeProfile {
   tenantId: string;
   employeeCode: string;
   fullName: string;
+  phone?: string;
   department?: string;
   designation?: string;
   userId?: string | UserAccount;
@@ -138,6 +136,7 @@ export interface UserWithRoles extends UserAccount {
 export interface RoleWithPermissions extends Role {
   groupedPermissions: Map<string, Permission[]>;
   permissionCount: number;
+  mappedUserCount?: number;
 }
 
 /**
@@ -167,26 +166,34 @@ export interface ApiListResponse<T> {
 export interface CreateUserRequest {
   fullName: string;
   email: string;
-  phone?: string;
 }
 
 export interface UpdateUserRequest {
-  phone?: string;
   status?: UserStatus;
   mfaEnabled?: boolean;
 }
 
 export interface CreateEmployeeRequest {
-  employeeCode: string;
+  employeeCode?: string;
   fullName: string;
+  email: string;
+  passwordMode?: 'auto' | 'manual';
+  password?: string;
+  phone?: string;
   department?: string;
   designation?: string;
   userId?: string;
   status?: EmployeeStatus;
 }
 
+export interface EmployeeCodePreview {
+  employeeCode: string;
+  allowManualOverride: boolean;
+}
+
 export interface UpdateEmployeeRequest {
   fullName?: string;
+  phone?: string;
   department?: string;
   designation?: string;
   userId?: string | null;
@@ -194,7 +201,7 @@ export interface UpdateEmployeeRequest {
 }
 
 export interface CreateRoleRequest {
-  roleKey: string;
+  roleKey?: string;
   name: string;
   description?: string;
   permissionKeys: string[];
@@ -249,6 +256,11 @@ export interface TenantAdminSummary {
     tier: string;
     status: string;
   } | null;
+  limits: {
+    maxEmployees: number | null;
+    maxRoles: number | null;
+    maxUsers: number | null;
+  };
   counts: {
     users: number;
     employees: number;
@@ -258,6 +270,20 @@ export interface TenantAdminSummary {
   entitledModules: string[];
   availablePermissions: Permission[];
   reasonCode?: string | null;
+}
+
+export interface BillingSupportCallbackRequest {
+  source?: string;
+  preferredChannel?: 'CALL' | 'EMAIL' | 'WHATSAPP' | 'OTHER';
+  note?: string;
+}
+
+export interface BillingSupportCallbackResponse {
+  requestId: string;
+  requestedAt: string;
+  tenantCode: string;
+  accountName: string;
+  accountStatus: string;
 }
 
 export interface DashboardUnavailableCard {

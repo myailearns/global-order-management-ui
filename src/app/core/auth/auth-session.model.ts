@@ -27,6 +27,7 @@ export interface AuthSession {
   roleKeys: string[];
   capabilities: AppCapability[];
   featureKeys?: string[];
+  effectivePermissionKeys?: string[];
   effectiveFeatureConfigs?: EffectiveFeatureConfigs;
 }
 

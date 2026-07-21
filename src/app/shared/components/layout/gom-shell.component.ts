@@ -18,7 +18,7 @@ interface NavItem {
   route: string;
   icon: string;
   translationKey: string;
-  section: 'Master Setup' | 'Marketplace' | 'Product Setup' | 'Order Management' | 'Settings';
+  section: 'Master Setup' | 'Marketplace' | 'Product Setup' | 'Order Management' | 'Staff Management' | 'Settings';
   actor: UserActor;
   capability?: AppCapability;
   /** If provided, the nav item is shown only when session has at least one of these feature keys. */
@@ -86,6 +86,7 @@ export class GomShellComponent implements OnInit, OnDestroy {
     'Marketplace': true,
     'Product Setup': true,
     'Order Management': true,
+    'Staff Management': true,
     'Settings': true,
   });
 
@@ -136,13 +137,13 @@ export class GomShellComponent implements OnInit, OnDestroy {
     { label: 'Tenant Dashboard', route: '/saas-admin/dashboard', icon: 'ri-dashboard-line', translationKey: 'app.navigation.tenantDashboard', section: 'Settings', actor: 'tenant', capability: 'tenant-admin' },
     { label: 'Tenant Users', route: '/saas-admin/users', icon: 'ri-user-settings-line', translationKey: 'app.navigation.tenantUsers', section: 'Settings', actor: 'tenant', capability: 'tenant-admin' },
     { label: 'Offers', route: '/saas-admin/offers', icon: 'ri-coupon-2-line', translationKey: 'gom.offers.title', section: 'Settings', actor: 'tenant', capability: 'tenant-admin' },
-    { label: 'Tenant Employees', route: '/saas-admin/employees', icon: 'ri-id-card-line', translationKey: 'app.navigation.tenantEmployees', section: 'Settings', actor: 'tenant', capability: 'tenant-admin', featureKeys: ['rider.list', 'rider.create', 'rider.update', 'rider.delete'] },
-    { label: 'Tenant Roles', route: '/saas-admin/roles', icon: 'ri-shield-check-line', translationKey: 'app.navigation.tenantRoles', section: 'Settings', actor: 'tenant', capability: 'tenant-admin' },
+    { label: 'Accounts', route: '/saas-admin/employees', icon: 'ri-id-card-line', translationKey: 'app.navigation.tenantEmployees', section: 'Staff Management', actor: 'tenant', capability: 'tenant-admin', featureKeys: ['employees.view', 'employees.add', 'employees.edit', 'employees.delete'] },
+    { label: 'Roles', route: '/saas-admin/roles', icon: 'ri-shield-check-line', translationKey: 'app.navigation.tenantRoles', section: 'Staff Management', actor: 'tenant', capability: 'tenant-admin', featureKeys: ['roles.view', 'roles.add', 'roles.edit', 'roles.delete'] },
   ];
 
   readonly sections = computed<Array<NavItem['section']>>(() => {
     const visibleItems = this.visibleNavItems();
-    const orderedSections: Array<NavItem['section']> = ['Master Setup', 'Marketplace', 'Product Setup', 'Order Management', 'Settings'];
+    const orderedSections: Array<NavItem['section']> = ['Master Setup', 'Marketplace', 'Product Setup', 'Order Management', 'Staff Management', 'Settings'];
     return orderedSections.filter((section) => visibleItems.some((item) => item.section === section));
   });
 
@@ -162,13 +163,10 @@ export class GomShellComponent implements OnInit, OnDestroy {
       }
 
       // For tenant actors: if nav item declares featureKeys, require at least one to be present.
+      // Use hasFeature() so that effectivePermissionKeys (package ∩ role permissions) is respected,
+      // keeping nav visibility in sync with the route guard.
       if (item.featureKeys?.length && session.actorType === 'tenant') {
-        const sessionKeys = new Set(
-          Array.isArray(session.featureKeys)
-            ? session.featureKeys.map((k) => String(k || '').trim().toLowerCase()).filter(Boolean)
-            : [],
-        );
-        return item.featureKeys.some((k) => sessionKeys.has(k.toLowerCase()));
+        return item.featureKeys.some((k) => this.authSession.hasFeature(k));
       }
 
       return true;
@@ -372,6 +370,10 @@ export class GomShellComponent implements OnInit, OnDestroy {
 
     if (section === 'Product Setup') {
       return 'app.navigation.productSetup';
+    }
+
+    if (section === 'Staff Management') {
+      return 'app.navigation.staffManagement';
     }
 
     if (section === 'Settings') {

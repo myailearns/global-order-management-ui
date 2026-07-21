@@ -29,6 +29,7 @@ import { SaasAccountsComponent } from './features/saas-platform/accounts/saas-ac
 import { PlatformUsersComponent } from './features/saas-platform/users/platform-users.component';
 import { FeatureCatalogComponent } from './features/saas-platform/entitlements/feature-catalog.component';
 import { PackagePlansComponent } from './features/saas-platform/entitlements/package-plans.component';
+import { TierManagementComponent } from './features/saas-platform/entitlements/tier-management.component';
 import { TenantEntitlementsComponent } from './features/saas-platform/entitlements/tenant-entitlements.component';
 import { RolesListComponent } from './features/saas-tenant-admin/roles/list/roles-list.component';
 import { RoleMatrixComponent } from './features/saas-tenant-admin/roles/matrix';
@@ -348,6 +349,16 @@ export const routes: Routes = [
 					capability: 'platform-admin',
 					title: 'SaaS Packages',
 					description: 'Manage package plans and the feature bundles offered per tier.',
+				},
+			},
+			{
+				path: 'saas-platform/packages/:packageId/tiers',
+				component: TierManagementComponent,
+				data: {
+					actor: 'platform',
+					capability: 'platform-admin',
+					title: 'SaaS Package Tiers',
+					description: 'Manage tiers and tier-level feature bundles for a package.',
 				},
 			},
 			{

@@ -6,6 +6,11 @@
   margin-bottom: 1rem;
 }
 
+.employee-form__layout {
+  display: grid;
+  gap: 1rem;
+}
+
 .employee-form__grid {
   max-width: 640px;
   display: grid;
@@ -16,4 +21,8 @@
   display: flex;
   justify-content: flex-end;
   gap: 0.75rem;
+}
+
+.employee-form__actions--modal {
+  width: 100%;
 }

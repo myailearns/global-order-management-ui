@@ -46,7 +46,16 @@ export class AuthSessionService {
       map((response) => response.data),
       tap((session) => this.setSession(this.sanitizeSession(session))),
       map(() => ({ success: true })),
-      catchError(() => of({ success: false, errorKey: 'auth.errors.invalid_tenant_credentials' })),
+      catchError((error) => {
+        const serverKey: string = error?.error?.message || error?.error?.errorKey || '';
+        if (serverKey === 'auth.errors.account_locked') {
+          return of({ success: false, errorKey: 'auth.errors.account_locked' });
+        }
+        if (serverKey === 'auth.errors.no_assigned_roles') {
+          return of({ success: false, errorKey: 'auth.errors.no_assigned_roles' });
+        }
+        return of({ success: false, errorKey: 'auth.errors.invalid_tenant_credentials' });
+      }),
     );
   }
 
@@ -127,6 +136,11 @@ export class AuthSessionService {
       return true;
     }
 
+    // When effectivePermissionKeys is present (role-gated employees), use it for fine-grained checks
+    if (Array.isArray(session.effectivePermissionKeys) && session.effectivePermissionKeys.length > 0) {
+      return session.effectivePermissionKeys.includes(normalized);
+    }
+
     const keys = Array.isArray(session.featureKeys)
       ? session.featureKeys.map((item) => String(item || '').trim().toLowerCase()).filter(Boolean)
       : [];
@@ -191,6 +205,9 @@ export class AuthSessionService {
     nextSession.featureKeys = Array.isArray(session.featureKeys)
       ? [...new Set(session.featureKeys.map((item) => String(item || '').trim().toLowerCase()).filter(Boolean))]
       : [];
+    nextSession.effectivePermissionKeys = Array.isArray(session.effectivePermissionKeys)
+      ? [...new Set(session.effectivePermissionKeys.map((item) => String(item || '').trim().toLowerCase()).filter(Boolean))]
+      : undefined;
     nextSession.effectiveFeatureConfigs = this.normalizeEffectiveFeatureConfigs(session.effectiveFeatureConfigs);
     if (session.actorType === 'tenant') {
       nextSession.tenantCode = String(session.tenantCode || '').trim().toUpperCase();

@@ -5,8 +5,18 @@
 .roles-list__header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 1rem;
+}
+
+.roles-list__quota-banner {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: color-mix(in srgb, var(--gom-warning) 15%, transparent);
+  border: 1px solid var(--gom-warning);
+  border-radius: var(--radius-sm);
+  color: var(--gom-text);
+  font-size: var(--text-sm);
+  margin-bottom: var(--spacing-xs);
 }
 
 .roles-list__header h1 {
@@ -28,4 +38,55 @@
 .roles-list__tenant-picker {
   max-width: 24rem;
   margin-bottom: 1rem;
+}
+
+.roles-list__modal-body {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.roles-list__modal-subtitle {
+  margin: 0;
+  color: var(--gom-color-text-secondary);
+}
+
+.roles-list__accounts-list {
+  max-height: 22rem;
+  overflow: auto;
+  border: 1px solid var(--gom-color-border-default);
+  border-radius: var(--radius-sm);
+}
+
+.roles-list__accounts-list--readonly {
+  padding: 0.25rem 0;
+}
+
+.roles-list__account-item {
+  display: grid;
+  grid-template-columns: auto 1fr 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0.75rem;
+  border-bottom: 1px solid var(--gom-color-border-muted);
+}
+
+.roles-list__account-item:last-child {
+  border-bottom: none;
+}
+
+.roles-list__account-item--readonly {
+  grid-template-columns: 1fr 1fr auto;
+}
+
+.roles-list__account-name {
+  font-weight: 600;
+}
+
+.roles-list__account-email {
+  color: var(--gom-color-text-secondary);
+}
+
+.roles-list__account-status {
+  font-size: 0.8rem;
+  color: var(--gom-color-text-secondary);
 }

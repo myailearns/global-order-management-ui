@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, computed, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { catchError, combineLatest, debounceTime, of, startWith, switchMap } from 'rxjs';
+import { startWith } from 'rxjs';
 
 import {
   FormControlsModule,
@@ -650,7 +650,7 @@ export class RidersComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (response) => {
-          const cfg = response.data?.employeeCodeConfig;
+          const cfg = response.data?.staffCodeConfig;
           if (cfg?.allowManualOverride) {
             this.allowManualOverride.set(true);
           }
@@ -662,30 +662,20 @@ export class RidersComponent implements OnInit {
   }
 
   private setupEmployeeCodePreview(): void {
-    combineLatest([
-      this.riderForm.controls.name.valueChanges.pipe(startWith(this.riderForm.controls.name.value)),
-      this.riderForm.controls.phone.valueChanges.pipe(startWith(this.riderForm.controls.phone.value)),
-    ])
-      .pipe(
-        debounceTime(400),
-        switchMap(([name, phone]) => {
-          if (this.editingId()) return of(null);
-          const n = String(name || '').trim();
-          const p = String(phone || '').replace(/\D/g, '');
-          if (n.length < 2 || p.length < 4) return of(null);
-          return this.service.previewEmployeeCode(n, p).pipe(catchError(() => of(null)));
-        }),
-        takeUntilDestroyed(this.destroyRef)
-      )
+    if (this.editingId()) return;
+    this.service.previewEmployeeCode()
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result) => {
         if (!result) return;
         const preview: EmployeeCodePreview = result.data;
         if (!this.allowManualOverride()) {
           this.riderForm.controls.employeeCode.setValue(preview.employeeCode, { emitEvent: false });
         }
-        if (preview.allowManualOverride && !this.allowManualOverride()) {
+        if (preview.allowManualOverride) {
           this.allowManualOverride.set(true);
           this.riderForm.controls.employeeCode.enable({ emitEvent: false });
+        } else {
+          this.riderForm.controls.employeeCode.disable({ emitEvent: false });
         }
       });
   }

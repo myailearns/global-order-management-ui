@@ -27,14 +27,11 @@ export interface ApiSuccess<T> {
 
 export type RiderStatus = 'ACTIVE' | 'INACTIVE' | 'ON_LEAVE';
 
-export type EmployeeCodeStrategy = 'DEFAULT_FORMULA' | 'PREFIX_SEQUENCE' | 'MANUAL';
-
-export interface EmployeeCodeConfig {
-  strategy: EmployeeCodeStrategy;
-  prefix: string;
+export interface StaffCodeConfig {
+  employeePrefix: string;
+  riderPrefix: string;
   separator: string;
   sequencePadding: number;
-  sequenceStart: number;
   allowManualOverride: boolean;
 }
 
@@ -68,7 +65,7 @@ export interface NotificationSettings {
 
 export interface TenantConfig {
   tenantId: string;
-  employeeCodeConfig: EmployeeCodeConfig;
+  staffCodeConfig: StaffCodeConfig;
   deliveryPincodeConfig?: DeliveryPincodeConfig;
   storefrontConfig?: StorefrontConfig;
   storefrontShare?: StorefrontShare;
@@ -180,7 +177,6 @@ export interface StorefrontConfig {
 
 export interface EmployeeCodePreview {
   employeeCode: string;
-  strategy: EmployeeCodeStrategy;
   allowManualOverride: boolean;
 }
 
@@ -288,17 +284,16 @@ export class DeliveryService {
     return this.http.delete<ApiSuccess<Rider>>(`${this.ridersUrl}/${id}`);
   }
 
-  previewEmployeeCode(name: string, phone: string): Observable<ApiSuccess<EmployeeCodePreview>> {
-    const params = new HttpParams().set('name', name).set('phone', phone);
-    return this.http.get<ApiSuccess<EmployeeCodePreview>>(`${this.ridersUrl}/preview-employee-code`, { params });
+  previewEmployeeCode(): Observable<ApiSuccess<EmployeeCodePreview>> {
+    return this.http.get<ApiSuccess<EmployeeCodePreview>>(`${this.ridersUrl}/preview-employee-code`);
   }
 
   getTenantConfig(): Observable<ApiSuccess<TenantConfig>> {
     return this.http.get<ApiSuccess<TenantConfig>>(this.tenantConfigUrl);
   }
 
-  updateTenantConfig(cfg: Partial<EmployeeCodeConfig>): Observable<ApiSuccess<TenantConfig>> {
-    return this.http.patch<ApiSuccess<TenantConfig>>(this.tenantConfigUrl, { employeeCodeConfig: cfg });
+  updateTenantConfig(cfg: Partial<StaffCodeConfig>): Observable<ApiSuccess<TenantConfig>> {
+    return this.http.patch<ApiSuccess<TenantConfig>>(this.tenantConfigUrl, { staffCodeConfig: cfg });
   }
 
   updateDeliveryPincodeConfig(cfg: Partial<DeliveryPincodeConfig>): Observable<ApiSuccess<TenantConfig>> {

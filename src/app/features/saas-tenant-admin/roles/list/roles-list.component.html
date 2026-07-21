@@ -10,19 +10,28 @@
       }
     </div>
     <div class="roles-list__header-actions">
-      @if (!platformMode()) {
-        <gom-lib-button variant="secondary" (buttonClick)="openPlatformTenantRoles()">
-          {{ 'saas.admin.roles.btn_open_platform_roles' | translate }}
-        </gom-lib-button>
+      @if (quotaLabel(); as label) {
+        <gom-lib-chip
+          [tone]="atQuota() ? 'danger' : 'neutral'"
+          [attr.aria-label]="('saas.admin.roles.lbl_quota_used' | translate) + ' ' + label">
+          {{ label }}
+        </gom-lib-chip>
       }
       <gom-lib-button
         [gomDisableIfNoCapability]="'tenant-admin'"
         (buttonClick)="createRole()"
-        [disabled]="loading() || !canWrite() || (platformMode() && !selectedTenantId())">
+        [disabled]="loading() || !canWrite() || atQuota() || (platformMode() && !selectedTenantId())"
+        [title]="atQuota() ? ('saas.admin.roles.msg_quota_exceeded' | translate) : ''">
         {{ 'saas.admin.roles.btn_create' | translate }}
       </gom-lib-button>
     </div>
   </header>
+
+  @if (atQuota()) {
+    <output class="roles-list__quota-banner" aria-live="polite">
+      {{ 'saas.admin.roles.msg_quota_reached' | translate }}
+    </output>
+  }
 
   @if (platformMode()) {
     <div class="roles-list__tenant-picker">
@@ -45,3 +54,93 @@
     (rowAction)="onTableAction($event)">
   </gom-lib-table>
 </section>
+
+<gom-lib-modal
+  [title]="'saas.admin.roles.title_create' | translate"
+  [(show)]="roleFormModalOpen"
+  size="large"
+>
+  @if (roleFormModalOpen()) {
+    <gom-role-matrix
+      [modalMode]="true"
+      [roleIdInput]="editingRoleId()"
+      [tenantIdInput]="selectedTenantId()"
+      [cloneSeedInput]="cloneSeed()"
+      (formSaved)="onRoleFormSaved()"
+      (formCancelled)="onRoleFormCancelled()"
+    ></gom-role-matrix>
+  }
+</gom-lib-modal>
+
+<gom-lib-modal
+  [title]="'Map Accounts to Role'"
+  [(show)]="mapUsersModalOpen"
+  (closed)="closeMapUsersModal()"
+  size="large"
+>
+  @if (selectedRoleForUsers(); as role) {
+    <div class="roles-list__modal-body">
+      <p class="roles-list__modal-subtitle">Role: {{ role.roleName }}</p>
+
+      @if (roleUsersLoading()) {
+        <p>Loading accounts...</p>
+      } @else {
+        <gom-lib-table
+          #mapAccountsTable
+          [columns]="mapUsersColumns"
+          [rows]="availableAccounts()"
+          [enableRowSelection]="true"
+          [showPagination]="false"
+          [pageSize]="500"
+          [totalItems]="availableAccounts().length"
+          [emptyMessage]="'No accounts available.'"
+          (selectedRowsChange)="onMapTableSelectedRowsChange($event)">
+        </gom-lib-table>
+      }
+    </div>
+  }
+
+  <footer gom-modal-actions class="gom-modal__action-layout">
+    <div class="gom-modal__action-layout-start"></div>
+    <div class="gom-modal__action-layout-end">
+      <gom-lib-button variant="secondary" (buttonClick)="closeMapUsersModal()">Cancel</gom-lib-button>
+      <gom-lib-button [disabled]="roleUsersSaving()" (buttonClick)="saveRoleUserMappings()">Save Mappings</gom-lib-button>
+    </div>
+  </footer>
+</gom-lib-modal>
+
+<gom-lib-modal
+  [title]="'Mapped Accounts'"
+  [(show)]="viewUsersModalOpen"
+  (closed)="closeViewUsersModal()"
+  size="medium"
+>
+  @if (selectedRoleForUsers(); as role) {
+    <div class="roles-list__modal-body">
+      <p class="roles-list__modal-subtitle">Role: {{ role.roleName }}</p>
+
+      @if (roleUsersLoading()) {
+        <p>Loading mapped accounts...</p>
+      } @else if (mappedAccounts().length === 0) {
+        <p>No accounts mapped to this role.</p>
+      } @else {
+        <div class="roles-list__accounts-list roles-list__accounts-list--readonly">
+          @for (account of mappedAccounts(); track account._id) {
+            <div class="roles-list__account-item roles-list__account-item--readonly">
+              <span class="roles-list__account-name">{{ account.fullName }}</span>
+              <span class="roles-list__account-email">{{ account.email }}</span>
+              <span class="roles-list__account-status">{{ account.status }}</span>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  <footer gom-modal-actions class="gom-modal__action-layout">
+    <div class="gom-modal__action-layout-start"></div>
+    <div class="gom-modal__action-layout-end">
+      <gom-lib-button variant="secondary" (buttonClick)="closeViewUsersModal()">Close</gom-lib-button>
+    </div>
+  </footer>
+</gom-lib-modal>

@@ -24,7 +24,6 @@ interface UserRow extends GomTableRow {
   userId: string;
   fullName: string;
   email: string;
-  phone: string;
   status: UserStatus;
   roles: string;
   lastLogin: string;
@@ -89,7 +88,6 @@ export class UsersListComponent implements OnInit {
         userId: user._id,
         fullName: user.fullName,
         email: user.email,
-        phone: user.phone || '-',
         status: user.status,
         roles: this.getUserRoleNames(user),
         lastLogin: user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleDateString() : '-',
@@ -104,12 +102,6 @@ export class UsersListComponent implements OnInit {
         header: this.translate.instant(TRANSLATION_KEYS.TBL_USER_EMAIL),
         sortable: true,
         width: '18rem',
-      },
-      {
-        key: 'phone',
-        header: this.translate.instant(TRANSLATION_KEYS.TBL_USER_PHONE),
-        sortable: true,
-        width: '12rem',
       },
       {
         key: 'status',
@@ -141,12 +133,6 @@ export class UsersListComponent implements OnInit {
             actionKey: 'assign-roles',
             variant: 'primary',
             icon: 'ri-admin-line',
-          },
-          {
-            label: (row) => (row.status === UserStatus.LOCKED ? 'Unlock' : 'Lock'),
-            actionKey: 'lock-unlock',
-            variant: 'danger',
-            icon: (row) => (row.status === UserStatus.LOCKED ? 'ri-lock-unlock-line' : 'ri-lock-line'),
           },
           {
             label: 'Reset Password',
@@ -238,9 +224,6 @@ export class UsersListComponent implements OnInit {
       case 'assign-roles':
         this.openAssignRoles(row);
         break;
-      case 'lock-unlock':
-        this.onToggleLock(row);
-        break;
       case 'reset-password':
         this.toast.info('Reset password API is not available yet.');
         break;
@@ -315,31 +298,6 @@ export class UsersListComponent implements OnInit {
     return this.selectedRoleIds().includes(roleId);
   }
 
-  private onToggleLock(row: UserRow): void {
-    const user = this.users().find((u) => u._id === row.userId);
-    if (!user) return;
-
-    const isUnlock = row.status === UserStatus.LOCKED;
-    const actionLabel = isUnlock ? 'unlock' : 'lock';
-    if (confirm(`Are you sure you want to ${actionLabel} ${user.email}?`)) {
-      const request = isUnlock ? this.service.unlockUser(row.userId) : this.service.lockUser(row.userId);
-      request.subscribe({
-        next: () => {
-          this.toast.success(`User ${isUnlock ? 'unlocked' : 'locked'} successfully`);
-          this.loadUsers();
-        },
-        error: (err) => {
-          const message = String(err?.error?.message || '');
-          if (message.toLowerCase().includes('last active saas_admin')) {
-            this.toast.error('Cannot lock the last active SaaS admin.');
-          } else {
-            this.toast.error(`Failed to ${actionLabel} user`);
-          }
-        },
-      });
-    }
-  }
-
   private getUserRoleNames(user: UserWithRoles): string {
     const assignedRoles = Array.isArray(user.assignedRoles) ? user.assignedRoles : [];
     if (assignedRoles.length > 0) {
@@ -366,11 +324,7 @@ export class UsersListComponent implements OnInit {
     switch (status) {
       case UserStatus.ACTIVE:
         return 'success';
-      case UserStatus.INVITED:
-        return 'info';
-      case UserStatus.LOCKED:
-        return 'warning';
-      case UserStatus.DISABLED:
+      case UserStatus.INACTIVE:
         return 'danger';
       default:
         return 'neutral';

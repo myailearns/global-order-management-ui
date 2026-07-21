@@ -24,10 +24,8 @@
         class="gom-users-list__status-select"
         aria-label="Filter by status">
         <option [ngValue]="null">{{ 'saas.admin.users.opt_all_statuses' | translate }}</option>
-        <option [ngValue]="'INVITED'">{{ 'saas.admin.users.opt_invited' | translate }}</option>
         <option [ngValue]="'ACTIVE'">{{ 'saas.admin.users.opt_active' | translate }}</option>
-        <option [ngValue]="'LOCKED'">{{ 'saas.admin.users.opt_locked' | translate }}</option>
-        <option [ngValue]="'DISABLED'">{{ 'saas.admin.users.opt_disabled' | translate }}</option>
+        <option [ngValue]="'INACTIVE'">{{ 'saas.admin.users.opt_inactive' | translate }}</option>
       </select>
     </div>
   </div>

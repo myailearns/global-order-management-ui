@@ -53,7 +53,6 @@ export class UserInviteFormComponent implements OnInit {
     this.inviteForm = this.fb.group({
       fullName: ['', [Validators.required, Validators.minLength(2)]],
       email: ['', [Validators.required, Validators.email]],
-      phone: ['', [Validators.pattern(/^[0-9\-+\s()]{10,}$/)]],
       roleIds: [[], [Validators.required]],
     });
   }
@@ -81,7 +80,6 @@ export class UserInviteFormComponent implements OnInit {
     const createRequest: CreateUserRequest = {
       fullName: this.inviteForm.get('fullName')?.value,
       email: this.inviteForm.get('email')?.value,
-      phone: this.inviteForm.get('phone')?.value || undefined,
     };
 
     const roleIds: string[] = this.inviteForm.get('roleIds')?.value || [];

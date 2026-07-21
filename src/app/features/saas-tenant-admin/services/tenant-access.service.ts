@@ -13,6 +13,7 @@ import {
   CreateEmployeeRequest,
   UpdateEmployeeRequest,
   RoleWithPermissions,
+  EmployeeCodePreview,
   CreateRoleRequest,
   UpdateRoleRequest,
   UserRoleAssignment,
@@ -20,6 +21,8 @@ import {
   ApiListResponse,
   Permission,
   TenantAdminSummary,
+  BillingSupportCallbackRequest,
+  BillingSupportCallbackResponse,
   TenantDashboardSummary,
   DashboardOrdersNeedingActionResponse,
   DashboardLowStockResponse,
@@ -58,6 +61,14 @@ export class TenantAccessService {
   getTenantAdminSummary(tenantId?: string): Observable<TenantAdminSummary> {
     return this.http
       .get<ApiResponse<TenantAdminSummary>>(`${this.apiBaseUrl}/summary`, {
+        headers: this.buildTenantHeaders(tenantId),
+      })
+      .pipe(map((res) => res.data));
+  }
+
+  requestBillingSupportCallback(payload: BillingSupportCallbackRequest, tenantId?: string): Observable<BillingSupportCallbackResponse> {
+    return this.http
+      .post<ApiResponse<BillingSupportCallbackResponse>>(`${this.apiBaseUrl}/billing/support-callback`, payload, {
         headers: this.buildTenantHeaders(tenantId),
       })
       .pipe(map((res) => res.data));
@@ -350,16 +361,16 @@ export class TenantAccessService {
   }
 
   /**
-   * Lock a user account
+   * Mark a user account inactive
    */
-  lockUser(userId: string): Observable<UserWithRoles> {
-    return this.updateUser(userId, { status: UserStatus.LOCKED });
+  deactivateUser(userId: string): Observable<UserWithRoles> {
+    return this.updateUser(userId, { status: UserStatus.INACTIVE });
   }
 
   /**
-   * Unlock a user account
+   * Mark a user account active
    */
-  unlockUser(userId: string): Observable<UserWithRoles> {
+  activateUser(userId: string): Observable<UserWithRoles> {
     return this.updateUser(userId, { status: UserStatus.ACTIVE });
   }
 
@@ -373,6 +384,12 @@ export class TenantAccessService {
   createEmployee(createRequest: CreateEmployeeRequest, tenantId?: string): Observable<EmployeeProfile> {
     return this.http
       .post<ApiResponse<EmployeeProfile>>(`${this.apiBaseUrl}/employees`, createRequest, { headers: this.buildTenantHeaders(tenantId) })
+      .pipe(map((res) => res.data));
+  }
+
+  previewEmployeeCode(tenantId?: string): Observable<EmployeeCodePreview> {
+    return this.http
+      .get<ApiResponse<EmployeeCodePreview>>(`${this.apiBaseUrl}/employees/preview-code`, { headers: this.buildTenantHeaders(tenantId) })
       .pipe(map((res) => res.data));
   }
 
@@ -434,6 +451,17 @@ export class TenantAccessService {
   }
 
   /**
+   * Delete employee profile
+   */
+  deleteEmployee(employeeId: string, tenantId?: string): Observable<void> {
+    return this.http
+      .delete<void>(
+        `${this.apiBaseUrl}/employees/${employeeId}`,
+        { headers: this.buildTenantHeaders(tenantId) },
+      );
+  }
+
+  /**
    * ============ Roles API ============
    */
 
@@ -480,6 +508,12 @@ export class TenantAccessService {
       .pipe(map((res) => res.data));
   }
 
+
+  deleteRole(roleId: string, tenantId?: string): Observable<void> {
+    return this.http
+      .delete<void>(`${this.apiBaseUrl}/roles/${roleId}`, { headers: this.buildTenantHeaders(tenantId) });
+  }
+
   /**
    * Clone a role (create new role based on existing)
    */
@@ -519,6 +553,25 @@ export class TenantAccessService {
     return this.http
       .get<ApiResponse<UserRoleAssignment[]>>(
         `${this.apiBaseUrl}/users/${userId}/assignments`,
+        { headers: this.buildTenantHeaders(tenantId) },
+      )
+      .pipe(map((res) => res.data));
+  }
+
+  getRoleUsers(roleId: string, tenantId?: string): Observable<UserWithRoles[]> {
+    return this.http
+      .get<ApiResponse<UserWithRoles[]>>(
+        `${this.apiBaseUrl}/roles/${roleId}/users`,
+        { headers: this.buildTenantHeaders(tenantId) },
+      )
+      .pipe(map((res) => res.data));
+  }
+
+  replaceRoleUsers(roleId: string, userIds: string[], tenantId?: string): Observable<UserWithRoles[]> {
+    return this.http
+      .put<ApiResponse<UserWithRoles[]>>(
+        `${this.apiBaseUrl}/roles/${roleId}/users`,
+        { userIds },
         { headers: this.buildTenantHeaders(tenantId) },
       )
       .pipe(map((res) => res.data));

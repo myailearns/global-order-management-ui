@@ -1,24 +1,26 @@
 <section class="role-matrix">
-  <div class="role-matrix__page-header">
-    <div>
-      <h1>{{ roleId ? ('saas.admin.roles.title_edit' | translate) : ('saas.admin.roles.title_create' | translate) }}</h1>
-      <p class="role-matrix__subtitle">{{ 'saas.admin.roles.subtitle' | translate }}</p>
-      @if (!platformMode()) {
-        <p class="role-matrix__switch-hint">{{ 'saas.admin.roles.msg_use_platform_flow' | translate }}</p>
-      }
-    </div>
-    <div class="role-matrix__page-actions">
-      @if (!platformMode()) {
-        <gom-lib-button type="button" variant="secondary" (buttonClick)="openPlatformTenantRoles()">
-          {{ 'saas.admin.roles.btn_open_platform_roles' | translate }}
+  @if (!modalMode) {
+    <div class="role-matrix__page-header">
+      <div>
+        <h1>{{ roleId ? ('saas.admin.roles.title_edit' | translate) : ('saas.admin.roles.title_create' | translate) }}</h1>
+        <p class="role-matrix__subtitle">{{ 'saas.admin.roles.subtitle' | translate }}</p>
+        @if (!platformMode()) {
+          <p class="role-matrix__switch-hint">{{ 'saas.admin.roles.msg_use_platform_flow' | translate }}</p>
+        }
+      </div>
+      <div class="role-matrix__page-actions">
+        @if (!platformMode()) {
+          <gom-lib-button type="button" variant="secondary" (buttonClick)="openPlatformTenantRoles()">
+            {{ 'saas.admin.roles.btn_open_platform_roles' | translate }}
+          </gom-lib-button>
+        }
+        <gom-lib-button type="button" variant="secondary" (buttonClick)="onCancel()">{{ 'common.btn_cancel' | translate }}</gom-lib-button>
+        <gom-lib-button type="button" [disabled]="loading() || form.invalid" (buttonClick)="onSubmit()">
+          {{ roleId ? ('saas.admin.roles.btn_update' | translate) : ('saas.admin.roles.btn_create' | translate) }}
         </gom-lib-button>
-      }
-      <gom-lib-button type="button" variant="secondary" (buttonClick)="onCancel()">{{ 'common.btn_cancel' | translate }}</gom-lib-button>
-      <gom-lib-button type="button" [disabled]="loading() || form.invalid" (buttonClick)="onSubmit()">
-        {{ roleId ? ('saas.admin.roles.btn_update' | translate) : ('saas.admin.roles.btn_create' | translate) }}
-      </gom-lib-button>
+      </div>
     </div>
-  </div>
+  }
 
   <form [formGroup]="form" class="role-matrix__form">
     <div class="role-matrix__fields-row">
@@ -33,7 +35,6 @@
           (ngModelChange)="onTenantSelect($event)"
         ></gom-lib-select>
       }
-      <gom-lib-input formControlName="roleKey" [label]="'saas.admin.roles.lbl_role_key' | translate" [required]="true"></gom-lib-input>
       <gom-lib-input formControlName="name" [label]="'saas.admin.roles.lbl_role_name' | translate" [required]="true"></gom-lib-input>
       <gom-lib-input formControlName="description" [label]="'common.labels.description' | translate"></gom-lib-input>
     </div>
@@ -95,4 +96,16 @@
       }
     }
   </div>
+
+  @if (modalMode) {
+    <footer gom-modal-actions class="role-matrix__modal-actions gom-modal__action-layout">
+      <div class="gom-modal__action-layout-start"></div>
+      <div class="gom-modal__action-layout-end">
+        <gom-lib-button type="button" variant="secondary" (buttonClick)="onCancel()">{{ 'common.btn_cancel' | translate }}</gom-lib-button>
+        <gom-lib-button type="button" [disabled]="loading() || form.invalid" (buttonClick)="onSubmit()">
+          {{ roleId ? ('saas.admin.roles.btn_update' | translate) : ('saas.admin.roles.btn_create' | translate) }}
+        </gom-lib-button>
+      </div>
+    </footer>
+  }
 </section>

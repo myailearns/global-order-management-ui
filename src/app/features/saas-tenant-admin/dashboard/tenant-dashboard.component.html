@@ -47,6 +47,22 @@
     <div class="tenant-dashboard__error">{{ dashboardFilterError() }}</div>
   }
 
+  @if (trialActivationAlert(); as trialAlert) {
+    <gom-lib-card class="tenant-dashboard__trial-alert" [class.tenant-dashboard__trial-alert--high-urgency]="trialAlert.urgency === 'high'" aria-label="Trial activation alert">
+      <div class="tenant-dashboard__trial-alert-content">
+        <span class="tenant-dashboard__trial-alert-badge">Trial Billing</span>
+        <h2>{{ trialAlert.title }}</h2>
+        <p>
+          {{ trialAlert.accountName }} has {{ trialAlert.daysRemaining }} day{{ trialAlert.daysRemaining === 1 ? '' : 's' }} remaining in trial.
+          Activate now to avoid service interruption.
+        </p>
+      </div>
+      <div class="tenant-dashboard__trial-alert-actions">
+        <gom-lib-button variant="primary" (buttonClick)="openSupportActivationModal()">Activate Account</gom-lib-button>
+      </div>
+    </gom-lib-card>
+  }
+
   <section class="tenant-dashboard__tabs" aria-label="Dashboard tabs">
     <button
       type="button"
@@ -790,6 +806,43 @@
 
     <div gom-modal-actions>
       <gom-lib-button variant="secondary" (buttonClick)="openDrillDown(null)">Close</gom-lib-button>
+    </div>
+  </gom-lib-modal>
+
+  <gom-lib-modal
+    [show]="supportModalOpen()"
+    title="Activate Account - Contact Billing Support"
+    size="medium"
+    [closeOnBackdropClick]="true"
+    (closed)="closeSupportActivationModal()"
+  >
+    <div class="tenant-dashboard__support-modal-body">
+      <p>
+        Your request will be sent to billing support. They will call you back and guide you through the payment process
+        to activate the account.
+      </p>
+
+      <div class="tenant-dashboard__support-contact-grid">
+        <div>
+          <span>Support Phone</span>
+          <strong>{{ supportPhone }}</strong>
+        </div>
+        <div>
+          <span>Support Email</span>
+          <strong>{{ supportEmail }}</strong>
+        </div>
+        <div>
+          <span>Callback SLA</span>
+          <strong>{{ supportCallbackSla }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <div gom-modal-actions>
+      <gom-lib-button variant="secondary" (buttonClick)="closeSupportActivationModal()">Close</gom-lib-button>
+      <gom-lib-button variant="primary" [disabled]="supportRequestInFlight()" (buttonClick)="requestSupportCallback()">
+        {{ supportRequestInFlight() ? 'Requesting...' : 'Request Callback' }}
+      </gom-lib-button>
     </div>
   </gom-lib-modal>
 </section>

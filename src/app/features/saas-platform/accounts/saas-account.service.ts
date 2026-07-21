@@ -6,14 +6,29 @@ import { environment } from '../../../../environments/environment';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import {
   AccountListResponse,
+  ApplyPaymentTierPayload,
   AccountStatus,
   ApiResponse,
   AuditLogItem,
+  CompleteIncompleteAccountPayload,
   CreateAccountResult,
   CreateAccountRequest,
+  DeleteAccountResult,
+  DeleteAllAccountsResult,
+  FirstAdminInfo,
+  PaymentRecord,
+  PaymentContextResponse,
+  PaymentRequestPayload,
+  PendingVerificationListResponse,
+  PendingVerificationPaymentRecord,
+  RejectPaymentPayload,
+  SetPaymentDurationPayload,
   TenantAccount,
   TenantStorageItem,
+  UploadPaymentProofPayload,
   UpdateAccountRequest,
+  VerifyPaymentPayload,
+  VerifyPaymentResult,
 } from './saas-account.model';
 
 @Injectable({ providedIn: 'root' })
@@ -21,6 +36,7 @@ export class SaasAccountService {
   private readonly http = inject(ngHttp.HttpClient);
   private readonly authSession = inject(AuthSessionService);
   private readonly baseUrl = `${environment.apiBaseUrl}/saas/accounts`;
+  private readonly saasPaymentsUrl = `${environment.apiBaseUrl}/saas/payments`;
 
   private get platformHeaders(): ngHttp.HttpHeaders {
     return new ngHttp.HttpHeaders(this.authSession.getPlatformHeaders());
@@ -74,9 +90,39 @@ export class SaasAccountService {
       .pipe(map((res) => res.data));
   }
 
+  createIncompleteAccount(payload: { accountName: string; primaryContactPhone: string; primaryContactEmail: string; countryCode: string }): Observable<TenantAccount> {
+    return this.http
+      .post<ApiResponse<TenantAccount>>(`${this.baseUrl}/incomplete`, payload, { headers: this.platformHeaders })
+      .pipe(map((res) => res.data));
+  }
+
+  completeIncompleteAccount(id: string, payload: CompleteIncompleteAccountPayload): Observable<TenantAccount> {
+    return this.http
+      .patch<ApiResponse<TenantAccount>>(`${this.baseUrl}/incomplete/${id}/complete`, payload, { headers: this.platformHeaders })
+      .pipe(map((res) => res.data));
+  }
+
+  deleteAllAccounts(): Observable<DeleteAllAccountsResult> {
+    return this.http
+      .delete<ApiResponse<DeleteAllAccountsResult>>(this.baseUrl, { headers: this.platformHeaders })
+      .pipe(map((res) => res.data));
+  }
+
+  deleteAccount(id: string): Observable<DeleteAccountResult> {
+    return this.http
+      .delete<ApiResponse<DeleteAccountResult>>(`${this.baseUrl}/${id}`, { headers: this.platformHeaders })
+      .pipe(map((res) => res.data));
+  }
+
   getAccountById(id: string): Observable<TenantAccount> {
     return this.http
       .get<ApiResponse<TenantAccount>>(`${this.baseUrl}/${id}`, { headers: this.platformHeaders })
+      .pipe(map((res) => res.data));
+  }
+
+  getAccountFirstAdmin(id: string): Observable<FirstAdminInfo | null> {
+    return this.http
+      .get<ApiResponse<FirstAdminInfo | null>>(`${this.baseUrl}/${id}/first-admin`, { headers: this.platformHeaders })
       .pipe(map((res) => res.data));
   }
 
@@ -120,6 +166,79 @@ export class SaasAccountService {
     const url = `${environment.apiBaseUrl}/platform/templates/media/tenant-storage`;
     return this.http
       .get<ApiResponse<TenantStorageItem[]>>(url, { headers: this.platformHeaders })
+      .pipe(map((res) => res.data));
+  }
+
+  requestPayment(accountId: string, payload: PaymentRequestPayload): Observable<PaymentRecord> {
+    return this.http
+      .post<ApiResponse<PaymentRecord>>(`${this.saasPaymentsUrl}/${accountId}/request`, payload, { headers: this.platformHeaders })
+      .pipe(map((res) => res.data));
+  }
+
+  uploadPaymentProof(accountId: string, payload: UploadPaymentProofPayload): Observable<PaymentRecord> {
+    return this.http
+      .post<ApiResponse<PaymentRecord>>(`${this.saasPaymentsUrl}/${accountId}/upload-proof`, payload, { headers: this.platformHeaders })
+      .pipe(map((res) => res.data));
+  }
+
+  listPendingVerification(params?: { page?: number; limit?: number; tenantId?: string; accountId?: string }): Observable<PendingVerificationListResponse> {
+    let httpParams = new ngHttp.HttpParams();
+
+    if (params?.page) {
+      httpParams = httpParams.set('page', String(params.page));
+    }
+    if (params?.limit) {
+      httpParams = httpParams.set('limit', String(params.limit));
+    }
+    if (params?.tenantId) {
+      httpParams = httpParams.set('tenantId', params.tenantId);
+    }
+    if (params?.accountId) {
+      httpParams = httpParams.set('accountId', params.accountId);
+    }
+
+    return this.http
+      .get<{ success: boolean; data: PendingVerificationPaymentRecord[]; meta: { page: number; limit: number; total: number } }>(
+        `${this.saasPaymentsUrl}/pending-verification`,
+        { headers: this.platformHeaders, params: httpParams },
+      )
+      .pipe(
+        map((res) => ({
+          items: res.data || [],
+          page: Number(res.meta?.page || 1),
+          limit: Number(res.meta?.limit || (res.data || []).length || 1),
+          total: Number(res.meta?.total || 0),
+        })),
+      );
+  }
+
+  getPaymentContext(accountId: string): Observable<PaymentContextResponse> {
+    return this.http
+      .get<ApiResponse<PaymentContextResponse>>(`${this.saasPaymentsUrl}/${accountId}/context`, { headers: this.platformHeaders })
+      .pipe(map((res) => res.data));
+  }
+
+  verifyPayment(paymentId: string, payload: VerifyPaymentPayload = {}): Observable<VerifyPaymentResult> {
+    return this.http
+      .patch<ApiResponse<VerifyPaymentResult>>(`${this.saasPaymentsUrl}/${paymentId}/verify`, payload, { headers: this.platformHeaders })
+      .pipe(map((res) => res.data));
+  }
+
+  rejectPayment(paymentId: string, payload: RejectPaymentPayload): Observable<PaymentRecord> {
+    return this.http
+      .patch<ApiResponse<PaymentRecord>>(`${this.saasPaymentsUrl}/${paymentId}/reject`, payload, { headers: this.platformHeaders })
+      .pipe(map((res) => res.data));
+  }
+
+  applyPaymentTier(paymentId: string, payload: ApplyPaymentTierPayload): Observable<PaymentRecord> {
+    return this.http
+      .patch<ApiResponse<PaymentRecord>>(`${this.saasPaymentsUrl}/${paymentId}/apply-tier`, payload, { headers: this.platformHeaders })
+      .pipe(map((res) => res.data));
+  }
+
+  setPaymentDuration(paymentId: string, payload: SetPaymentDurationPayload): Observable<PaymentRecord> {
+    return this.http
+      .patch<ApiResponse<PaymentRecord>>(`${this.saasPaymentsUrl}/${paymentId}/set-duration`, payload, { headers: this.platformHeaders })
       .pipe(map((res) => res.data));
   }
 }
