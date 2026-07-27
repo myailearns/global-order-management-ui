@@ -56,7 +56,7 @@ export class NotificationOpsComponent implements OnInit {
 
   readonly loading = signal(false);
   readonly retryingId = signal<string | null>(null);
-  readonly canWrite = computed(() => this.authSession.canWrite('tenant-admin'));
+  readonly canEdit = computed(() => this.authSession.hasFeature('notification.manage'));
 
   readonly selectedChannel = signal<string>('');
   readonly selectedStatus = signal<string>('');
@@ -144,7 +144,7 @@ export class NotificationOpsComponent implements OnInit {
   }
 
   retry(dispatchId: string): void {
-    if (!this.canWrite()) return;
+    if (!this.canEdit()) return;
 
     this.retryingId.set(dispatchId);
     this.http

@@ -176,7 +176,18 @@ export class ProductCollectionsComponent implements OnInit {
   pendingDeleteCollection = signal<ProductCollection | null>(null);
   private suppressCategoryChange = false;
 
-  readonly canView = computed(() => this.authSession.hasFeature('productCollection.list'));
+  readonly canList = computed(() => this.authSession.hasFeature('productCollection.list'));
+  readonly canViewDetail = computed(() => this.authSession.hasFeature('productCollection.view'));
+  readonly hasCreateFeature = computed(() => this.authSession.hasFeature('productCollection.create'));
+  readonly collectionCreateLimit = computed(() => this.authSession.getFeatureConfigNumber('productCollection.create', 'max_count'));
+  readonly collectionCreateUsed = computed(() => this.collections().length);
+  readonly collectionCreateRemaining = computed(() => {
+    const limit = this.collectionCreateLimit();
+    if (limit === null) {
+      return null;
+    }
+    return Math.max(limit - this.collectionCreateUsed(), 0);
+  });
   readonly canCreate = computed(() => this.authSession.hasFeature('productCollection.create'));
   readonly canEdit = computed(() => this.authSession.hasFeature('productCollection.edit'));
   readonly canDelete = computed(() => this.authSession.hasFeature('productCollection.delete'));
@@ -317,17 +328,6 @@ export class ProductCollectionsComponent implements OnInit {
   });
 
   readonly columns = computed<GomTableColumn<ProductCollectionRow>[]>(() => {
-    const actionButtons: Array<{ label: string; actionKey: string; variant?: 'primary' | 'secondary' | 'danger' }> = [];
-    if (this.canView()) {
-      actionButtons.push({ label: 'View', actionKey: 'view', variant: 'secondary' });
-    }
-    if (this.canEdit()) {
-      actionButtons.push({ label: 'Edit', actionKey: 'edit', variant: 'secondary' });
-    }
-    if (this.canDelete()) {
-      actionButtons.push({ label: 'Delete', actionKey: 'delete', variant: 'danger' });
-    }
-
     return [
       { key: 'name', header: 'Name', sortable: true, width: '16rem' },
       { key: 'description', header: 'Description', width: '20rem' },
@@ -338,7 +338,29 @@ export class ProductCollectionsComponent implements OnInit {
         key: 'id',
         header: 'Actions',
         width: '10rem',
-        actionButtons,
+        actionButtons: [
+          {
+            label: () => this.canViewDetail() ? 'View' : 'No permission to view collections',
+            icon: 'ri-eye-line',
+            actionKey: 'view',
+            variant: 'secondary',
+            disabled: () => !this.canViewDetail(),
+          },
+          {
+            label: () => this.canEdit() ? 'Edit' : 'No permission to edit collections',
+            icon: 'ri-pencil-line',
+            actionKey: 'edit',
+            variant: 'secondary',
+            disabled: () => !this.canEdit(),
+          },
+          {
+            label: () => this.canDelete() ? 'Delete' : 'No permission to delete collections',
+            icon: 'ri-delete-bin-line',
+            actionKey: 'delete',
+            variant: 'danger',
+            disabled: () => !this.canDelete(),
+          },
+        ],
       },
     ];
   });
@@ -368,7 +390,7 @@ export class ProductCollectionsComponent implements OnInit {
   }
 
   load(): void {
-    if (!this.canView()) {
+    if (!this.canList()) {
       this.rows.set([]);
       this.collections.set([]);
       return;
@@ -400,6 +422,14 @@ export class ProductCollectionsComponent implements OnInit {
 
   openCreate(): void {
     if (!this.canCreate()) {
+      this.toast.warning('No permission to create collections.');
+      return;
+    }
+
+    const limit = this.collectionCreateLimit();
+    const remaining = this.collectionCreateRemaining();
+    if (limit !== null && remaining !== null && remaining <= 0) {
+      this.toast.error(`Collection creation limit reached. You can create up to ${limit} collections.`);
       return;
     }
 

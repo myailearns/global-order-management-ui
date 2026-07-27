@@ -65,6 +65,10 @@ export class CustomersComponent implements OnInit {
 
   readonly loading = signal(false);
   private readonly authSession = inject(AuthSessionService);
+  readonly canListCustomers = computed(() => this.authSession.hasFeature('customer.list'));
+  readonly canViewCustomer = computed(() => this.authSession.hasFeature('customer.view'));
+  readonly canEditCustomer = computed(() => this.authSession.hasFeature('customer.edit'));
+  readonly canDeleteCustomer = computed(() => this.authSession.hasFeature('customer.delete'));
   readonly canWrite = computed(() => this.authSession.canWrite('customers'));
 
   readonly detailLoading = signal(false);
@@ -123,6 +127,7 @@ export class CustomersComponent implements OnInit {
           label: 'View Details',
           actionKey: 'view',
           variant: 'secondary',
+          disabled: () => !this.canViewCustomer(),
         },
       ],
     },

@@ -78,7 +78,7 @@ export class StockComponent implements OnInit {
   readonly localDateTimePipe = new LocalDateTimePipe();
 
   readonly loading = signal(false);
-  readonly canCreateStock = computed(() => this.authSession.hasFeature('stock.create') && (this.stockCreateRemaining() ?? Infinity) > 0);
+  readonly canCreateStock = computed(() => this.authSession.hasFeature('stock.create'));
   readonly canUpdateStock = computed(() => this.authSession.hasFeature('stock.edit') || this.authSession.hasFeature('stock.update'));
   readonly canDeleteStock = computed(() => this.authSession.hasFeature('stock.delete'));
   readonly stockCreateLimit = computed(() => this.authSession.getFeatureConfigNumber('stock.create', 'max_count'));
@@ -654,6 +654,13 @@ export class StockComponent implements OnInit {
 
   openAddStock(): void {
     if (!this.canCreateStock()) {
+      return;
+    }
+
+    const remaining = this.stockCreateRemaining();
+    if (remaining !== null && remaining <= 0) {
+      const limit = this.stockCreateLimit();
+      this.toast.error(`Stock entry limit reached. You have used ${this.stockCreateUsed()} of ${limit} allowed entries this month.`);
       return;
     }
 

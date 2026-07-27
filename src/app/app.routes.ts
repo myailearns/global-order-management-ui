@@ -144,27 +144,27 @@ export const routes: Routes = [
 			{
 				path: 'product/groups',
 				component: GroupsComponent,
-				data: { actor: 'tenant', capability: 'product' },
+				data: { actor: 'tenant', capability: 'product', featureKeys: ['group.list'] },
 			},
 			{
 				path: 'product/groups/bulk-upload',
 				component: BulkUploadGroupsComponent,
-				data: { actor: 'tenant', capability: 'product' },
+				data: { actor: 'tenant', capability: 'product', featureKeys: ['group.create', 'group.bulk_create'] },
 			},
 			{
 				path: 'product/stock',
 				component: StockComponent,
-				data: { actor: 'tenant', capability: 'product' },
+				data: { actor: 'tenant', capability: 'product', featureKeys: ['stock.list'] },
 			},
 			{
 				path: 'product/variants',
 				component: VariantsComponent,
-				data: { actor: 'tenant', capability: 'product' },
+				data: { actor: 'tenant', capability: 'product', featureKeys: ['variant.list'] },
 			},
 			{
 				path: 'product/packs',
 				component: PacksComponent,
-				data: { actor: 'tenant', capability: 'product' },
+				data: { actor: 'tenant', capability: 'product', featureKeys: ['pack.list'] },
 			},
 			{
 				path: 'product/product-collections',
@@ -184,15 +184,14 @@ export const routes: Routes = [
 			{
 				path: 'product/media',
 				component: MediaLibraryComponent,
-				data: { actor: 'tenant', capability: 'product', mode: 'tenant' },
+				data: { actor: 'tenant', capability: 'product', mode: 'tenant', featureKeys: ['media.list'] },
 			},
 			{
 				path: 'orders/list',
 				component: OrdersComponent,
 				data: {
 					actor: 'tenant',
-					capability: 'orders',
-					title: 'Orders',
+					capability: 'orders',				featureKeys: ['order.list', 'order.view', 'order.create', 'order.update', 'order.delete'],					title: 'Orders',
 					description: 'Create and manage operational orders across channels.',
 					ctaLabel: 'Create Order',
 				},
@@ -202,8 +201,7 @@ export const routes: Routes = [
 				component: CreateOrderComponent,
 				data: {
 					actor: 'tenant',
-					capability: 'orders',
-					title: 'Create Order',
+					capability: 'orders',				featureKeys: ['order.create'],					title: 'Create Order',
 					description: 'Billing style order entry with multi-item support.',
 					ctaLabel: 'Place Order',
 				},
@@ -214,6 +212,7 @@ export const routes: Routes = [
 				data: {
 					actor: 'tenant',
 					capability: 'delivery',
+					featureKeys: ['rider.list'],
 					title: 'Riders',
 					description: 'Manage rider master data and availability states.',
 					ctaLabel: 'Add Rider',
@@ -225,6 +224,7 @@ export const routes: Routes = [
 				data: {
 					actor: 'tenant',
 					capability: 'delivery',
+					featureKeys: ['courierPartner.list'],
 					title: 'Courier Partners',
 					description: 'Manage courier partner master data used in dispatch flows.',
 					ctaLabel: 'Add Courier Partner',
@@ -238,6 +238,7 @@ export const routes: Routes = [
 					capability: 'customers',
 					title: 'Customers',
 					description: 'Track customer order history, spend and repeat purchase insights.',
+					featureKeys: ['customer.list'],
 				},
 			},
 			{
@@ -248,6 +249,7 @@ export const routes: Routes = [
 					capability: 'customer-groups',
 					title: 'Customer Groups',
 					description: 'Manage manual customer segments for targeted outreach.',
+					featureKeys: ['customerGroup.list'],
 				},
 			},
 			{
@@ -256,6 +258,7 @@ export const routes: Routes = [
 				data: {
 					actor: 'tenant',
 					capability: 'tenant-admin',
+				featureKeys: ['employeeCode.view', 'employeeCode.config'],
 					title: 'Employee Code Config',
 					description: 'Configure how employee codes are generated for riders.',
 				},
@@ -266,6 +269,7 @@ export const routes: Routes = [
 				data: {
 					actor: 'tenant',
 					capability: 'tenant-admin',
+					featureKeys: ['pincode.config'],
 					title: 'Serviceable Pincodes',
 					description: 'Configure home-delivery serviceable pincodes and fallback suggestions.',
 				},
@@ -276,6 +280,7 @@ export const routes: Routes = [
 				data: {
 					actor: 'tenant',
 					capability: 'tenant-admin',
+					featureKeys: ['storefront.config'],
 					title: 'Customer Storefront',
 					description: 'Configure your public-facing online store — branding, layout, banners, and payment methods.',
 				},
@@ -286,6 +291,7 @@ export const routes: Routes = [
 				data: {
 					actor: 'tenant',
 					capability: 'tenant-admin',
+					featureKeys: ['returnPolicy.config'],
 					title: 'Return & Exchange Policy',
 					description: 'Configure whether your store accepts returns, refunds, and exchanges.',
 				},
@@ -296,6 +302,7 @@ export const routes: Routes = [
 				data: {
 					actor: 'tenant',
 					capability: 'tenant-admin',
+					featureKeys: ['security.config'],
 					title: 'PIN Security Policy',
 					description: 'Configure authentication attempts, lockout duration, and unlock policies for PIN-based customer access.',
 				},
@@ -306,7 +313,7 @@ export const routes: Routes = [
 				data: {
 					actor: 'tenant',
 					capability: 'tenant-admin',
-					featureKeys: ['order.list', 'order.create', 'order.update'],
+					featureKeys: ['notification.broadcast'],
 					title: 'Push Notifications',
 					description: 'Broadcast offers and announcements to all subscribed customers.',
 				},
@@ -317,6 +324,7 @@ export const routes: Routes = [
 				data: {
 					actor: 'tenant',
 					capability: 'tenant-admin',
+					featureKeys: ['notification.manage'],
 					title: 'Notification Settings',
 					description: 'Configure admin email notifications for order lifecycle updates.',
 				},
@@ -327,6 +335,7 @@ export const routes: Routes = [
 				data: {
 					actor: 'tenant',
 					capability: 'tenant-admin',
+					featureKeys: ['notification.manage'],
 					title: 'Notification Operations',
 					description: 'Monitor delivery status, SLA metrics, and manually retry failed notifications across channels.',
 				},
@@ -448,6 +457,7 @@ export const routes: Routes = [
 				data: {
 					actor: 'tenant',
 					capability: 'masters',
+					featureKeys: ['template.browse', 'template.subscribe', 'template.unsubscribe'],
 					title: 'Category Templates',
 					description: 'Browse and subscribe to platform category templates.',
 				},

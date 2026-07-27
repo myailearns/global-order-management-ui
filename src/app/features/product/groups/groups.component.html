@@ -6,8 +6,8 @@
         type="button"
         variant="secondary"
         (buttonClick)="openBulkUpload()"
-        gomDisableIfNoFeature="group.create"
-        [disabled]="saving() || !canCreateGroup()"
+        gomDisableIfNoFeature="group.bulk_create"
+        [disabled]="saving() || !canBulkCreateGroup()"
       ><i class="ri-upload-2-line" aria-hidden="true"></i> Bulk Upload</gom-lib-button>
 
       <gom-lib-button
@@ -15,7 +15,7 @@
         variant="primary"
         (buttonClick)="openCreateWizard()"
         gomDisableIfNoFeature="group.create"
-        [disabled]="saving() || !canCreateGroup() || (groupCreateRemaining() ?? 1) <= 0"
+        [disabled]="saving() || !canCreateGroup()"
       ><i class="ri-add-line" aria-hidden="true"></i> Create Group</gom-lib-button>
     </div>
   </header>
@@ -50,7 +50,8 @@
             type="button"
             variant="secondary"
             (buttonClick)="applyStatusToSelectedGroups('ACTIVE')"
-            [disabled]="saving()"
+            gomDisableIfNoFeature="group.bulk_create"
+            [disabled]="saving() || !canBulkCreateGroup()"
           >
             <i class="ri-check-line" aria-hidden="true"></i> Activate Selected
           </gom-lib-button>
@@ -58,7 +59,8 @@
             type="button"
             variant="secondary"
             (buttonClick)="applyStatusToSelectedGroups('INACTIVE')"
-            [disabled]="saving()"
+            gomDisableIfNoFeature="group.bulk_create"
+            [disabled]="saving() || !canBulkCreateGroup()"
           >
             <i class="ri-close-line" aria-hidden="true"></i> Deactivate Selected
           </gom-lib-button>

@@ -24,7 +24,7 @@
         variant="primary"
         (buttonClick)="openAddStock()"
         gomDisableIfNoFeature="stock.create"
-        [disabled]="saving() || !canCreateStock() || (stockCreateRemaining() ?? 1) <= 0"
+        [disabled]="saving() || !canCreateStock()"
       >
         <i class="ri-add-line" aria-hidden="true"></i> Add Stock
       </gom-lib-button>

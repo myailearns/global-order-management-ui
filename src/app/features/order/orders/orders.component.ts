@@ -68,6 +68,8 @@ export class OrdersComponent implements OnInit {
   private readonly authSession = inject(AuthSessionService);
 
   readonly loading = signal(false);
+  readonly canListOrders = computed(() => this.authSession.hasFeature('order.list'));
+  readonly canViewOrder = computed(() => this.authSession.hasFeature('order.view'));
   readonly canCreateOrder = computed(() => this.authSession.hasFeature('order.create'));
   readonly canUpdateOrder = computed(() => this.authSession.hasFeature('order.update'));
   readonly canDeleteOrder = computed(() => this.authSession.hasFeature('order.delete'));
@@ -238,7 +240,7 @@ export class OrdersComponent implements OnInit {
           label: (row) => this.getNextStatusLabel(String(row['rawStatus'] || ''), String(row['deliveryType'] || ''), String(row['orderType'] || '')),
           actionKey: 'next',
           variant: 'secondary',
-          disabled: (row) => !this.getNextStatus(
+          disabled: (row) => !this.canUpdateOrder() || !this.getNextStatus(
             String(row['rawStatus'] || ''),
             String(row['deliveryType'] || ''),
             String(row['orderType'] || '')
@@ -249,7 +251,7 @@ export class OrdersComponent implements OnInit {
           icon: (row) => String(row['assignedRiderName'] || '') ? 'ri-user-follow-line' : 'ri-user-add-line',
           actionKey: 'assign-rider',
           variant: 'secondary',
-          disabled: (row) => !this.canAssignRider(
+          disabled: (row) => !this.canUpdateOrder() || !this.canAssignRider(
             String(row['rawStatus'] || ''),
             String(row['deliveryType'] || ''),
             String(row['orderType'] || '')
@@ -297,13 +299,13 @@ export class OrdersComponent implements OnInit {
               label: 'Mark Payment Received',
               actionKey: 'mark-payment-received',
               variant: 'secondary',
-              disabled: (row) => String(row['paymentStatus'] || '').toUpperCase() !== 'PENDING',
+              disabled: (row) => !this.canUpdateOrder() || String(row['paymentStatus'] || '').toUpperCase() !== 'PENDING',
             },
             {
               label: 'Mark Delivery Attempt Failed',
               actionKey: 'attempt-failed',
               variant: 'secondary',
-              disabled: (row) => !(
+              disabled: (row) => !this.canUpdateOrder() || !(
                 String(row['deliveryType'] || '').toUpperCase() === 'DELIVERY'
                 && String(row['rawStatus'] || '') === 'SHIPPED'
               ),
@@ -315,14 +317,14 @@ export class OrdersComponent implements OnInit {
               icon: 'ri-arrow-go-back-line',
               actionKey: 'request-return',
               variant: 'secondary',
-              disabled: (row) => String(row['rawStatus'] || '') !== 'DELIVERED',
+              disabled: (row) => !this.canUpdateOrder() || String(row['rawStatus'] || '') !== 'DELIVERED',
             },
             {
               label: 'Mark Return In Transit',
               icon: 'ri-truck-line',
               actionKey: 'mark-return-in-transit',
               variant: 'secondary',
-              disabled: (row) => !(
+              disabled: (row) => !this.canUpdateOrder() || !(
                 String(row['rawStatus'] || '') === 'RETURN_REQUESTED'
                 && (
                   String(row['deliveryType'] || '').toUpperCase() === 'DELIVERY'
@@ -335,7 +337,7 @@ export class OrdersComponent implements OnInit {
               icon: 'ri-home-office-line',
               actionKey: 'mark-return-received',
               variant: 'secondary',
-              disabled: (row) => !(
+              disabled: (row) => !this.canUpdateOrder() || !(
                 (
                   String(row['rawStatus'] || '') === 'RETURN_IN_TRANSIT'
                   && (
@@ -354,7 +356,7 @@ export class OrdersComponent implements OnInit {
               icon: 'ri-refund-2-line',
               actionKey: 'mark-money-refunded',
               variant: 'secondary',
-              disabled: (row) => String(row['rawStatus'] || '') !== 'RETURNED',
+              disabled: (row) => !this.canUpdateOrder() || String(row['rawStatus'] || '') !== 'RETURNED',
             },
             {
               label: 'Return to Warehouse (Undeliverable)',
@@ -1245,11 +1247,13 @@ export class OrdersComponent implements OnInit {
   }
 
   private canEditOrderDetails(status: string): boolean {
+    if (!this.canUpdateOrder()) return false;
     const normalized = String(status || '').toUpperCase();
     return !['DELIVERED', 'CANCELLED', 'RETURN_REQUESTED', 'RETURN_IN_TRANSIT', 'RETURNED', 'REFUNDED'].includes(normalized);
   }
 
   private canEditOrderItems(status: string, paymentStatus: string): boolean {
+    if (!this.canUpdateOrder()) return false;
     const normalizedStatus = String(status || '').toUpperCase();
     const normalizedPayment = String(paymentStatus || '').toUpperCase();
     return ['DRAFT', 'PLACED', 'CONFIRMED'].includes(normalizedStatus) && normalizedPayment !== 'SUCCESS';
@@ -1462,10 +1466,12 @@ export class OrdersComponent implements OnInit {
   }
 
   canCancelStatus(status: string): boolean {
+    if (!this.canUpdateOrder()) return false;
     return ['PLACED', 'CONFIRMED', 'PACKED', 'ASSIGNED', 'ATTEMPTED_DELIVERY', 'RETURN_REQUESTED', 'RETURN_IN_TRANSIT'].includes(status);
   }
 
   canDeleteStatus(status: string): boolean {
+    if (!this.canDeleteOrder()) return false;
     return ['DRAFT', 'CANCELLED'].includes(status);
   }
 
@@ -1594,6 +1600,7 @@ export class OrdersComponent implements OnInit {
   }
 
   private canShowCourierReturnAction(row: OrderRow): boolean {
+    if (!this.canUpdateOrder()) return false;
     return String(row.orderType || '').toUpperCase() === 'CALL_COURIER' && String(row.rawStatus || '').toUpperCase() === 'DISPATCHED';
   }
 

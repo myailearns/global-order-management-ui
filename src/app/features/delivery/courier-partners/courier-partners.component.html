@@ -6,7 +6,7 @@
       variant="primary"
       (buttonClick)="openCreate()"
       [gomDisableIfNoFeature]="'courierPartner.create'"
-      [disabled]="saving() || !canCreatePartner() || (courierPartnerCreateRemaining() ?? 1) <= 0"
+      [disabled]="saving() || !canCreatePartner()"
     >
       <i class="ri-add-line" aria-hidden="true"></i> Add Courier Partner
     </gom-lib-button>

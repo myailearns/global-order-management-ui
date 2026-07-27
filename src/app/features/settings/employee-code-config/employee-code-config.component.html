@@ -86,7 +86,7 @@
             variant="primary"
             type="submit"
             [gomDisableIfNoCapability]="'tenant-admin'"
-            [disabled]="saving() || !canWrite()"
+            [disabled]="saving() || !canEdit()"
             (buttonClick)="save()"
           ></gom-lib-button>
         </div>

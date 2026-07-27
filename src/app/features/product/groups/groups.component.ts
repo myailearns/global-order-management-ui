@@ -125,9 +125,11 @@ export class GroupsComponent implements OnInit {
   private readonly groupFieldToggleControls = new Map<string, FormControl<boolean>>();
 
   readonly loading = signal(false);
-  readonly canCreateGroup = computed(() => this.authSession.hasFeature('group.create') && (this.groupCreateRemaining() ?? Infinity) > 0);
+  readonly canCreateGroup = computed(() => this.authSession.hasFeature('group.create'));
   readonly canUpdateGroup = computed(() => this.authSession.hasFeature('group.edit') || this.authSession.hasFeature('group.update'));
   readonly canDeleteGroup = computed(() => this.authSession.hasFeature('group.delete'));
+  readonly canPublishGroup = computed(() => this.authSession.hasFeature('group.publish'));
+  readonly canBulkCreateGroup = computed(() => this.authSession.hasFeature('group.bulk_create'));
   readonly canCreateStock = computed(() => this.authSession.hasFeature('stock.create'));
   readonly canCreateVariant = computed(() => this.authSession.hasFeature('variant.create'));
   readonly canManageProductCollections = computed(
@@ -316,11 +318,16 @@ export class GroupsComponent implements OnInit {
           disabled: () => !this.canManageProductCollections(),
         },
         {
-          label: (row: GroupRow) => row.status === 'INACTIVE' ? 'Publish' : 'Unpublish',
+          label: (row: GroupRow) => {
+            if (!this.canPublishGroup()) {
+              return 'No permission to publish/unpublish groups';
+            }
+            return row.status === 'INACTIVE' ? 'Publish' : 'Unpublish';
+          },
           icon: (row: GroupRow) => row.status === 'INACTIVE' ? 'ri-toggle-fill' : 'ri-toggle-line',
           actionKey: 'publish',
           variant: 'primary',
-          disabled: () => !this.canUpdateGroup(),
+          disabled: () => !this.canPublishGroup(),
         },
         {
           label: () => this.canDeleteGroup() ? 'Delete' : 'No permission to delete groups',
@@ -722,6 +729,13 @@ export class GroupsComponent implements OnInit {
     }
 
   openCreateWizard(): void {
+    const remaining = this.groupCreateRemaining();
+    if (remaining !== null && remaining <= 0) {
+      const limit = this.groupCreateLimit();
+      this.toast.error(`Group creation limit reached. You have used ${this.groupCreateUsed()} of ${limit} allowed groups.`);
+      return;
+    }
+
     this.resetWizard();
     // Defer modal open with enough time for form initialization
     setTimeout(() => {
@@ -739,8 +753,8 @@ export class GroupsComponent implements OnInit {
   }
 
   applyStatusToSelectedGroups(nextStatus: 'ACTIVE' | 'INACTIVE'): void {
-    if (!this.canUpdateGroup()) {
-      this.toast.warning('No permission to update group status.');
+    if (!this.canBulkCreateGroup()) {
+      this.toast.warning('No permission for bulk operations.');
       return;
     }
 
@@ -857,10 +871,11 @@ export class GroupsComponent implements OnInit {
     }
 
     if (event.actionKey === 'publish') {
-      if (!this.canUpdateGroup()) {
-        this.toast.warning('No permission to publish groups.');
+      if (!this.canPublishGroup()) {
+        this.toast.warning('No permission to change group status.');
         return;
       }
+      
       const nextStatus: 'ACTIVE' | 'INACTIVE' = existing.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
       const actionLabel = nextStatus === 'ACTIVE' ? 'published' : 'unpublished';
       this.saving.set(true);

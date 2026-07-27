@@ -28,19 +28,19 @@ export const SAAS_TENANT_ADMIN_ROUTES: Routes = [
       {
         path: 'users',
         component: UsersListComponent,
-        data: { title: 'saas.admin.users.title' },
+        data: { title: 'saas.admin.users.title', featureKeys: ['user.list'] },
       },
       {
         path: 'users/invite',
         component: UserInviteFormComponent,
-        data: { title: 'saas.admin.users.btn_invite' },
+        data: { title: 'saas.admin.users.btn_invite', featureKeys: ['user.create'] },
       },
       {
         path: 'employees',
         component: EmployeesListComponent,
         data: {
           title: 'saas.admin.employees.title',
-          featureKeys: ['employees.view', 'employees.add', 'employees.edit', 'employees.delete'],
+          featureKeys: ['tenantAccount.view', 'tenantAccount.add', 'tenantAccount.edit', 'tenantAccount.delete'],
         },
       },
       {
@@ -48,43 +48,49 @@ export const SAAS_TENANT_ADMIN_ROUTES: Routes = [
         component: EmployeeFormComponent,
         data: {
           title: 'saas.admin.employees.btn_create',
-          featureKeys: ['employees.view', 'employees.add', 'employees.edit', 'employees.delete'],
+          featureKeys: ['tenantAccount.view', 'tenantAccount.add', 'tenantAccount.edit', 'tenantAccount.delete'],
         },
       },
       {
         path: 'roles',
         component: RolesListComponent,
-        data: { title: 'saas.admin.roles.title' },
+        data: {
+          title: 'saas.admin.roles.title',
+          featureKeys: ['tenantRole.view', 'tenantRole.add', 'tenantRole.edit', 'tenantRole.delete'],
+        },
       },
       {
         path: 'roles/matrix',
         component: RoleMatrixComponent,
-        data: { title: 'saas.admin.roles.title' },
+        data: {
+          title: 'saas.admin.roles.title',
+          featureKeys: ['tenantRole.view', 'tenantRole.add', 'tenantRole.edit', 'tenantRole.delete'],
+        },
       },
       {
         path: 'dashboard',
         component: TenantDashboardComponent,
-        data: { title: 'saas.admin.dashboard.title' },
+        data: { title: 'saas.admin.dashboard.title', featureKeys: ['dashboard.view'] },
       },
       {
         path: 'offers',
         component: OffersListComponent,
-        data: { title: 'gom.offers.title' },
+        data: { title: 'gom.offers.title', featureKeys: ['offer.list'] },
       },
       {
         path: 'offers/create',
         component: OfferCreateWizardComponent,
-        data: { title: 'gom.offers.btn_create' },
+        data: { title: 'gom.offers.btn_create', featureKeys: ['offer.create'] },
       },
       {
         path: 'offers/edit/:id',
         component: OfferCreateWizardComponent,
-        data: { title: 'gom.offers.btn_edit' },
+        data: { title: 'gom.offers.btn_edit', featureKeys: ['offer.edit'] },
       },
       {
         path: 'offers/settings',
         component: ProgramSettingsComponent,
-        data: { title: 'gom.offers.btn_settings' },
+        data: { title: 'gom.offers.btn_settings', featureKeys: ['offer.view'] },
       },
     ],
   },

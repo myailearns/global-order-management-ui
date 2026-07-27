@@ -6,7 +6,7 @@
       variant="primary"
       (buttonClick)="openCreatePack()"
       [gomDisableIfNoFeature]="'pack.create'"
-      [disabled]="saving() || !canCreatePack() || (packCreateRemaining() ?? 1) <= 0"
+      [disabled]="saving() || !canCreatePack()"
     >
       <i class="ri-add-line" aria-hidden="true"></i> Add Pack
     </gom-lib-button>

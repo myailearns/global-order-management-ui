@@ -35,7 +35,7 @@ export class NotificationSettingsComponent implements OnInit {
   readonly loading = signal(false);
   readonly saving = signal(false);
   readonly errorMessage = signal<string | null>(null);
-  readonly canWrite = computed(() => this.authSession.canWrite('tenant-admin'));
+  readonly canEdit = computed(() => this.authSession.hasFeature('notification.manage'));
 
   readonly tabs = [{ id: 'orders', label: 'Order Notifications' }] as const;
   readonly activeTab = signal<'orders'>('orders');
@@ -84,7 +84,7 @@ export class NotificationSettingsComponent implements OnInit {
   }
 
   save(): void {
-    if (!this.canWrite()) {
+    if (!this.canEdit()) {
       return;
     }
 

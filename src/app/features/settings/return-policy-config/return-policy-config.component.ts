@@ -25,7 +25,7 @@ export class ReturnPolicyConfigComponent implements OnInit {
   readonly loading = signal(false);
   readonly saving = signal(false);
   readonly errorMessage = signal<string | null>(null);
-  readonly canWrite = computed(() => this.authSession.canWrite('tenant-admin'));
+  readonly canEdit = computed(() => this.authSession.hasFeature('returnPolicy.config'));
 
   readonly policyForm = this.fb.group({
     returnsEnabled: [true],
@@ -64,7 +64,7 @@ export class ReturnPolicyConfigComponent implements OnInit {
   }
 
   save(): void {
-    if (!this.canWrite()) {
+    if (!this.canEdit()) {
       return;
     }
 

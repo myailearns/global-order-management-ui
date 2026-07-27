@@ -34,6 +34,7 @@ export class PushNotificationsComponent implements OnInit {
   readonly sending = signal(false);
   readonly subscriberCount = signal<number | null>(null);
   readonly lastResult = signal<BroadcastResult | null>(null);
+  readonly canBroadcast = computed(() => this.authSession.hasFeature('notification.broadcast'));
   readonly canWrite = computed(() => this.authSession.canWrite('tenant-admin'));
 
   readonly broadcastForm = this.fb.group({
@@ -62,7 +63,8 @@ export class PushNotificationsComponent implements OnInit {
   }
 
   sendBroadcast(): void {
-    if (!this.canWrite()) {
+    if (!this.canBroadcast()) {
+      this.toast.error('You do not have permission to send broadcast notifications.');
       return;
     }
 

@@ -26,6 +26,7 @@ export class EmployeeCodeConfigComponent implements OnInit {
   readonly loading = signal(false);
   readonly saving = signal(false);
   readonly errorMessage = signal<string | null>(null);
+  readonly canEdit = computed(() => this.authSession.hasFeature('employeeCode.config'));
   readonly canWrite = computed(() => this.authSession.canWrite('tenant-admin'));
 
   readonly employeePreview = signal<string>('');
@@ -100,6 +101,10 @@ export class EmployeeCodeConfigComponent implements OnInit {
   }
 
   save(): void {
+    if (!this.canEdit()) {
+      this.toast.error('You do not have permission to edit configuration.');
+      return;
+    }
     if (!this.canWrite()) {
       return;
     }

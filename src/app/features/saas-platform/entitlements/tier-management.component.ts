@@ -25,7 +25,6 @@ const STANDARD_CONFIG_KEYS = new Set([
   'max_videos',
   'max_variants',
   'max_groups',
-  'max_movements_per_month',
 ]);
 
 const BILLING_CYCLE_CONFIG: Array<{ code: BillingDurationCode; label: string; months: number; defaultDiscountPercent: number }> = [
@@ -656,7 +655,7 @@ export class TierManagementComponent implements OnInit {
   private suppressAutoCycleBaseSync = false;
 
   readonly moduleOptions = computed(() => {
-    const modules = [...new Set(this.features().map((item) => String(item.module || '').trim()).filter(Boolean))]
+    const modules = [...new Set(this.selectedFeatures().map((item) => String(item.module || '').trim()).filter(Boolean))]
       .sort((left, right) => left.localeCompare(right, 'en'));
     return [{ value: 'all', label: 'All Modules' }, ...modules.map((moduleName) => ({ value: moduleName, label: moduleName }))];
   });
@@ -702,9 +701,11 @@ export class TierManagementComponent implements OnInit {
   });
 
   readonly selectedFeatures = computed(() => {
+    const moduleFilter = this.activeModule();
     const keySet = new Set(this.selectedFeatureKeys());
     return this.features()
       .filter((feature) => keySet.has(String(feature.featureKey || '').trim().toLowerCase()))
+      .filter((feature) => (moduleFilter === 'all' ? true : String(feature.module || '').trim() === moduleFilter))
       .sort((left, right) => String(left.displayName || '').localeCompare(String(right.displayName || ''), 'en'));
   });
 
@@ -992,8 +993,70 @@ export class TierManagementComponent implements OnInit {
     const currentSet = new Set(this.selectedFeatureKeys());
 
     if (checked) {
+      // When ADDING a feature, check if its dependencies are already selected
+      const currentFeature = this.features().find((f) => String(f.featureKey || '').trim().toLowerCase() === normalized);
+      
+      if (currentFeature && Array.isArray(currentFeature.dependencyKeys) && currentFeature.dependencyKeys.length > 0) {
+        const missingDependencies = currentFeature.dependencyKeys
+          .map((dep) => String(dep || '').trim().toLowerCase())
+          .filter((dep) => !currentSet.has(dep));
+        
+        if (missingDependencies.length > 0) {
+          // Find the feature details for missing dependencies
+          const missingFeatures = this.features().filter((f) => {
+            const fKey = String(f.featureKey || '').trim().toLowerCase();
+            return missingDependencies.includes(fKey);
+          });
+          
+          const missingNames = missingFeatures.map((f) => f.displayName || f.featureKey);
+          const currentDisplayName = currentFeature.displayName || featureKey;
+          
+          // Auto-add missing dependencies
+          missingDependencies.forEach((dep) => currentSet.add(dep));
+          currentSet.add(normalized);
+          
+          this.toast.info(
+            `Added "${currentDisplayName}" and its required dependencies: ${missingNames.join(', ')}`
+          );
+          
+          this.setSelectedFeatureKeys([...currentSet]);
+          return;
+        }
+      }
+      
       currentSet.add(normalized);
     } else {
+      // Check if any selected feature depends on this feature
+      const dependentFeatures = this.features()
+        .filter((feature) => {
+          const fKey = String(feature.featureKey || '').trim().toLowerCase();
+          if (!currentSet.has(fKey) || fKey === normalized) {
+            return false;
+          }
+          const dependencies = (feature.dependencyKeys || []).map((dep) => String(dep || '').trim().toLowerCase());
+          return dependencies.includes(normalized);
+        });
+
+      if (dependentFeatures.length > 0) {
+        const currentFeature = this.features().find((f) => String(f.featureKey || '').trim().toLowerCase() === normalized);
+        const currentDisplayName = currentFeature?.displayName || featureKey;
+        const dependentNames = dependentFeatures.map((f) => f.displayName || f.featureKey);
+        
+        // Automatically remove dependent features too
+        dependentFeatures.forEach((feature) => {
+          const fKey = String(feature.featureKey || '').trim().toLowerCase();
+          currentSet.delete(fKey);
+        });
+        currentSet.delete(normalized);
+        
+        this.toast.info(
+          `Removed "${currentDisplayName}" and its dependent features: ${dependentNames.join(', ')}`
+        );
+        
+        this.setSelectedFeatureKeys([...currentSet]);
+        return;
+      }
+
       currentSet.delete(normalized);
     }
 

@@ -124,7 +124,7 @@ export class VariantsComponent implements OnInit {
   private readonly translate = inject(TranslateService);
 
   readonly loading = signal(false);
-  readonly canCreateVariant = computed(() => this.authSession.hasFeature('variant.create') && (this.variantCreateRemaining() ?? Infinity) > 0);
+  readonly canCreateVariant = computed(() => this.authSession.hasFeature('variant.create'));
   readonly canUpdateVariant = computed(
     () => this.authSession.hasFeature('variant.edit')
       || this.authSession.hasFeature('variant.update')
@@ -474,20 +474,23 @@ export class VariantsComponent implements OnInit {
       actionButtons: [
         {
           label: () => this.canUpdateVariant() ? 'Edit' : 'No permission to edit variants',
+          icon: 'ri-pencil-line',
           actionKey: 'edit',
           variant: 'secondary',
           disabled: () => !this.canUpdateVariant(),
         },
         {
           label: () => this.canManageProductCollections() ? 'Collections' : 'No permission for collections',
+          icon: 'ri-folders-line',
           actionKey: 'collections',
           variant: 'secondary',
           disabled: () => !this.canManageProductCollections(),
         },
         {
           label: () => this.canDeleteVariant() ? 'Delete' : 'No permission to delete variants',
+          icon: 'ri-delete-bin-line',
           actionKey: 'delete',
-          variant: 'secondary',
+          variant: 'danger',
           disabled: () => !this.canDeleteVariant(),
         },
       ],
@@ -835,6 +838,13 @@ export class VariantsComponent implements OnInit {
   openCreateVariant(): void {
     if (!this.selectedGroupId()) {
       this.toast.warning('Please select a group first.');
+      return;
+    }
+
+    const remaining = this.variantCreateRemaining();
+    if (remaining !== null && remaining <= 0) {
+      const limit = this.variantCreateLimit();
+      this.toast.error(`Variant creation limit reached. You have used ${this.variantCreateUsed()} of ${limit} allowed variants.`);
       return;
     }
 

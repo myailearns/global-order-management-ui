@@ -40,11 +40,13 @@ export const protectedRouteGuard: CanActivateChildFn = (childRoute, state) => {
     });
   }
 
-  // If route declares featureKeys, tenant must have at least one to access the page.
+  // If route declares featureKeys, tenant must have the list permission (first key) to access the page.
+  // The list permission (e.g., 'category.list') grants page access; other permissions control actions on the page.
   const routeFeatureKeys = childRoute.data['featureKeys'] as string[] | undefined;
   if (routeFeatureKeys?.length && session.actorType === 'tenant') {
-    const hasAtLeastOne = routeFeatureKeys.some((key) => authSession.hasFeature(key));
-    if (!hasAtLeastOne) {
+    // Check if user has the first feature key, which should be the .list permission
+    const listPermission = routeFeatureKeys[0];
+    if (!authSession.hasFeature(listPermission)) {
       return router.createUrlTree(['/auth/access-denied'], {
         queryParams: { reason: 'feature_disabled' },
       });

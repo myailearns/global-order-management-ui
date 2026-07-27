@@ -59,7 +59,7 @@
         type="submit"
         variant="primary"
         [gomDisableIfNoCapability]="'tenant-admin'"
-        [disabled]="broadcastForm.invalid || sending() || (subscriberCount() === 0) || !canWrite()"
+        [disabled]="broadcastForm.invalid || sending() || (subscriberCount() === 0) || !canBroadcast()"
       >
         <i class="ri-send-plane-line mr-2"></i>
         Send to All Subscribers

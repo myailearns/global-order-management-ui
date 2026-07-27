@@ -8,7 +8,7 @@
       variant="primary"
       (buttonClick)="onInviteUser()"
       [gomDisableIfNoCapability]="'tenant-admin'"
-      [disabled]="loading() || !canWrite()"
+      [disabled]="loading() || !canCreate()"
       aria-label="Invite new user">
       {{ translationKeys.BTN_INVITE_USER | translate }}
     </gom-lib-button>

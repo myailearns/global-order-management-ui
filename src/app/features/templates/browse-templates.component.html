@@ -30,7 +30,7 @@
                 </gom-lib-button>
                 <gom-lib-button
                   variant="primary"
-                  [disabled]="subscribingId() === bt._id"
+                  [disabled]="!canSubscribe() || subscribingId() === bt._id"
                   (buttonClick)="subscribeToBusinessTemplate(bt)"
                 >
                   @if (subscribingId() === bt._id) {
@@ -78,7 +78,7 @@
                 } @else {
                   <gom-lib-button
                     variant="primary"
-                    [disabled]="subscribingId() === tpl._id"
+                    [disabled]="!canSubscribe() || subscribingId() === tpl._id"
                     (buttonClick)="subscribe(tpl)"
                   >
                     @if (subscribingId() === tpl._id) {
@@ -123,7 +123,7 @@
                 </div>
                 <gom-lib-button
                   variant="danger"
-                  [disabled]="subscribingId() === sub.platformCategoryId._id"
+                  [disabled]="!canUnsubscribe() || subscribingId() === sub.platformCategoryId._id"
                   (buttonClick)="unsubscribe(sub)"
                 >
                   <i class="ri-close-circle-line" aria-hidden="true"></i> {{ 'categoryTemplates.unsubscribe' | translate }}

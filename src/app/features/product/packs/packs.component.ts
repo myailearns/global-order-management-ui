@@ -67,7 +67,7 @@ export class PacksComponent implements OnInit {
   private readonly authSession = inject(AuthSessionService);
 
   readonly loading = signal(false);
-  readonly canCreatePack = computed(() => this.authSession.hasFeature('pack.create') && (this.packCreateRemaining() ?? Infinity) > 0);
+  readonly canCreatePack = computed(() => this.authSession.hasFeature('pack.create'));
   readonly canUpdatePack = computed(() => this.authSession.hasFeature('pack.edit') || this.authSession.hasFeature('pack.update'));
   readonly canDeletePack = computed(() => this.authSession.hasFeature('pack.delete'));
   readonly packCreateLimit = computed(() => this.authSession.getFeatureConfigNumber('pack.create', 'max_count'));
@@ -381,6 +381,13 @@ export class PacksComponent implements OnInit {
   }
 
   openCreatePack(): void {
+    const remaining = this.packCreateRemaining();
+    if (remaining !== null && remaining <= 0) {
+      const limit = this.packCreateLimit();
+      this.toast.error(`Pack creation limit reached. You have used ${this.packCreateUsed()} of ${limit} allowed packs.`);
+      return;
+    }
+
     this.editingPackId.set(null);
     this.packForm.reset({
       name: '',

@@ -55,7 +55,9 @@ export class RidersComponent implements OnInit {
   private readonly authSession = inject(AuthSessionService);
 
   readonly loading = signal(false);
-  readonly canCreateRider = computed(() => this.authSession.hasFeature('rider.create') && (this.riderCreateRemaining() ?? Infinity) > 0);
+  readonly canListRiders = computed(() => this.authSession.hasFeature('rider.list'));
+  readonly canViewRider = computed(() => this.authSession.hasFeature('rider.view'));
+  readonly canCreateRider = computed(() => this.authSession.hasFeature('rider.create'));
   readonly canUpdateRider = computed(() => this.authSession.hasFeature('rider.update'));
   readonly canDeleteRider = computed(() => this.authSession.hasFeature('rider.delete'));
   readonly riderCreateLimit = computed(() => this.authSession.getFeatureConfigNumber('rider.create', 'max_count'));
@@ -249,6 +251,18 @@ export class RidersComponent implements OnInit {
   }
 
   openCreate(): void {
+    if (!this.authSession.hasFeature('rider.create')) {
+      this.toast.warning('No permission to create riders.');
+      return;
+    }
+
+    const limit = this.riderCreateLimit();
+    const remaining = this.riderCreateRemaining();
+    if (limit !== null && remaining !== null && remaining <= 0) {
+      this.toast.error(`Rider creation limit reached. You can create up to ${limit} riders.`);
+      return;
+    }
+
     this.editingId.set(null);
     this.riderForm.reset({
       name: '',

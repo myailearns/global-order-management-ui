@@ -10,6 +10,7 @@ import {
   GomInputComponent,
   GomModalComponent,
 } from '@gomlibs/ui';
+import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { MediaAssetService } from '../../../features/saas-platform/media/media-asset.service';
 import { MediaAsset, MediaType, MediaUsageDetail, StorageSummary } from '../../../features/saas-platform/media/media-asset.model';
 
@@ -43,9 +44,15 @@ export class MediaLibraryComponent implements OnInit {
   private readonly mediaService = inject(MediaAssetService);
   private readonly toast = inject(GomAlertToastService);
   private readonly route = inject(ActivatedRoute);
+  private readonly authSession = inject(AuthSessionService);
 
   readonly mode = signal<MediaLibraryMode>('tenant');
   readonly isPlatform = computed(() => this.mode() === 'platform');
+
+  // Permissions
+  readonly canListMedia = computed(() => this.authSession.hasFeature('media.list'));
+  readonly canUploadMedia = computed(() => this.authSession.hasFeature('media.upload'));
+  readonly canDeleteMedia = computed(() => this.authSession.hasFeature('media.delete'));
 
   readonly loading = signal(false);
   readonly activeMediaType = signal<MediaType>('IMAGE');
@@ -346,9 +353,16 @@ export class MediaLibraryComponent implements OnInit {
         await firstValueFrom(upload$);
         this.setQueueItemStatus(item.id, 'done');
         succeeded++;
-      } catch {
+      } catch (error: any) {
         this.setQueueItemStatus(item.id, 'failed');
         failed++;
+        
+        // Show specific error message from backend (e.g., feature limit errors)
+        if (error?.error?.message) {
+          this.toast.error(error.error.message);
+        } else if (error?.message) {
+          this.toast.error(error.message);
+        }
       }
     }
 
@@ -357,9 +371,10 @@ export class MediaLibraryComponent implements OnInit {
     if (failed === 0) {
       this.toast.success(`${succeeded} media file(s) uploaded successfully.`);
       this.uploadModalOpen.set(false);
-    } else {
-      this.toast.error(`${succeeded} uploaded, ${failed} failed.`);
+    } else if (succeeded > 0) {
+      this.toast.warning(`${succeeded} uploaded successfully, ${failed} failed. Check error messages above.`);
     }
+    // If all failed and we already showed specific error messages, don't show generic message
 
     this.loadMedia();
     if (this.isPlatform()) {
@@ -457,6 +472,11 @@ export class MediaLibraryComponent implements OnInit {
   }
 
   canDeleteAsset(asset: MediaAsset): boolean {
-    return this.isPlatform() || !this.isSharedAsset(asset);
+    // Platform mode: can delete any asset
+    // Tenant mode: can only delete own assets (not shared platform assets) AND must have delete permission
+    if (this.isPlatform()) {
+      return true;
+    }
+    return !this.isSharedAsset(asset) && this.canDeleteMedia();
   }
 }

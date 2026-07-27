@@ -29,7 +29,7 @@ export class PinSecurityConfigComponent implements OnInit {
   readonly loading = signal(false);
   readonly saving = signal(false);
   readonly errorMessage = signal<string | null>(null);
-  readonly canWrite = computed(() => this.authSession.canWrite('tenant-admin'));
+  readonly canEdit = computed(() => this.authSession.hasFeature('security.config'));
   private readonly initialPayloadFingerprint = signal('');
 
   readonly configForm = this.fb.group({
@@ -135,7 +135,7 @@ export class PinSecurityConfigComponent implements OnInit {
   }
 
   save(): void {
-    if (!this.canWrite()) {
+    if (!this.canEdit()) {
       return;
     }
 

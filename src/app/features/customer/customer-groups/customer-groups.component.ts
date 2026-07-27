@@ -51,6 +51,11 @@ export class CustomerGroupsComponent implements OnInit {
   private readonly authSession = inject(AuthSessionService);
 
   readonly loading = signal(false);
+  readonly canListGroups = computed(() => this.authSession.hasFeature('customerGroup.list'));
+  readonly canViewGroup = computed(() => this.authSession.hasFeature('customerGroup.view'));
+  readonly canCreateGroup = computed(() => this.authSession.hasFeature('customerGroup.create'));
+  readonly canEditGroup = computed(() => this.authSession.hasFeature('customerGroup.edit'));
+  readonly canDeleteGroup = computed(() => this.authSession.hasFeature('customerGroup.delete'));
   readonly canWrite = computed(() => this.authSession.canWrite('customer-groups'));
   readonly saving = signal(false);
   readonly errorMessage = signal<string | null>(null);
@@ -104,18 +109,21 @@ export class CustomerGroupsComponent implements OnInit {
           icon: 'ri-edit-line',
           actionKey: 'edit',
           variant: 'secondary',
+          disabled: () => !this.canEditGroup(),
         },
         {
           label: 'Members',
           icon: 'ri-team-line',
           actionKey: 'members',
           variant: 'secondary',
+          disabled: () => !this.canViewGroup(),
         },
         {
           label: (row) => String(row['status'] || '') === 'INACTIVE' ? 'Activate' : 'Deactivate',
           icon: (row) => String(row['status'] || '') === 'INACTIVE' ? 'ri-user-follow-line' : 'ri-user-unfollow-line',
           actionKey: 'toggle-status',
           variant: 'secondary',
+          disabled: () => !this.canEditGroup(),
         },
       ],
     },

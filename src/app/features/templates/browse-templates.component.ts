@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import {
@@ -19,6 +19,7 @@ import {
   BusinessTemplatePreviewData,
 } from './template-subscription.service';
 import { TemplatePreviewModalComponent } from './preview/template-preview-modal.component';
+import { AuthSessionService } from '../../core/auth/auth-session.service';
 
 @Component({
   selector: 'gom-browse-templates',
@@ -39,6 +40,11 @@ import { TemplatePreviewModalComponent } from './preview/template-preview-modal.
 export class BrowseTemplatesComponent implements OnInit {
   private readonly subscriptionService = inject(TemplateSubscriptionService);
   private readonly toast = inject(GomAlertToastService);
+  private readonly authSession = inject(AuthSessionService);
+
+  readonly canBrowse = computed(() => this.authSession.hasFeature('template.browse'));
+  readonly canSubscribe = computed(() => this.authSession.hasFeature('template.subscribe'));
+  readonly canUnsubscribe = computed(() => this.authSession.hasFeature('template.unsubscribe'));
 
   readonly tabs: TabItem[] = [
     { id: 'business', label: 'Business Types' },
@@ -82,6 +88,9 @@ export class BrowseTemplatesComponent implements OnInit {
   }
 
   subscribeToBusinessTemplate(bt: BusinessTemplateListItem) {
+    if (!this.canSubscribe()) {
+      return;
+    }
     this.subscribingId.set(bt._id);
     this.subscriptionService.subscribeToBusinessTemplate(bt._id).subscribe({
       next: (res) => {
@@ -142,6 +151,9 @@ export class BrowseTemplatesComponent implements OnInit {
   }
 
   subscribe(template: AvailableTemplate) {
+    if (!this.canSubscribe()) {
+      return;
+    }
     this.subscribingId.set(template._id);
     this.subscriptionService.subscribe(template._id).subscribe({
       next: () => {
@@ -159,6 +171,9 @@ export class BrowseTemplatesComponent implements OnInit {
   }
 
   unsubscribe(sub: MySubscription) {
+    if (!this.canUnsubscribe()) {
+      return;
+    }
     this.subscribingId.set(sub.platformCategoryId._id);
     this.subscriptionService.unsubscribe(sub.platformCategoryId._id).subscribe({
       next: () => {

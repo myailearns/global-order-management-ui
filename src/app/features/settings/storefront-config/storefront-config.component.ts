@@ -75,7 +75,7 @@ export class StorefrontConfigComponent implements OnInit {
   readonly errorMessage = signal<string | null>(null);
   readonly tenantCode = signal('');
   readonly useCustomColors = signal(false);
-  readonly canWrite = computed(() => this.authSession.canWrite('tenant-admin'));
+  readonly canEdit = computed(() => this.authSession.hasFeature('storefront.config'));
   readonly storefrontShare = signal<StorefrontShare | null>(null);
   readonly shareBusy = signal<'copy' | 'whatsapp' | 'download' | null>(null);
   readonly hasStorefrontShareAccess = computed(() => this.authSession.hasFeature('storefront.share'));
@@ -253,7 +253,7 @@ export class StorefrontConfigComponent implements OnInit {
   }
 
   resetThemeDefaults(): void {
-    if (!this.canWrite()) {
+    if (!this.canEdit()) {
       return;
     }
 
@@ -266,7 +266,7 @@ export class StorefrontConfigComponent implements OnInit {
   }
 
   enableCustomColors(): void {
-    if (!this.canWrite()) {
+    if (!this.canEdit()) {
       return;
     }
 
@@ -434,7 +434,7 @@ export class StorefrontConfigComponent implements OnInit {
   }
 
   removePickupLocation(index: number): void {
-    if (!this.canWrite() || this.pickupLocations.length <= 1) {
+    if (!this.canEdit() || this.pickupLocations.length <= 1) {
       return;
     }
 
@@ -442,7 +442,7 @@ export class StorefrontConfigComponent implements OnInit {
   }
 
   setFulfillmentMode(mode: FulfillmentMode): void {
-    if (!this.canWrite()) {
+    if (!this.canEdit()) {
       return;
     }
 
@@ -719,7 +719,7 @@ export class StorefrontConfigComponent implements OnInit {
   }
 
   addBanner(): void {
-    if (!this.canWrite()) {
+    if (!this.canEdit()) {
       return;
     }
 
@@ -727,7 +727,7 @@ export class StorefrontConfigComponent implements OnInit {
   }
 
   removeBanner(index: number): void {
-    if (!this.canWrite()) {
+    if (!this.canEdit()) {
       return;
     }
 
@@ -736,7 +736,7 @@ export class StorefrontConfigComponent implements OnInit {
   }
 
   onBannerInputChange(event: Event, index: number): void {
-    if (!this.canWrite()) {
+    if (!this.canEdit()) {
       return;
     }
 
@@ -755,7 +755,7 @@ export class StorefrontConfigComponent implements OnInit {
   }
 
   onBannerFileSelected(file: File, index: number): void {
-    if (!this.canWrite()) {
+    if (!this.canEdit()) {
       return;
     }
 
@@ -890,7 +890,7 @@ export class StorefrontConfigComponent implements OnInit {
   private readonly LOGO_H = 68;
 
   onLogoFileSelected(file: File): void {
-    if (!this.canWrite()) {
+    if (!this.canEdit()) {
       return;
     }
 
@@ -932,7 +932,7 @@ export class StorefrontConfigComponent implements OnInit {
   }
 
   onLogoInputChange(event: Event): void {
-    if (!this.canWrite()) {
+    if (!this.canEdit()) {
       return;
     }
 
@@ -998,7 +998,7 @@ export class StorefrontConfigComponent implements OnInit {
   }
 
   save(): void {
-    if (!this.canWrite()) {
+    if (!this.canEdit()) {
       return;
     }
 

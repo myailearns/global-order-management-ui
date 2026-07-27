@@ -58,7 +58,7 @@
         type="submit"
         variant="primary"
         [gomDisableIfNoCapability]="'tenant-admin'"
-        [disabled]="loading() || saving() || !canWrite() || !hasChanges()">
+        [disabled]="loading() || saving() || !canEdit() || !hasChanges()">
         {{ saving() ? 'Saving...' : 'Save PIN Security Policy' }}
       </gom-lib-button>
     </div>

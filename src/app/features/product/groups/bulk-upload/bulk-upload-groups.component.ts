@@ -159,12 +159,11 @@ export class BulkUploadGroupsComponent implements OnInit {
   readonly selectedExtraFieldIds = signal<string[]>([]);
 
   readonly canCreate = computed(
-    () => (this.authSession.hasFeature('group.bulk_create') || this.authSession.hasFeature('group.create'))
+    () => this.authSession.hasFeature('group.bulk_create')
       && (this.groupCreateRemaining() ?? Infinity) > 0,
   );
   readonly groupCreateLimit = computed(() =>
-    this.authSession.getFeatureConfigNumber('group.bulk_create', 'max_count')
-    ?? this.authSession.getFeatureConfigNumber('group.create', 'max_count'),
+    this.authSession.getFeatureConfigNumber('group.bulk_create', 'max_count'),
   );
   readonly groupCreateUsed = computed(() => this.groups().length);
   readonly groupCreateRemaining = computed(() => {

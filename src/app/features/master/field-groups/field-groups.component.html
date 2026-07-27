@@ -6,7 +6,7 @@
       variant="primary"
       (buttonClick)="onAddFieldGroup()"
       [gomDisableIfNoFeature]="'fieldGroup.create'"
-      [disabled]="loading() || !canCreateFieldGroup() || (fieldGroupCreateRemaining() ?? 1) <= 0"
+      [disabled]="loading() || !canCreateFieldGroup()"
     >
       <i class="ri-add-line" aria-hidden="true"></i> {{ 'fieldGroups.add' | translate }}
     </gom-lib-button>

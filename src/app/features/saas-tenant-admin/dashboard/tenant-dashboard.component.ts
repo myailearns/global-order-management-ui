@@ -9,6 +9,7 @@ import { interval } from 'rxjs';
 import { FormControlsModule, GomAlertToastService, GomButtonComponent, GomCardComponent, GomModalComponent, GomTableColumn, GomTableComponent, GomTableRow } from '@gomlibs/ui';
 import { NgApexchartsModule } from 'ng-apexcharts';
 import { environment } from '../../../../environments/environment';
+import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { TenantAccessService } from '../services';
 import { 
   TenantAdminSummary,
@@ -46,7 +47,9 @@ export class TenantDashboardComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly toast = inject(GomAlertToastService);
+  private readonly authSession = inject(AuthSessionService);
 
+  readonly canView = computed(() => this.authSession.hasFeature('dashboard.view'));
   readonly dashboardLoading = signal(false);
   readonly dashboardError = signal<string | null>(null);
   readonly tenantAdminSummary = signal<TenantAdminSummary | null>(null);

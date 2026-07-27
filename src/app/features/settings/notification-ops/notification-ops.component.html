@@ -121,7 +121,7 @@
                       type="button"
                       variant="secondary"
                       size="default"
-                      [disabled]="retryingId() === row._id || !canWrite()"
+                      [disabled]="retryingId() === row._id || !canEdit()"
                       (buttonClick)="retry(row._id)"
                     >
                       {{ retryingId() === row._id ? 'Retrying...' : 'Retry' }}

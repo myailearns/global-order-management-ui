@@ -6,7 +6,7 @@
       variant="primary"
       (buttonClick)="openCreateVariant()"
       gomDisableIfNoFeature="variant.create"
-      [disabled]="saving() || !canCreateVariant() || (variantCreateRemaining() ?? 1) <= 0"
+      [disabled]="saving() || !canCreateVariant()"
     >
       <i class="ri-add-line" aria-hidden="true"></i> Add Variant
     </gom-lib-button>

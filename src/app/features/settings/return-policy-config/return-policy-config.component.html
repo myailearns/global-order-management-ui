@@ -59,7 +59,7 @@
         type="submit"
         variant="primary"
         [gomDisableIfNoCapability]="'tenant-admin'"
-        [disabled]="loading() || saving() || !canWrite()">
+        [disabled]="loading() || saving() || !canEdit()">
         {{ saving() ? 'Saving...' : 'Save Return Policy' }}
       </gom-lib-button>
     </div>

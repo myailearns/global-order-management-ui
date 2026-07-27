@@ -46,7 +46,7 @@
             type="submit"
             variant="primary"
             [gomDisableIfNoCapability]="'tenant-admin'"
-            [disabled]="loading() || saving() || !canWrite()"
+            [disabled]="loading() || saving() || !canEdit()"
           >
             {{ saving() ? 'Saving...' : 'Save Notification Settings' }}
           </gom-lib-button>

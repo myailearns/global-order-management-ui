@@ -91,7 +91,61 @@ export class AuthSessionService {
       return '/auth';
     }
 
-    return session.actorType === 'platform' ? '/settings/saas-accounts' : '/saas-admin/dashboard';
+    // Platform users always go to SaaS Accounts
+    if (session.actorType === 'platform') {
+      return '/settings/saas-accounts';
+    }
+
+    // For tenant users, try to find the first accessible route based on their features
+    // Priority order: Dashboard -> Users -> Employees -> Categories -> Orders -> Settings
+    if (this.hasFeature('dashboard.view')) {
+      return '/saas-admin/dashboard';
+    }
+
+    if (this.hasFeature('user.list')) {
+      return '/saas-admin/users';
+    }
+
+    if (this.hasFeature('tenantAccount.view')) {
+      return '/saas-admin/employees';
+    }
+
+    if (this.hasFeature('category.list')) {
+      return '/masters/categories';
+    }
+
+    if (this.hasFeature('order.list')) {
+      return '/orders';
+    }
+
+    if (this.hasFeature('group.list')) {
+      return '/product/groups';
+    }
+
+    if (this.hasFeature('offer.list')) {
+      return '/saas-admin/offers';
+    }
+
+    // Check settings pages
+    if (this.hasFeature('storefront.config')) {
+      return '/settings/storefront';
+    }
+
+    if (this.hasFeature('pincode.config')) {
+      return '/settings/serviceable-pincodes';
+    }
+
+    if (this.hasFeature('notification.manage')) {
+      return '/settings/notification-settings';
+    }
+
+    if (this.hasFeature('employeeCode.config')) {
+      return '/settings/employee-code';
+    }
+
+    // If user has no accessible features, redirect to access-denied
+    // This shouldn't normally happen as users should have at least one feature
+    return '/auth/access-denied?reason=feature_disabled';
   }
 
   getLoginRouteForActor(actor: UserActor): string {
@@ -128,6 +182,7 @@ export class AuthSessionService {
 
     const session = this.sessionState();
     if (!session) {
+      console.log('[DEBUG] hasFeature: No session found');
       return false;
     }
 

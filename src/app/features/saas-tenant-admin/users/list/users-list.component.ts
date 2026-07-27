@@ -57,7 +57,8 @@ export class UsersListComponent implements OnInit {
   private readonly authSession = inject(AuthSessionService);
 
   readonly loading = signal(false);
-  readonly canWrite = computed(() => this.authSession.canWrite('tenant-admin'));
+  readonly canCreate = computed(() => this.authSession.hasFeature('user.create'));
+  readonly canEdit = computed(() => this.authSession.hasFeature('user.edit'));
   readonly errorMessage = signal<string | null>(null);
 
   readonly users = signal<UserWithRoles[]>([]);
@@ -117,7 +118,7 @@ export class UsersListComponent implements OnInit {
       },
     ];
 
-    if (!this.canWrite()) {
+    if (!this.canEdit()) {
       return baseColumns;
     }
 
@@ -191,7 +192,7 @@ export class UsersListComponent implements OnInit {
   }
 
   onInviteUser(): void {
-    if (!this.canWrite()) {
+    if (!this.canCreate()) {
       return;
     }
     this.router.navigate(['/saas-admin/users/invite']);
@@ -215,7 +216,7 @@ export class UsersListComponent implements OnInit {
   }
 
   onTableAction(event: { actionKey: string; row: UserRow }): void {
-    if (!this.canWrite()) {
+    if (!this.canEdit()) {
       return;
     }
     const { actionKey, row } = event;

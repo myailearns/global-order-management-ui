@@ -7,14 +7,14 @@
     <div class="offers-actions">
       <gom-lib-button
         variant="primary"
-        [disabled]="!canWrite()"
+        [disabled]="!canCreateOffer()"
         (buttonClick)="onCreate()"
       >
         {{ 'gom.offers.btn_create' | translate }}
       </gom-lib-button>
       <gom-lib-button
         variant="secondary"
-        [disabled]="!canWrite()"
+        [disabled]="!canViewOffer()"
         (buttonClick)="onSettings()"
       >
         {{ 'gom.offers.btn_settings' | translate }}

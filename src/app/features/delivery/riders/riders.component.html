@@ -6,7 +6,7 @@
       variant="primary"
       (buttonClick)="openCreate()"
       [gomDisableIfNoFeature]="'rider.create'"
-      [disabled]="saving() || !canCreateRider() || (riderCreateRemaining() ?? 1) <= 0"
+      [disabled]="saving() || !canCreateRider()"
     >
       <i class="ri-add-line" aria-hidden="true"></i> Add Rider
     </gom-lib-button>

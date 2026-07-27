@@ -7,7 +7,7 @@
       </h2>
       <p class="media-page__subtitle">{{ (isPlatform() ? 'media.description' : 'tenantMedia.description') | translate }}</p>
     </div>
-    <gom-lib-button type="button" variant="primary" (buttonClick)="openUploadModal()">
+    <gom-lib-button type="button" variant="primary" (buttonClick)="openUploadModal()" [disabled]="!canUploadMedia()">
       <i class="ri-upload-2-line" aria-hidden="true"></i> {{ (uploadButtonLabel() | translate) }}
     </gom-lib-button>
   </header>

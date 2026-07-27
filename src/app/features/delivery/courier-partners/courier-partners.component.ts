@@ -52,7 +52,9 @@ export class CourierPartnersComponent implements OnInit {
 
   readonly loading = signal(false);
   private readonly authSession = inject(AuthSessionService);
-  readonly canCreatePartner = computed(() => this.authSession.hasFeature('courierPartner.create') && (this.courierPartnerCreateRemaining() ?? Infinity) > 0);
+  readonly canListPartners = computed(() => this.authSession.hasFeature('courierPartner.list'));
+  readonly canViewPartner = computed(() => this.authSession.hasFeature('courierPartner.view'));
+  readonly canCreatePartner = computed(() => this.authSession.hasFeature('courierPartner.create'));
   readonly canUpdatePartner = computed(() => this.authSession.hasFeature('courierPartner.update'));
   readonly canDeletePartner = computed(() => this.authSession.hasFeature('courierPartner.delete'));
   readonly courierPartnerCreateLimit = computed(() => this.authSession.getFeatureConfigNumber('courierPartner.create', 'max_count'));
@@ -212,6 +214,18 @@ export class CourierPartnersComponent implements OnInit {
   }
 
   openCreate(): void {
+    if (!this.authSession.hasFeature('courierPartner.create')) {
+      this.toast.warning('No permission to create courier partners.');
+      return;
+    }
+
+    const limit = this.courierPartnerCreateLimit();
+    const remaining = this.courierPartnerCreateRemaining();
+    if (limit !== null && remaining !== null && remaining <= 0) {
+      this.toast.error(`Courier partner creation limit reached. You can create up to ${limit} courier partners.`);
+      return;
+    }
+
     this.editingId.set(null);
     this.partnerForm.reset({
       name: '',

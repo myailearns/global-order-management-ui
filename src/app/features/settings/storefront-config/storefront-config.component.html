@@ -68,7 +68,7 @@
                     type="button"
                     variant="secondary"
                     gomDisableIfNoCapability="tenant-admin"
-                    [disabled]="uploadingLogo() || !canWrite()"
+                    [disabled]="uploadingLogo() || !canEdit()"
                     (buttonClick)="logoFileInput.click()">
                     Upload logo
                   </gom-lib-button>
@@ -86,7 +86,7 @@
                     type="button"
                     variant="secondary"
                     [gomDisableIfNoCapability]="'tenant-admin'"
-                    [disabled]="uploadingLogo() || !canWrite()"
+                    [disabled]="uploadingLogo() || !canEdit()"
                     (buttonClick)="logoFileInput.click()">
                     Replace logo
                   </gom-lib-button>
@@ -100,7 +100,8 @@
           </div>
         </fieldset>
 
-        @if (hasStorefrontShareAccess() && storefrontShare()) {
+        @if (hasStorefrontShareAccess()) {
+          {{hasStorefrontShareAccess()}}
           <fieldset class="settings-section">
             <legend>{{ 'storefrontConfig.shareCenter.title' | translate }}</legend>
             <p class="section-hint">{{ 'storefrontConfig.shareCenter.hint' | translate }}</p>
@@ -190,7 +191,7 @@
                 type="button"
                 variant="secondary"
                 [gomDisableIfNoCapability]="'tenant-admin'"
-                [disabled]="!canWrite()"
+                [disabled]="!canEdit()"
                 (buttonClick)="enableCustomColors()">
                 Switch to custom colors
               </gom-lib-button>
@@ -199,7 +200,7 @@
                 type="button"
                 variant="secondary"
                 [gomDisableIfNoCapability]="'tenant-admin'"
-                [disabled]="!canWrite()"
+                [disabled]="!canEdit()"
                 (buttonClick)="resetThemeDefaults()">
                 Use defaults
               </gom-lib-button>
@@ -381,7 +382,7 @@
                       type="button"
                       variant="secondary"
                       [gomDisableIfNoCapability]="'tenant-admin'"
-                      [disabled]="uploadingBanner() === i || !canWrite()"
+                      [disabled]="uploadingBanner() === i || !canEdit()"
                       (buttonClick)="bannerFileInput.click()"
                     >
                       Replace image
@@ -398,7 +399,7 @@
                       type="button"
                       variant="secondary"
                       [gomDisableIfNoCapability]="'tenant-admin'"
-                      [disabled]="uploadingBanner() === i || !canWrite()"
+                      [disabled]="uploadingBanner() === i || !canEdit()"
                       (buttonClick)="bannerFileInput.click()"
                     >
                       Upload image
@@ -424,7 +425,7 @@
                 type="button"
                 class="btn-icon-danger"
                 [gomDisableIfNoCapability]="'tenant-admin'"
-                [disabled]="!canWrite()"
+                [disabled]="!canEdit()"
                 (click)="removeBanner(i)"
                 title="Remove banner">
                 ✕
@@ -436,7 +437,7 @@
             type="button"
             variant="secondary"
             [gomDisableIfNoCapability]="'tenant-admin'"
-            [disabled]="!canWrite()"
+            [disabled]="!canEdit()"
             (buttonClick)="addBanner()">
             + Add Banner
           </gom-lib-button>
@@ -454,7 +455,7 @@
               <button
                 type="button"
                 class="fulfillment-chip-button"
-                [disabled]="!canWrite()"
+                [disabled]="!canEdit()"
                 (click)="setFulfillmentMode($any(option.value))"
               >
                 <gom-lib-chip [tone]="getFulfillmentChipTone($any(option.value))">
@@ -478,7 +479,7 @@
                   type="button"
                   variant="secondary"
                   [gomDisableIfNoCapability]="'tenant-admin'"
-                  [disabled]="!canWrite()"
+                  [disabled]="!canEdit()"
                   (buttonClick)="openDeliveryEditor()">
                   Edit
                 </gom-lib-button>
@@ -516,7 +517,7 @@
                 type="button"
                 variant="secondary"
                 [gomDisableIfNoCapability]="'tenant-admin'"
-                [disabled]="!canWrite()"
+                [disabled]="!canEdit()"
                 (buttonClick)="openPickupEditor()">
                 + Add New Address
               </gom-lib-button>
@@ -687,7 +688,7 @@
         type="submit"
         variant="primary"
         [gomDisableIfNoCapability]="'tenant-admin'"
-        [disabled]="loading() || saving() || !canWrite()">
+        [disabled]="loading() || saving() || !canEdit()">
         {{ saving() ? 'Saving...' : 'Save Storefront Settings' }}
       </gom-lib-button>
     </div>
