@@ -1,0 +1,58 @@
+<section class="master-page">
+  <header class="master-page__header">
+    <h2>{{ text.pageTitle | translate }}</h2>
+    <gom-lib-button type="button" variant="primary" (buttonClick)="onAddNew()" [gomDisableIfNoFeature]="'attribute.create'" [disabled]="loading() || !canCreate()">
+      <i class="ri-add-line" aria-hidden="true"></i> {{ text.addLabel | translate }}
+    </gom-lib-button>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="master-page__error">
+      <i class="ri-alert-fill" aria-hidden="true"></i>
+      <span>{{ errorMessage() }}</span>
+    </div>
+  }
+
+  <gom-lib-table
+    [columns]="columns"
+    [rows]="rows()"
+    [loading]="loading()"
+    [dataMode]="viewMode()"
+    [totalItems]="totalItems()"
+    [pageIndex]="pageIndex()"
+    [pageSize]="pageSize()"
+    [pageSizeOptions]="[10, 20, 50]"
+    [searchPlaceholder]="text.searchPlaceholder | translate"
+    [emptyMessage]="text.emptyMessage | translate"
+    [mobileCardView]="true"
+    (rowAction)="onAction($event)"
+    (queryChange)="onQueryChange($event)"
+  ></gom-lib-table>
+</section>
+
+<gom-lib-modal [show]="formOpen()" (showChange)="formOpen.set($event)" [title]="(selected() ? text.formTitleEdit : text.formTitleCreate) | translate" size="medium" (closed)="cancelForm()">
+  <form [formGroup]="form" (ngSubmit)="submit()" class="master-form">
+    <gom-lib-input [label]="text.nameLabel | translate" [formControl]="form.controls.name" [placeholder]="text.nameLabel | translate" [error]="form.controls.name.touched && form.controls.name.invalid ? (text.validationName | translate) : ''"></gom-lib-input>
+    <gom-lib-input [label]="text.keyLabel | translate" [formControl]="form.controls.key" [placeholder]="text.keyLabel | translate" [error]="form.controls.key.touched && form.controls.key.invalid ? (text.validationKey | translate) : ''"></gom-lib-input>
+    <gom-lib-input [label]="text.labelLabel | translate" [formControl]="form.controls.label" [placeholder]="text.labelLabel | translate"></gom-lib-input>
+    <gom-lib-select [label]="text.inputTypeLabel | translate" [options]="inputTypeOptions" [formControl]="form.controls.inputType"></gom-lib-select>
+    <gom-lib-textarea [label]="text.allowedValuesLabel | translate" [formControl]="form.controls.allowedValues" [placeholder]="text.allowedValuesLabel | translate"></gom-lib-textarea>
+    <gom-lib-select [label]="text.statusLabel | translate" [options]="statusOptions" [formControl]="form.controls.status"></gom-lib-select>
+
+    <div class="master-form__actions" gom-modal-actions>
+      <gom-lib-button type="button" variant="secondary" (buttonClick)="cancelForm()">{{ text.close | translate }}</gom-lib-button>
+      <gom-lib-button type="submit" variant="primary" [disabled]="form.invalid || loading()">{{ (selected() ? text.update : text.create) | translate }}</gom-lib-button>
+    </div>
+  </form>
+</gom-lib-modal>
+
+<gom-lib-confirmation-modal
+  [(show)]="deleteConfirmOpen"
+  [title]="text.deleteTitle | translate"
+  [message]="text.deleteMessage | translate"
+  [confirmText]="text.deleteAction | translate"
+  [cancelText]="text.close | translate"
+  confirmVariant="danger"
+  (confirmed)="confirmDelete()"
+  (cancelled)="cancelDelete()"
+></gom-lib-confirmation-modal>

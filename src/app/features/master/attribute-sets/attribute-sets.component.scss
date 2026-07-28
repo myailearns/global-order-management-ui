@@ -1,0 +1,32 @@
+.master-page {
+  display: grid;
+  gap: 1rem;
+}
+
+.master-page__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.master-page__error {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.master-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.master-form__hint {
+  opacity: 0.85;
+}
+
+.master-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}

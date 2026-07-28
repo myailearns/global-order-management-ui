@@ -3,7 +3,10 @@ import { ActivatedRouteSnapshot, Router, Routes } from '@angular/router';
 import { CategoriesComponent } from './features/master/categories';
 import { FieldsComponent } from './features/master/fields';
 import { FieldGroupsComponent } from './features/master/field-groups';
+import { AttributesComponent } from './features/master/attributes';
+import { AttributeSetsComponent } from './features/master/attribute-sets';
 import { UnitsComponent } from './features/master/units';
+import { PricingTemplatesComponent } from './features/master/pricing-templates';
 import { TaxProfilesComponent } from './features/master/tax-profiles';
 import { GroupsComponent } from './features/product/groups/groups.component';
 import { BulkUploadGroupsComponent } from './features/product/groups/bulk-upload/bulk-upload-groups.component';
@@ -118,6 +121,30 @@ export const routes: Routes = [
 				},
 			},
 			{
+				path: 'masters/attributes',
+				component: AttributesComponent,
+				data: {
+					actor: 'tenant',
+					capability: 'masters',
+					featureKeys: ['attribute.list', 'attribute.create', 'attribute.edit', 'attribute.delete'],
+					title: 'Attributes',
+					description: 'Create reusable product option definitions used by groups and variants.',
+					ctaLabel: 'Add Attribute',
+				},
+			},
+			{
+				path: 'masters/attribute-sets',
+				component: AttributeSetsComponent,
+				data: {
+					actor: 'tenant',
+					capability: 'masters',
+					featureKeys: ['attributeSet.list', 'attributeSet.create', 'attributeSet.edit', 'attributeSet.delete'],
+					title: 'Attribute Sets',
+					description: 'Bundle reusable attributes into product option sets for groups.',
+					ctaLabel: 'Add Attribute Set',
+				},
+			},
+			{
 				path: 'masters/units',
 				component: UnitsComponent,
 				data: {
@@ -127,6 +154,18 @@ export const routes: Routes = [
 					title: 'Units',
 					description: 'Configure base and allowed units with conversion values.',
 					ctaLabel: 'Add Unit',
+				},
+			},
+			{
+				path: 'masters/pricing-templates',
+				component: PricingTemplatesComponent,
+				data: {
+					actor: 'tenant',
+					capability: 'masters',
+					featureKeys: ['pricingTemplate.list', 'pricingTemplate.create', 'pricingTemplate.edit', 'pricingTemplate.delete'],
+					title: 'Pricing Templates',
+					description: 'Define reusable price rules for groups and variants.',
+					ctaLabel: 'Add Pricing Template',
 				},
 			},
 			{

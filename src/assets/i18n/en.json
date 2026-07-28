@@ -15,6 +15,9 @@
                                    "productSetup":  "Product Setup",
                                    "categories":  "Categories",
                                    "fields":  "Fields",
+                                   "attributes":  "Attributes",
+                                   "attributeSets":  "Attribute Sets",
+                                   "pricingTemplates":  "Pricing Templates",
                                    "fieldGroups":  "Field Groups",
                                    "units":  "Units",
                                    "taxProfiles":  "Tax Profiles",
@@ -902,8 +905,132 @@
                                              "errorSave":  "Failed to save product collection.",
                                              "errorDelete":  "Failed to delete product collection."
                                          }
-                           },
-    "auth":  {
+                        },
+                        "attributes":  {
+                                       "title":  "Attributes",
+                                       "add":  "Add Attribute",
+                                       "search":  "Search attributes",
+                                       "empty":  "No attributes found.",
+                                       "labels":  {
+                                                      "name":  "Attribute Name",
+                                                      "key":  "Attribute Key",
+                                                      "label":  "Display Label",
+                                                      "inputType":  "Input Type",
+                                                      "allowedValues":  "Allowed Values",
+                                                      "status":  "Status"
+                                                  },
+                                       "types":  {
+                                                     "text":  "Text",
+                                                     "singleSelect":  "Single Select",
+                                                     "multiSelect":  "Multi Select"
+                                                 },
+                                       "form":  {
+                                                    "titleCreate":  "Add Attribute",
+                                                    "titleEdit":  "Edit Attribute"
+                                                },
+                                       "validation":  {
+                                                          "nameRequired":  "Attribute name is required",
+                                                          "keyRequired":  "Attribute key is required",
+                                                          "allowedValuesRequired":  "Allowed values are required for select-based attributes"
+                                                      },
+                                       "toast":  {
+                                                     "successCreate":  "Attribute created successfully.",
+                                                     "successUpdate":  "Attribute updated successfully.",
+                                                     "successDelete":  "Attribute deleted successfully.",
+                                                     "errorLoad":  "Failed to load attributes. Please try again.",
+                                                     "errorSave":  "Failed to save attribute. Please try again.",
+                                                     "errorDelete":  "Failed to delete attribute. Please try again."
+                                                 },
+                                       "deleteConfirm":  {
+                                                             "title":  "Delete Attribute",
+                                                             "message":  "Are you sure you want to delete attribute: {{name}}?"
+                                                         }
+                                   },
+                        "attributeSets":  {
+                                       "title":  "Attribute Sets",
+                                       "add":  "Add Attribute Set",
+                                       "search":  "Search attribute sets",
+                                       "empty":  "No attribute sets found.",
+                                       "labels":  {
+                                                      "name":  "Attribute Set Name",
+                                                      "description":  "Description",
+                                                      "status":  "Status",
+                                                      "categories":  "Categories",
+                                                      "attributes":  "Attributes"
+                                                  },
+                                       "placeholders":  {
+                                                          "attributes":  "Comma-separated attribute IDs",
+                                                          "categories":  "Comma-separated category IDs"
+                                                      },
+                                       "required":  {
+                                                        "inherit":  "Inherit",
+                                                        "required":  "Required",
+                                                        "optional":  "Optional"
+                                                    },
+                                       "hint":  "Enter attribute IDs and category IDs as comma-separated values for this first implementation.",
+                                       "form":  {
+                                                    "titleCreate":  "Add Attribute Set",
+                                                    "titleEdit":  "Edit Attribute Set"
+                                                },
+                                       "validation":  {
+                                                          "nameRequired":  "Attribute set name is required",
+                                                          "attributesRequired":  "Add at least one attribute to the set"
+                                                      },
+                                       "toast":  {
+                                                     "successCreate":  "Attribute set created successfully.",
+                                                     "successUpdate":  "Attribute set updated successfully.",
+                                                     "successDelete":  "Attribute set deleted successfully.",
+                                                     "errorLoad":  "Failed to load attribute sets. Please try again.",
+                                                     "errorSave":  "Failed to save attribute set. Please try again.",
+                                                     "errorDelete":  "Failed to delete attribute set. Please try again."
+                                                 },
+                                       "deleteConfirm":  {
+                                                             "title":  "Delete Attribute Set",
+                                                             "message":  "Are you sure you want to delete attribute set: {{name}}?"
+                                                         }
+                                   },
+                        "pricingTemplates":  {
+                                       "title":  "Pricing Templates",
+                                       "add":  "Add Pricing Template",
+                                       "search":  "Search pricing templates",
+                                       "empty":  "No pricing templates found.",
+                                       "labels":  {
+                                                      "name":  "Template Name",
+                                                      "description":  "Description",
+                                                      "status":  "Status",
+                                                      "fieldKeys":  "Supported Field Keys",
+                                                      "categories":  "Categories",
+                                                      "actualPriceFormula":  "Actual Price Formula",
+                                                      "sellingPriceFormula":  "Selling Price Formula",
+                                                      "anchorPriceFormula":  "Anchor Price Formula"
+                                                  },
+                                       "placeholders":  {
+                                                          "fieldKeys":  "Comma-separated field keys",
+                                                          "categories":  "Comma-separated category IDs"
+                                                      },
+                                       "hint":  "Use comma-separated field keys and keep formulas in the same order as the current pricing logic.",
+                                       "form":  {
+                                                    "titleCreate":  "Add Pricing Template",
+                                                    "titleEdit":  "Edit Pricing Template"
+                                                },
+                                       "validation":  {
+                                                          "nameRequired":  "Pricing template name is required",
+                                                          "formulasRequired":  "All formulas are required"
+                                                      },
+                                       "toast":  {
+                                                     "successCreate":  "Pricing template created successfully.",
+                                                     "successUpdate":  "Pricing template updated successfully.",
+                                                     "successDelete":  "Pricing template deleted successfully.",
+                                                     "errorLoad":  "Failed to load pricing templates. Please try again.",
+                                                     "errorSave":  "Failed to save pricing template. Please try again.",
+                                                     "errorDelete":  "Failed to delete pricing template. Please try again."
+                                                 },
+                                       "deleteConfirm":  {
+                                                             "title":  "Delete Pricing Template",
+                                                             "message":  "Are you sure you want to delete pricing template: {{name}}?"
+                                                         }
+                                   },
+                        "auth":  {
                  "entry":  {
                                "eyebrow":  "Access Validation",
                                "title":  "Choose your admin login",
