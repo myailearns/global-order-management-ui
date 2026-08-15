@@ -34,14 +34,147 @@
   <form [formGroup]="form" (ngSubmit)="submit()" class="master-form">
     <gom-lib-input [label]="text.nameLabel | translate" [formControl]="form.controls.name"></gom-lib-input>
     <gom-lib-textarea [label]="text.descriptionLabel | translate" [formControl]="form.controls.description"></gom-lib-textarea>
-    <gom-lib-textarea [label]="text.actualPriceFormulaLabel | translate" [formControl]="form.controls.actualPriceFormula"></gom-lib-textarea>
-    <gom-lib-textarea [label]="text.sellingPriceFormulaLabel | translate" [formControl]="form.controls.sellingPriceFormula"></gom-lib-textarea>
-    <gom-lib-textarea [label]="text.anchorPriceFormulaLabel | translate" [formControl]="form.controls.anchorPriceFormula"></gom-lib-textarea>
-    <gom-lib-input [label]="text.fieldKeysLabel | translate" [formControl]="form.controls.supportedFieldKeys" [placeholder]="'pricingTemplates.placeholders.fieldKeys' | translate"></gom-lib-input>
-    <gom-lib-input [label]="text.categoriesLabel | translate" [formControl]="form.controls.categoryIds" [placeholder]="'pricingTemplates.placeholders.categories' | translate"></gom-lib-input>
-    <gom-lib-select [label]="text.statusLabel | translate" [options]="statusOptions" [formControl]="form.controls.status"></gom-lib-select>
+    
+    <!-- Field Group - REQUIRED -->
+    <gom-lib-select 
+      label="Field Group *" 
+      [options]="fieldGroupOptions()" 
+      [formControl]="form.controls.fieldGroupId"
+      (ngModelChange)="onFieldGroupChange($event)"
+    ></gom-lib-select>
 
-    <div class="master-form__hint">{{ 'pricingTemplates.hint' | translate }}</div>
+    <!-- Show builder controls when field group is selected -->
+    @if (selectedFieldGroupId()) {
+      <!-- Base Cost Field -->
+      <gom-lib-select 
+        label="Base Cost Field *" 
+        [options]="availablePricingFields()" 
+        [formControl]="form.controls.baseCostField"
+      ></gom-lib-select>
+      
+      <!-- Profit Margin & MRP Markup -->
+      <div class="builder-inputs-row">
+        <gom-lib-input 
+          label="Profit Margin (%)" 
+          type="number" 
+          [formControl]="form.controls.profitMarginPercent"
+          placeholder="e.g., 25"
+        ></gom-lib-input>
+        
+        <gom-lib-input 
+          label="MRP Markup (%)" 
+          type="number" 
+          [formControl]="form.controls.mrpMarkupPercent"
+          placeholder="e.g., 10"
+        ></gom-lib-input>
+      </div>
+
+      <!-- Include Extra Cost Fields Section -->
+      @if (availableExtraCostFields().length > 0 && selectedBaseCostField()) {
+        <div class="extra-cost-section">
+          <div class="extra-cost-section__header">
+            <h4>Include Extra Cost Fields In Actual Price</h4>
+            <gom-lib-button 
+              type="button" 
+              variant="secondary" 
+              (buttonClick)="selectAllExtraCostFields()"
+            >
+              Select All
+            </gom-lib-button>
+          </div>
+          
+          <div class="extra-cost-checkboxes">
+            @for (field of availableExtraCostFields(); track field.value) {
+              @if (field.value !== selectedBaseCostField()) {
+                <label class="extra-cost-checkbox">
+                  <input 
+                    type="checkbox" 
+                    [checked]="extraCostFieldKeys().includes(field.value)"
+                    (change)="toggleExtraCostField(field.value, $any($event.target).checked)"
+                  />
+                  <span>{{ field.label }} <span class="field-key">({{ field.value }})</span></span>
+                </label>
+              }
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Generated Formulas Card -->
+      @if (generatedFormulas().actualPrice) {
+        <div class="formulas-card">
+          <div class="formulas-card__header">
+            <h4><i class="ri-code-s-slash-line" aria-hidden="true"></i> Generated Formulas</h4>
+            <gom-lib-button 
+              type="button" 
+              variant="secondary"
+              (buttonClick)="toggleFormulasEditMode()"
+            >
+              <i [class]="formulasEditMode() ? 'ri-eye-line' : 'ri-edit-line'" aria-hidden="true"></i>
+              {{ formulasEditMode() ? 'View Mode' : 'Edit' }}
+            </gom-lib-button>
+          </div>
+          
+          @if (!formulasEditMode()) {
+            <!-- Read-only preview -->
+            <div class="formula-preview-grid">
+              <div class="formula-item">
+                <span class="formula-label">Actual Price:</span>
+                <code>{{ displayFormulas().actualPrice }}</code>
+              </div>
+              
+              <div class="formula-item">
+                <span class="formula-label">Selling Price:</span>
+                <code>{{ displayFormulas().sellingPrice }}</code>
+              </div>
+              
+              <div class="formula-item">
+                <span class="formula-label">Anchor/MRP Price:</span>
+                <code>{{ displayFormulas().anchorPrice }}</code>
+              </div>
+              
+              <div class="formula-item">
+                <span class="formula-label">Fields:</span>
+                <code>{{ displayFormulas().fieldNames }}</code>
+              </div>
+            </div>
+          } @else {
+            <!-- Editable mode -->
+            <div class="formula-edit-grid">
+              <gom-lib-textarea 
+                label="Actual Price Formula" 
+                [formControl]="form.controls.actualPriceFormula"
+                [rows]="2"
+              ></gom-lib-textarea>
+              
+              <gom-lib-textarea 
+                label="Selling Price Formula" 
+                [formControl]="form.controls.sellingPriceFormula"
+                [rows]="2"
+              ></gom-lib-textarea>
+              
+              <gom-lib-textarea 
+                label="Anchor Price Formula" 
+                [formControl]="form.controls.anchorPriceFormula"
+                [rows]="2"
+              ></gom-lib-textarea>
+              
+              <gom-lib-input 
+                label="Supported Field Keys" 
+                [formControl]="form.controls.supportedFieldKeys"
+              ></gom-lib-input>
+            </div>
+          }
+        </div>
+      }
+    }
+    
+    <gom-lib-select [label]="text.statusLabel | translate" [options]="statusOptions()" [formControl]="form.controls.status"></gom-lib-select>
+
+    <div class="master-form__hint">
+      <i class="ri-information-line" aria-hidden="true"></i>
+      Formulas are auto-generated based on your inputs. Click Edit to customize if needed.
+    </div>
 
     <div class="master-form__actions" gom-modal-actions>
       <gom-lib-button type="button" variant="secondary" (buttonClick)="cancelForm()">{{ text.close | translate }}</gom-lib-button>

@@ -14,8 +14,12 @@ export interface PricingTemplate {
   sellingPriceFormula: string;
   anchorPriceFormula: string;
   supportedFieldKeys: string[];
-  categoryIds: string[];
+  /** @deprecated Category association removed - pricing templates are now global */
+  categoryIds?: string[];
   status: PricingTemplateStatus;
+  fieldGroupId?: string | null;
+  fieldGroupName?: string | null;
+  fieldGroupVersion?: number | null;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -27,8 +31,12 @@ export interface PricingTemplatePayload {
   sellingPriceFormula: string;
   anchorPriceFormula: string;
   supportedFieldKeys: string[];
-  categoryIds: string[];
+  /** @deprecated Category association removed - pricing templates are now global */
+  categoryIds?: string[];
   status: PricingTemplateStatus;
+  fieldGroupId?: string | null;
+  fieldGroupName?: string | null;
+  fieldGroupVersion?: number | null;
 }
 
 interface ApiSuccess<T> {

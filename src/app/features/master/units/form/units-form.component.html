@@ -49,20 +49,6 @@
         [options]="statusOptions"
         [formControl]="form.controls.status"
       ></gom-lib-select>
-
-      <gom-lib-select
-        [label]="('units.labels.mappedCategories' | translate)"
-        [placeholder]="('units.placeholders.mappedCategories' | translate)"
-        [multiple]="true"
-        [searchable]="true"
-        [options]="categoryOptions"
-        [selectedValues]="selectedCategoryIds"
-        [closeMenuTrigger]="categorySelectCloseToken"
-        (selectedValuesChange)="onMappedCategorySelectionChange($event)"
-      ></gom-lib-select>
-      @if (mappedCategoriesInvalid) {
-        <p class="units-form__validation-error">{{ 'units.validation.mappedCategoriesRequired' | translate }}</p>
-      }
     </div>
 
     <div gom-modal-actions class="units-form__actions gom-modal__action-layout">

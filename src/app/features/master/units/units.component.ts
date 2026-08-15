@@ -1,12 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, ViewChild, computed, inject, signal } from '@angular/core';
-import { forkJoin } from 'rxjs';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
-import { GomAlertToastService, GomConfirmationModalComponent, GomSelectOption, GomTableQuery } from '@gomlibs/ui';
+import { GomAlertToastService, GomConfirmationModalComponent, GomTableQuery } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { UNIT_UI_TEXT } from './units.constants';
-import { CategoryOption, Unit, UnitPayload, UnitsService } from './units.service';
+import { Unit, UnitPayload, UnitsService } from './units.service';
 import { UnitAction, UnitsListComponent } from './list/units-list.component';
 import { UnitAssignOption, UnitFormData, UnitsFormComponent } from './form/units-form.component';
 import { UnitsViewComponent } from './view/units-view.component';
@@ -33,7 +32,7 @@ export class UnitsComponent implements OnInit {
   readonly allUnitsLoaded = signal(false);
   readonly serverSidePaginationUnits = computed(() => this.totalUnits() > 500);
   readonly unitTableDataMode = computed<'client' | 'server'>(() => (this.serverSidePaginationUnits() && !this.allUnitsLoaded() ? 'server' : 'client'));
-  readonly categories = signal<CategoryOption[]>([]);
+  // readonly categories = signal<CategoryOption[]>([]); // Category association removed
   readonly loading = signal(false);
   readonly canCreateUnit = computed(() => this.authSession.hasFeature('unit.create'));
   readonly canEditUnit = computed(() => this.authSession.hasFeature('unit.edit'));
@@ -58,11 +57,7 @@ export class UnitsComponent implements OnInit {
 
   @ViewChild(UnitsFormComponent) unitsFormComponent!: UnitsFormComponent;
 
-  readonly categoryOptions = computed<GomSelectOption[]>(() =>
-    this.categories()
-      .filter((c) => c.status === 'ACTIVE')
-      .map((c) => ({ value: c._id, label: c.name }))
-  );
+  // categoryOptions removed - units are now global
 
   readonly baseUnitNameById = computed<Record<string, string>>(() =>
     this.units().reduce<Record<string, string>>((acc, unit) => {
@@ -79,7 +74,7 @@ export class UnitsComponent implements OnInit {
       .map((unit) => ({
         id: unit._id || '',
         name: `${unit.name} (${unit.symbol})`,
-        categoryIds: unit.categoryIds ? [...unit.categoryIds] : [],
+        // categoryIds removed - units are now global
       }))
       .filter((unit) => !!unit.id)
   );
@@ -97,7 +92,7 @@ export class UnitsComponent implements OnInit {
       baseUnitId: unit.baseUnitId,
       conversionFactor: unit.conversionFactor,
       status: unit.status,
-      categoryIds: unit.categoryIds ? [...unit.categoryIds] : [],
+      // categoryIds removed - units are now global
     };
   });
 
@@ -112,12 +107,10 @@ export class UnitsComponent implements OnInit {
     this.loading.set(true);
     this.errorMessage.set(null);
 
-    forkJoin({
-      units: this.unitsService.getUnits({ page: 1, limit: this.unitTablePageSize() }),
-      categories: this.unitsService.listCategories({ page: 1, limit: 5000, status: 'ACTIVE' }),
-    }).subscribe({
+    // Only load units - categories removed
+    this.unitsService.getUnits({ page: 1, limit: this.unitTablePageSize() }).subscribe({
       next: (result) => {
-        const pagination = result.units.pagination;
+        const pagination = result.pagination;
         this.totalUnits.set(pagination.total);
         this.canLoadAllUnits.set(pagination.canLoadAll);
         this.allUnitsLoaded.set(pagination.total <= 500);
@@ -127,10 +120,9 @@ export class UnitsComponent implements OnInit {
             next: (allRes) => this.units.set(allRes.data ?? []),
           });
         } else {
-          this.units.set(result.units.data ?? []);
+          this.units.set(result.data ?? []);
         }
 
-        this.categories.set(result.categories.data ?? []);
         this.loading.set(false);
       },
       error: (error) => {

@@ -6,9 +6,12 @@ import { AuthSessionService } from '../auth/auth-session.service';
 
 const TENANT_ROUTE_PREFIXES = [
   '/categories',
+  '/attributes',
+  '/attribute-sets',
   '/fields',
   '/field-groups',
   '/units',
+  '/pricing-templates',
   '/groups',
   '/variants',
   '/packs',

@@ -349,11 +349,10 @@
 .vws-col--check  { width: 2.25rem; }
 .vws-col--qty    { width: 6rem; }
 .vws-col--unit   { width: 8rem; }
-.vws-col--options { width: 10rem; }
+.vws-col--options { width: 15rem; }
 .vws-col--base-cost { width: 8rem; }
-.vws-col--charge { width: 7rem; }
-.vws-col--name   { min-width: 12rem; }
-.vws-col--price  { width: 7rem; }
+.vws-col--charge { width: 9rem; }
+.vws-col--name   { width: 16rem; min-width: 16rem; }
 .vws-col--status { width: 6rem; }
 .vws-col--actions { width: 5.5rem; }
 
@@ -369,6 +368,42 @@
 
 .vws-td--options {
   vertical-align: middle;
+}
+
+.vws-option-editors {
+  display: grid;
+  gap: theme.get-gap(xs);
+  min-width: 0;
+}
+
+.vws-option-editor {
+  display: block;
+}
+
+.vws-option-readonly-list {
+  display: grid;
+  gap: theme.get-gap(xs);
+}
+
+.vws-option-readonly {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.4rem 0.55rem;
+  border: theme.get-border-size(hairline) solid theme.get-border(standard);
+  border-radius: theme.get-radius(sm);
+  background: theme.get-background(secondary);
+}
+
+.vws-option-readonly__label {
+  font-size: theme.get-font-size(xs);
+  color: theme.get-text(hint);
+  font-weight: 600;
+}
+
+.vws-option-readonly__value {
+  @include theme.typography-body;
+  font-size: theme.get-font-size(sm);
+  color: theme.get-text(primary);
 }
 
 .vws-option-pill {
@@ -664,6 +699,10 @@
   gap: theme.get-gap(sm);
 }
 
+.variant-form__section + .variant-form__section {
+  margin-top: theme.get-spacing(xs);
+}
+
 .variant-form__section-title {
   margin: 0;
   @include theme.typography-heading(sm);
@@ -672,6 +711,21 @@
   padding-bottom: theme.get-spacing(xs);
   border-bottom: theme.get-border-size(hairline) solid theme.get-border(standard);
 }
+
+  .variant-form__section-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: theme.get-gap(sm);
+    padding-bottom: theme.get-spacing(xs);
+    border-bottom: theme.get-border-size(hairline) solid theme.get-border(standard);
+
+    .variant-form__section-title {
+      border-bottom: none;
+      padding-bottom: 0;
+      flex: 1;
+    }
+  }
 
 .variant-form__section-subtitle {
   @include theme.typography-body;
@@ -735,6 +789,18 @@
     margin-top: 0.125rem;
     color: theme.get-text(info);
   }
+}
+
+.quill-wrapper {
+  display: grid;
+  gap: theme.get-gap(xs);
+}
+
+.variant-form__field-hint {
+  margin: 0;
+  @include theme.typography-body;
+  font-size: 0.8125rem;
+  color: theme.get-text(hint);
 }
 
 .variant-form__overrides-list {
@@ -1171,4 +1237,99 @@
   }
 }
 
+// Status Change Warning Modal
+.status-change-warning {
+  padding: theme.get-spacing(md);
+}
+
+.warning-icon {
+  text-align: center;
+  margin-bottom: theme.get-spacing(md);
+  
+  i {
+    font-size: 3rem;
+    color: theme.get-text(warning);
+  }
+}
+
+.warning-content {
+  h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: theme.get-spacing(md);
+    text-align: center;
+  }
+}
+
+.order-breakdown {
+  display: grid;
+  gap: theme.get-gap(md);
+  margin: theme.get-spacing(lg) 0;
+}
+
+.order-stat {
+  padding: theme.get-spacing(md);
+  border-radius: theme.get-radius(md);
+  border: theme.get-border-size(hairline) solid theme.get-border(standard);
+  
+  &--safe {
+    background: theme.get-background(success-light);
+    border-color: theme.get-border(success);
+  }
+  
+  &--warning {
+    background: theme.get-background(warning-light);
+    border-color: theme.get-border(warning);
+  }
+}
+
+.stat-label {
+  display: flex;
+  align-items: center;
+  gap: theme.get-gap(sm);
+  font-weight: 600;
+  font-size: 0.875rem;
+  margin-bottom: theme.get-spacing(sm);
+  
+  i {
+    font-size: 1rem;
+  }
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: theme.get-spacing(xs);
+}
+
+.stat-note {
+  font-size: 0.8125rem;
+  color: theme.get-text(default-light);
+}
+
+.warning-note {
+  display: flex;
+  gap: theme.get-gap(sm);
+  padding: theme.get-spacing(md);
+  background: theme.get-background(info-light);
+  border: theme.get-border-size(hairline) solid theme.get-border(info);
+  border-radius: theme.get-radius(md);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  
+  i {
+    flex-shrink: 0;
+    font-size: 1.25rem;
+    color: theme.get-text(info);
+  }
+  
+  p {
+    margin: 0;
+  }
+  
+  .text-warning {
+    font-weight: 600;
+    color: theme.get-text(danger);
+  }
+}
 

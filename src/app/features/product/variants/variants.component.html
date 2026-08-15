@@ -130,79 +130,14 @@
               </div>
             </div>
 
-            @if (showBaseCostColumn()) {
-              <div class="vws-bulk-card vws-bulk-card--compact">
-                <div class="vws-bulk-card__head">{{ getBaseCostFieldLabel() }}</div>
-                <p class="vws-bulk-card__copy">Set the same base cost for all selected rows.</p>
-                <div class="vws-bulk-card__controls">
-                  <input
-                    class="vws-base-cost-input"
-                    type="number"
-                    placeholder="0"
-                    [attr.aria-label]="getBaseCostFieldLabel()"
-                    [formControl]="draftBulkApplyForm.controls.baseCost"
-                  />
-                  <gom-lib-button type="button" variant="secondary" [disabled]="selectedDraftRowCount() === 0" (buttonClick)="applyBulkBaseCost()">Apply cost</gom-lib-button>
-                </div>
-              </div>
-            }
-
             <div class="vws-bulk-card vws-bulk-card--compact">
-              <div class="vws-bulk-card__head">Additional Charge (&#8377;)</div>
-              <p class="vws-bulk-card__copy">Apply one extra charge amount to all selected rows.</p>
+              <div class="vws-bulk-card__head">Extra Amount (&#8377;)</div>
+              <p class="vws-bulk-card__copy">Apply one extra amount to all selected rows.</p>
               <div class="vws-bulk-card__controls">
                 <gom-lib-input label="" type="number" placeholder="0.00" [formControl]="draftBulkApplyForm.controls.additionalPrice"></gom-lib-input>
-                <gom-lib-button type="button" variant="secondary" [disabled]="selectedDraftRowCount() === 0" (buttonClick)="applyBulkAdditionalCharge()">Apply charge</gom-lib-button>
+                <gom-lib-button type="button" variant="secondary" [disabled]="selectedDraftRowCount() === 0" (buttonClick)="applyBulkAdditionalCharge()">Apply amount</gom-lib-button>
               </div>
             </div>
-
-            @if (showFieldOverrides()) {
-              <div class="vws-bulk-card vws-bulk-card--grow">
-                <div class="vws-bulk-card__head">Field Overrides</div>
-                <p class="vws-bulk-card__copy">Select group pricing fields and set a value to apply on selected rows.</p>
-                <div class="vws-bulk-card__controls vws-bulk-card__controls--stack">
-                  <div class="vws-override-stack vws-override-stack--bulk">
-                    @for (entry of bulkFieldOverrideEntries(); track entry.id) {
-                      <div class="vws-override-chip">
-                        <select
-                          class="vws-override-chip__key"
-                          [attr.aria-label]="'Bulk override key'"
-                          [value]="entry.key"
-                          (change)="updateBulkFieldOverrideEntryKey(entry.id, $any($event.target).value)"
-                        >
-                          <option value="">Select key</option>
-                          @for (keyOption of getBulkFieldOverrideKeyOptions(entry.id); track keyOption.key) {
-                            <option [value]="keyOption.key">{{ keyOption.label }}</option>
-                          }
-                        </select>
-                        <span class="vws-override-chip__sep">:</span>
-                        <input
-                          class="vws-override-chip__val"
-                          type="number"
-                          placeholder="0"
-                          [attr.aria-label]="'Bulk override value'"
-                          [value]="entry.value"
-                          (input)="updateBulkFieldOverrideEntryValue(entry.id, $any($event.target).value)"
-                        />
-                        <button
-                          type="button"
-                          class="vws-override-chip__x"
-                          (click)="removeBulkFieldOverrideEntry(entry.id)"
-                          aria-label="Remove bulk override"
-                        ><i class="ri-close-line" aria-hidden="true"></i></button>
-                      </div>
-                    }
-
-                    <button type="button" class="vws-override-add" (click)="addBulkFieldOverrideEntry()">
-                      <i class="ri-add-circle-line" aria-hidden="true"></i> Add field
-                    </button>
-                  </div>
-                  <div class="vws-bulk-card__actions">
-                    <gom-lib-button type="button" variant="secondary" [disabled]="selectedDraftRowCount() === 0" (buttonClick)="applyBulkFieldOverrides()">Apply overrides</gom-lib-button>
-                  </div>
-                </div>
-              </div>
-            }
           </div>
         </div>
       }
@@ -221,19 +156,14 @@
             <tr class="vws-thead-row">
               <th class="vws-col--check"></th>
               <th class="vws-col--qty">Quantity</th>
-              <th class="vws-col--unit">Unit</th>
+              @if (showWorkspaceUnitColumn()) {
+                <th class="vws-col--unit">Unit</th>
+              }
               @if (showOptionsColumn()) {
                 <th class="vws-col--options">Options</th>
               }
-              @if (showBaseCostColumn()) {
-                <th class="vws-col--base-cost">{{ getBaseCostFieldLabel() }}</th>
-              }
-              <th class="vws-col--charge">Extra (&#8377;)</th>
-              @if (showFieldOverrides()) {
-                <th class="vws-col--overrides">Field Overrides</th>
-              }
-              <th class="vws-col--name">Display Name</th>
-              <th class="vws-col--price">Price</th>
+              <th class="vws-col--charge">Extra Amount</th>
+              <th class="vws-col--name">Variant Name</th>
               <th class="vws-col--status">Status</th>
               <th class="vws-col--actions"></th>
             </tr>
@@ -260,42 +190,41 @@
                   />
                 </td>
 
-                <td class="vws-td vws-td--unit">
-                  <gom-lib-select
-                    [label]="''"
-                    [options]="availableUnitOptions()"
-                    [formControl]="row.form.controls.unitId"
-                    (valueChange)="updateDraftRowUnit(row.rowId, $event)"
-                  ></gom-lib-select>
-                </td>
-
-                @if (showOptionsColumn()) {
-                  <td class="vws-td vws-td--options">
-                    @if (row.optionSelections.length) {
-                      <div class="vws-option-pills">
-                        @for (opt of row.optionSelections; track opt.key) {
-                          <span class="vws-option-pill">
-                            <span class="vws-option-pill__label">{{ opt.label }}</span>
-                            <span class="vws-option-pill__value">{{ opt.value }}</span>
-                          </span>
-                        }
-                      </div>
-                    } @else {
-                      <span class="vws-dim">—</span>
-                    }
+                @if (showWorkspaceUnitColumn()) {
+                  <td class="vws-td vws-td--unit">
+                    <gom-lib-select
+                      [label]="''"
+                      [options]="getDraftRowUnitOptions(row)"
+                      [formControl]="row.form.controls.unitId"
+                      (valueChange)="updateDraftRowUnit(row.rowId, $event)"
+                    ></gom-lib-select>
                   </td>
                 }
 
-                @if (showBaseCostColumn()) {
-                  <td class="vws-td vws-td--base-cost">
-                    <input
-                      class="vws-base-cost-input"
-                      type="number"
-                      placeholder="0"
-                      [attr.aria-label]="getBaseCostFieldLabel()"
-                      [value]="getDraftRowBaseCostValue(row)"
-                      (input)="updateDraftRowBaseCost(row.rowId, $any($event.target).value)"
-                    />
+                @if (showOptionsColumn()) {
+                  <td class="vws-td vws-td--options">
+                    @if (row.mode === 'AUTO') {
+                      <div class="vws-option-readonly-list">
+                        @for (opt of row.optionSelections; track opt.key) {
+                          <div class="vws-option-readonly">
+                            <span class="vws-option-readonly__label">{{ opt.label }}</span>
+                            <span class="vws-option-readonly__value">{{ opt.value || '-' }}</span>
+                          </div>
+                        }
+                      </div>
+                    } @else {
+                      <div class="vws-option-editors">
+                        @for (opt of row.optionSelections; track opt.key) {
+                          <gom-lib-select
+                            class="vws-option-editor"
+                            [label]="opt.label"
+                            [options]="getDraftRowOptionValueOptions(row, opt.key)"
+                            [selectedValues]="[opt.value]"
+                            (valueChange)="updateDraftRowOptionSelection(row.rowId, opt.key, $event)"
+                          ></gom-lib-select>
+                        }
+                      </div>
+                    }
                   </td>
                 }
 
@@ -309,46 +238,6 @@
                   ></gom-lib-input>
                 </td>
 
-                @if (showFieldOverrides()) {
-                  <td class="vws-td vws-td--overrides">
-                    <div class="vws-override-stack">
-                      @for (entry of row.fieldOverrideEntries; track entry.id) {
-                        <div class="vws-override-chip">
-                          <select
-                            class="vws-override-chip__key"
-                            [attr.aria-label]="'Override key'"
-                            [value]="entry.key"
-                            (change)="updateDraftRowFieldOverrideEntryKey(row.rowId, entry.id, $any($event.target).value)"
-                          >
-                            <option value="">Select key</option>
-                            @for (keyOption of getFieldOverrideKeyOptions(row, entry.id); track keyOption.key) {
-                              <option [value]="keyOption.key">{{ keyOption.label }}</option>
-                            }
-                          </select>
-                          <span class="vws-override-chip__sep">:</span>
-                          <input
-                            class="vws-override-chip__val"
-                            type="number"
-                            placeholder="0"
-                            [attr.aria-label]="'Override value'"
-                            [value]="entry.value"
-                            (input)="updateDraftRowFieldOverrideEntryValue(row.rowId, entry.id, $any($event.target).value)"
-                          />
-                          <button
-                            type="button"
-                            class="vws-override-chip__x"
-                            (click)="removeDraftRowFieldOverrideEntry(row.rowId, entry.id)"
-                            aria-label="Remove override"
-                          ><i class="ri-close-line" aria-hidden="true"></i></button>
-                        </div>
-                      }
-                      <button type="button" class="vws-override-add" (click)="addDraftRowFieldOverrideEntry(row.rowId)">
-                        <i class="ri-add-circle-line" aria-hidden="true"></i> Add field
-                      </button>
-                    </div>
-                  </td>
-                }
-
                 <td class="vws-td vws-td--name">
                   <gom-lib-input
                     [label]="''"
@@ -357,14 +246,6 @@
                     [formControl]="row.form.controls.displayName"
                     (valueChange)="updateDraftRowDisplayName(row.rowId, $event)"
                   ></gom-lib-input>
-                </td>
-
-                <td class="vws-td vws-td--price">
-                  @if (row.preview) {
-                    <span class="vws-price-chip">{{ currencySymbol }} {{ formatCurrency(row.derivedSelling) }}</span>
-                  } @else {
-                    <span class="vws-dim">—</span>
-                  }
                 </td>
 
                 <td class="vws-td vws-td--status">
@@ -492,6 +373,20 @@
           [error]="variantForm.controls.name.touched && variantForm.controls.name.invalid ? 'Name is required' : ''"
         ></gom-lib-input>
 
+        <!-- Status Field (for Edit mode only) -->
+        @if (editingVariantId()) {
+          <gom-lib-select
+            label="Status"
+            placeholder="Select status"
+            [options]="[
+              { label: 'Active', value: 'ACTIVE' },
+              { label: 'Inactive (Unavailable for purchase)', value: 'INACTIVE' }
+            ]"
+            [formControl]="variantForm.controls.status"
+            (valueChange)="onStatusChange($event)"
+          ></gom-lib-select>
+        }
+
         <!-- Option Selections for ATTRIBUTE/HYBRID Groups -->
         @if (needsOptionSelections() && selectedGroup()?.optionAxes) {
           <div class="variant-form__row variant-form__row--options">
@@ -507,144 +402,28 @@
           </div>
         }
 
-        <gom-lib-checkbox
-          label="Create as Pack"
-          hint="Enable this when the variant should represent multiple packs."
-          [formControl]="variantForm.controls.createAsPack"
-        ></gom-lib-checkbox>
+        <div class="variant-form__row">
+          <gom-lib-input
+            [label]="needsOptionSelections() ? 'Quantity' : 'Quantity'"
+            type="number"
+            placeholder="e.g. 500"
+            hint="e.g. 500 g, 1 kg, 5 kg"
+            [formControl]="variantForm.controls.quantity"
+            [error]="variantForm.controls.quantity.touched && variantForm.controls.quantity.invalid ? 'Quantity is required' : ''"
+          ></gom-lib-input>
 
-        @if (showPackFields()) {
-          <div class="variant-form__row">
-            <gom-lib-input
-              [label]="needsOptionSelections() ? 'Quantity per Pack' : 'Weight per Pack'"
-              type="number"
-              placeholder="e.g. 500"
-              [formControl]="variantForm.controls.quantity"
-              [error]="variantForm.controls.quantity.touched && variantForm.controls.quantity.invalid ? (needsOptionSelections() ? 'Quantity per pack is required' : 'Weight per pack is required') : ''"
-            ></gom-lib-input>
-
-            <gom-lib-input
-              label="Number of Packs"
-              type="number"
-              placeholder="e.g. 2"
-              [formControl]="variantForm.controls.packCount"
-              [error]="variantForm.controls.packCount.touched && variantForm.controls.packCount.invalid ? 'Number of packs must be at least 1' : ''"
-            ></gom-lib-input>
-          </div>
-
-          <div class="variant-form__row">
-            <gom-lib-select
-              label="Unit"
-              placeholder="Select unit"
-              [options]="availableUnitOptions()"
-              [formControl]="variantForm.controls.unitId"
-              [error]="variantForm.controls.unitId.touched && variantForm.controls.unitId.invalid ? 'Unit is required' : ''"
-            ></gom-lib-select>
-
-            <div></div>
-          </div>
-
-          <div class="variant-form__summary">
-            <i class="ri-scales-3-line" aria-hidden="true"></i>
-            <span>{{ totalWeightSummary() }}</span>
-          </div>
-        } @else {
-          <div class="variant-form__row">
-            <gom-lib-input
-              [label]="needsOptionSelections() ? 'Quantity' : 'Weight'"
-              type="number"
-              placeholder="e.g. 500"
-              [formControl]="variantForm.controls.quantity"
-              [error]="variantForm.controls.quantity.touched && variantForm.controls.quantity.invalid ? (needsOptionSelections() ? 'Quantity is required' : 'Weight is required') : ''"
-            ></gom-lib-input>
-
-            <gom-lib-select
-              label="Unit"
-              placeholder="Select unit"
-              [options]="availableUnitOptions()"
-              [formControl]="variantForm.controls.unitId"
-              [error]="variantForm.controls.unitId.touched && variantForm.controls.unitId.invalid ? 'Unit is required' : ''"
-            ></gom-lib-select>
-          </div>
-        }
+          <gom-lib-select
+            label="Unit"
+            placeholder="Select unit"
+            [options]="availableUnitOptions()"
+            [formControl]="variantForm.controls.unitId"
+            [error]="variantForm.controls.unitId.touched && variantForm.controls.unitId.invalid ? 'Unit is required' : ''"
+          ></gom-lib-select>
+        </div>
       </div>
     </div>
 
-    <!-- ── Field Overrides (for ATTRIBUTE groups) ───────────────── -->
-    @if (showFieldOverrides()) {
-      <div class="variant-form__section">
-        <h3 class="variant-form__section-title">Field Overrides <span class="variant-form__section-subtitle">(Optional)</span></h3>
 
-        <div class="variant-form__card">
-          <div class="variant-form__hint">
-            <i class="ri-information-line" aria-hidden="true"></i>
-            <span>Override formula field values for this specific variant. Leave empty to use group formula values.</span>
-          </div>
-
-          <!-- Base Cost Field (Default) -->
-          @if (baseCostFieldKey()) {
-            <div class="variant-form__field-row">
-              <label [for]="'base-cost-override'" class="variant-form__field-label">{{ baseCostFieldKey() }}</label>
-              <input
-                type="number"
-                id="base-cost-override"
-                class="variant-form__field-input"
-                [value]="baseCostValue()"
-                (input)="updateBaseCostOverride($any($event.target).value)"
-                placeholder="Leave empty for formula value"
-                [attr.aria-label]="baseCostFieldKey() + ' override value'"
-              />
-              <button
-                type="button"
-                class="variant-form__field-add"
-                (click)="addVariantFieldOverride()"
-                [disabled]="availableFieldOptions().length === 0"
-                [title]="availableFieldOptions().length === 0 ? 'All fields already added' : 'Add another field override'"
-                [attr.aria-label]="'Add field override'"
-              >
-                <i class="ri-add-line" aria-hidden="true"></i>
-              </button>
-            </div>
-          }
-
-          <!-- Additional Field Overrides -->
-          @if (additionalFieldOverrides().length > 0) {
-            <div class="variant-form__overrides-list">
-              @for (entry of additionalFieldOverrides(); track entry.id) {
-                <div class="variant-form__field-row">
-                  <gom-lib-select
-                    [label]="''"
-                    [placeholder]="'Select field'"
-                    [options]="getFieldOptionsForEntry(entry.key)"
-                    [formControl]="$any({ value: entry.key })"
-                    (valueChange)="updateFieldKeyInOverride(entry.key, $event)"
-                    class="variant-form__field-select"
-                  ></gom-lib-select>
-                  <input
-                    type="number"
-                    [id]="'override-' + entry.id"
-                    class="variant-form__field-input"
-                    [value]="entry.value"
-                    (input)="updateVariantFieldOverride(entry.key, $any($event.target).value)"
-                    placeholder="0"
-                    [attr.aria-label]="entry.key + ' override value'"
-                  />
-                  <button
-                    type="button"
-                    class="variant-form__field-remove"
-                    (click)="removeVariantFieldOverride(entry.key)"
-                    [attr.aria-label]="'Remove ' + entry.key + ' override'"
-                    title="Remove override"
-                  >
-                    <i class="ri-close-line" aria-hidden="true"></i>
-                  </button>
-                </div>
-              }
-            </div>
-          }
-        </div>
-      </div>
-    }
 
     <!-- ── Additional Charge (Optional) ─────────────────────────── -->
     <div class="variant-form__section">
@@ -669,70 +448,28 @@
       </div>
     </div>
 
-    <!-- ── MRP Override (Formula mode only) ─────────────────────── -->
-    @if (!isOverrideMode()) {
-      <div class="variant-form__section">
-        <h3 class="variant-form__section-title">MRP <span class="variant-form__section-subtitle">(Optional)</span></h3>
 
-        <div class="variant-form__card">
-          <gom-lib-input
-            label="Market Retail Price (MRP)"
-            type="number"
-            placeholder="e.g. 120"
-            [formControl]="variantForm.controls.mrp"
-            hint="Set an MRP higher than the selling price to show a strikethrough discount on product cards. Leave blank to use the formula-computed value."
-            [error]="variantForm.controls.mrp.touched && variantForm.controls.mrp.invalid ? 'MRP must be 0 or greater' : ''"
-          ></gom-lib-input>
-        </div>
-      </div>
-    }
-
-    <!-- ── Price Preview ───────────────────────────────────────── -->
-    @if (hasPricePreview()) {
-      <div class="variant-form__preview">
-        <div class="variant-form__preview-breakdown">
-          <span class="variant-form__preview-item">
-            <span class="variant-form__preview-label">Base</span>
-            <span class="variant-form__preview-value">{{ currencySymbol }}{{ previewBasePrice() }}</span>
-          </span>
-          @if (hasAdditionalCharge()) {
-            <span class="variant-form__preview-sep">+</span>
-            <span class="variant-form__preview-item">
-              <span class="variant-form__preview-label">Extra</span>
-              <span class="variant-form__preview-value">{{ currencySymbol }}{{ previewAdditionalPrice() }}</span>
-            </span>
-          }
-          <span class="variant-form__preview-sep">=</span>
-        </div>
-
-        <div class="variant-form__preview-final">
-          <span class="variant-form__preview-final-label">Final Price</span>
-          <span class="variant-form__preview-final-value">{{ currencySymbol }}{{ previewFinalPrice() }}</span>
-        </div>
-
-        <div class="variant-form__preview-anchor">
-          <i class="ri-price-tag-2-line" aria-hidden="true"></i>
-          MRP: {{ currencySymbol }}{{ previewFinalAnchorPrice() }}
-        </div>
-      </div>
-    }
 
   </section>
 
-  @if (editingVariantId()) {
-    <section class="variant-form__media-section">
-      <div class="variant-form__media-header">
-        <h4 class="variant-form__media-title">
-          <i class="ri-gallery-line" aria-hidden="true"></i> Media
-        </h4>
-        <gom-lib-button type="button" variant="secondary" (buttonClick)="openVariantMediaPicker()">
-          <i class="ri-add-line" aria-hidden="true"></i> Add Media
-        </gom-lib-button>
-      </div>
+  <!-- ── Media ───────────────────────────────────────────────── -->
+  <!-- ── Media ──────────────────────────────────────────────── -->
+  <div class="variant-form__section">
+    <div class="variant-form__section-title-row">
+      <h3 class="variant-form__section-title">
+        Media
+        <span class="variant-form__section-subtitle">(Optional)</span>
+      </h3>
+      <gom-lib-button type="button" variant="secondary" (buttonClick)="openVariantMediaPicker()">
+        <i class="ri-add-line" aria-hidden="true"></i> Add Media
+      </gom-lib-button>
+    </div>
 
-      @if (groupImages().length > 0) {
-        <div class="variant-form__media-group">
-          <p class="variant-form__media-sublabel">Group Media (shared)</p>
+    <div class="variant-form__card">
+      <!-- Group media (inherited by default, hidden when user opts out) -->
+      @if (groupImages().length > 0 && !variantHidesGroupMedia()) {
+        <div>
+          <p class="variant-form__media-sublabel">Group Media <em>(inherited from group by default)</em></p>
           <div class="variant-form__media-grid">
             @for (img of groupImages(); track img.mediaAssetId._id) {
               <div class="variant-form__media-card variant-form__media-card--group">
@@ -748,11 +485,14 @@
             }
           </div>
         </div>
+      } @else {
+        <p class="variant-form__media-empty">No group media found.</p>
       }
 
-      @if (variantImages().length > 0) {
-        <div class="variant-form__media-group">
-          <p class="variant-form__media-sublabel">Variant Media (this variant only)</p>
+      <!-- Variant-specific media (only in edit mode) -->
+      @if (editingVariantId() && variantImages().length > 0) {
+        <div>
+          <p class="variant-form__media-sublabel">Variant Media <em>(this variant only)</em></p>
           <div class="variant-form__media-grid">
             @for (img of variantImages(); track img.mediaAssetId._id) {
               <div class="variant-form__media-card">
@@ -772,11 +512,72 @@
         </div>
       }
 
-      @if (groupImages().length === 0 && variantImages().length === 0) {
-        <p class="variant-form__media-empty">No media yet. Click "Add Media" to attach images or videos.</p>
+      <!-- Pending media (create mode before save) -->
+      @if (!editingVariantId() && pendingVariantImages().length > 0) {
+        <div>
+          <p class="variant-form__media-sublabel">Selected Variant Media <em>(will attach after Save)</em></p>
+          <div class="variant-form__media-grid">
+            @for (item of pendingVariantImages(); track item.asset._id) {
+              <div class="variant-form__media-card">
+                @if (item.asset.mediaType === 'VIDEO') {
+                  <video [src]="item.asset.url" class="variant-form__media-thumb" preload="metadata" muted>
+                    <track kind="captions" srclang="en" label="English" />
+                  </video>
+                } @else {
+                  <img [src]="item.asset.url" [alt]="item.asset.name" class="variant-form__media-thumb" loading="lazy" />
+                }
+                <button type="button" class="variant-form__media-remove" (click)="removePendingVariantImage(item.asset._id)" aria-label="Remove">
+                  <i class="ri-close-line" aria-hidden="true"></i>
+                </button>
+              </div>
+            }
+          </div>
+        </div>
       }
-    </section>
-  }
+
+      <!-- Checkbox: stop inheriting group media -->
+      <gom-lib-checkbox
+        label="Don't use group media — show only this variant's own media"
+        hint="When checked, group images are hidden for this variant. Only images you upload specifically for this variant will be shown."
+        [formControl]="variantForm.controls.useOnlyVariantMedia"
+      ></gom-lib-checkbox>
+    </div>
+  </div>
+
+  <!-- ── Description ──────────────────────────────────────────── -->
+  <div class="variant-form__section">
+    <gom-lib-accordion
+      [title]="'Description (Optional)'"
+      [expanded]="false"
+    >
+      <div class="variant-form__card">
+        @if (selectedGroup()?.description) {
+          <div class="variant-form__hint">
+            <i class="ri-information-line" aria-hidden="true"></i>
+            <span><strong>Group description:</strong> {{ selectedGroup()!.description }}</span>
+          </div>
+        }
+
+        <div class="quill-wrapper">
+          <app-rich-text-editor
+            #variantDescEditor
+            label="Variant Description"
+            placeholder="Enter a variant-specific description (optional)"
+            [value]="variantForm.controls.variantDescription.value || ''"
+            (valueChange)="onVariantDescriptionChanged($event)"
+          ></app-rich-text-editor>
+        </div>
+        <p class="variant-form__field-hint">Leave blank to use the group description when displaying this variant.</p>
+
+        <!-- Checkbox: stop inheriting group description -->
+        <gom-lib-checkbox
+          label="Don't use group description — show only this variant's description"
+          hint="When checked, the group description is hidden for this variant. Only the description entered above will be shown."
+          [formControl]="variantForm.controls.useOnlyVariantDescription"
+        ></gom-lib-checkbox>
+      </div>
+    </gom-lib-accordion>
+  </div>
 
   <footer class="gom-modal__action-layout variants-form__actions" gom-modal-actions>
     <div class="gom-modal__action-layout-start"></div>
@@ -890,6 +691,73 @@
     <div class="gom-modal__action-layout-start"></div>
     <div class="gom-modal__action-layout-end">
       <gom-lib-button type="button" variant="secondary" (buttonClick)="closeVariantCollectionsModal()">Close</gom-lib-button>
+    </div>
+  </footer>
+</gom-lib-modal>
+
+<!-- Status Change Warning Modal -->
+<gom-lib-modal
+  [show]="showStatusChangeWarning()"
+  (dismiss)="cancelStatusChange()"
+  size="medium"
+  [title]="'Change Variant Status to Inactive'"
+>
+  <section gom-modal-body>
+    <div class="status-change-warning">
+      <div class="warning-icon">
+        <i class="ri-error-warning-line"></i>
+      </div>
+      
+      <div class="warning-content">
+        <h3>Warning: Logged-in Customers Have This Item</h3>
+        
+        <div class="order-breakdown">
+          @if (statusChangeDraftCount() > 0) {
+            <div class="order-stat order-stat--warning">
+              <div class="stat-label">
+                <i class="ri-shopping-cart-line"></i>
+                Logged-in Customers with Item in Cart
+              </div>
+              <div class="stat-value">{{ statusChangeDraftCount() }}</div>
+              <div class="stat-note">⚠️ Will be blocked at checkout</div>
+            </div>
+          }
+          
+          @if (statusChangeConfirmedCount() > 0) {
+            <div class="order-stat order-stat--safe">
+              <div class="stat-label">
+                <i class="ri-checkbox-circle-line"></i>
+                Confirmed Orders
+              </div>
+              <div class="stat-value">{{ statusChangeConfirmedCount() }}</div>
+              <div class="stat-note">✓ No impact - will fulfill normally</div>
+            </div>
+          }
+        </div>
+        
+        <div class="warning-note">
+          <i class="ri-information-line"></i>
+          <p>
+            <strong>{{ statusChangeDraftCount() }} logged-in customer(s)</strong> have this item in their cart. 
+            Marking it <strong>INACTIVE</strong> will prevent them from completing checkout with this item. 
+            They will need to remove it from their cart first.
+            @if (statusChangeConfirmedCount() > 0) {
+              <br><br>
+              Note: The {{ statusChangeConfirmedCount() }} confirmed order(s) will fulfill normally.
+            }
+            <br><br>
+            <small><em>Note: This includes users who added items before login (anonymous carts are synced after login). Users currently browsing anonymously cannot be detected.</em></small>
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <footer class="gom-modal__action-layout" gom-modal-actions>
+    <div class="gom-modal__action-layout-start"></div>
+    <div class="gom-modal__action-layout-end">
+      <gom-lib-button type="button" variant="secondary" (buttonClick)="cancelStatusChange()">Cancel</gom-lib-button>
+      <gom-lib-button type="button" variant="danger" (buttonClick)="confirmStatusChange()">Mark as Inactive</gom-lib-button>
     </div>
   </footer>
 </gom-lib-modal>

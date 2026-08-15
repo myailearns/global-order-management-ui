@@ -38,8 +38,12 @@ export class CategoriesListComponent implements OnChanges {
   @Input() pageIndex = 0;
   @Input() pageSize = 10;
   @Input() pageSizeOptions: number[] = [10, 20, 50];
+  @Input() templateDownloading = false;
+  @Input() templateUploading = false;
   @Output() action = new EventEmitter<CategoryAction>();
   @Output() addNew = new EventEmitter<void>();
+  @Output() downloadTemplate = new EventEmitter<void>();
+  @Output() uploadCategories = new EventEmitter<void>();
   @Output() queryChange = new EventEmitter<GomTableQuery>();
 
   readonly text = CATEGORY_UI_TEXT;

@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { CATEGORY_DEFAULT_STATUS, CATEGORY_UI_TEXT } from './categories.constants';
@@ -8,20 +8,23 @@ import { CategoriesListComponent, CategoryAction } from './list/categories-list.
 import { CategoriesFormComponent, CategoryFormData } from './form/categories-form.component';
 import { CategoriesViewComponent } from './view/categories-view.component';
 import { CategoryAssociationsModalComponent } from './associations/category-associations-modal.component';
-import { GomAlertToastService, GomButtonComponent, GomConfirmationModalComponent, GomTableQuery } from '@gomlibs/ui';
+import { CategoryBulkUploadService, CategoryBulkUploadJobStatus, CategoryBulkUploadJobResults } from './bulk-upload/category-bulk-upload.service';
+import { GomAlertToastService, GomButtonComponent, GomConfirmationModalComponent, GomModalComponent, GomTableQuery } from '@gomlibs/ui';
 
 @Component({
   selector: 'gom-categories',
   standalone: true,
-  imports: [CommonModule, TranslateModule, CategoriesListComponent, CategoriesFormComponent, CategoriesViewComponent, CategoryAssociationsModalComponent, GomConfirmationModalComponent, GomButtonComponent],
+  imports: [CommonModule, TranslateModule, CategoriesListComponent, CategoriesFormComponent, CategoriesViewComponent, CategoryAssociationsModalComponent, GomConfirmationModalComponent, GomButtonComponent, GomModalComponent],
   templateUrl: './categories.component.html',
   styleUrl: './categories.component.scss'
 })
-export class CategoriesComponent implements OnInit {
+export class CategoriesComponent implements OnInit, OnDestroy {
   private readonly categoriesService = inject(CategoriesService);
+  private readonly bulkUploadService = inject(CategoryBulkUploadService);
   private readonly toast = inject(GomAlertToastService);
   private readonly translate = inject(TranslateService);
   private readonly authSession = inject(AuthSessionService);
+  private bulkUploadPollTimer: ReturnType<typeof setInterval> | null = null;
 
   readonly text = CATEGORY_UI_TEXT;
   readonly defaultStatus = CATEGORY_DEFAULT_STATUS;
@@ -74,8 +77,28 @@ export class CategoriesComponent implements OnInit {
   readonly serverSidePaginationCategories = computed(() => this.totalCategories() > 500);
   readonly categoryTableDataMode = computed<'client' | 'server'>(() => (this.serverSidePaginationCategories() && !this.allCategoriesLoaded() ? 'server' : 'client'));
 
+  // Bulk upload/download signals
+  readonly templateDownloading = signal(false);
+  readonly templateUploading = signal(false);
+  
+  // Support multiple unacknowledged jobs
+  readonly bulkUploadJobs = signal<CategoryBulkUploadJobStatus[]>([]);
+  readonly currentViewingJobId = signal<string | null>(null);
+  
+  readonly showBulkUploadResultModal = signal(false);
+  readonly bulkUploadResults = signal<CategoryBulkUploadJobResults | null>(null);
+  readonly bulkUploadResultsLoading = signal(false);
+
   ngOnInit() {
     this.loadCategories();
+    this.checkForAttentionJob();
+  }
+
+  ngOnDestroy() {
+    if (this.bulkUploadPollTimer) {
+      clearInterval(this.bulkUploadPollTimer);
+      this.bulkUploadPollTimer = null;
+    }
   }
 
   loadCategories() {
@@ -303,6 +326,240 @@ export class CategoriesComponent implements OnInit {
   onFormCancel() {
     this.formOpen.set(false);
     this.selectedCategory.set(null);
+  }
+
+
+  /**
+   * Download category bulk upload template (Excel)
+   */
+  downloadTemplate(): void {
+    if (!this.canCreateCategory()) {
+      this.toast.warning('You do not have permission to download the template.');
+      return;
+    }
+
+    this.templateDownloading.set(true);
+    this.bulkUploadService.downloadTemplate().subscribe({
+      next: (blob) => {
+        const timestamp = new Date().toISOString().split('T')[0];
+        this.bulkUploadService.triggerFileDownload(blob, `categories-template-${timestamp}.xlsx`);
+        this.toast.success('Template downloaded successfully.');
+        this.templateDownloading.set(false);
+      },
+      error: (err) => {
+        console.error('Failed to download template:', err);
+        this.toast.error('Failed to download template. Please try again.');
+        this.templateDownloading.set(false);
+      },
+    });
+  }
+
+  /**
+   * Upload categories from Excel file (job-based async processing)
+   */
+  uploadCategories(): void {
+    if (!this.canCreateCategory()) {
+      this.toast.warning('You do not have permission to upload categories.');
+      return;
+    }
+
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = '.xlsx,.xls';
+    
+    fileInput.onchange = (event) => {
+      const file = (event.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      // Validate file type
+      const validTypes = [
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-excel'
+      ];
+      const fileExtRegex = /\.(xlsx|xls)$/i;
+      if (!validTypes.includes(file.type) && !fileExtRegex.exec(file.name)) {
+        this.toast.error('Please upload a valid Excel file (.xlsx or .xls)');
+        return;
+      }
+
+      // Validate file size (max 10MB)
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      if (file.size > maxSize) {
+        this.toast.error('File size exceeds 10MB limit. Please upload a smaller file.');
+        return;
+      }
+
+      this.templateUploading.set(true);
+      this.errorMessage.set(null);
+
+      this.bulkUploadService.uploadCategories(file).subscribe({
+        next: (response) => {
+          this.templateUploading.set(false);
+          if (response.success && response.data?.jobId) {
+            this.toast.info('Upload accepted. Processing categories...');
+            // Polling will add the job to the jobs array
+            this.startPollingJobStatus(response.data.jobId);
+          } else {
+            this.toast.error(response.message || 'Upload failed. Please try again.');
+          }
+        },
+        error: (err) => {
+          console.error('Failed to upload categories:', err);
+          const errorMsg = err.error?.message || 'Failed to upload categories. Please check the file format and try again.';
+          this.toast.error(errorMsg);
+          this.errorMessage.set(errorMsg);
+          this.templateUploading.set(false);
+        },
+      });
+    };
+
+    fileInput.click();
+  }
+
+  /**
+   * Check for existing jobs that need attention (on init)
+   */
+  checkForAttentionJob(): void {
+    this.bulkUploadService.getAttentionJob().subscribe({
+      next: (response) => {
+        if (response.success && response.data?.hasAttention && response.data.jobs) {
+          this.bulkUploadJobs.set(response.data.jobs);
+          
+          // Start polling for any non-terminal jobs
+          response.data.jobs.forEach(job => {
+            if (!job.isTerminal) {
+              this.startPollingJobStatus(job.jobId);
+            }
+          });
+        }
+      },
+      error: (err) => {
+        console.error('Failed to check attention jobs:', err);
+      },
+    });
+  }
+
+  /**
+   * Start polling for job status (every 2 seconds)
+   */
+  startPollingJobStatus(jobId: string): void {
+    if (this.bulkUploadPollTimer) {
+      clearInterval(this.bulkUploadPollTimer);
+    }
+    
+    this.bulkUploadPollTimer = setInterval(() => {
+      this.bulkUploadService.getJobStatus(jobId).subscribe({
+        next: (response) => {
+          if (response.success && response.data) {
+            // Update the specific job in the array
+            const jobs = this.bulkUploadJobs();
+            const index = jobs.findIndex(j => j.jobId === response.data.jobId);
+            
+            if (index >= 0) {
+              jobs[index] = response.data;
+              this.bulkUploadJobs.set([...jobs]);
+            } else {
+              this.bulkUploadJobs.set([...jobs, response.data]);
+            }
+            
+            // Stop polling if job is terminal
+            if (response.data.isTerminal) {
+              if (this.bulkUploadPollTimer) {
+                clearInterval(this.bulkUploadPollTimer);
+                this.bulkUploadPollTimer = null;
+              }
+              
+              // Show success/error toast
+              const totals = response.data.totals;
+              if (response.data.status === 'COMPLETED') {
+                this.toast.success(`Successfully created ${totals?.successRows || 0} categories.`);
+                this.loadCategories();
+              } else if (response.data.status === 'COMPLETED_WITH_ERRORS') {
+                this.toast.warning(`Created ${totals?.successRows || 0} categories. ${totals?.failedRows || 0} failed. Click "View Details" to review.`);
+                this.loadCategories();
+              } else if (response.data.status === 'FAILED') {
+                this.toast.error(response.data.errorMessage || 'Upload failed.');
+              }
+            }
+          }
+        },
+        error: (err) => {
+          console.error('Failed to get job status:', err);
+          if (this.bulkUploadPollTimer) {
+            clearInterval(this.bulkUploadPollTimer);
+            this.bulkUploadPollTimer = null;
+          }
+        },
+      });
+    }, 2000); // Poll every 2 seconds
+  }
+
+  /**
+   * View bulk upload job results
+   */
+  viewBulkUploadResults(jobId: string): void {
+    if (!jobId) return;
+    
+    this.currentViewingJobId.set(jobId);
+    this.showBulkUploadResultModal.set(true);
+    this.bulkUploadResultsLoading.set(true);
+    
+    this.bulkUploadService.getJobResults(jobId).subscribe({
+      next: (response) => {
+        this.bulkUploadResultsLoading.set(false);
+        if (response.success && response.data) {
+          this.bulkUploadResults.set(response.data);
+        }
+      },
+      error: (err) => {
+        console.error('Failed to load job results:', err);
+        this.bulkUploadResultsLoading.set(false);
+        this.toast.error('Failed to load job results.');
+      },
+    });
+  }
+
+  /**
+   * Acknowledge job (user clicked "I am good")
+   */
+  acknowledgeBulkUploadJob(): void {
+    const jobId = this.currentViewingJobId();
+    if (!jobId) return;
+    
+    this.bulkUploadService.acknowledgeJob(jobId).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.toast.success('Job acknowledged successfully.');
+          
+          // Remove job from list
+          const jobs = this.bulkUploadJobs().filter(j => j.jobId !== jobId);
+          this.bulkUploadJobs.set(jobs);
+          
+          // Close modal
+          this.closeBulkUploadResults();
+        }
+      },
+      error: (err) => {
+        console.error('Failed to acknowledge job:', err);
+        this.toast.error('Failed to acknowledge job.');
+      },
+    });
+  }
+
+  /**
+   * Dismiss notification banner for a specific job
+   */
+  dismissBulkUploadNotification(jobId: string): void {
+    const jobs = this.bulkUploadJobs().filter(j => j.jobId !== jobId);
+    this.bulkUploadJobs.set(jobs);
+  }
+
+  /**
+   * Close job results modal
+   */
+  closeBulkUploadResults(): void {
+    this.showBulkUploadResultModal.set(false);
+    this.bulkUploadResults.set(null);
   }
 
   onAssociationsClosed(): void {

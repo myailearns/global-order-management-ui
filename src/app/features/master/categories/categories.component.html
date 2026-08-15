@@ -11,6 +11,45 @@
     </div>
   }
 
+  <!-- Multiple job notification banners -->
+  @for (job of bulkUploadJobs(); track job.jobId) {
+    <div class="job-notification-banner" [class.job-notification-banner--completed]="job.isTerminal">
+      <div class="job-notification-banner__content">
+        @if (job.status === 'QUEUED') {
+          <i class="ri-time-line" aria-hidden="true"></i>
+          <p>Bulk upload queued...</p>
+        } @else if (job.status === 'VALIDATING') {
+          <i class="ri-loader-4-line animate-spin" aria-hidden="true"></i>
+          <p>Validating upload...</p>
+        } @else if (job.status === 'PROCESSING') {
+          <i class="ri-loader-4-line animate-spin" aria-hidden="true"></i>
+          <p>Processing {{ job.totals?.processedRows || 0 }} / {{ job.totals?.totalRows || 0 }} categories...</p>
+        } @else if (job.status === 'COMPLETED') {
+          <i class="ri-check-circle-fill" aria-hidden="true"></i>
+          <p>Successfully created {{ job.totals?.successRows || 0 }} categories.</p>
+        } @else if (job.status === 'COMPLETED_WITH_ERRORS') {
+          <i class="ri-alert-circle-fill" aria-hidden="true"></i>
+          <p>Created {{ job.totals?.successRows || 0 }} categories. {{ job.totals?.failedRows || 0 }} failed.</p>
+        } @else if (job.status === 'FAILED') {
+          <i class="ri-error-warning-fill" aria-hidden="true"></i>
+          <p>Upload failed: {{ job.errorMessage || 'Unknown error' }}</p>
+        }
+      </div>
+      <div class="job-notification-banner__actions">
+        @if (job.isTerminal && job.totals && (job.totals.failedRows > 0 || job.totals.successRows > 0)) {
+          <button class="job-notification-banner__view-btn" (click)="viewBulkUploadResults(job.jobId)">
+            View Details
+          </button>
+        }
+        @if (job.isTerminal) {
+          <button class="job-notification-banner__close" (click)="dismissBulkUploadNotification(job.jobId)" aria-label="Close notification">
+            <i class="ri-close-line" aria-hidden="true"></i>
+          </button>
+        }
+      </div>
+    </div>
+  }
+
   @if (canCreateCategory()) {
     <div class="quota-banner">
       @if (categoryCreateLimit() !== null) {
@@ -32,7 +71,11 @@
     [pageIndex]="categoryTablePageIndex()"
     [pageSize]="categoryTablePageSize()"
     [pageSizeOptions]="serverSidePaginationCategories() ? [50] : [10, 20, 50]"
+    [templateDownloading]="templateDownloading()"
+    [templateUploading]="templateUploading()"
     (addNew)="onAddNew()"
+    (downloadTemplate)="downloadTemplate()"
+    (uploadCategories)="uploadCategories()"
     (action)="onAction($event)"
     (queryChange)="onCategoryTableQueryChange($event)"
   ></gom-categories-list>
@@ -90,4 +133,117 @@
     [category]="associationsCategory()"
     (closed)="onAssociationsClosed()"
   ></gom-category-associations-modal>
+
+  <!-- Bulk Upload Results Modal -->
+  <gom-lib-modal
+    title="Category Upload Results"
+    [show]="showBulkUploadResultModal()"
+    (showChange)="showBulkUploadResultModal.set($event)"
+    (closed)="closeBulkUploadResults()"
+    size="large"
+  >
+    <section class="bulk-upload-results">
+      @if (bulkUploadResultsLoading()) {
+        <p class="bulk-upload-results__loading">Loading results…</p>
+      } @else if (bulkUploadResults(); as results) {
+
+        <!-- Summary -->
+        <div class="bulk-upload-results__summary">
+          <div class="bulk-upload-results__stat">
+            <span class="bulk-upload-results__stat-label">Total Rows</span>
+            <span class="bulk-upload-results__stat-value">{{ results.job.totals.totalRows }}</span>
+          </div>
+          <div class="bulk-upload-results__stat bulk-upload-results__stat--success">
+            <span class="bulk-upload-results__stat-label">Created</span>
+            <span class="bulk-upload-results__stat-value">{{ results.job.totals.successRows }}</span>
+          </div>
+          <div class="bulk-upload-results__stat bulk-upload-results__stat--fail">
+            <span class="bulk-upload-results__stat-label">Failed</span>
+            <span class="bulk-upload-results__stat-value">{{ results.job.totals.failedRows }}</span>
+          </div>
+        </div>
+
+        <!-- Failed Rows -->
+        @if (results.failedRows && results.failedRows.length > 0) {
+          <div>
+            <h4 class="bulk-upload-results__section-title">
+              <i class="ri-error-warning-line" aria-hidden="true"></i>
+              Failed Rows ({{ results.failedRows.length }})
+            </h4>
+            <div class="bulk-upload-results__table">
+              <table class="results-table">
+                <thead>
+                  <tr>
+                    <th>Row #</th>
+                    <th>Name</th>
+                    <th>Reason</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (row of results.failedRows; track row.rowNumber) {
+                    <tr>
+                      <td>{{ row.rowNumber }}</td>
+                      <td>{{ row.name || 'N/A' }}</td>
+                      <td class="error-cell">
+                        @if (row.reasons && row.reasons.length > 0) {
+                          <div>
+                            @for (reason of row.reasons; track reason.code) {
+                              <div>{{ reason.message }}</div>
+                            }
+                          </div>
+                        } @else {
+                          Unknown error
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        }
+
+        <!-- Success Rows -->
+        @if (results.successRows && results.successRows.length > 0) {
+          <div>
+            <h4 class="bulk-upload-results__section-title bulk-upload-results__section-title--success">
+              <i class="ri-checkbox-circle-line" aria-hidden="true"></i>
+              Success Rows ({{ results.successRows.length }})
+            </h4>
+            <div class="bulk-upload-results__table">
+              <table class="results-table">
+                <thead>
+                  <tr>
+                    <th>Row #</th>
+                    <th>Name</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (row of results.successRows.slice(0, 100); track row.rowNumber) {
+                    <tr>
+                      <td>{{ row.rowNumber }}</td>
+                      <td>{{ row.name || 'N/A' }}</td>
+                      <td class="success-cell">Created</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+              @if (results.successRows.length > 100) {
+                <p class="results-table__note">Showing first 100 of {{ results.successRows.length }} successful rows.</p>
+              }
+            </div>
+          </div>
+        }
+      }
+    </section>
+
+    <footer class="gom-modal__action-layout" gom-modal-actions>
+      <div class="gom-modal__action-layout-start"></div>
+      <div class="gom-modal__action-layout-end">
+        <gom-lib-button type="button" variant="primary" (buttonClick)="acknowledgeBulkUploadJob()">I am good</gom-lib-button>
+        <gom-lib-button type="button" variant="secondary" (buttonClick)="closeBulkUploadResults()">Close</gom-lib-button>
+      </div>
+    </footer>
+  </gom-lib-modal>
 </div>

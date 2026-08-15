@@ -18,6 +18,12 @@
   }
 }
 
+.categories-list__actions {
+  display: flex;
+  align-items: center;
+  gap: theme.get-gap(xs);
+}
+
 .categories-list__table-shell {
   padding: theme.get-spacing(md);
   border: theme.get-border-size(hairline) solid theme.get-border(standard);

@@ -34,8 +34,6 @@
   <form [formGroup]="form" (ngSubmit)="submit()" class="master-form">
     <gom-lib-input [label]="text.nameLabel | translate" [formControl]="form.controls.name" [placeholder]="text.nameLabel | translate" [error]="form.controls.name.touched && form.controls.name.invalid ? (text.validationName | translate) : ''"></gom-lib-input>
     <gom-lib-input [label]="text.keyLabel | translate" [formControl]="form.controls.key" [placeholder]="text.keyLabel | translate" [error]="form.controls.key.touched && form.controls.key.invalid ? (text.validationKey | translate) : ''"></gom-lib-input>
-    <gom-lib-input [label]="text.labelLabel | translate" [formControl]="form.controls.label" [placeholder]="text.labelLabel | translate"></gom-lib-input>
-    <gom-lib-select [label]="text.inputTypeLabel | translate" [options]="inputTypeOptions" [formControl]="form.controls.inputType"></gom-lib-select>
     <gom-lib-textarea [label]="text.allowedValuesLabel | translate" [formControl]="form.controls.allowedValues" [placeholder]="text.allowedValuesLabel | translate"></gom-lib-textarea>
     <gom-lib-select [label]="text.statusLabel | translate" [options]="statusOptions" [formControl]="form.controls.status"></gom-lib-select>
 

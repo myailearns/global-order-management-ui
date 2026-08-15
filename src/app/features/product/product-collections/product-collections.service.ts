@@ -12,6 +12,7 @@ export interface ProductCollection {
   status: 'ACTIVE' | 'INACTIVE';
   autoSyncNewVariants: boolean;
   showOnHomeScreen: boolean;
+  showAllItemsOnHomeScreen: boolean;
   createdAt?: string;
   updatedAt?: string;
   itemCount?: {
@@ -71,6 +72,7 @@ export interface ProductCollectionUpsertPayload {
   status: 'ACTIVE' | 'INACTIVE';
   autoSyncNewVariants?: boolean;
   showOnHomeScreen?: boolean;
+  showAllItemsOnHomeScreen?: boolean;
   assignments?: Array<{ type: 'GROUP' | 'VARIANT'; referenceId: string }>;
   mappingState?: ProductCollectionMappingState;
 }

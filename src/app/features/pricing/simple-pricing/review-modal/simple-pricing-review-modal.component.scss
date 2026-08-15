@@ -1,0 +1,268 @@
+@use "theme" as theme;
+
+// ── Modal content ───────────────────────────────────────────────────────────
+
+.sp-review-modal {
+  display: flex;
+  flex-direction: column;
+  background: theme.get-background(standard);
+  max-height: min(72vh, 680px);
+
+  // ── Header ────────────────────────────────────────────────────────────────
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: theme.get-gap(sm);
+    padding: theme.get-spacing(md) theme.get-spacing(md) theme.get-spacing(sm);
+    border-bottom: 1px solid theme.get-border(standard);
+    flex-shrink: 0;
+  }
+
+  &__header-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: theme.get-radius(md);
+    background: theme.get-background(primary-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: theme.get-text(primary);
+    flex-shrink: 0;
+  }
+
+  &__header-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  &__title {
+    @include theme.typography-heading(sm);
+    color: theme.get-text(default);
+    margin: 0;
+  }
+
+  &__subtitle {
+    font-size: theme.get-font-size(sm);
+    color: theme.get-text(default-light);
+    margin: 0;
+  }
+
+  // ── Scrollable list ───────────────────────────────────────────────────────
+
+  &__list {
+    flex: 1;
+    overflow-y: auto;
+    padding: theme.get-spacing(sm) theme.get-spacing(md);
+    display: flex;
+    flex-direction: column;
+    gap: theme.get-gap(sm);
+    overscroll-behavior: contain;
+  }
+
+  // ── Single item card ──────────────────────────────────────────────────────
+
+  &__item {
+    position: relative;
+    background: theme.get-background(secondary);
+    border: 1px solid theme.get-border(standard);
+    border-radius: theme.get-radius(md);
+    padding: theme.get-spacing(sm);
+    padding-right: 44px; // space for remove button
+    display: flex;
+    flex-direction: column;
+    gap: theme.get-gap(xs);
+  }
+
+  &__item-name {
+    display: flex;
+    align-items: center;
+    gap: theme.get-gap(xs);
+    flex-wrap: wrap;
+  }
+
+  &__item-label {
+    font-size: theme.get-font-size(body);
+    font-weight: 600;
+    color: theme.get-text(default);
+    overflow-wrap: anywhere;
+  }
+
+  &__item-type {
+    font-size: theme.get-font-size(xs);
+    font-weight: 500;
+    color: theme.get-text(primary);
+    background: theme.get-background(primary-light);
+    padding: 1px 7px;
+    border-radius: theme.get-radius(sm);
+    white-space: nowrap;
+  }
+
+  &__item-product {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  &__item-product-label {
+    font-size: theme.get-font-size(xs);
+    color: theme.get-text(default-light);
+    white-space: nowrap;
+  }
+
+  &__item-product-value {
+    font-size: theme.get-font-size(sm);
+    color: theme.get-text(default);
+    font-weight: 500;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  // ── Price change row ──────────────────────────────────────────────────────
+
+  &__price-change {
+    display: flex;
+    align-items: center;
+    gap: theme.get-gap(xs);
+    font-size: theme.get-font-size(body-lg);
+    font-weight: 700;
+    color: theme.get-text(default-light);
+
+    &--up &__price-new   { color: theme.get-text(success); }
+    &--down &__price-new { color: theme.get-text(danger); }
+  }
+
+  &__price-old {
+    color: theme.get-text(default-light);
+    text-decoration: line-through;
+    font-weight: 400;
+    font-size: theme.get-font-size(sm);
+  }
+
+  &__price-arrow {
+    font-size: theme.get-font-size(sm);
+    opacity: 0.6;
+  }
+
+  &__price-new {
+    color: theme.get-text(default);
+    font-size: theme.get-font-size(body-lg);
+    font-weight: 700;
+  }
+
+  // ── Profit row ────────────────────────────────────────────────────────────
+
+  &__profit-row {
+    display: flex;
+    align-items: center;
+    gap: theme.get-gap(sm);
+    flex-wrap: wrap;
+  }
+
+  &__profit-block {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  &__profit-label {
+    font-size: theme.get-font-size(xs);
+    color: theme.get-text(default-light);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  &__profit-value {
+    font-size: theme.get-font-size(sm);
+    font-weight: 600;
+    color: theme.get-text(default);
+  }
+
+  &__profit-sep {
+    font-size: theme.get-font-size(sm);
+    color: theme.get-text(default-light);
+    opacity: 0.5;
+    align-self: flex-end;
+    margin-bottom: 2px;
+  }
+
+  // ── Remove button ─────────────────────────────────────────────────────────
+
+  &__remove-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: theme.get-background(danger-light);
+    color: theme.get-text(danger);
+    border-radius: theme.get-radius(sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.1s ease;
+
+    &:hover {
+      background: theme.get-background(danger);
+      color: #fff;
+    }
+
+    &:active {
+      transform: scale(0.93);
+    }
+  }
+
+  // ── Empty state ───────────────────────────────────────────────────────────
+
+  &__empty {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: theme.get-gap(sm);
+    padding: theme.get-spacing(xl);
+    color: theme.get-text(default-light);
+    font-size: theme.get-font-size(sm);
+  }
+
+  &__empty-icon {
+    font-size: 2.5rem;
+    color: theme.get-text(success);
+    opacity: 0.7;
+  }
+
+  // ── Footer ────────────────────────────────────────────────────────────────
+
+  &__footer {
+    border-top: 1px solid theme.get-border(standard);
+    padding-top: theme.get-spacing(sm);
+
+    .gom-modal__action-layout-start {
+      min-width: 0;
+    }
+
+    .gom-modal__action-layout-end {
+      display: flex;
+      align-items: center;
+      gap: theme.get-gap(sm);
+
+      @media (max-width: 767px) {
+        width: 100%;
+        justify-content: stretch;
+
+        > * {
+          flex: 1;
+        }
+      }
+    }
+  }
+}

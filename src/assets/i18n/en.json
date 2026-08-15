@@ -24,6 +24,7 @@
                                    "groupCreation":  "Group Creation",
                                    "stock":  "Stock",
                                    "variants":  "Variants",
+                                   "simplePricing":  "Simple Pricing",
                                    "packs":  "Packs",
                                    "mediaLibrary":  "Media Library",
                                    "productCollections":  "Product Collections",
@@ -106,6 +107,59 @@
                                     "closeErrorBanner":  "Close error banner"
                                 }
                },
+    "pricing":  {
+                    "simple":  {
+                                   "title":  "Simple Pricing",
+                                   "description":  "Update selling prices quickly for group-level and variant-level pricing.",
+                                   "empty":  "No pricing rows found.",
+                                   "filter":  {
+                                                  "category":  "Category",
+                                                  "categorySearch":  "Search category",
+                                                  "groupType":  "Group Type",
+                                                  "pricingState":  "Pricing State",
+                                                  "search":  "Search product"
+                                              },
+                                   "col":  {
+                                               "item":  "Item",
+                                               "sellingPrice":  "Selling Price",
+                                               "definedProfit":  "Defined Profit %",
+                                               "affectedProfit":  "Affected Profit %",
+                                               "priceSummary":  "Price Summary"
+                                           },
+                                   "state":  {
+                                                 "INHERITED":  "Inherited",
+                                                 "ADJUSTED":  "Adjusted",
+                                                 "OVERRIDDEN":  "Overridden",
+                                                 "DIRECT":  "Direct"
+                                             },
+                                   "action":  {
+                                                  "info":  "Info"
+                                              },
+                                   "review":  {
+                                                  "title":  "Review Price Changes",
+                                                  "subtitle":  "{{count}} change(s) pending",
+                                                  "empty":  "No changes remaining.",
+                                                  "typeGroup":  "Group",
+                                                  "typeVariant":  "Variant",
+                                                  "remove":  "Remove from save list",
+                                                  "confirm":  "Confirm & Save ({{count}})"
+                                              },
+                                   "bulk":  {
+                                                "saveAll":  "Save All",
+                                                "saving":  "Saving...",
+                                                "editedRows":  "Edited rows: {{count}}",
+                                                "defaultReason":  "Bulk update from Simple Pricing table"
+                                            },
+                                   "toast":  {
+                                                "updated":  "Pricing updated successfully.",
+                                                "bulkUpdated":  "Updated {{count}} pricing rows successfully."
+                                            },
+                                   "error":  {
+                                                "loadFailed":  "Failed to load pricing data.",
+                                                "updateFailed":  "Failed to update pricing."
+                                            }
+                               }
+                },
     "storefrontConfig":  {
                              "shareCenter":  {
                                                  "title":  "Storefront Share Center",

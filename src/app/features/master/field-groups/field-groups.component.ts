@@ -13,7 +13,7 @@ import {
   GomTableRow,
 } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
-import { CategoryOption, FieldGroup, FieldGroupPayload, FieldGroupsService, PricingField, ProductGroupUsage } from './field-groups.service';
+import { /* CategoryOption, */ FieldGroup, FieldGroupPayload, FieldGroupsService, PricingField, ProductGroupUsage } from './field-groups.service';
 import { FieldGroupsFormComponent } from './form/field-groups-form.component';
 import { DisableIfNoFeatureDirective } from '../../../shared/directives/disable-if-no-feature.directive';
 
@@ -90,7 +90,8 @@ export class FieldGroupsComponent implements OnInit {
   readonly fieldGroupsTableDataMode = computed<'client' | 'server'>(() => (this.serverSidePaginationFieldGroups() && !this.allFieldGroupsLoaded() ? 'server' : 'client'));
   readonly fields = signal<PricingField[]>([]);
   readonly groups = signal<ProductGroupUsage[]>([]);
-  readonly categories = signal<CategoryOption[]>([]);
+  // REMOVED: Category association - field groups are now global
+  // readonly categories = signal<CategoryOption[]>([]);
 
   readonly rows = computed<FieldGroupRow[]>(() =>
     this.fieldGroups().map((fieldGroup) => ({
@@ -258,7 +259,8 @@ export class FieldGroupsComponent implements OnInit {
       fieldGroups: this.fieldGroupsService.listFieldGroups({ page: 1, limit: this.fieldGroupTablePageSize() }),
       fields: this.fieldGroupsService.listFields({ page: 1, limit: 5000 }),
       groups: this.fieldGroupsService.listGroups({ page: 1, limit: 5000 }),
-      categories: this.fieldGroupsService.listCategories({ page: 1, limit: 5000, status: 'ACTIVE' }),
+      // REMOVED: Category association - field groups are now global
+      // categories: this.fieldGroupsService.listCategories({ page: 1, limit: 5000, status: 'ACTIVE' }),
     }).subscribe({
       next: (result) => {
         const pagination = result.fieldGroups.pagination;
@@ -276,7 +278,8 @@ export class FieldGroupsComponent implements OnInit {
 
         this.fields.set(result.fields.data ?? []);
         this.groups.set(result.groups.data ?? []);
-        this.categories.set(result.categories.data ?? []);
+        // REMOVED: Category association - field groups are now global
+        // this.categories.set(result.categories.data ?? []);
         this.loading.set(false);
       },
       error: (error) => {

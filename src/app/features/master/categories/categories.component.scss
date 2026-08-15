@@ -53,3 +53,263 @@
     }
   }
 }
+
+// Job notification banner
+.job-notification-banner {
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  background-color: rgba(59, 130, 246, 0.1);
+  border-left: 4px solid theme.get-text(primary);
+  border-radius: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+
+  &--completed {
+    background-color: rgba(34, 197, 94, 0.1);
+    border-left-color: theme.get-text(success);
+  }
+
+  .job-notification-banner__content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+
+    i {
+      font-size: 1.25rem;
+      flex-shrink: 0;
+      color: theme.get-text(primary);
+
+      &.animate-spin {
+        animation: spin 1s linear infinite;
+      }
+    }
+
+    p {
+      margin: 0;
+      color: theme.get-text(primary);
+      font-size: 14px;
+    }
+  }
+
+  .job-notification-banner__actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .job-notification-banner__view-btn {
+    background-color: theme.get-background(primary);
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+
+    &:hover {
+      opacity: 0.9;
+    }
+  }
+
+  .job-notification-banner__close {
+    background: none;
+    border: none;
+    color: theme.get-text(primary);
+    cursor: pointer;
+    padding: 4px 8px;
+    display: flex;
+    align-items: center;
+
+    i {
+      font-size: 1.125rem;
+    }
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Quota banner
+.quota-banner {
+  margin-bottom: 16px;
+  padding: 8px 12px;
+  background-color: theme.get-background(secondary);
+  border-radius: 4px;
+
+  p {
+    margin: 0;
+    font-size: 13px;
+    color: theme.get-text(default-light);
+  }
+}
+
+// Pagination controls
+.pagination-controls {
+  margin-top: 16px;
+  padding: 12px;
+  background-color: theme.get-background(secondary);
+  border-radius: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+
+  .pagination-controls__info {
+    font-size: 14px;
+    color: theme.get-text(default-light);
+  }
+}
+
+// Bulk upload results modal
+.bulk-upload-results {
+  padding: 0;
+
+  &__loading {
+    text-align: center;
+    padding: 40px 20px;
+    color: theme.get-text(default-light);
+  }
+
+  &__summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid theme.get-border(light);
+  }
+
+  &__stat {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px;
+    background-color: theme.get-background(secondary);
+    border-radius: 4px;
+    border: 1px solid theme.get-border(light);
+
+    &--success {
+      border-color: theme.get-border(success);
+      background-color: rgba(34, 197, 94, 0.05);
+    }
+
+    &--fail {
+      border-color: theme.get-border(danger);
+      background-color: rgba(239, 68, 68, 0.05);
+    }
+
+    &-label {
+      font-size: 12px;
+      color: theme.get-text(default-light);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    &-value {
+      font-size: 24px;
+      font-weight: 600;
+      color: theme.get-text(primary);
+    }
+  }
+
+  &__section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: theme.get-text(primary);
+
+    i {
+      font-size: 1.25rem;
+      color: theme.get-text(danger);
+    }
+
+    &--success i {
+      color: theme.get-text(success);
+    }
+  }
+
+  &__table {
+    margin-bottom: 24px;
+    overflow-x: auto;
+    border: 1px solid theme.get-border(light);
+    border-radius: 4px;
+  }
+}
+
+.results-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+
+  thead {
+    background-color: theme.get-background(secondary);
+    border-bottom: 1px solid theme.get-border(light);
+
+    th {
+      padding: 12px 16px;
+      text-align: left;
+      font-weight: 600;
+      color: theme.get-text(default-light);
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+  }
+
+  tbody {
+    tr {
+      border-bottom: 1px solid theme.get-border(light);
+
+      &:hover {
+        background-color: theme.get-background(secondary);
+      }
+
+      &:last-child {
+        border-bottom: none;
+      }
+    }
+
+    td {
+      padding: 12px 16px;
+      color: theme.get-text(primary);
+
+      &.error-cell {
+        color: theme.get-text(danger);
+        font-size: 13px;
+      }
+
+      &.success-cell {
+        color: theme.get-text(success);
+        font-weight: 500;
+      }
+    }
+  }
+
+  &__note {
+    padding: 12px 16px;
+    margin: 0;
+    font-size: 13px;
+    color: theme.get-text(default-light);
+    font-style: italic;
+    background-color: theme.get-background(secondary);
+    border-top: 1px solid theme.get-border(light);
+  }
+}

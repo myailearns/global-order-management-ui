@@ -1,3 +1,6 @@
+@use 'sass:map';
+@use 'theme' as *;
+
 .master-page {
   display: grid;
   gap: 1rem;
@@ -23,10 +26,140 @@
 
 .master-form__hint {
   opacity: 0.85;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  
+  i {
+    font-size: 1.125rem;
+  }
 }
 
 .master-form__actions {
   display: flex;
   justify-content: flex-end;
   gap: 0.75rem;
+}
+
+.builder-inputs-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.extra-cost-section {
+  background: get-background(secondary);
+  border: 1px solid get-border(light);
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin: 1rem 0;
+}
+
+.extra-cost-section__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid get-border(light);
+  
+  h4 {
+    margin: 0;
+    font-size: get-font-size(body-lg);
+    font-weight: 600;
+    color: get-text(default);
+  }
+}
+
+.extra-cost-checkboxes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: get-gap(xs);
+}
+
+.extra-cost-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: get-gap(xs);
+  cursor: pointer;
+  
+  input[type="checkbox"] {
+    width: 1rem;
+    height: 1rem;
+    cursor: pointer;
+    accent-color: get-background(primary);
+  }
+  
+  span {
+    font-size: get-font-size(sm);
+    color: get-text(default);
+    user-select: none;
+  }
+}
+
+.formulas-card {
+  background: get-background(white);
+  border: 2px solid get-border(primary);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.formulas-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid get-border(light);
+  
+  h4 {
+    margin: 0;
+    font-size: get-font-size(body-lg);
+    font-weight: 600;
+    color: get-text(default);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    
+    i {
+      color: get-text(primary);
+      font-size: 1.375rem;
+    }
+  }
+}
+
+.formula-preview-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.formula-item {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 1rem;
+  align-items: center;
+  
+  .formula-label {
+    font-weight: 500;
+    color: get-text(default-light);
+    font-size: get-font-size(sm);
+  }
+  
+  code {
+    background: get-background(secondary);
+    padding: 0.75rem;
+    border-radius: 6px;
+    border: 1px solid get-border(light);
+    font-family: 'Courier New', monospace;
+    font-size: get-font-size(sm);
+    color: get-text(danger);
+    overflow-x: auto;
+  }
+}
+
+.formula-edit-grid {
+  display: grid;
+  gap: 1rem;
 }

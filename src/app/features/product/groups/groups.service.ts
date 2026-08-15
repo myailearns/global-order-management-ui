@@ -119,6 +119,27 @@ export interface Group {
   baseUnitId: string;
   allowedUnitIds: string[];
   taxProfileId?: string | null;
+  attributeSetId?: string | null;
+  pricingTemplateId?: string | null;
+  completionState?: 'QUICK_CREATE_PENDING' | 'FIELD_VALUES_PENDING' | 'VARIANTS_PENDING' | 'MEDIA_PENDING' | 'COMPLETE';
+  completionChecklist?: {
+    fieldValues: boolean;
+    variants: boolean;
+    media: boolean;
+    advancedSettings: boolean;
+  };
+  completedAt?: string | null;
+  completionSummary?: {
+    completionState: 'QUICK_CREATE_PENDING' | 'FIELD_VALUES_PENDING' | 'VARIANTS_PENDING' | 'MEDIA_PENDING' | 'COMPLETE';
+    completionChecklist: {
+      fieldValues: boolean;
+      variants: boolean;
+      media: boolean;
+      advancedSettings: boolean;
+    };
+    variantCount: number;
+    hasMedia: boolean;
+  };
   stock?: {
     onHand: number;
     reserved: number;
@@ -133,6 +154,57 @@ export interface GroupDeleteResult {
   id: string;
   unmappedFromCollections?: number;
   removedVariantCount?: number;
+}
+
+export interface GroupCompletionStatus {
+  groupId: string;
+  completionState: 'QUICK_CREATE_PENDING' | 'FIELD_VALUES_PENDING' | 'VARIANTS_PENDING' | 'MEDIA_PENDING' | 'COMPLETE';
+  completedAt: string | null;
+  checklist: Array<{
+    item: 'fieldValues' | 'variants' | 'media' | 'advancedSettings';
+    completed: boolean;
+  }>;
+  allComplete: boolean;
+  nextPendingItems: Array<'fieldValues' | 'variants' | 'media' | 'advancedSettings'>;
+}
+
+export interface GroupAdvancedPricingPreview {
+  currentFormula: {
+    actualPrice: string;
+    sellingPrice: string;
+    anchorPrice: string;
+  };
+  proposedFormula: {
+    actualPrice: string;
+    sellingPrice: string;
+    anchorPrice: string;
+  };
+  preview: {
+    actualPrice: number;
+    sellingPrice: number;
+    anchorPrice: number;
+  };
+}
+
+export interface GroupVariantCombinationItem {
+  combinationKey: string;
+  quantity: number;
+  unitId: string;
+  optionSelections: Array<{
+    key: string;
+    label?: string;
+    value: string;
+  }>;
+  enabled: boolean;
+  exists: boolean;
+  name: string;
+}
+
+export interface GroupVariantGenerationPreview {
+  groupId: string;
+  groupType: 'MEASURED' | 'ATTRIBUTE' | 'HYBRID';
+  total: number;
+  items: GroupVariantCombinationItem[];
 }
 
 export interface GroupPayload {
@@ -207,6 +279,104 @@ export class GroupsService {
     return this.http.put<ApiSuccess<Group>>(`${this.groupsUrl}/${id}`, payload);
   }
 
+  getGroupById(id: string): Observable<ApiSuccess<Group>> {
+    return this.http.get<ApiSuccess<Group>>(`${this.groupsUrl}/${id}`);
+  }
+
+  getGroupOrderStatusBreakdown(groupId: string): Observable<ApiSuccess<{
+    draftCount: number;
+    confirmedCount: number;
+    totalCount: number;
+    affectedVariants: Array<{ id: string; name: string; sku: string }>;
+  }>> {
+    return this.http.get<ApiSuccess<{
+      draftCount: number;
+      confirmedCount: number;
+      totalCount: number;
+      affectedVariants: Array<{ id: string; name: string; sku: string }>;
+    }>>(`${this.groupsUrl}/${groupId}/order-status-breakdown`);
+  }
+
+  getGroupCompletionStatus(id: string): Observable<ApiSuccess<GroupCompletionStatus>> {
+    return this.http.get<ApiSuccess<GroupCompletionStatus>>(`${this.groupsUrl}/${id}/completion-status`);
+  }
+
+  updateGroupCompletionChecklist(
+    id: string,
+    payload: Partial<Record<'fieldValues' | 'variants' | 'media' | 'advancedSettings', boolean>>,
+  ): Observable<ApiSuccess<Group>> {
+    return this.http.patch<ApiSuccess<Group>>(`${this.groupsUrl}/${id}/completion-checklist`, payload);
+  }
+
+  markGroupComplete(id: string): Observable<ApiSuccess<Group>> {
+    return this.http.post<ApiSuccess<Group>>(`${this.groupsUrl}/${id}/completion/complete`, {});
+  }
+
+  updateGroupFieldValues(
+    id: string,
+    payload: { fieldValues: Array<{ fieldId: string; value: number }>; excludedFieldKeys?: string[] },
+  ): Observable<ApiSuccess<Group>> {
+    return this.http.patch<ApiSuccess<Group>>(`${this.groupsUrl}/${id}/field-values`, payload);
+  }
+
+  previewAdvancedPricing(
+    id: string,
+    payload: { actualPrice?: string; sellingPrice?: string; anchorPrice?: string },
+  ): Observable<ApiSuccess<GroupAdvancedPricingPreview>> {
+    return this.http.post<ApiSuccess<GroupAdvancedPricingPreview>>(`${this.groupsUrl}/${id}/pricing/advanced/preview`, payload);
+  }
+
+  updateAdvancedPricing(
+    id: string,
+    payload: { actualPrice?: string; sellingPrice?: string; anchorPrice?: string },
+  ): Observable<ApiSuccess<Group>> {
+    return this.http.put<ApiSuccess<Group>>(`${this.groupsUrl}/${id}/pricing/advanced`, payload);
+  }
+
+  updateGroupUnits(
+    id: string,
+    payload: { baseUnitId?: string; allowedUnitIds?: string[] },
+  ): Observable<ApiSuccess<Group>> {
+    return this.http.put<ApiSuccess<Group>>(`${this.groupsUrl}/${id}/units`, payload);
+  }
+
+  updateGroupMappings(
+    id: string,
+    payload: { fieldGroupId?: string; attributeSetId?: string | null; pricingTemplateId?: string | null },
+  ): Observable<ApiSuccess<Group>> {
+    return this.http.put<ApiSuccess<Group>>(`${this.groupsUrl}/${id}/mappings`, payload);
+  }
+
+  updateGroupAdvancedSettings(
+    id: string,
+    payload: { taxProfileId?: string | null; pricingRefreshMode?: PricingRefreshMode; groupType?: 'MEASURED' | 'ATTRIBUTE' | 'HYBRID'; optionAxes?: Array<{ key: string; label: string; values: string[] }> },
+  ): Observable<ApiSuccess<Group>> {
+    return this.http.put<ApiSuccess<Group>>(`${this.groupsUrl}/${id}/advanced`, payload);
+  }
+
+  generateGroupVariants(
+    id: string,
+    payload?: { measuredOptions?: Array<{ quantity: number; unitId: string }>; disabledCombinationKeys?: string[] },
+  ): Observable<ApiSuccess<{ createdCount: number; skippedCount: number; created: unknown[] }>> {
+    return this.http.post<ApiSuccess<{ createdCount: number; skippedCount: number; created: unknown[] }>>(`${this.groupsUrl}/${id}/variants/generate`, payload || {});
+  }
+
+  previewAutoGenerateVariants(payload: {
+    groupId: string;
+    measuredOptions?: Array<{ quantity: number; unitId: string }>;
+    disabledCombinationKeys?: string[];
+  }): Observable<ApiSuccess<GroupVariantGenerationPreview>> {
+    return this.http.post<ApiSuccess<GroupVariantGenerationPreview>>(`${this.groupsUrl}/variants/auto-generate/preview`, payload);
+  }
+
+  createAutoGenerateVariants(payload: {
+    groupId: string;
+    measuredOptions?: Array<{ quantity: number; unitId: string }>;
+    disabledCombinationKeys?: string[];
+  }): Observable<ApiSuccess<{ createdCount: number; skippedCount: number; created: unknown[] }>> {
+    return this.http.post<ApiSuccess<{ createdCount: number; skippedCount: number; created: unknown[] }>>(`${this.groupsUrl}/variants/auto-generate/create`, payload);
+  }
+
   deleteGroup(id: string): Observable<ApiSuccess<GroupDeleteResult>> {
     return this.http.delete<ApiSuccess<GroupDeleteResult>>(`${this.groupsUrl}/${id}`);
   }
@@ -233,5 +403,76 @@ export class GroupsService {
 
   listTaxProfiles(): Observable<ApiPaginated<TaxProfile>> {
     return this.http.get<ApiPaginated<TaxProfile>>(`${this.taxProfilesUrl}?status=ACTIVE`);
+  }
+
+    // Simplified getters for quick-create form
+    getCategories(): Observable<Category[]> {
+      return new Observable(subscriber => {
+        this.listCategories().subscribe({
+          next: (response) => subscriber.next(response.data),
+          error: (err) => subscriber.error(err),
+          complete: () => subscriber.complete(),
+        });
+      });
+    }
+
+    getFieldGroups(): Observable<FieldGroup[]> {
+      return new Observable(subscriber => {
+        this.listFieldGroups().subscribe({
+          next: (response) => subscriber.next(response.data),
+          error: (err) => subscriber.error(err),
+          complete: () => subscriber.complete(),
+        });
+      });
+    }
+
+    getUnits(): Observable<Unit[]> {
+      return new Observable(subscriber => {
+        this.listUnits().subscribe({
+          next: (response) => subscriber.next(response.data),
+          error: (err) => subscriber.error(err),
+          complete: () => subscriber.complete(),
+        });
+      });
+    }
+
+    getTaxProfiles(): Observable<TaxProfile[]> {
+      return new Observable(subscriber => {
+        this.listTaxProfiles().subscribe({
+          next: (response) => subscriber.next(response.data),
+          error: (err) => subscriber.error(err),
+          complete: () => subscriber.complete(),
+        });
+      });
+    }
+
+    previewQuickCreate(payload: { 
+      categoryId: string; 
+      fieldGroupId?: string;
+      attributeSetId?: string;
+      pricingTemplateId?: string; 
+      baseUnitId?: string; 
+      taxProfileId?: string;
+      groupType?: string;
+      pricingRefreshMode?: PricingRefreshMode;
+    }): Observable<any> {
+    return this.http.post<any>(`${this.groupsUrl}/quick-create/preview`, payload);
+  }
+
+    quickCreateGroup(payload: { 
+      name: string; 
+      categoryId: string; 
+      description?: string; 
+      fieldGroupId?: string; 
+      attributeSetId?: string; 
+      pricingTemplateId?: string; 
+      baseUnitId?: string; 
+      taxProfileId?: string; 
+      groupType?: string; 
+      pricingRefreshMode?: PricingRefreshMode; 
+      allowedUnitIds?: string[]; 
+      createDefaultVariant?: boolean 
+    }): Observable<ApiSuccess<Group>> {
+    return this.http.post<ApiSuccess<Group>>(`${this.groupsUrl}/quick-create`, payload);
   }
 }

@@ -5,14 +5,11 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
 export type AttributeStatus = 'ACTIVE' | 'INACTIVE';
-export type AttributeInputType = 'TEXT' | 'SINGLE_SELECT' | 'MULTI_SELECT';
 
 export interface AttributeDefinition {
   _id?: string;
   name: string;
   key: string;
-  label: string;
-  inputType: AttributeInputType;
   allowedValues: string[];
   status: AttributeStatus;
   createdAt?: string;
@@ -22,8 +19,6 @@ export interface AttributeDefinition {
 export interface AttributeDefinitionPayload {
   name: string;
   key: string;
-  label: string;
-  inputType: AttributeInputType;
   allowedValues: string[];
   status: AttributeStatus;
 }

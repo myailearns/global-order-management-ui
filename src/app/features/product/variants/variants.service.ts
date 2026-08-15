@@ -38,6 +38,7 @@ export interface GroupResolvedField {
 export interface Group {
   _id: string;
   name: string;
+  description?: string;
   categoryId?: string;
   groupType?: 'MEASURED' | 'ATTRIBUTE' | 'HYBRID';
   fieldGroupId?: string;
@@ -96,6 +97,12 @@ export interface Variant {
   quantity: number;
   unitId: string;
   convertedQuantity: number;
+  variantDescription?: string;
+  useOnlyVariantMedia?: boolean;
+  useOnlyVariantDescription?: boolean;
+  effectiveDescription?: string;
+  effectiveMediaCount?: number;
+  effectiveMediaSource?: 'NONE' | 'GROUP_ONLY' | 'VARIANT_ONLY' | 'GROUP_AND_VARIANT';
   optionSelections?: Array<{
     key: string;
     label: string;
@@ -146,6 +153,9 @@ export interface CreateVariantsPayload {
     finalAnchorPrice?: number | null;
     reason?: string;
     combinationKey?: string;
+    variantDescription?: string;
+    useOnlyVariantMedia?: boolean;
+    useOnlyVariantDescription?: boolean;
   }>;
 }
 
@@ -154,6 +164,7 @@ export interface UpdateVariantPayload {
   itemType?: 'INDIVIDUAL' | 'PACK';
   quantity: number;
   unitId: string;
+  status?: 'ACTIVE' | 'INACTIVE';
   additionalPrice?: number;
   additionalPriceReason?: string;
   fieldOverrides?: Record<string, number>;
@@ -164,6 +175,9 @@ export interface UpdateVariantPayload {
   finalAnchorPrice?: number | null;
   reason?: string;
   clearOverride?: boolean;
+  variantDescription?: string;
+  useOnlyVariantMedia?: boolean;
+  useOnlyVariantDescription?: boolean;
 }
 
 export interface VariantPricePreview {
@@ -319,6 +333,14 @@ export class VariantsService {
 
   deleteVariant(id: string): Observable<ApiSuccess<{ id: string; unmappedFromCollections?: number }>> {
     return this.http.delete<ApiSuccess<{ id: string; unmappedFromCollections?: number }>>(`${this.variantsUrl}/${id}`, { headers: this.tenantHeaders });
+  }
+
+  getVariantOrderCount(variantId: string): Observable<ApiSuccess<{ orderCount: number }>> {
+    return this.http.get<ApiSuccess<{ orderCount: number }>>(`${this.variantsUrl}/${variantId}/order-count`, { headers: this.tenantHeaders });
+  }
+
+  getVariantOrderStatusBreakdown(variantId: string): Observable<ApiSuccess<{ draftCount: number; confirmedCount: number; totalCount: number }>> {
+    return this.http.get<ApiSuccess<{ draftCount: number; confirmedCount: number; totalCount: number }>>(`${this.variantsUrl}/${variantId}/order-status-breakdown`, { headers: this.tenantHeaders });
   }
 
   previewVariantPrice(payload: {

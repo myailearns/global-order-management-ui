@@ -1,0 +1,53 @@
+<div class="sp-search">
+  <!-- ── Active selection chip ─────────────────────────────── -->
+  @if (selectedSuggestion(); as sel) {
+    <div class="sp-search__chip-wrap">
+      <span class="sp-search__chip">
+        <span class="sp-search__chip-name">{{ sel.name }}</span>
+        <button
+          type="button"
+          class="sp-search__chip-clear"
+          aria-label="Clear search"
+          (click)="clearSelection()">
+          <i class="ri-close-line" aria-hidden="true"></i>
+        </button>
+      </span>
+    </div>
+  }
+
+  <!-- ── Input (hidden when a selection is active) ─────────── -->
+  @if (!selectedSuggestion()) {
+    <div class="sp-search__input-wrap">
+      <gom-lib-input
+        [formControl]="inputControl"
+        type="search"
+        placeholder="Search product…"
+        label="Search product"
+        prefixIcon="ri-search-line">
+      </gom-lib-input>
+
+      @if (loading()) {
+        <span class="sp-search__spinner" aria-hidden="true">
+          <i class="ri-loader-4-line"></i>
+        </span>
+      }
+    </div>
+
+    <!-- ── Suggestion dropdown ──────────────────────────────── -->
+    @if (open() && suggestions().length) {
+      <ul class="sp-search__dropdown" role="listbox" aria-label="Search suggestions">
+        @for (item of suggestions(); track item.id) {
+          <li
+            class="sp-search__item"
+            role="option"
+            [attr.aria-selected]="false"
+            (click)="select(item)"
+            (keydown.enter)="select(item)"
+            tabindex="0">
+            <span class="sp-search__item-name">{{ item.name }}</span>
+          </li>
+        }
+      </ul>
+    }
+  }
+</div>

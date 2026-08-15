@@ -35,7 +35,7 @@
     <gom-lib-input [label]="text.nameLabel | translate" [formControl]="form.controls.name"></gom-lib-input>
     <gom-lib-textarea [label]="text.descriptionLabel | translate" [formControl]="form.controls.description"></gom-lib-textarea>
     <gom-lib-input [label]="text.attributesLabel | translate" [formControl]="form.controls.attributes" [placeholder]="'attributeSets.placeholders.attributes' | translate"></gom-lib-input>
-    <gom-lib-input [label]="text.categoriesLabel | translate" [formControl]="form.controls.categories" [placeholder]="'attributeSets.placeholders.categories' | translate"></gom-lib-input>
+    <!-- Category input removed - attribute sets are now global -->
     <gom-lib-select [label]="text.statusLabel | translate" [options]="statusOptions" [formControl]="form.controls.status"></gom-lib-select>
 
     <div class="master-form__hint">{{ 'attributeSets.hint' | translate }}</div>

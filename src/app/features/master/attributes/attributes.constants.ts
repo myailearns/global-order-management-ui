@@ -1,17 +1,10 @@
 import { GomSelectOption } from '@gomlibs/ui';
 
 export const ATTRIBUTE_DEFAULT_STATUS = 'ACTIVE' as const;
-export const ATTRIBUTE_DEFAULT_INPUT_TYPE = 'SINGLE_SELECT' as const;
 
 export const ATTRIBUTE_STATUS_OPTIONS: GomSelectOption[] = [
   { label: 'common.status.active', value: 'ACTIVE' },
   { label: 'common.status.inactive', value: 'INACTIVE' },
-];
-
-export const ATTRIBUTE_INPUT_TYPE_OPTIONS: GomSelectOption[] = [
-  { label: 'attributes.types.text', value: 'TEXT' },
-  { label: 'attributes.types.singleSelect', value: 'SINGLE_SELECT' },
-  { label: 'attributes.types.multiSelect', value: 'MULTI_SELECT' },
 ];
 
 export const ATTRIBUTE_UI_TEXT = {
@@ -30,8 +23,6 @@ export const ATTRIBUTE_UI_TEXT = {
   statusLabel: 'attributes.labels.status',
   nameLabel: 'attributes.labels.name',
   keyLabel: 'attributes.labels.key',
-  labelLabel: 'attributes.labels.label',
-  inputTypeLabel: 'attributes.labels.inputType',
   allowedValuesLabel: 'attributes.labels.allowedValues',
   deleteTitle: 'attributes.deleteConfirm.title',
   deleteMessage: 'attributes.deleteConfirm.message',

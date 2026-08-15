@@ -203,6 +203,7 @@ export class ProductCollectionsComponent implements OnInit {
     status: ['INACTIVE' as 'ACTIVE' | 'INACTIVE', [Validators.required]],
     autoSyncNewVariants: [true],
     showOnHomeScreen: [false],
+    showAllItemsOnHomeScreen: [false],
     categoryIds: [[] as string[]],
     productSearch: [''],
     groupTabSearch: [''],
@@ -530,6 +531,7 @@ export class ProductCollectionsComponent implements OnInit {
       status: (String(raw.status || 'INACTIVE').toUpperCase() as 'ACTIVE' | 'INACTIVE'),
       autoSyncNewVariants: raw.autoSyncNewVariants !== false,
       showOnHomeScreen: raw.showOnHomeScreen === true,
+      showAllItemsOnHomeScreen: raw.showAllItemsOnHomeScreen === true,
       assignments: this.buildAssignments(),
       mappingState: this.buildMappingStatePayload(),
     };
@@ -795,6 +797,7 @@ export class ProductCollectionsComponent implements OnInit {
           status: detail.status,
           autoSyncNewVariants: detail.autoSyncNewVariants !== false,
           showOnHomeScreen: detail.showOnHomeScreen === true,
+          showAllItemsOnHomeScreen: detail.showAllItemsOnHomeScreen === true,
           categoryIds: [],
           productSearch: '',
           groupTabSearch: '',

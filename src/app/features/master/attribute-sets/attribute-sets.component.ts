@@ -7,14 +7,14 @@ import { GomAlertToastService, GomButtonComponent, GomConfirmationModalComponent
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { DisableIfNoFeatureDirective } from '../../../shared/directives/disable-if-no-feature.directive';
 import { ATTRIBUTE_SET_DEFAULT_STATUS, ATTRIBUTE_SET_REQUIRED_OPTIONS, ATTRIBUTE_SET_STATUS_OPTIONS, ATTRIBUTE_SET_UI_TEXT } from './attribute-sets.constants';
-import { AttributeDefinitionOption, AttributeSet, AttributeSetItem, AttributeSetPayload, AttributeSetsService, CategoryOption } from './attribute-sets.service';
+import { AttributeDefinitionOption, AttributeSet, AttributeSetPayload, AttributeSetsService } from './attribute-sets.service';
 
 interface AttributeSetRow extends GomTableRow {
   _id: string;
   name: string;
   description: string;
   attributes: string;
-  categories: string;
+  // categories: string; // Category association removed
   status: string;
 }
 
@@ -49,9 +49,9 @@ export class AttributeSetsComponent implements OnInit {
   readonly deleteConfirmOpen = signal(false);
   readonly pendingDelete = signal<AttributeSet | null>(null);
   readonly attributes = signal<AttributeDefinitionOption[]>([]);
-  readonly categories = signal<CategoryOption[]>([]);
+  // readonly categories = signal<CategoryOption[]>([]); // Category association removed
   readonly attributeOptions = computed(() => this.attributes().map((item) => ({ value: item._id, label: `${item.name} (${item.key})` })));
-  readonly categoryOptions = computed(() => this.categories().filter((item) => item.status === 'ACTIVE').map((item) => ({ value: item._id, label: item.name })));
+  // readonly categoryOptions = computed(() => this.categories().filter((item) => item.status === 'ACTIVE').map((item) => ({ value: item._id, label: item.name }))); // Category association removed
   readonly canCreate = computed(() => this.authSession.hasFeature('attributeSet.create'));
   readonly canEdit = computed(() => this.authSession.hasFeature('attributeSet.edit'));
   readonly canDelete = computed(() => this.authSession.hasFeature('attributeSet.delete'));
@@ -60,15 +60,15 @@ export class AttributeSetsComponent implements OnInit {
     name: ['', [Validators.required, Validators.minLength(2)]],
     description: [''],
     attributes: ['' as string, [Validators.required]],
-    categories: ['' as string],
-    status: [ATTRIBUTE_SET_DEFAULT_STATUS, [Validators.required]],
+    // categories: ['' as string], // Category association removed
+    status: [ATTRIBUTE_SET_DEFAULT_STATUS as string, [Validators.required]],
   });
 
   readonly columns: GomTableColumn<AttributeSetRow>[] = [
     { key: 'name', header: '', sortable: true, filterable: true, width: '16rem' },
     { key: 'description', header: '', sortable: true, width: '16rem', textMode: 'wrap' },
     { key: 'attributes', header: '', width: '18rem', textMode: 'wrap' },
-    { key: 'categories', header: '', width: '14rem', textMode: 'wrap' },
+    // { key: 'categories', header: '', width: '14rem', textMode: 'wrap' }, // Category association removed
     { key: 'status', header: '', sortable: true, width: '10rem' },
     { key: 'id', header: '', width: '10rem', actionButtons: [] },
   ];
@@ -79,7 +79,7 @@ export class AttributeSetsComponent implements OnInit {
       name: item.name,
       description: item.description || '-',
       attributes: item.attributes?.length ? item.attributes.map((a) => a.attributeId).join(', ') : '-',
-      categories: item.categoryIds?.length ? item.categoryIds.join(', ') : '-',
+      // categories: item.categoryIds?.length ? item.categoryIds.join(', ') : '-', // Category association removed
       status: item.status,
     }))
   );
@@ -96,7 +96,7 @@ export class AttributeSetsComponent implements OnInit {
   onAddNew(): void {
     if (!this.canCreate()) return;
     this.selected.set(null);
-    this.form.reset({ name: '', description: '', attributes: '', categories: '', status: ATTRIBUTE_SET_DEFAULT_STATUS });
+    this.form.reset({ name: '', description: '', attributes: '', status: ATTRIBUTE_SET_DEFAULT_STATUS });
     this.formOpen.set(true);
   }
 
@@ -130,7 +130,7 @@ export class AttributeSetsComponent implements OnInit {
         name: item.name,
         description: item.description,
         attributes: item.attributes?.map((attr) => attr.attributeId).join(', ') || '',
-        categories: item.categoryIds?.join(', ') || '',
+        // categories: item.categoryIds?.join(', ') || '', // Category association removed
         status: item.status,
       });
       this.formOpen.set(true);
@@ -161,8 +161,8 @@ export class AttributeSetsComponent implements OnInit {
       name: raw.name.trim(),
       description: raw.description.trim(),
       attributes: attributeIds.map((attributeId, index) => ({ attributeId, order: index + 1, requiredOverride: null })),
-      categoryIds: raw.categories.split(',').map((item) => item.trim()).filter(Boolean),
-      status: raw.status,
+      // categoryIds removed - attribute sets are now global
+      status: raw.status as any,
     };
 
     this.loading.set(true);
@@ -226,12 +226,15 @@ export class AttributeSetsComponent implements OnInit {
     });
 
     this.service.getAttributes({ page: 1, limit: 500, status: 'ACTIVE' }).subscribe({ next: (response) => this.attributes.set(response.data ?? []) });
-    this.service.listCategories({ page: 1, limit: 500, status: 'ACTIVE' }).subscribe({ next: (response) => this.categories.set(response.data ?? []) });
+    // Categories load removed - attribute sets are now global
   }
 
-  private handleError(error: unknown, fallbackKey: keyof typeof ATTRIBUTE_SET_UI_TEXT): void {
+  private handleError(error: unknown, fallbackKey: string): void {
     console.error('Attribute sets error:', error);
-    const message = this.translate.instant(fallbackKey);
+    const apiMessage = String((error as { error?: { message?: string } })?.error?.message || '').toLowerCase();
+    const message = apiMessage.includes('duplicate') || apiMessage.includes('already exists') || apiMessage.includes('e11000')
+      ? 'An attribute set with the same name already exists.'
+      : this.translate.instant(fallbackKey);
     this.errorMessage.set(message);
     this.toast.error(message);
     this.loading.set(false);
@@ -241,10 +244,10 @@ export class AttributeSetsComponent implements OnInit {
     this.columns[0].header = this.translate.instant(this.text.nameLabel);
     this.columns[1].header = this.translate.instant(this.text.descriptionLabel);
     this.columns[2].header = this.translate.instant(this.text.attributesLabel);
-    this.columns[3].header = this.translate.instant(this.text.categoriesLabel);
-    this.columns[4].header = this.translate.instant(this.text.statusLabel);
-    this.columns[5].header = this.translate.instant(this.text.actionsLabel);
-    this.columns[5].actionButtons = [
+    // this.columns[3].header = this.translate.instant(this.text.categoriesLabel); // Category association removed
+    this.columns[3].header = this.translate.instant(this.text.statusLabel);
+    this.columns[4].header = this.translate.instant(this.text.actionsLabel);
+    this.columns[4].actionButtons = [
       { label: this.translate.instant(this.text.editAction), actionKey: 'edit', variant: 'secondary' },
       { label: this.translate.instant(this.text.deleteAction), actionKey: 'delete', variant: 'secondary' },
     ];

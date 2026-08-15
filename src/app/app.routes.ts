@@ -14,6 +14,7 @@ import { StockComponent } from './features/product/stock';
 import { VariantsComponent } from './features/product/variants';
 import { PacksComponent } from './features/product/packs';
 import { ProductCollectionsComponent } from './features/product/product-collections';
+import { SimplePricingComponent } from './features/pricing/simple-pricing/simple-pricing.component';
 import { OrdersComponent } from './features/order/orders';
 import { CreateOrderComponent } from './features/order/create-order';
 import { RidersComponent } from './features/delivery/riders';
@@ -204,6 +205,17 @@ export const routes: Routes = [
 				path: 'product/packs',
 				component: PacksComponent,
 				data: { actor: 'tenant', capability: 'product', featureKeys: ['pack.list'] },
+			},
+			{
+				path: 'pricing/simple',
+				component: SimplePricingComponent,
+				data: {
+					actor: 'tenant',
+					capability: 'product',
+					featureKeys: ['variant.list'],
+					title: 'Simple Pricing',
+					description: 'Quickly review and update selling prices for groups and variants.',
+				},
 			},
 			{
 				path: 'product/product-collections',

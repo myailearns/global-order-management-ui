@@ -23,6 +23,7 @@ export interface UnitFormData {
   baseUnitId: string | null;
   conversionFactor: number;
   status: UnitStatus;
+  /** @deprecated Category association removed - units are now global */
   categoryIds?: string[];
 }
 
@@ -36,7 +37,7 @@ export interface UnitFormData {
 export class UnitsFormComponent implements OnInit, OnChanges {
   @Input() initialData: UnitFormData | null = null;
   @Input() baseUnitOptions: UnitAssignOption[] = [];
-  @Input() categoryOptions: GomSelectOption[] = [];
+  // @Input() categoryOptions: GomSelectOption[] = []; // Category association removed
   @Input() isOpen = false;
   @Output() formSubmit = new EventEmitter<UnitPayload>();
   @Output() formCancel = new EventEmitter<void>();
@@ -46,8 +47,8 @@ export class UnitsFormComponent implements OnInit, OnChanges {
   readonly cancelMode: GomButtonContentMode = getButtonContentMode('dismiss');
   readonly statusOptions: GomSelectOption[] = [];
 
-  selectedCategoryIds: string[] = [];
-  categorySelectCloseToken = 0;
+  // selectedCategoryIds: string[] = []; // Category association removed
+  // categorySelectCloseToken = 0; // Category association removed
 
   private readonly fb = inject(FormBuilder);
   private readonly translate = inject(TranslateService);
@@ -58,7 +59,7 @@ export class UnitsFormComponent implements OnInit, OnChanges {
     symbol: ['', [Validators.required, Validators.minLength(1)]],
     baseUnitId: [''],
     conversionFactor: [{ value: '1', disabled: true }, [Validators.required]],
-    mappedCategories: this.fb.nonNullable.control<string[]>([], [Validators.required]),
+    // mappedCategories: this.fb.nonNullable.control<string[]>([], [Validators.required]), // Category association removed
     status: new FormControl<UnitStatus>(UNIT_DEFAULT_STATUS, {
       nonNullable: true,
       validators: [Validators.required],
@@ -77,16 +78,7 @@ export class UnitsFormComponent implements OnInit, OnChanges {
         if (baseUnitId) {
           this.form.controls.conversionFactor.enable({ emitEvent: false });
 
-          const selectedBaseUnit = this.baseUnitOptions.find((option) => option.id === String(baseUnitId));
-          const inheritedCategoryIds = Array.isArray(selectedBaseUnit?.categoryIds)
-            ? selectedBaseUnit.categoryIds.map((id) => String(id || '').trim()).filter(Boolean)
-            : [];
-
-          if (inheritedCategoryIds.length > 0 && this.selectedCategoryIds.length === 0) {
-            this.selectedCategoryIds = [...new Set(inheritedCategoryIds)];
-            this.form.controls.mappedCategories.setValue([...this.selectedCategoryIds]);
-          }
-
+          // Category inheritance logic removed
           return;
         }
 
@@ -141,7 +133,6 @@ export class UnitsFormComponent implements OnInit, OnChanges {
   onSubmit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
-      this.form.controls.mappedCategories.markAsTouched();
       return;
     }
 
@@ -152,7 +143,7 @@ export class UnitsFormComponent implements OnInit, OnChanges {
       baseUnitId: raw.baseUnitId || null,
       conversionFactor: raw.baseUnitId ? Number(raw.conversionFactor || 1) : 1,
       status: raw.status,
-      categoryIds: [...this.selectedCategoryIds],
+      // categoryIds removed - units are now global
     };
 
     this.formSubmit.emit(payload);
@@ -163,11 +154,7 @@ export class UnitsFormComponent implements OnInit, OnChanges {
     this.formCancel.emit();
   }
 
-  onMappedCategorySelectionChange(ids: string[]): void {
-    this.selectedCategoryIds = [...ids];
-    this.form.controls.mappedCategories.setValue([...ids]);
-    this.form.controls.mappedCategories.markAsTouched();
-  }
+  // onMappedCategorySelectionChange removed - category association removed
 
   onConversionFactorInput(value: string): void {
     // Keep the control in sync with the latest typed value immediately.
@@ -184,15 +171,14 @@ export class UnitsFormComponent implements OnInit, OnChanges {
       symbol: '',
       baseUnitId: '',
       conversionFactor: '1',
-      mappedCategories: [],
+      // mappedCategories: [], // Category association removed
       status: UNIT_DEFAULT_STATUS,
     });
 
     this.form.controls.conversionFactor.setValue('1', { emitEvent: false });
     this.form.controls.conversionFactor.disable({ emitEvent: false });
 
-    this.selectedCategoryIds = [];
-    this.categorySelectCloseToken++;
+    // Category state reset removed
 
     this.form.markAsPristine();
     this.form.markAsUntouched();
@@ -218,7 +204,7 @@ export class UnitsFormComponent implements OnInit, OnChanges {
       symbol: this.initialData?.symbol ?? '',
       baseUnitId: this.initialData?.baseUnitId ?? '',
       conversionFactor: String(this.initialData?.conversionFactor ?? 1),
-      mappedCategories: this.initialData?.categoryIds ?? [],
+      // mappedCategories: this.initialData?.categoryIds ?? [], // Category association removed
       status: this.initialData?.status ?? UNIT_DEFAULT_STATUS,
     });
 
@@ -229,17 +215,13 @@ export class UnitsFormComponent implements OnInit, OnChanges {
       this.form.controls.conversionFactor.disable({ emitEvent: false });
     }
 
-    this.selectedCategoryIds = [...(this.initialData?.categoryIds ?? [])];
-    this.categorySelectCloseToken++;
+    // Category state initialization removed
 
     this.form.markAsPristine();
     this.form.markAsUntouched();
   }
 
-  get mappedCategoriesInvalid(): boolean {
-    const control = this.form.controls.mappedCategories;
-    return control.touched && control.invalid;
-  }
+  // mappedCategoriesInvalid removed - category association removed
 
   private rebuildStatusOptions(): void {
     this.statusOptions.length = 0;

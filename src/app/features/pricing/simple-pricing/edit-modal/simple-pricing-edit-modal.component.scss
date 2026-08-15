@@ -1,0 +1,115 @@
+@use "theme" as theme;
+
+// Backdrop overlay
+:host {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.simple-pricing-edit__modal {
+  position: relative;
+  background: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0;
+  width: 720px;
+  max-width: 95vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.simple-pricing-edit__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e0e0e0;
+
+  h2 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+}
+
+.simple-pricing-edit__close {
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  cursor: pointer;
+  color: #666;
+  padding: 0 4px;
+  line-height: 1;
+
+  &:hover {
+    color: #000;
+  }
+}
+
+.simple-pricing-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+}
+
+.simple-pricing-edit__preview {
+  background: #f5f5f5;
+  border-radius: 6px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.simple-pricing-edit__preview-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+
+  span {
+    color: #555;
+  }
+
+  strong {
+    color: #111;
+  }
+}
+
+.simple-pricing-edit__fields {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  h3 {
+    margin: 0 0 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #333;
+  }
+}
+
+.simple-pricing-edit__fields-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.simple-pricing-edit__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 8px;
+  border-top: 1px solid #e0e0e0;
+}
+

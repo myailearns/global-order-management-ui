@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, computed, inject, OnInit, signal, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, computed, inject, OnInit, OnDestroy, signal, ViewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import {
   FormBuilder,
@@ -17,6 +17,7 @@ import {
   GomAlertToastService,
   GomButtonComponent,
   GomButtonContentMode,
+  GomConfirmationModalComponent,
   GomModalComponent,
   GomSelectOption,
   GomTabContentComponent,
@@ -42,23 +43,31 @@ import {
   Field,
   FieldGroup,
   Group,
+  GroupCompletionStatus,
+  GroupVariantGenerationPreview,
   GroupPayload,
   PricingRefreshMode,
   GroupsService,
   Unit,
   TaxProfile,
 } from './groups.service';
+import { QuickCreateGroupComponent } from './quick-create';
+import {
+  BulkImportTemplateService,
+  BulkUploadFailedRow,
+  BulkUploadJobResults,
+  BulkUploadJobStatus,
+  BulkUploadVariantFailure,
+} from './bulk-upload/services/bulk-import-template.service';
+import { VariantsService, ApiPaginated, Variant } from '../variants/variants.service';
 
 interface GroupRow extends GomTableRow {
   _id: string;
   name: string;
   categoryName: string;
-  fieldGroupName: string;
-  taxProfileName: string;
   stock: string;
   stockSeverity: 'normal' | 'low' | 'critical';
   status: string;
-  updatedAt: string;
   actions: string;
 }
 
@@ -75,6 +84,7 @@ interface GroupWizardField {
 
 type FormulaTarget = 'sellingPrice' | 'anchorPrice' | 'actualPrice';
 type SellingMarginBase = 'actual' | 'buy';
+type CompletionChecklistItem = 'fieldValues' | 'variants' | 'media' | 'advancedSettings';
 
 interface BulkRowEditContext {
   name: string;
@@ -91,6 +101,48 @@ interface BulkRowEditContext {
   baseUnitId: string;
 }
 
+interface BulkFailedResultRow extends GomTableRow {
+  rowId: string;
+  rowNumber: number;
+  groupName: string;
+  category: string;
+  inferredGroupType: string;
+  baseUnit: string;
+  allowedUnits: string;
+  resultType: string;
+  errorSummary: string;
+  errorFields: string[];
+  actions: string;
+}
+
+interface BulkSuccessResultRow extends GomTableRow {
+  rowId: string;
+  rowNumber: number;
+  groupId: string;
+  groupName: string;
+  category: string;
+  inferredGroupType: string;
+  baseUnit: string;
+  allowedUnits: string;
+  variantSummary: string;
+  variantTooltip: string;
+  createVariantsRequested: boolean;
+  variantFailureCount: number;
+  variantIssue: string;
+  actions: string;
+  status: string;
+}
+
+interface BulkVariantFailureRow extends GomTableRow {
+  id: string;
+  rowNumber: number;
+  groupName: string;
+  attemptedVariantLabel: string;
+  measuredInput: string;
+  failureCode: string;
+  failureMessage: string;
+}
+
 @Component({
   selector: 'gom-groups',
   standalone: true,
@@ -104,16 +156,20 @@ interface BulkRowEditContext {
     GomTabsComponent,
     GomTabContentComponent,
     GomModalComponent,
+    GomConfirmationModalComponent,
     ImagePickerComponent,
     RichTextEditorComponent,
+    QuickCreateGroupComponent,
   ],
   templateUrl: './groups.component.html',
   styleUrl: './groups.component.scss',
 })
-export class GroupsComponent implements OnInit {
+export class GroupsComponent implements OnInit, OnDestroy {
   @ViewChild('descEditor') descEditor?: RichTextEditorComponent;
+  @ViewChild('quickCreateModal') quickCreateModal?: QuickCreateGroupComponent;
   private readonly groupsService = inject(GroupsService);
   private readonly mediaService = inject(MediaAssetService);
+  private readonly bulkImportTemplateService = inject(BulkImportTemplateService);
   private readonly toast = inject(GomAlertToastService);
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
@@ -121,14 +177,104 @@ export class GroupsComponent implements OnInit {
   private readonly authSession = inject(AuthSessionService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly productCollectionsService = inject(ProductCollectionsService);
+  private readonly variantsService = inject(VariantsService);
   private readonly bulkRowEditContextStorageKey = 'gom.bulk.row.edit.context';
   private readonly groupFieldToggleControls = new Map<string, FormControl<boolean>>();
+  private pendingQuickEditGroupId: string | null = null;
+  private bulkUploadPollTimer: ReturnType<typeof setInterval> | null = null;
+
+  // ── Bulk Upload Excel state ─────────────────────────────────────────────
+  readonly templateUploading = signal(false);
+  readonly bulkUploadJobId = signal<string | null>(null);
+  readonly bulkUploadJobStatus = signal<BulkUploadJobStatus | null>(null);
+  readonly showBulkUploadResultModal = signal(false);
+  readonly bulkUploadResults = signal<BulkUploadJobResults | null>(null);
+  readonly bulkUploadResultsLoading = signal(false);
+  readonly bulkUploadRetryingRowId = signal<string | null>(null);
+  readonly bulkUploadEditRow = signal<BulkUploadFailedRow | null>(null);
+  readonly bulkUploadEditGroupName = signal('');
+  readonly bulkUploadEditGroupNameControl = new FormControl<string>('', { nonNullable: true });
+  readonly bulkUploadPendingQuickCreateRow = signal<BulkUploadFailedRow | null>(null);
+  readonly reopenBulkUploadResultsAfterQuickCreate = signal(false);
+  readonly bulkUploadAcknowledgeConfirmOpen = signal(false);
+  readonly bulkUploadDeleteConfirmOpen = signal(false);
+  readonly bulkUploadRowToDelete = signal<BulkUploadFailedRow | null>(null);
+  readonly bulkVariantFailuresHidden = signal(false);
+
+  readonly bulkJobIsActive = computed(() => {
+    const s = this.bulkUploadJobStatus()?.status;
+    return s === 'QUEUED' || s === 'VALIDATING' || s === 'PROCESSING';
+  });
+
+  readonly bulkJobIsTerminal = computed(() => this.bulkUploadJobStatus()?.isTerminal ?? false);
+  readonly bulkJobUnresolvedCount = computed(() => {
+    // Always prefer the server-authoritative totals (row-level counts, not record counts).
+    // Fallback to counting locally only when status is not yet loaded.
+    const fromStatus = this.bulkUploadJobStatus()?.totals?.unresolvedRows;
+    if (typeof fromStatus === 'number') {
+      return fromStatus;
+    }
+    // Local fallback: count unresolved failed rows only (variant warnings are server-authoritative).
+    return this.bulkUploadResults()?.failedRows.filter((r) => !r.resolved).length ?? 0;
+  });
+  readonly showBulkUploadBanner = computed(() => {
+    // Keep completion banner visible for the current job even when there are no failures,
+    // so users can still open View and inspect success/variant-warning details.
+    return this.bulkJobIsActive() || this.bulkJobUnresolvedCount() > 0 || this.bulkJobIsTerminal();
+  });
+
+  private readonly bulkFailedErrorFieldMap: Record<string, string[]> = {
+    GROUP_NAME_REQUIRED: ['groupName'],
+    DUPLICATE: ['groupName'],
+    CATEGORY_INVALID: ['category'],
+    BASE_UNIT_REQUIRED: ['baseUnit'],
+    ALLOWED_UNIT_INVALID: ['allowedUnits'],
+    TAX_PROFILE_INVALID: ['taxProfile'],
+    PRICING_TEMPLATE_INVALID: ['pricingTemplate'],
+    GROUP_TYPE_INFERENCE_FAILED: ['inferredGroupType'],
+    ATTRIBUTE_INVALID: ['inferredGroupType'],
+    ATTRIBUTE_VALUES_REQUIRED: ['inferredGroupType'],
+    ATTRIBUTE_VALUES_INVALID: ['inferredGroupType'],
+    ATTRIBUTE_NAME_REQUIRED: ['inferredGroupType'],
+    QUOTA_EXCEEDED: ['resultType'],
+    SYSTEM_ERROR: ['resultType'],
+    INVALID: ['resultType'],
+  };
 
   readonly loading = signal(false);
+  readonly templateDownloading = signal(false);
+  readonly templateRefreshing = signal(false);
+  readonly showTemplateRefreshWarningsModal = signal(false);
+  readonly templateRefreshWarnings = signal<Array<{ rowNumber: number; message: string }>>([]);
+  readonly templateRefreshResult = signal<{
+    file: string;
+    filename: string;
+    rowCount: number;
+    newlyAdded: {
+      categories: string[];
+      units: string[];
+      taxProfiles: string[];
+      pricingTemplates: string[];
+      attributes: string[];
+    };
+    masterData: {
+      categories: string[];
+      units: string[];
+      taxProfiles: string[];
+      pricingTemplates: string[];
+      attributes: string[];
+    };
+  } | null>(null);
   readonly canCreateGroup = computed(() => this.authSession.hasFeature('group.create'));
+  readonly canCreateTabbedGroup = computed(() => {
+    return (
+      this.authSession.hasFeature('tap.create_group')
+      || this.authSession.hasFeature('tab.create_group')
+      || this.authSession.hasFeature('Tap Create Group')
+    );
+  });
   readonly canUpdateGroup = computed(() => this.authSession.hasFeature('group.edit') || this.authSession.hasFeature('group.update'));
   readonly canDeleteGroup = computed(() => this.authSession.hasFeature('group.delete'));
-  readonly canPublishGroup = computed(() => this.authSession.hasFeature('group.publish'));
   readonly canBulkCreateGroup = computed(() => this.authSession.hasFeature('group.bulk_create'));
   readonly canCreateStock = computed(() => this.authSession.hasFeature('stock.create'));
   readonly canCreateVariant = computed(() => this.authSession.hasFeature('variant.create'));
@@ -146,6 +292,15 @@ export class GroupsComponent implements OnInit {
     return Math.max(limit - this.groupCreateUsed(), 0);
   });
   readonly saving = signal(false);
+  readonly completionStatus = signal<GroupCompletionStatus | null>(null);
+  readonly completionLoading = signal(false);
+  readonly completionActionItem = signal<CompletionChecklistItem | null>(null);
+  readonly completionMode = signal(false);
+  readonly variantReviewOpen = signal(false);
+  readonly variantReviewLoading = signal(false);
+  readonly variantGenerating = signal(false);
+  readonly variantPreview = signal<GroupVariantGenerationPreview | null>(null);
+  readonly variantDisabledKeys = signal<string[]>([]);
   readonly errorMessage = signal<string | null>(null);
 
   readonly totalGroups = signal(0);
@@ -159,7 +314,6 @@ export class GroupsComponent implements OnInit {
   readonly totalGroupPages = computed(() => Math.max(Math.ceil(this.totalGroups() / 50), 1));
 
   readonly groups = signal<Group[]>([]);
-  readonly selectedGroupRows = signal<GroupRow[]>([]);
   readonly categories = signal<Category[]>([]);
   readonly fields = signal<Field[]>([]);
   readonly fieldGroups = signal<FieldGroup[]>([]);
@@ -265,8 +419,6 @@ export class GroupsComponent implements OnInit {
   readonly columns: GomTableColumn<GroupRow>[] = [
     { key: 'name', header: 'Group Name', sortable: true, filterable: true, width: '16rem' },
     { key: 'categoryName', header: 'Category', sortable: true, filterable: true, width: '12rem' },
-    { key: 'fieldGroupName', header: 'Field Group', sortable: true, filterable: true, width: '14rem' },
-    { key: 'taxProfileName', header: 'Tax Profile', sortable: true, filterable: true, width: '14rem' },
     {
       key: 'stock',
       header: 'Stock',
@@ -283,7 +435,6 @@ export class GroupsComponent implements OnInit {
       },
     },
     { key: 'status', header: 'Status', sortable: true, filterable: true, width: '10rem' },
-    { key: 'updatedAt', header: 'Updated', sortable: true, width: '12rem' },
     {
       key: 'actions',
       header: 'Actions',
@@ -295,6 +446,13 @@ export class GroupsComponent implements OnInit {
           actionKey: 'edit',
           variant: 'secondary',
           disabled: () => !this.canUpdateGroup(),
+        },
+        {
+          label: () => this.canCreateGroup() ? 'Clone Group' : 'No permission to clone groups',
+          icon: 'ri-file-copy-line',
+          actionKey: 'clone',
+          variant: 'secondary',
+          disabled: () => !this.canCreateGroup(),
         },
         {
           label: () => this.canCreateStock() ? 'Add Stock' : 'No permission to add stock',
@@ -318,18 +476,6 @@ export class GroupsComponent implements OnInit {
           disabled: () => !this.canManageProductCollections(),
         },
         {
-          label: (row: GroupRow) => {
-            if (!this.canPublishGroup()) {
-              return 'No permission to publish/unpublish groups';
-            }
-            return row.status === 'INACTIVE' ? 'Publish' : 'Unpublish';
-          },
-          icon: (row: GroupRow) => row.status === 'INACTIVE' ? 'ri-toggle-fill' : 'ri-toggle-line',
-          actionKey: 'publish',
-          variant: 'primary',
-          disabled: () => !this.canPublishGroup(),
-        },
-        {
           label: () => this.canDeleteGroup() ? 'Delete' : 'No permission to delete groups',
           icon: 'ri-delete-bin-line',
           actionKey: 'delete',
@@ -339,6 +485,288 @@ export class GroupsComponent implements OnInit {
       ],
     },
   ];
+
+  readonly bulkFailedColumns: GomTableColumn<BulkFailedResultRow>[] = [
+    { key: 'rowNumber', header: 'Row', sortable: true, width: '6rem' },
+    {
+      key: 'groupName',
+      header: 'Group Name',
+      sortable: true,
+      filterable: true,
+      width: '14rem',
+      cellClass: (_value, row) => row.errorFields.includes('groupName') ? 'bulk-upload-cell--error' : '',
+    },
+    {
+      key: 'category',
+      header: 'Category',
+      sortable: true,
+      filterable: true,
+      width: '12rem',
+      cellClass: (_value, row) => row.errorFields.includes('category') ? 'bulk-upload-cell--error' : '',
+    },
+    {
+      key: 'inferredGroupType',
+      header: 'Group Type',
+      sortable: true,
+      filterable: true,
+      width: '10rem',
+      cellClass: (_value, row) => row.errorFields.includes('inferredGroupType') ? 'bulk-upload-cell--error' : '',
+    },
+    {
+      key: 'baseUnit',
+      header: 'Base Unit',
+      sortable: true,
+      filterable: true,
+      width: '10rem',
+      cellClass: (_value, row) => row.errorFields.includes('baseUnit') ? 'bulk-upload-cell--error' : '',
+    },
+    {
+      key: 'allowedUnits',
+      header: 'Allowed Units',
+      sortable: false,
+      filterable: true,
+      width: '12rem',
+      cellClass: (_value, row) => row.errorFields.includes('allowedUnits') ? 'bulk-upload-cell--error' : '',
+    },
+    {
+      key: 'resultType',
+      header: 'Fail Type',
+      sortable: true,
+      filterable: true,
+      width: '10rem',
+      cellClass: (_value, row) => row.errorFields.includes('resultType') ? 'bulk-upload-cell--error' : '',
+    },
+    {
+      key: 'errorSummary',
+      header: 'Error Details',
+      sortable: false,
+      filterable: true,
+      width: '24rem',
+      cellClass: () => 'bulk-upload-cell--error-detail',
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      width: '18rem',
+      actionButtons: [
+        {
+          label: () => 'Edit',
+          icon: 'ri-pencil-line',
+          actionKey: 'edit',
+          variant: 'secondary',
+        },
+        {
+          label: () => 'Retry',
+          icon: 'ri-refresh-line',
+          actionKey: 'retry',
+          variant: 'secondary',
+        },
+        {
+          label: () => 'Delete',
+          icon: 'ri-delete-bin-line',
+          actionKey: 'delete',
+          variant: 'danger',
+        },
+      ],
+    },
+  ];
+
+  readonly bulkSuccessColumns: GomTableColumn<BulkSuccessResultRow>[] = [
+    { key: 'rowNumber', header: 'Row', sortable: true, width: '6rem' },
+    { key: 'groupName', header: 'Group Name', sortable: true, filterable: true, width: '14rem' },
+    { key: 'category', header: 'Category', sortable: true, filterable: true, width: '12rem' },
+    { key: 'inferredGroupType', header: 'Group Type', sortable: true, filterable: true, width: '10rem' },
+    { key: 'baseUnit', header: 'Base Unit', sortable: true, filterable: true, width: '10rem' },
+    { key: 'allowedUnits', header: 'Allowed Units', sortable: false, filterable: true, width: '12rem' },
+    {
+      key: 'variantSummary',
+      header: 'Variants',
+      sortable: false,
+      filterable: true,
+      width: '24rem',
+      tooltip: (_value, row) => row.variantTooltip,
+    },
+    {
+      key: 'variantIssue',
+      header: 'Variant Issue',
+      sortable: false,
+      filterable: true,
+      width: '26rem',
+      cellClass: (_value, row) => row.variantIssue !== '-' ? 'bulk-upload-cell--error-detail' : '',
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      width: '14rem',
+      actionButtons: [
+        {
+          label: () => 'Retry Variants',
+          icon: 'ri-refresh-line',
+          actionKey: 'retry-variants',
+          variant: 'secondary',
+          disabled: (row) => !(row.createVariantsRequested && row.variantFailureCount > 0 && !!row.groupId),
+          disabledTooltip: (row) => row.createVariantsRequested
+            ? 'No variant retry needed for this row'
+            : 'Create Variants is not enabled for this row',
+        },
+      ],
+    },
+    { key: 'status', header: 'Status', sortable: true, filterable: true, width: '8rem' },
+  ];
+
+  readonly bulkFailedRows = computed<BulkFailedResultRow[]>(() => {
+    const rows = this.bulkUploadResults()?.failedRows ?? [];
+    return rows
+      .filter((row) => !row.resolved)
+      .map((row) => {
+        const errorFields = this.resolveFailedRowErrorFields(row);
+        const cleanedErrors = (row.reasons || [])
+          .map((reason) => this.parseErrorMessage(reason.message || ''))
+          .filter((msg) => msg !== '-')
+          .join(' | ');
+        return {
+          rowId: row.rowId,
+          rowNumber: Number(row.rowNumber || 0),
+          groupName: String(row.groupName || row.rawPayload?.['groupName'] || '-'),
+          category: String(row.rawPayload?.['category'] || '-'),
+          inferredGroupType: String(row.inferredGroupType || '-'),
+          baseUnit: String(row.rawPayload?.['baseUnit'] || '-'),
+          allowedUnits: String(row.rawPayload?.['allowedUnits'] || '-'),
+          resultType: String(row.resultType || '-'),
+          errorSummary: cleanedErrors || '-',
+          errorFields,
+          actions: 'Edit / Retry / Delete',
+        };
+      });
+  });
+
+  readonly bulkSuccessRows = computed<BulkSuccessResultRow[]>(() => {
+    const rows = this.bulkUploadResults()?.successRows ?? [];
+    return rows.map((row) => ({
+      groupId: String(row.groupId || ''),
+      createVariantsRequested: Boolean(row.createVariantsRequested),
+      variantFailureCount: Number(row.variantFailureCount || 0),
+      variantIssue: String(row.variantFailureReason || '').trim() || '-',
+      actions: 'Retry Variants',
+      variantSummary: this.buildVariantSummary(
+        Array.isArray(row.variantNames) ? row.variantNames : [],
+        Number(row.variantCount || 0)
+      ),
+      variantTooltip: this.buildVariantTooltip(
+        Array.isArray(row.variantNames) ? row.variantNames : [],
+        Number(row.variantCount || 0)
+      ),
+      rowId: row.rowId,
+      rowNumber: Number(row.rowNumber || 0),
+      groupName: String(row.groupName || '-'),
+      category: String(row.category || row.rawPayload?.['category'] || '-'),
+      inferredGroupType: String(row.inferredGroupType || '-'),
+      baseUnit: String(row.baseUnit || row.rawPayload?.['baseUnit'] || '-'),
+      allowedUnits: String(row.allowedUnits || row.rawPayload?.['allowedUnits'] || '-'),
+      status: 'SUCCESS',
+    }));
+  });
+
+  onBulkSuccessRowAction(event: { actionKey: string; row: GomTableRow }): void {
+    if (event.actionKey !== 'retry-variants') {
+      return;
+    }
+
+    const rowId = String(event.row['rowId'] || '');
+    if (!rowId) {
+      return;
+    }
+
+    const row = this.bulkUploadResults()?.successRows.find((item) => item.rowId === rowId);
+    if (!row) {
+      return;
+    }
+
+    this.retryVariantsForSuccessRow(row);
+  }
+
+  private retryVariantsForSuccessRow(row: { rowId: string; rowNumber: number; groupId: string | null }): void {
+    const jobId = this.bulkUploadJobId();
+    if (!jobId || !row.groupId) {
+      this.toast.warning('Cannot retry variants for this row.');
+      return;
+    }
+
+    this.bulkUploadRetryingRowId.set(row.rowId);
+    this.bulkImportTemplateService.retryRow(jobId, row.rowId, { retryVariantsOnly: 'true' }).subscribe({
+      next: (res) => {
+        this.bulkUploadRetryingRowId.set(null);
+        const attempted = Number(res.data?.variantRetry?.attempted || 0);
+        const warnings = Number(res.data?.variantRetry?.warningCount || 0);
+        if (warnings > 0) {
+          this.toast.warning(`Retried ${attempted} variants. ${warnings} warning(s) remain.`);
+        } else {
+          this.toast.success(`Retried ${attempted} variants successfully.`);
+        }
+        this.loadBulkUploadResults(jobId);
+      },
+      error: (err) => {
+        this.bulkUploadRetryingRowId.set(null);
+        this.toast.error(err?.error?.message || 'Retry variants failed. Please try again.');
+      },
+    });
+  }
+
+  private buildVariantSummary(variantNames: string[], totalCount: number): string {
+    if (!Number.isFinite(totalCount) || totalCount <= 0) {
+      return 'No variants created';
+    }
+    const cleanNames = variantNames
+      .map((name) => String(name || '').trim())
+      .filter(Boolean)
+      .slice(0, 3);
+    const remaining = Math.max(0, totalCount - cleanNames.length);
+    const prefix = cleanNames.length > 0 ? cleanNames.join(' | ') : `${totalCount} created`;
+    return remaining > 0 ? `${prefix} + ${remaining} more` : prefix;
+  }
+
+  private buildVariantTooltip(variantNames: string[], totalCount: number): string {
+    if (!Number.isFinite(totalCount) || totalCount <= 0) {
+      return 'No variants created';
+    }
+
+    const cleanNames = variantNames
+      .map((name) => String(name || '').trim())
+      .filter(Boolean);
+
+    if (cleanNames.length === 0) {
+      return `${totalCount} variants created`;
+    }
+
+    return cleanNames.join('\n');
+  }
+
+  readonly bulkVariantFailureColumns: GomTableColumn<BulkVariantFailureRow>[] = [
+    { key: 'rowNumber', header: 'Row', sortable: true, width: '6rem' },
+    { key: 'groupName', header: 'Group Name', sortable: true, filterable: true, width: '14rem' },
+    { key: 'attemptedVariantLabel', header: 'Attempted Variant', sortable: false, width: '20rem' },
+    { key: 'measuredInput', header: 'Measured Input', sortable: false, width: '10rem' },
+    { key: 'failureCode', header: 'Failure Code', sortable: true, filterable: true, width: '14rem' },
+    {
+      key: 'failureMessage',
+      header: 'Reason',
+      sortable: false,
+      width: '24rem',
+      cellClass: () => 'bulk-upload-cell--error-detail',
+    },
+  ];
+
+  readonly bulkVariantFailureRows = computed<BulkVariantFailureRow[]>(() =>
+    (this.bulkUploadResults()?.variantFailures ?? []).map((vf: BulkUploadVariantFailure) => ({
+      id: vf.id,
+      rowNumber: Number(vf.rowNumber || 0),
+      groupName: String(vf.groupName || '-'),
+      attemptedVariantLabel: String(vf.attemptedVariantLabel || '-'),
+      measuredInput: String(vf.measuredInput || '-'),
+      failureCode: String(vf.failureCode || '-'),
+      failureMessage: String(vf.failureMessage || '-'),
+    }))
+  );
 
   readonly categoryOptions = computed<GomSelectOption[]>(() =>
     this.categories()
@@ -500,8 +928,6 @@ export class GroupsComponent implements OnInit {
 
   readonly rows = computed<GroupRow[]>(() => {
     const categoriesById = new Map(this.categories().map((item) => [item._id, item.name]));
-    const fieldGroupsById = new Map(this.fieldGroups().map((item) => [item._id, item.name]));
-    const taxProfilesById = new Map(this.taxProfiles().map((item) => [item._id, item.name]));
 
     return this.groups().map((item) => {
       const availableStock = Number(item.stock?.available ?? 0);
@@ -518,12 +944,9 @@ export class GroupsComponent implements OnInit {
         _id: item._id,
         name: item.name,
         categoryName: categoriesById.get(item.categoryId) || '-',
-        fieldGroupName: fieldGroupsById.get(item.fieldGroupId) || '-',
-        taxProfileName: item.taxProfileId ? (taxProfilesById.get(item.taxProfileId) || 'Unknown') : 'Not mapped',
         stock: availableStock.toLocaleString(),
         stockSeverity,
         status: item.status,
-        updatedAt: new Date(item.updatedAt).toLocaleDateString(),
         actions: 'Edit',
       };
     });
@@ -535,15 +958,57 @@ export class GroupsComponent implements OnInit {
 
   readonly wizardTabs = computed<TabItem[]>(() => [
     { id: 1, label: '1. Basic Info' },
-    { id: 2, label: '2. Field Group' },
+    { id: 2, label: '2. Product Options' },
     { id: 3, label: '3. Field Values' },
-    { id: 4, label: '4. Pricing Formula' },
+    { id: 4, label: '4. Price Rule' },
     { id: 5, label: '5. Units' },
     { id: 6, label: '6. Images/Videos' },
   ]);
 
+  /**
+   * Extract error message from HTTP error response
+   * Handles various error structures from backend
+   */
+  private getErrorMessage(error: any, fallback: string): string {
+    // Try to get message from structured error response
+    if (error?.error) {
+      // If error.error is a string, return it
+      if (typeof error.error === 'string') {
+        return error.error;
+      }
+      // If error.error has a message property
+      if (error.error.message && typeof error.error.message === 'string') {
+        return error.error.message;
+      }
+      // If error.error is an object, try to stringify it nicely
+      if (typeof error.error === 'object') {
+        return error.error.message || JSON.stringify(error.error);
+      }
+    }
+    // Try to get message directly from error
+    if (error?.message && typeof error.message === 'string') {
+      return error.message;
+    }
+    // Fallback
+    return fallback;
+  }
+
   ngOnInit(): void {
     this.pendingBulkContextOpen = this.route.snapshot.queryParamMap.get('openBulkRowEdit') === '1';
+    const quickEditTargetId = this.route.snapshot.queryParamMap.get('quickEditGroupId') || '';
+    const quickEditMode = this.route.snapshot.queryParamMap.get('quickEdit') === '1';
+    if (quickEditMode && quickEditTargetId) {
+      this.pendingQuickEditGroupId = quickEditTargetId;
+      this.completionMode.set(false);
+      this.editingGroupId.set(null);
+    }
+
+    const completionTargetId = this.route.snapshot.queryParamMap.get('completeGroupId') || '';
+    if (!this.pendingQuickEditGroupId && this.route.snapshot.queryParamMap.get('openCompletion') === '1' && completionTargetId) {
+      this.pendingQuickEditGroupId = completionTargetId;
+      this.completionMode.set(false);
+      this.editingGroupId.set(null);
+    }
     this.loadInitialData();
   }
 
@@ -581,11 +1046,38 @@ export class GroupsComponent implements OnInit {
         this.fieldGroups.set(result.fieldGroups.data ?? []);
         this.units.set(result.units.data ?? []);
         this.taxProfiles.set(result.taxProfiles.data ?? []);
+        this.restoreBulkUploadAttention();
         this.loading.set(false);
 
         if (this.pendingBulkContextOpen) {
           this.pendingBulkContextOpen = false;
           this.openWizardFromBulkContext();
+        }
+
+        if (this.pendingQuickEditGroupId) {
+          const quickEditId = this.pendingQuickEditGroupId;
+          this.pendingQuickEditGroupId = null;
+          this.openQuickCreateEditById(quickEditId);
+          return;
+        }
+
+        if (this.completionMode() && this.editingGroupId()) {
+          const group = this.groups().find((item) => item._id === this.editingGroupId());
+          if (group) {
+            this.openEditWizard(group, true);
+          } else {
+            const completionGroupId = this.editingGroupId()!;
+            this.groupsService.getGroupById(completionGroupId).subscribe({
+              next: (response) => {
+                if (response?.data) {
+                  this.openEditWizard(response.data, true);
+                }
+              },
+              error: () => {
+                this.toast.error('Unable to open completion mode for this group.');
+              },
+            });
+          }
         }
       },
       error: (error) => {
@@ -748,48 +1240,625 @@ export class GroupsComponent implements OnInit {
     void this.router.navigate(['/product/groups/bulk-upload']);
   }
 
-  onSelectedGroupsChange(rows: GomTableRow[]): void {
-    this.selectedGroupRows.set(rows.filter((row): row is GroupRow => typeof (row as GroupRow)._id === 'string'));
+  downloadTemplate(): void {
+    if (!this.canCreateGroup()) {
+      this.toast.warning('You do not have permission to download the template.');
+      return;
+    }
+
+    this.templateDownloading.set(true);
+    this.bulkImportTemplateService.downloadTemplate().subscribe({
+      next: (blob) => {
+        const timestamp = new Date().toISOString().split('T')[0];
+        this.bulkImportTemplateService.triggerFileDownload(blob, `groups-template-${timestamp}.xlsx`);
+        this.toast.success('Template downloaded successfully.');
+        this.templateDownloading.set(false);
+      },
+      error: (err) => {
+        console.error('Failed to download template:', err);
+        this.toast.error('Failed to download template. Please try again.');
+        this.templateDownloading.set(false);
+      },
+    });
   }
 
-  applyStatusToSelectedGroups(nextStatus: 'ACTIVE' | 'INACTIVE'): void {
-    if (!this.canBulkCreateGroup()) {
-      this.toast.warning('No permission for bulk operations.');
+  refreshTemplate(): void {
+    if (!this.canCreateGroup()) {
+      this.toast.warning('You do not have permission to refresh the template.');
       return;
     }
 
-    const selectedRows = this.selectedGroupRows();
-    if (!selectedRows.length) {
-      return;
-    }
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = '.xlsx';
+    fileInput.onchange = (event) => {
+      const file = (event.target as HTMLInputElement).files?.[0];
+      if (!file) return;
 
-    const rowsToUpdate = selectedRows.filter((row) => row.status !== nextStatus);
-    if (!rowsToUpdate.length) {
-      this.toast.info(`Selected groups are already ${nextStatus === 'ACTIVE' ? 'active' : 'inactive'}.`);
-      return;
-    }
+      this.templateRefreshing.set(true);
+      this.bulkImportTemplateService.refreshTemplate(file).subscribe({
+        next: (response) => {
+          this.templateRefreshing.set(false);
+          // Store the refreshed file so user can download from the modal
+          this.templateRefreshResult.set({
+            file: response.file,
+            filename: response.filename,
+            rowCount: response.rowCount,
+            newlyAdded: response.newlyAdded ?? {
+              categories: [],
+              units: [],
+              taxProfiles: [],
+              pricingTemplates: [],
+              attributes: [],
+            },
+            masterData: response.masterData ?? {
+              categories: [],
+              units: [],
+              taxProfiles: [],
+              pricingTemplates: [],
+              attributes: [],
+            },
+          });
+          // Always open the result modal (shows success + any warnings)
+          this.templateRefreshWarnings.set(
+            (response.warnings ?? []).map(w => ({ rowNumber: w.rowNumber, message: w.message }))
+          );
+          this.showTemplateRefreshWarningsModal.set(true);
+        },
+        error: (err) => {
+          console.error('Failed to refresh template:', err);
+          const errorMessage = err.error?.message || 'Failed to refresh template. Please check that the file is a valid .xlsx template.';
+          this.toast.error(errorMessage);
+          this.templateRefreshing.set(false);
+        },
+      });
+    };
+    fileInput.click();
+  }
 
-    this.saving.set(true);
-    forkJoin(rowsToUpdate.map((row) => this.groupsService.patchGroupStatus(row._id, nextStatus))).subscribe({
-      next: () => {
-        const actionLabel = nextStatus === 'ACTIVE' ? 'activated' : 'deactivated';
-        this.toast.success(`${rowsToUpdate.length} group${this.pluralSuffix(rowsToUpdate.length)} ${actionLabel} successfully.`);
-        this.refreshGroupList(() => {
-          this.selectedGroupRows.set([]);
-          this.saving.set(false);
-        }, () => this.saving.set(false));
+  downloadRefreshedTemplate(): void {
+    const result = this.templateRefreshResult();
+    if (!result) return;
+    this.bulkImportTemplateService.downloadRefreshedTemplate(result.file, result.filename);
+  }
+
+  private showTemplateRefreshWarningsPopup(warnings: any[]): void {
+    const formattedWarnings = warnings.map((w) => ({
+      rowNumber: w.rowNumber || w.row,
+      message: w.message,
+    }));
+    
+    this.templateRefreshWarnings.set(formattedWarnings);
+    this.showTemplateRefreshWarningsModal.set(true);
+  }
+
+  closeTemplateRefreshWarningsModal(): void {
+    this.showTemplateRefreshWarningsModal.set(false);
+    this.templateRefreshWarnings.set([]);
+    this.templateRefreshResult.set(null);
+  }
+
+  // ── Bulk Upload Excel methods ─────────────────────────────────────────────
+
+  ngOnDestroy(): void {
+    this.stopBulkUploadPoll();
+  }
+
+  private stopBulkUploadPoll(): void {
+    if (this.bulkUploadPollTimer !== null) {
+      clearInterval(this.bulkUploadPollTimer);
+      this.bulkUploadPollTimer = null;
+    }
+  }
+
+  private startBulkUploadPoll(jobId: string): void {
+    this.stopBulkUploadPoll();
+    const doPoll = () => {
+      this.bulkImportTemplateService.getJobStatus(jobId).subscribe({
+        next: (res) => {
+          this.bulkUploadJobStatus.set(res.data);
+          if (res.data.isTerminal) {
+            this.stopBulkUploadPoll();
+            this.loadBulkUploadResults(jobId);
+            const failedRows = Number(res.data.totals.failedRows || 0);
+            const variantWarnings = Number(res.data.totals.variantWarningRows || 0);
+            if (failedRows > 0 && variantWarnings > 0) {
+              this.toast.warning(
+                `Upload complete — ${res.data.totals.successRows} groups created, ${failedRows} failed row(s), ${variantWarnings} group(s) have variant warnings.`
+              );
+            } else if (failedRows > 0) {
+              this.toast.warning(`Upload complete with ${failedRows} failed row(s). Review and retry failed rows.`);
+            } else if (variantWarnings > 0) {
+              this.toast.warning(`Upload complete — ${res.data.totals.successRows} groups created. ${variantWarnings} group(s) have variant warnings to review.`);
+            } else {
+              this.toast.success(`Upload complete! ${res.data.totals.successRows} groups created.`);
+            }
+          }
+        },
+        error: () => this.stopBulkUploadPoll(),
+      });
+    };
+    doPoll();
+    this.bulkUploadPollTimer = setInterval(doPoll, 3000);
+  }
+
+  private loadBulkUploadResults(jobId: string, unresolvedOnly = false): void {
+    this.bulkUploadResultsLoading.set(true);
+    this.bulkImportTemplateService.getJobResults(jobId, unresolvedOnly ? 'unresolved' : 'all').subscribe({
+      next: (res) => {
+        this.bulkUploadResults.set(res.data);
+        this.bulkVariantFailuresHidden.set(false);
+        this.bulkUploadJobStatus.update((prev) => {
+          const status = String(res.data?.job?.status || prev?.status || 'COMPLETED') as BulkUploadJobStatus['status'];
+          return {
+            jobId: String(res.data?.job?.jobId || prev?.jobId || jobId),
+            status,
+            isTerminal: Boolean(res.data?.job?.isTerminal),
+            totals: res.data?.job?.totals || prev?.totals || {
+              totalRows: 0,
+              processedRows: 0,
+              successRows: 0,
+              failedRows: 0,
+              unresolvedRows: 0,
+            },
+            startedAt: prev?.startedAt ?? null,
+            completedAt: prev?.completedAt ?? null,
+            errorMessage: prev?.errorMessage || '',
+          };
+        });
+        this.bulkUploadResultsLoading.set(false);
       },
-      error: (error) => {
-        const apiMessage = String(error?.error?.message || '').trim();
-        const publishReadinessMessage = 'Cannot publish group: at least one active variant is required';
+      error: () => this.bulkUploadResultsLoading.set(false),
+    });
+  }
 
-        if (nextStatus === 'ACTIVE' && apiMessage === publishReadinessMessage) {
-          this.toast.warning('Cannot publish selected groups. Add at least one active variant to each group first.');
-        } else {
-          this.toast.error(`Failed to ${nextStatus === 'ACTIVE' ? 'activate' : 'deactivate'} selected groups.`);
+  private restoreBulkUploadAttention(): void {
+    this.bulkImportTemplateService.getAttentionJob().subscribe({
+      next: (res) => {
+        const attention = res.data;
+        if (!attention?.hasAttention || !attention.job?.jobId) {
+          return;
         }
 
-        this.saving.set(false);
+        this.bulkUploadJobId.set(attention.job.jobId);
+        this.bulkUploadJobStatus.set(attention.job);
+
+        if (attention.reason === 'PROCESSING') {
+          this.startBulkUploadPoll(attention.job.jobId);
+          return;
+        }
+
+        this.loadBulkUploadResults(attention.job.jobId);
+      },
+      error: () => {
+        // Keep page usable even if attention lookup fails.
+      },
+    });
+  }
+
+  uploadTemplate(): void {
+    if (!this.canCreateGroup()) {
+      this.toast.warning('You do not have permission to upload a template.');
+      return;
+    }
+
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = '.xlsx';
+    fileInput.onchange = (event) => {
+      const file = (event.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      this.templateUploading.set(true);
+      this.bulkUploadResults.set(null);
+      this.bulkUploadJobStatus.set(null);
+      this.bulkVariantFailuresHidden.set(false);
+
+      this.bulkImportTemplateService.uploadTemplate(file).subscribe({
+        next: (res) => {
+          this.templateUploading.set(false);
+          const jobId = res.data.jobId;
+          this.bulkUploadJobId.set(jobId);
+          this.toast.success('Upload accepted. Group creation is processing in the background.');
+          this.startBulkUploadPoll(jobId);
+        },
+        error: (err) => {
+          this.templateUploading.set(false);
+          const msg = err?.error?.message || 'Failed to upload template. Please check the file and try again.';
+          this.toast.error(msg);
+        },
+      });
+    };
+    fileInput.click();
+  }
+
+  openBulkUploadResultModal(): void {
+    const jobId = this.bulkUploadJobId();
+    if (!jobId) return;
+
+    this.showBulkUploadResultModal.set(true);
+    if (!this.bulkUploadResults()) {
+      this.loadBulkUploadResults(jobId);
+    }
+  }
+
+  closeBulkUploadResultModal(): void {
+    this.showBulkUploadResultModal.set(false);
+  }
+
+  onBulkFailedRowAction(event: { actionKey: string; row: GomTableRow }): void {
+    const rawRowId = event.row['rowId'];
+    const rowId = typeof rawRowId === 'string' ? rawRowId : '';
+    if (!rowId) {
+      return;
+    }
+
+    const failedRow = (this.bulkUploadResults()?.failedRows || []).find((item) => item.rowId === rowId);
+    if (!failedRow) {
+      return;
+    }
+
+    if (event.actionKey === 'retry') {
+      this.retryRow(failedRow);
+      return;
+    }
+
+    if (event.actionKey === 'delete') {
+      this.closeFailedRow(failedRow);
+      return;
+    }
+
+    if (event.actionKey === 'edit') {
+      if (failedRow.resultType === 'QUOTA_EXCEEDED') {
+        this.toast.warning('Quota exceeded rows cannot be edited in this phase.');
+        return;
+      }
+      this.openFailedRowQuickCreate(failedRow);
+    }
+  }
+
+  private openFailedRowQuickCreate(row: BulkUploadFailedRow): void {
+    this.bulkUploadPendingQuickCreateRow.set(row);
+
+    // Avoid modal stacking: close upload results first, then open Quick Create.
+    this.showBulkUploadResultModal.set(false);
+    this.reopenBulkUploadResultsAfterQuickCreate.set(true);
+
+    setTimeout(() => this.quickCreateModal?.openModal(), 50);
+
+    const applyPrefill = () => {
+      if (!this.quickCreateModal) {
+        return;
+      }
+
+      const name = String(row.rawPayload?.['groupName'] || row.groupName || '').trim();
+      const categoryName = String(row.rawPayload?.['category'] || '').trim().toLowerCase();
+      const baseUnitName = String(row.rawPayload?.['baseUnit'] || '').trim().toLowerCase();
+      const taxProfileName = String(row.rawPayload?.['taxProfile'] || '').trim().toLowerCase();
+      const pricingTemplateName = String(row.rawPayload?.['pricingTemplate'] || '').trim().toLowerCase();
+      const pricingRefreshMode = String(row.rawPayload?.['pricingRefreshMode'] || 'AUTO_REFRESH').trim().toUpperCase();
+
+      const categoryId = this.categories().find((item) => item.name.trim().toLowerCase() === categoryName)?._id || '';
+      const baseUnit = this.units().find((item) => item.name.trim().toLowerCase() === baseUnitName);
+      const taxProfileId = this.taxProfiles().find((item) => item.name.trim().toLowerCase() === taxProfileName)?._id || '';
+
+      const pricingTemplateId = this.quickCreateModal
+        .pricingTemplates()
+        .find((item) => String(item.label || '').trim().toLowerCase() === pricingTemplateName)?.value || '';
+
+      const allowedUnits = String(row.rawPayload?.['allowedUnits'] || '')
+        .split(',')
+        .map((item) => item.trim().toLowerCase())
+        .filter(Boolean)
+        .map((unitName) => this.units().find((unit) => unit.name.trim().toLowerCase() === unitName)?._id || '')
+        .filter(Boolean);
+
+      // Parse uploaded attribute columns and retain only valid values.
+      const uploadedAttrPairs = Array.from({ length: 3 }, (_unused, idx) => {
+        const i = idx + 1;
+        const attrNameRaw = String(
+          row.rawPayload?.[`attribute${i}`] ||
+          row.rawPayload?.[`Attribute ${i}`] ||
+          ''
+        ).trim();
+        const attrValuesRaw = String(
+          row.rawPayload?.[`attribute${i}Values`] ||
+          row.rawPayload?.[`Attribute ${i} Values`] ||
+          ''
+        ).trim();
+        const uploadedValues = attrValuesRaw
+          .split(',')
+          .map((item) => item.trim())
+          .filter(Boolean);
+
+        return {
+          attrNameRaw,
+          attrNameKey: attrNameRaw.toLowerCase(),
+          uploadedValues,
+        };
+      }).filter((item) => item.attrNameRaw);
+
+      const attributesData = this.quickCreateModal.attributesData();
+      const selectedAttributeIds: string[] = [];
+      const selectedAttributeValues: Record<string, string[]> = {};
+
+      for (const pair of uploadedAttrPairs) {
+        const matchedAttr = attributesData.find((attr) => {
+          const nameKey = String(attr.name || '').trim().toLowerCase();
+          const apiKey = String(attr.key || '').trim().toLowerCase();
+          return nameKey === pair.attrNameKey || apiKey === pair.attrNameKey;
+        });
+
+        if (!matchedAttr?._id) {
+          continue;
+        }
+
+        selectedAttributeIds.push(matchedAttr._id);
+
+        const allowedValues = Array.isArray(matchedAttr.allowedValues)
+          ? matchedAttr.allowedValues
+          : [];
+        const allowedByLower = new Map(
+          allowedValues.map((value) => [String(value || '').trim().toLowerCase(), String(value || '').trim()])
+        );
+
+        const validUploadedValues: string[] = [];
+        for (const uploadedValue of pair.uploadedValues) {
+          const canonical = allowedByLower.get(uploadedValue.toLowerCase());
+          if (canonical && !validUploadedValues.includes(canonical)) {
+            validUploadedValues.push(canonical);
+          }
+        }
+
+        // If no values were uploaded for a valid attribute, keep all allowed values selected.
+        selectedAttributeValues[matchedAttr._id] = pair.uploadedValues.length > 0
+          ? validUploadedValues
+          : [...allowedValues];
+      }
+
+      const groupType = (row.inferredGroupType === 'ATTRIBUTE' || row.inferredGroupType === 'HYBRID' || row.inferredGroupType === 'MEASURED')
+        ? row.inferredGroupType
+        : 'MEASURED';
+
+      this.quickCreateModal.quickCreateForm.patchValue({
+        name,
+        categoryId,
+        groupType,
+        attributeIds: [...new Set(selectedAttributeIds)],
+        pricingTemplateId,
+        baseUnitId: baseUnit?._id || '',
+        allowedUnitIds: [...new Set([...(allowedUnits || []), ...(baseUnit?._id ? [baseUnit._id] : [])])],
+        taxProfileId,
+        pricingRefreshMode: pricingRefreshMode || 'AUTO_REFRESH',
+      });
+
+      this.quickCreateModal.selectedAttributeValues.set(selectedAttributeValues);
+
+      // Pricing templates load async in quick-create; retry once if not available yet.
+      if (!pricingTemplateId && pricingTemplateName) {
+        setTimeout(() => {
+          if (!this.quickCreateModal) {
+            return;
+          }
+          const delayedPricingTemplateId = this.quickCreateModal
+            .pricingTemplates()
+            .find((item) => String(item.label || '').trim().toLowerCase() === pricingTemplateName)?.value || '';
+          if (delayedPricingTemplateId) {
+            this.quickCreateModal.quickCreateForm.patchValue({ pricingTemplateId: delayedPricingTemplateId });
+          }
+
+          // Retry attribute prefill once in case attributes loaded after modal opened.
+          const delayedAttributesData = this.quickCreateModal.attributesData();
+          if (delayedAttributesData.length > 0 && selectedAttributeIds.length === 0 && uploadedAttrPairs.length > 0) {
+            const delayedAttributeIds: string[] = [];
+            const delayedSelectedValues: Record<string, string[]> = {};
+
+            for (const pair of uploadedAttrPairs) {
+              const matchedAttr = delayedAttributesData.find((attr) => {
+                const nameKey = String(attr.name || '').trim().toLowerCase();
+                const apiKey = String(attr.key || '').trim().toLowerCase();
+                return nameKey === pair.attrNameKey || apiKey === pair.attrNameKey;
+              });
+              if (!matchedAttr?._id) {
+                continue;
+              }
+
+              delayedAttributeIds.push(matchedAttr._id);
+              const allowedValues = Array.isArray(matchedAttr.allowedValues) ? matchedAttr.allowedValues : [];
+              const allowedByLower = new Map(
+                allowedValues.map((value) => [String(value || '').trim().toLowerCase(), String(value || '').trim()])
+              );
+
+              const validUploadedValues: string[] = [];
+              for (const uploadedValue of pair.uploadedValues) {
+                const canonical = allowedByLower.get(uploadedValue.toLowerCase());
+                if (canonical && !validUploadedValues.includes(canonical)) {
+                  validUploadedValues.push(canonical);
+                }
+              }
+
+              delayedSelectedValues[matchedAttr._id] = pair.uploadedValues.length > 0
+                ? validUploadedValues
+                : [...allowedValues];
+            }
+
+            if (delayedAttributeIds.length > 0) {
+              this.quickCreateModal.quickCreateForm.patchValue({ attributeIds: [...new Set(delayedAttributeIds)] });
+              this.quickCreateModal.selectedAttributeValues.set(delayedSelectedValues);
+            }
+          }
+        }, 500);
+      }
+    };
+
+    setTimeout(applyPrefill, 150);
+  }
+
+  private closeFailedRow(row: BulkUploadFailedRow): void {
+    this.bulkUploadRowToDelete.set(row);
+    this.bulkUploadDeleteConfirmOpen.set(true);
+  }
+
+  openDeleteRowConfirm(): void {
+    // Confirmation modal will open via signal
+  }
+
+  cancelDeleteRowConfirm(): void {
+    this.bulkUploadDeleteConfirmOpen.set(false);
+    this.bulkUploadRowToDelete.set(null);
+  }
+
+  confirmDeleteRow(): void {
+    const row = this.bulkUploadRowToDelete();
+    const jobId = this.bulkUploadJobId();
+    if (!row || !jobId) {
+      this.bulkUploadDeleteConfirmOpen.set(false);
+      return;
+    }
+
+    this.bulkUploadRetryingRowId.set(row.rowId);
+    this.bulkUploadDeleteConfirmOpen.set(false);
+    
+    this.bulkImportTemplateService.closeRow(jobId, row.rowId).subscribe({
+      next: () => {
+        this.bulkUploadRetryingRowId.set(null);
+        this.bulkUploadRowToDelete.set(null);
+        this.toast.success(`Row ${row.rowNumber} removed from failed list.`);
+        this.loadBulkUploadResults(jobId);
+      },
+      error: (err) => {
+        this.bulkUploadRetryingRowId.set(null);
+        this.bulkUploadRowToDelete.set(null);
+        this.toast.error(err?.error?.message || 'Failed to remove row from failed list.');
+      },
+    });
+  }
+
+  private resolveFailedRowErrorFields(row: BulkUploadFailedRow): string[] {
+    const fields = new Set<string>();
+    for (const reason of row.reasons || []) {
+      const mapped = this.bulkFailedErrorFieldMap[String(reason.code || '').trim()] || [];
+      mapped.forEach((item) => fields.add(item));
+    }
+
+    if (fields.size === 0) {
+      fields.add('resultType');
+    }
+
+    return [...fields];
+  }
+
+  private parseErrorMessage(message: string): string {
+    if (!message) return '-';
+
+    // E11000 duplicate key error: extract the field names from the index
+    const dupKeyMatch = message.match(/E11000.*index: ([\w_]+)/);
+    if (dupKeyMatch && dupKeyMatch[1]) {
+      // Split index name by underscore, remove trailing version numbers, filter out tenantId
+      const fields = dupKeyMatch[1]
+        .split('_')
+        .filter((part, i, arr) => 
+          !/^\d+$/.test(part) && 
+          part.toLowerCase() !== 'tenantid' &&
+          (i === arr.length - 1 || !/^\d+$/.test(arr[i + 1]))
+        )
+        .map((field) => field.charAt(0).toUpperCase() + field.slice(1))
+        .join(', ');
+      
+      return fields ? `Duplicate: ${fields}` : 'Duplicate entry';
+    }
+
+    // Validation error: take first 80 characters
+    const lines = message.split('\n')[0];
+    return lines.length > 80 ? lines.substring(0, 80) + '...' : lines;
+  }
+
+  openBulkUploadAcknowledgeConfirm(): void {
+    const jobId = this.bulkUploadJobId();
+    if (!jobId || this.bulkJobUnresolvedCount() <= 0) {
+      this.closeBulkUploadResultModal();
+      return;
+    }
+
+    this.bulkUploadAcknowledgeConfirmOpen.set(true);
+  }
+
+  cancelBulkUploadAcknowledgeConfirm(): void {
+    this.bulkUploadAcknowledgeConfirmOpen.set(false);
+  }
+
+  confirmBulkUploadAcknowledgement(): void {
+    const jobId = this.bulkUploadJobId();
+    if (!jobId || this.bulkJobUnresolvedCount() <= 0) {
+      this.bulkUploadAcknowledgeConfirmOpen.set(false);
+      this.closeBulkUploadResultModal();
+      return;
+    }
+
+    this.bulkUploadAcknowledgeConfirmOpen.set(false);
+
+    this.bulkUploadResultsLoading.set(true);
+    this.bulkImportTemplateService.suspendUnresolved(jobId).subscribe({
+      next: (res) => {
+        this.bulkUploadJobStatus.update((prev) => {
+          if (!prev) {
+            return prev;
+          }
+          return {
+            ...prev,
+            totals: res.data?.totals || prev.totals,
+          };
+        });
+        this.bulkUploadResultsLoading.set(false);
+        this.showBulkUploadResultModal.set(false);
+        this.loadBulkUploadResults(jobId);
+        this.toast.success('Unresolved upload errors were marked as accepted for now.');
+      },
+      error: (err) => {
+        this.bulkUploadResultsLoading.set(false);
+        this.toast.error(err?.error?.message || 'Failed to mark unresolved errors as accepted.');
+      },
+    });
+  }
+
+  openRowCorrection(row: BulkUploadFailedRow): void {
+    if (row.resultType === 'QUOTA_EXCEEDED') return;
+    this.bulkUploadEditRow.set(row);
+    const currentName = row.rawPayload?.['groupName'] ?? row.groupName ?? '';
+    this.bulkUploadEditGroupName.set(currentName);
+    this.bulkUploadEditGroupNameControl.setValue(currentName);
+  }
+
+  cancelRowCorrection(): void {
+    this.bulkUploadEditRow.set(null);
+    this.bulkUploadEditGroupName.set('');
+    this.bulkUploadEditGroupNameControl.setValue('');
+  }
+
+  retryRow(row: BulkUploadFailedRow): void {
+    const jobId = this.bulkUploadJobId();
+    if (!jobId) return;
+
+    const patch: Record<string, string> = {};
+    if (row.resultType === 'DUPLICATE') {
+      patch['groupName'] = this.bulkUploadEditGroupNameControl.value.trim();
+    }
+
+    this.bulkUploadRetryingRowId.set(row.rowId);
+    this.bulkImportTemplateService.retryRow(jobId, row.rowId, patch).subscribe({
+      next: (res) => {
+        this.bulkUploadRetryingRowId.set(null);
+        this.cancelRowCorrection();
+        if (res.data.resolved) {
+          this.toast.success(`Row ${row.rowNumber} retried successfully.`);
+        } else {
+          this.toast.warning(`Row ${row.rowNumber} still has errors after retry.`);
+        }
+        this.loadBulkUploadResults(jobId);
+      },
+      error: (err) => {
+        this.bulkUploadRetryingRowId.set(null);
+        this.toast.error(err?.error?.message || 'Retry failed. Please try again.');
       },
     });
   }
@@ -828,6 +1897,9 @@ export class GroupsComponent implements OnInit {
 
   closeWizard(): void {
     this.wizardOpen.set(false);
+    this.completionMode.set(false);
+    this.completionStatus.set(null);
+    this.closeVariantReview();
   }
 
   onRowAction(event: { actionKey: string; row: GomTableRow }): void {
@@ -870,37 +1942,6 @@ export class GroupsComponent implements OnInit {
       return;
     }
 
-    if (event.actionKey === 'publish') {
-      if (!this.canPublishGroup()) {
-        this.toast.warning('No permission to change group status.');
-        return;
-      }
-      
-      const nextStatus: 'ACTIVE' | 'INACTIVE' = existing.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
-      const actionLabel = nextStatus === 'ACTIVE' ? 'published' : 'unpublished';
-      this.saving.set(true);
-      this.groupsService.patchGroupStatus(existing._id, nextStatus).subscribe({
-        next: () => {
-          this.toast.success(`"${existing.name}" ${actionLabel} successfully.`);
-          this.refreshGroupList(() => this.saving.set(false), () => this.saving.set(false));
-        },
-        error: (error) => {
-          const apiMessage = String(error?.error?.message || '').trim();
-          const publishReadinessMessage = 'Cannot publish group: at least one active variant is required';
-
-          if (nextStatus === 'ACTIVE' && apiMessage === publishReadinessMessage) {
-            this.toast.warning(`Cannot publish "${existing.name}". Add at least one active variant first.`);
-          } else {
-            this.toast.error(`Failed to ${nextStatus === 'ACTIVE' ? 'publish' : 'unpublish'} group.`);
-          }
-
-          this.saving.set(false);
-        },
-        complete: () => this.saving.set(false),
-      });
-      return;
-    }
-
     if (event.actionKey === 'delete') {
       if (!this.canDeleteGroup()) {
         this.toast.warning('No permission to delete groups.');
@@ -908,55 +1949,27 @@ export class GroupsComponent implements OnInit {
       }
 
       this.saving.set(true);
-      this.productCollectionsService.listCollectionsByGroup(existing._id).subscribe({
-        next: (response) => {
-          const impactCount = (response.data || []).length;
-          const warning = impactCount > 0
-            ? `Delete "${existing.name}"? It is used in ${impactCount} collections and will be unmapped from all of them.`
-            : `Delete "${existing.name}"?`;
-
-          const confirmed = window.confirm(warning);
-          if (!confirmed) {
+      
+      // First check if group has variants
+      this.variantsService.listVariants(existing._id, undefined, 1).subscribe({
+        next: (variantsResponse: ApiPaginated<Variant>) => {
+          const variantCount = variantsResponse.pagination.total;
+          
+          if (variantCount > 0) {
+            this.toast.error(
+              `Cannot delete "${existing.name}": it has ${variantCount} variant(s). ` +
+              `Please delete all variants first.`
+            );
             this.saving.set(false);
             return;
           }
-
-          this.groupsService.deleteGroup(existing._id).subscribe({
-            next: (deleteResponse) => {
-              const unmapped = Number(deleteResponse.data?.unmappedFromCollections || 0);
-              if (unmapped > 0) {
-                this.toast.success(`"${existing.name}" deleted. Unmapped from ${unmapped} collections.`);
-              } else {
-                this.toast.success(`"${existing.name}" deleted successfully.`);
-              }
-              this.refreshGroupList(() => this.saving.set(false), () => this.saving.set(false));
-            },
-            error: (error) => {
-              this.toast.error(String(error?.error?.message || 'Failed to delete group.'));
-              this.saving.set(false);
-            },
-            complete: () => this.saving.set(false),
-          });
+          
+          // No variants, proceed with collection impact check
+          this.proceedWithGroupDeletion(existing);
         },
         error: () => {
-          // Fall back to basic confirmation if impact lookup fails.
-          const confirmed = window.confirm(`Delete "${existing.name}"?`);
-          if (!confirmed) {
-            this.saving.set(false);
-            return;
-          }
-
-          this.groupsService.deleteGroup(existing._id).subscribe({
-            next: () => {
-              this.toast.success(`"${existing.name}" deleted successfully.`);
-              this.refreshGroupList(() => this.saving.set(false), () => this.saving.set(false));
-            },
-            error: (err) => {
-              this.toast.error(String(err?.error?.message || 'Failed to delete group.'));
-              this.saving.set(false);
-            },
-            complete: () => this.saving.set(false),
-          });
+          this.toast.error('Failed to check group variants.');
+          this.saving.set(false);
         },
       });
 
@@ -964,11 +1977,154 @@ export class GroupsComponent implements OnInit {
     }
 
     if (event.actionKey !== 'edit') {
+      if (event.actionKey !== 'clone') {
+        return;
+      }
+
+      this.quickCreateModal?.openForClone(existing);
       return;
     }
 
+    void this.router.navigate([], {
+      queryParams: {
+        quickEdit: '1',
+        quickEditGroupId: existing._id,
+        openCompletion: null,
+        completeGroupId: null,
+      },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+
+    this.quickCreateModal?.openForEdit(existing);
+  }
+
+  onQuickCreateSaved(): void {
+    this.refreshGroupList();
+
+    const pendingRow = this.bulkUploadPendingQuickCreateRow();
+    const jobId = this.bulkUploadJobId();
+    if (pendingRow && jobId) {
+      this.bulkImportTemplateService.closeRow(jobId, pendingRow.rowId, { markSuccess: true }).subscribe({
+        next: () => {
+          this.toast.success(`Row ${pendingRow.rowNumber} resolved from failed list.`);
+          this.bulkUploadPendingQuickCreateRow.set(null);
+          this.loadBulkUploadResults(jobId);
+        },
+        error: () => {
+          this.bulkUploadPendingQuickCreateRow.set(null);
+          this.loadBulkUploadResults(jobId);
+        },
+      });
+    }
+  }
+
+  onQuickCreateClosed(): void {
+    const shouldReopenBulkResults = this.reopenBulkUploadResultsAfterQuickCreate();
+
+    this.bulkUploadPendingQuickCreateRow.set(null);
+    this.reopenBulkUploadResultsAfterQuickCreate.set(false);
+    this.pendingQuickEditGroupId = null;
+    this.completionMode.set(false);
+    this.editingGroupId.set(null);
+    void this.router.navigate([], {
+      queryParams: {
+        quickEdit: null,
+        quickEditGroupId: null,
+        openCompletion: null,
+        completeGroupId: null,
+      },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+
+    if (shouldReopenBulkResults) {
+      this.showBulkUploadResultModal.set(true);
+      const jobId = this.bulkUploadJobId();
+      if (jobId) {
+        this.loadBulkUploadResults(jobId);
+      }
+    }
+  }
+
+  private proceedWithGroupDeletion(existing: Group): void {
+    this.productCollectionsService.listCollectionsByGroup(existing._id).subscribe({
+      next: (response) => {
+        const impactCount = (response.data || []).length;
+        const warning = impactCount > 0
+          ? `Delete "${existing.name}"? It is used in ${impactCount} collections and will be unmapped from all of them.`
+          : `Delete "${existing.name}"?`;
+
+        const confirmed = window.confirm(warning);
+        if (!confirmed) {
+          this.saving.set(false);
+          return;
+        }
+
+        this.groupsService.deleteGroup(existing._id).subscribe({
+          next: (deleteResponse) => {
+            const unmapped = Number(deleteResponse.data?.unmappedFromCollections || 0);
+            if (unmapped > 0) {
+              this.toast.success(`"${existing.name}" deleted. Unmapped from ${unmapped} collections.`);
+            } else {
+              this.toast.success(`"${existing.name}" deleted successfully.`);
+            }
+            this.refreshGroupList(() => this.saving.set(false), () => this.saving.set(false));
+          },
+          error: (error) => {
+            this.toast.error(this.getErrorMessage(error, 'Failed to delete group.'));
+            this.saving.set(false);
+          },
+          complete: () => this.saving.set(false),
+        });
+      },
+      error: () => {
+        // Fall back to basic confirmation if impact lookup fails.
+        const confirmed = window.confirm(`Delete "${existing.name}"?`);
+        if (!confirmed) {
+          this.saving.set(false);
+          return;
+        }
+
+        this.groupsService.deleteGroup(existing._id).subscribe({
+          next: () => {
+            this.toast.success(`"${existing.name}" deleted successfully.`);
+            this.refreshGroupList(() => this.saving.set(false), () => this.saving.set(false));
+          },
+          error: (err) => {
+            this.toast.error(this.getErrorMessage(err, 'Failed to delete group.'));
+            this.saving.set(false);
+          },
+          complete: () => this.saving.set(false),
+        });
+      },
+    });
+  }
+
+  private openQuickCreateEditById(groupId: string): void {
+    const existing = this.groups().find((item) => item._id === groupId);
+    if (existing) {
+      this.quickCreateModal?.openForEdit(existing);
+      return;
+    }
+
+    this.groupsService.getGroupById(groupId).subscribe({
+      next: (response) => {
+        if (response?.data) {
+          this.quickCreateModal?.openForEdit(response.data);
+        }
+      },
+      error: () => {
+        this.toast.error('Unable to open quick edit for this group.');
+      },
+    });
+  }
+
+  private openEditWizard(existing: Group, completionMode = false): void {
     this.resetWizard();
+    this.completionMode.set(completionMode);
     this.editingGroupId.set(existing._id);
+    this.loadCompletionStatus(existing._id);
 
     this.basicForm.patchValue({
       name: existing.name,
@@ -1003,7 +2159,11 @@ export class GroupsComponent implements OnInit {
     });
 
     this.unitsForm.patchValue({ baseUnitId: existing.baseUnitId });
-    this.allowedUnitIds.set([...existing.allowedUnitIds]);
+    const allowedUnits = new Set([...(existing.allowedUnitIds || [])]);
+    if (existing.baseUnitId) {
+      allowedUnits.add(existing.baseUnitId);
+    }
+    this.allowedUnitIds.set([...allowedUnits]);
 
     this.currentStep.set(1);
     this.loadGroupImages(existing._id);
@@ -1018,8 +2178,324 @@ export class GroupsComponent implements OnInit {
     setTimeout(() => this.descEditor?.setContent(existing.description || ''), 0);
   }
 
-  private pluralSuffix(count: number): string {
-    return count === 1 ? '' : 's';
+  private loadCompletionStatus(groupId: string): void {
+    this.completionLoading.set(true);
+    this.groupsService.getGroupCompletionStatus(groupId).subscribe({
+      next: (response) => {
+        this.completionStatus.set(response.data);
+        this.completionLoading.set(false);
+      },
+      error: () => {
+        this.completionStatus.set(null);
+        this.completionLoading.set(false);
+      },
+    });
+  }
+
+  getCompletionItemTitle(item: CompletionChecklistItem): string {
+    if (item === 'fieldValues') return 'Field Values';
+    if (item === 'variants') return 'Variants';
+    if (item === 'media') return 'Media';
+    return 'Advanced Settings';
+  }
+
+  getCompletionActionLabel(item: CompletionChecklistItem): string {
+    if (item === 'fieldValues') return 'Save Values';
+    if (item === 'variants') return 'Review & Generate';
+    if (item === 'media') return 'Open Media Tab';
+    return 'Save Advanced';
+  }
+
+  isCompletionActionRunning(item: CompletionChecklistItem): boolean {
+    return this.completionActionItem() === item;
+  }
+
+  openCompletionStep(item: CompletionChecklistItem): void {
+    if (item === 'fieldValues') {
+      this.currentStep.set(3);
+      return;
+    }
+
+    if (item === 'variants') {
+      const editId = this.editingGroupId();
+      if (!editId) {
+        return;
+      }
+
+      void this.router.navigate(['/product/variants'], {
+        queryParams: {
+          groupId: editId,
+        },
+      });
+      return;
+    }
+
+    if (item === 'media') {
+      this.currentStep.set(6);
+      return;
+    }
+
+    this.currentStep.set(4);
+  }
+
+  runCompletionItem(item: CompletionChecklistItem): void {
+    const editId = this.editingGroupId();
+    if (!editId) {
+      return;
+    }
+
+    if (item === 'media') {
+      this.currentStep.set(6);
+      this.openPicker();
+      return;
+    }
+
+    if (item === 'fieldValues') {
+      if (!this.isStepValid(3)) {
+        this.currentStep.set(3);
+        this.touchStep(3);
+        this.toast.warning('Please complete required Field Values before saving.');
+        return;
+      }
+
+      const values = this.valuesForm.getRawValue() as Record<string, number | null>;
+      const fieldValues = this.wizardFields().map((field) => ({
+        fieldId: field.fieldId,
+        value: Number(values[field.key]),
+      }));
+
+      this.completionActionItem.set(item);
+      this.groupsService.updateGroupFieldValues(editId, {
+        fieldValues,
+        excludedFieldKeys: [...this.hiddenGroupFieldKeys()],
+      }).subscribe({
+        next: () => this.updateCompletionChecklistItem(editId, item, 'Field values saved and checklist updated.'),
+        error: () => {
+          this.completionActionItem.set(null);
+          this.toast.error('Failed to save field values.');
+        },
+      });
+      return;
+    }
+
+    if (item === 'variants') {
+      this.openVariantReview();
+      return;
+    }
+
+    const invalidAdvancedStep = [4, 5].find((step) => !this.isStepValid(step));
+    if (invalidAdvancedStep) {
+      this.currentStep.set(invalidAdvancedStep);
+      this.touchStep(invalidAdvancedStep);
+      this.toast.warning('Please complete required Price Rule and Units fields before saving advanced settings.');
+      return;
+    }
+
+    const baseUnitId = String(this.unitsForm.controls.baseUnitId.value || '');
+    const allowedUnitIds = new Set(this.allowedUnitIds());
+    if (baseUnitId) {
+      allowedUnitIds.add(baseUnitId);
+    }
+
+    const optionAxes = (this.basicForm.controls.groupType.value === 'ATTRIBUTE' || this.basicForm.controls.groupType.value === 'HYBRID')
+      ? this.optionAxesForm.controls.map((control) => ({
+          key: (control.controls.key.value || '').trim(),
+          label: (control.controls.label.value || '').trim(),
+          values: this.getOptionAxisValuesArray(control.controls.values.value || ''),
+        })).filter((axis) => axis.key && axis.values.length > 0)
+      : [];
+
+    this.completionActionItem.set(item);
+    forkJoin({
+      pricing: this.groupsService.updateAdvancedPricing(editId, {
+        actualPrice: String(this.formulaForm.controls.actualPrice.value || '').trim(),
+        sellingPrice: String(this.formulaForm.controls.sellingPrice.value || '').trim(),
+        anchorPrice: String(this.formulaForm.controls.anchorPrice.value || '').trim(),
+      }),
+      units: this.groupsService.updateGroupUnits(editId, {
+        baseUnitId,
+        allowedUnitIds: [...allowedUnitIds],
+      }),
+      mappings: this.groupsService.updateGroupMappings(editId, {
+        fieldGroupId: String(this.selectionForm.controls.fieldGroupId.value || ''),
+      }),
+      advanced: this.groupsService.updateGroupAdvancedSettings(editId, {
+        taxProfileId: String(this.basicForm.controls.taxProfileId.value || '').trim() || null,
+        pricingRefreshMode: this.basicForm.controls.pricingRefreshMode.value || 'AUTO_REFRESH',
+        groupType: this.basicForm.controls.groupType.value || 'MEASURED',
+        optionAxes,
+      }),
+    }).subscribe({
+      next: () => this.updateCompletionChecklistItem(editId, item, 'Advanced settings saved and checklist updated.'),
+      error: () => {
+        this.completionActionItem.set(null);
+        this.toast.error('Failed to save advanced settings.');
+      },
+    });
+  }
+
+  markCompletionItem(item: CompletionChecklistItem): void {
+    const editId = this.editingGroupId();
+    if (!editId) {
+      return;
+    }
+
+    this.updateCompletionChecklistItem(editId, item, 'Checklist updated.');
+  }
+
+  private updateCompletionChecklistItem(
+    groupId: string,
+    item: CompletionChecklistItem,
+    successMessage: string,
+  ): void {
+    this.groupsService.updateGroupCompletionChecklist(groupId, { [item]: true }).subscribe({
+      next: () => {
+        this.loadCompletionStatus(groupId);
+        this.completionActionItem.set(null);
+        this.toast.success(successMessage);
+      },
+      error: () => {
+        this.completionActionItem.set(null);
+        this.toast.error('Failed to update checklist.');
+      },
+    });
+  }
+
+  completeGroupSetup(): void {
+    const editId = this.editingGroupId();
+    if (!editId) {
+      return;
+    }
+
+    this.groupsService.markGroupComplete(editId).subscribe({
+      next: () => {
+        this.loadCompletionStatus(editId);
+        this.completionMode.set(false);
+        this.toast.success('Group setup completed.');
+        void this.router.navigate([], {
+          queryParams: { completeGroupId: null, openCompletion: null },
+          queryParamsHandling: 'merge',
+          replaceUrl: true,
+        });
+      },
+      error: () => this.toast.error('Failed to complete group setup.'),
+    });
+  }
+
+  openVariantReview(): void {
+    const editId = this.editingGroupId();
+    if (!editId) {
+      return;
+    }
+
+    this.variantReviewOpen.set(true);
+    this.variantReviewLoading.set(true);
+    this.variantDisabledKeys.set([]);
+
+    this.groupsService.previewAutoGenerateVariants({ groupId: editId }).subscribe({
+      next: (response) => {
+        this.variantPreview.set(response.data);
+        this.variantReviewLoading.set(false);
+      },
+      error: () => {
+        this.variantPreview.set(null);
+        this.variantReviewLoading.set(false);
+        this.toast.error('Failed to load variant combinations preview.');
+      },
+    });
+  }
+
+  closeVariantReview(): void {
+    this.variantReviewOpen.set(false);
+    this.variantReviewLoading.set(false);
+    this.variantGenerating.set(false);
+    this.variantPreview.set(null);
+    this.variantDisabledKeys.set([]);
+  }
+
+  isVariantCombinationSelected(combinationKey: string, exists: boolean): boolean {
+    if (exists) {
+      return false;
+    }
+
+    return !this.variantDisabledKeys().includes(combinationKey);
+  }
+
+  toggleVariantCombination(combinationKey: string, exists: boolean, checked: boolean): void {
+    if (exists) {
+      return;
+    }
+
+    const disabled = new Set(this.variantDisabledKeys());
+    if (checked) {
+      disabled.delete(combinationKey);
+    } else {
+      disabled.add(combinationKey);
+    }
+
+    this.variantDisabledKeys.set([...disabled]);
+  }
+
+  selectedVariantCombinationCount(): number {
+    const preview = this.variantPreview();
+    if (!preview) {
+      return 0;
+    }
+
+    const disabledSet = new Set(this.variantDisabledKeys());
+    return preview.items.filter((item) => !item.exists && !disabledSet.has(item.combinationKey)).length;
+  }
+
+  getVariantOptionText(item: { optionSelections: Array<{ value: string }> }): string {
+    return item.optionSelections.map((option) => option.value).join(' / ');
+  }
+
+  createVariantsFromReview(): void {
+    const editId = this.editingGroupId();
+    if (!editId) {
+      return;
+    }
+
+    const selectedCount = this.selectedVariantCombinationCount();
+    if (selectedCount <= 0) {
+      this.toast.warning('Select at least one new combination to generate variants.');
+      return;
+    }
+
+    this.variantGenerating.set(true);
+    this.groupsService.createAutoGenerateVariants({
+      groupId: editId,
+      disabledCombinationKeys: [...this.variantDisabledKeys()],
+    }).subscribe({
+      next: (response) => {
+        const data = response.data;
+        this.variantGenerating.set(false);
+        this.updateCompletionChecklistItem(
+          editId,
+          'variants',
+          `Generated ${data.createdCount} variants (${data.skippedCount} skipped).`,
+        );
+        this.closeVariantReview();
+      },
+      error: () => {
+        this.variantGenerating.set(false);
+        this.toast.error('Failed to generate variants from selected combinations.');
+      },
+    });
+  }
+
+  openVariantsModuleFromReview(): void {
+    const editId = this.editingGroupId();
+    if (!editId) {
+      return;
+    }
+
+    this.closeVariantReview();
+    void this.router.navigate(['/product/variants'], {
+      queryParams: {
+        groupId: editId,
+      },
+    });
   }
 
   onDescriptionChanged(html: string): void {
@@ -1476,6 +2952,7 @@ export class GroupsComponent implements OnInit {
           }));
           this.mediaService.attachGroupImages(newGroupId, entries).subscribe({
             next: () => {
+              this.groupsService.updateGroupCompletionChecklist(newGroupId, { media: true }).subscribe({ next: () => void 0, error: () => void 0 });
               this.saving.set(false);
               this.closeWizard();
               this.loadInitialData();
@@ -1548,6 +3025,10 @@ export class GroupsComponent implements OnInit {
 
     this.mediaService.attachGroupImages(editId, entries).subscribe({
       next: () => {
+        this.groupsService.updateGroupCompletionChecklist(editId, { media: true }).subscribe({
+          next: () => this.loadCompletionStatus(editId),
+          error: () => void 0,
+        });
         this.toast.success('Media attached.');
         this.loadGroupImages(editId);
       },
@@ -1639,7 +3120,7 @@ export class GroupsComponent implements OnInit {
       const markup = this.simpleAnchorPercent();
       
       // All three simple builder fields must be filled
-      if (!baseCost || !baseCost.trim()) {
+      if (!baseCost?.trim()) {
         return false; // Base cost is required
       }
       
@@ -1754,6 +3235,9 @@ export class GroupsComponent implements OnInit {
     this.replaceValuesForm(new FormRecord<FormControl<number | null>>({}));
     this.groupImages.set([]);
     this.clearOptionAxes();
+    this.completionStatus.set(null);
+    this.completionMode.set(false);
+    this.closeVariantReview();
   }
 
   private clearOptionAxes(): void {
@@ -1841,9 +3325,7 @@ export class GroupsComponent implements OnInit {
       }
     }
 
-    if (!editingGroupId) {
-      payload.groupType = this.basicForm.controls.groupType.value || 'MEASURED';
-    }
+    payload.groupType = this.basicForm.controls.groupType.value || 'MEASURED';
 
     // Add optionAxes for ATTRIBUTE/HYBRID groups
     const groupType = this.basicForm.controls.groupType.value;
@@ -2057,7 +3539,7 @@ export class GroupsComponent implements OnInit {
       },
       error: (error) => {
         this.loadingGroupCollections.set(false);
-        this.toast.error(String(error?.error?.message || 'Failed to add group to collection.'));
+        this.toast.error(this.getErrorMessage(error, 'Failed to add group to collection.'));
       },
     });
   }

@@ -1,6 +1,7 @@
 <div class="categories-list">
   <header class="categories-list__header">
     <h2><i class="ri-tags-line" aria-hidden="true"></i> {{ text.pageTitle | translate }}</h2>
+    <div class="categories-list__actions">
       <gom-lib-button
         class="btn-add"
         (buttonClick)="onAddNew()"
@@ -9,6 +10,25 @@
       >
         <i class="ri-add-line" aria-hidden="true"></i> {{ text.addCategory | translate }}
       </gom-lib-button>
+      
+      <gom-lib-button
+        variant="secondary"
+        (buttonClick)="downloadTemplate.emit()"
+        gomDisableIfNoFeature="category.create"
+        [disabled]="loading || templateDownloading || !canCreate"
+      >
+        <i class="ri-download-line" aria-hidden="true"></i> {{ templateDownloading ? 'Downloading...' : 'Download Template' }}
+      </gom-lib-button>
+      
+      <gom-lib-button
+        variant="secondary"
+        (buttonClick)="uploadCategories.emit()"
+        gomDisableIfNoFeature="category.create"
+        [disabled]="loading || templateUploading || !canCreate"
+      >
+        <i class="ri-upload-line" aria-hidden="true"></i> {{ templateUploading ? 'Uploading...' : 'Upload Categories' }}
+      </gom-lib-button>
+    </div>
   </header>
 
   <section class="categories-list__table-shell">

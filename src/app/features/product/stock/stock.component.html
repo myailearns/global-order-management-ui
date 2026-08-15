@@ -760,11 +760,11 @@
 >
   <section class="form-grid">
     <gom-lib-input
-      label="Quantity Delta"
+      label="Reduce Quantity"
       type="number"
-      placeholder="Use negative for reduction, positive for increase"
+      placeholder="Enter quantity to reduce from stock"
       [formControl]="correctionForm.controls.quantityDelta"
-      [error]="correctionForm.controls.quantityDelta.touched && correctionForm.controls.quantityDelta.invalid ? 'Quantity delta is required' : ''"
+      [error]="correctionForm.controls.quantityDelta.touched && correctionForm.controls.quantityDelta.invalid ? 'Reduction quantity must be greater than zero' : ''"
     ></gom-lib-input>
 
     <gom-lib-select

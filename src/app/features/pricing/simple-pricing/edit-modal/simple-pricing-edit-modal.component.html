@@ -1,0 +1,70 @@
+<dialog class="simple-pricing-edit__modal" open [attr.aria-label]="title()" (click)="$event.stopPropagation()" (keydown)="onDialogKeyDown($event)">
+    <header class="simple-pricing-edit__header">
+      <h2>{{ title() }}</h2>
+      <button type="button" class="simple-pricing-edit__close" (click)="onClose()" aria-label="Close">
+        ×
+      </button>
+    </header>
+
+    <form [formGroup]="form" class="simple-pricing-edit" (ngSubmit)="onSave()">
+      @if (isGroupEntity()) {
+        <section class="simple-pricing-edit__fields">
+          <h3>Formula Inputs</h3>
+          <div class="simple-pricing-edit__fields-grid">
+            @for (field of formulaFields(); track field.fieldId) {
+              <gom-lib-input
+                type="number"
+                [label]="field.label"
+                [formControl]="field.control"
+              ></gom-lib-input>
+            }
+          </div>
+        </section>
+
+        <section class="simple-pricing-edit__preview">
+          <div class="simple-pricing-edit__preview-row">
+            <span>Actual Price</span>
+            <strong>{{ preview().actual | number:'1.2-2' }}</strong>
+          </div>
+          <div class="simple-pricing-edit__preview-row">
+            <span>Selling Price</span>
+            <strong>{{ preview().selling | number:'1.2-2' }}</strong>
+          </div>
+          <div class="simple-pricing-edit__preview-row">
+            <span>MRP / Anchor Price</span>
+            <strong>{{ preview().anchor | number:'1.2-2' }}</strong>
+          </div>
+          <div class="simple-pricing-edit__preview-row">
+            <span>Profit %</span>
+            <strong>{{ preview().profit | number:'1.1-1' }}%</strong>
+          </div>
+        </section>
+      } @else {
+        <gom-lib-input
+          type="number"
+          [label]="'Selling Price'"
+          [formControl]="form.controls.sellingPrice"
+          [error]="form.controls.sellingPrice.touched && form.controls.sellingPrice.invalid ? 'Enter valid selling price' : ''"
+        ></gom-lib-input>
+      }
+
+      <div class="simple-pricing-edit__actions">
+        <gom-lib-button
+          type="button"
+          variant="secondary"
+          [disabled]="saving"
+          (buttonClick)="onClose()"
+        >
+          Cancel
+        </gom-lib-button>
+        <gom-lib-button
+          type="submit"
+          variant="primary"
+          [disabled]="saving"
+          (buttonClick)="onSave()"
+        >
+          Save
+        </gom-lib-button>
+      </div>
+    </form>
+</dialog>

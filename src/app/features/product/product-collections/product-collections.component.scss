@@ -299,13 +299,6 @@
   color: theme.get-text(danger);
 }
 
-.product-collections-inline-form__actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: theme.get-spacing(xs);
-  margin-top: theme.get-spacing(xs);
-}
-
 .product-collections-details {
   display: grid;
   gap: theme.get-spacing(xs);

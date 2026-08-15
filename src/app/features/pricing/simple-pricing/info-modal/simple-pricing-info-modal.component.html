@@ -1,0 +1,40 @@
+<gom-lib-modal
+  [show]="true"
+  [title]="entity.displayName"
+  [closeOnBackdropClick]="true"
+  size="small"
+  (closed)="onClose()"
+>
+  <section class="simple-pricing-info">
+    <div class="simple-pricing-info__row">
+      <span class="simple-pricing-info__label">Actual Price</span>
+      <strong>{{ formatMoney(entity.actualPrice) }}</strong>
+    </div>
+    <div class="simple-pricing-info__row">
+      <span class="simple-pricing-info__label">Selling Price</span>
+      <strong>{{ formatMoney(entity.sellingPrice) }}</strong>
+    </div>
+    <div class="simple-pricing-info__row">
+      <span class="simple-pricing-info__label">MRP / Anchor Price</span>
+      <strong>{{ formatMoney(entity.anchorPrice) }}</strong>
+    </div>
+    <div class="simple-pricing-info__row">
+      <span class="simple-pricing-info__label">Pricing State</span>
+      <strong>{{ entity.pricingState }}</strong>
+    </div>
+    @if (entity.formulaSummary) {
+      <div class="simple-pricing-info__row simple-pricing-info__row--block">
+        <span class="simple-pricing-info__label">Formula Summary</span>
+        <p>{{ entity.formulaSummary }}</p>
+      </div>
+    }
+  </section>
+
+  <div gom-modal-actions class="gom-modal__action-layout">
+    <div class="gom-modal__action-layout-end">
+      <gom-lib-button type="button" variant="secondary" (buttonClick)="onClose()">
+        Close
+      </gom-lib-button>
+    </div>
+  </div>
+</gom-lib-modal>

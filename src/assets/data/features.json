@@ -844,32 +844,5 @@
     "planAvailability": ["GROWTH", "SCALE"],
     "dependencies": [],
     "actions": ["upload", "delete", "list"]
-  },
-  {
-    "featureKey": "categoryDefaults.view",
-    "displayName": "View Category Defaults",
-    "module": "settings",
-    "description": "View and browse category default configurations",
-    "planAvailability": ["STARTUP", "GROWTH", "SCALE"],
-    "dependencies": [],
-    "actions": ["view", "browse", "export"]
-  },
-  {
-    "featureKey": "categoryDefaults.edit",
-    "displayName": "Edit Category Defaults",
-    "module": "settings",
-    "description": "Edit and configure category default settings for attributes, prices, and metadata",
-    "planAvailability": ["GROWTH", "SCALE"],
-    "dependencies": ["categoryDefaults.view"],
-    "actions": ["edit", "update", "save"]
-  },
-  {
-    "featureKey": "categoryDefaults.template",
-    "displayName": "Manage Default Templates",
-    "module": "settings",
-    "description": "Create and manage default templates for product attributes and metadata",
-    "planAvailability": ["SCALE"],
-    "dependencies": ["categoryDefaults.view"],
-    "actions": ["create-template", "edit-template", "delete-template", "clone-template"]
   }
 ]

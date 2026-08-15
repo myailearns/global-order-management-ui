@@ -37,6 +37,22 @@
         </p>
       </div>
 
+      @if (form.get('showOnHomeScreen')?.value) {
+        <div class="product-collections-form__toggle-row">
+          <label class="product-collections-form__toggle-label">
+            <input
+              type="checkbox"
+              class="product-collections-form__toggle-input"
+              formControlName="showAllItemsOnHomeScreen"
+            />
+            <span>Display all collection items directly on home screen</span>
+          </label>
+          <p class="product-collections-form__toggle-hint">
+            When enabled, collection items (variants/groups) will be displayed directly on the home screen in horizontal scroll instead of showing category tiles.
+          </p>
+        </div>
+      }
+
       <div class="product-collections-form__toggle-row">
         <label class="product-collections-form__toggle-label">
           <input
@@ -172,12 +188,14 @@
           <p class="product-collections-mapper__error">{{ assignmentError() }}</p>
         }
       </div>
+    </form>
 
-      <div gom-modal-actions class="product-collections-inline-form__actions">
+    <footer class="gom-modal__action-layout" gom-modal-actions>
+      <div class="gom-modal__action-layout-end">
         <gom-lib-button type="button" variant="secondary" (buttonClick)="closeForm()">{{ text.cancel | translate }}</gom-lib-button>
         <gom-lib-button type="button" (buttonClick)="save()" [disabled]="loading()">{{ text.save | translate }}</gom-lib-button>
       </div>
-    </form>
+    </footer>
   </gom-lib-modal>
 
   <gom-lib-table
@@ -293,9 +311,12 @@
         </div>
       }
 
-      <div gom-modal-actions class="product-collections-inline-form__actions">
+    </section>
+
+    <footer class="gom-modal__action-layout" gom-modal-actions>
+      <div class="gom-modal__action-layout-end">
         <gom-lib-button type="button" variant="secondary" (buttonClick)="closeDetails()">{{ text.cancel | translate }}</gom-lib-button>
       </div>
-    </section>
+    </footer>
   </gom-lib-modal>
 </section>

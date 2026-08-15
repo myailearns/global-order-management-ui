@@ -231,7 +231,7 @@ export class StockComponent implements OnInit {
   });
 
   readonly correctionForm = this.fb.group({
-    quantityDelta: [null as number | null, [Validators.required]],
+    quantityDelta: [null as number | null, [Validators.required, Validators.min(0.000001)]],
     unitId: ['', [Validators.required]],
     variantId: [''],
     correctionReason: ['DAMAGE' as 'DAMAGE' | 'RETURN' | 'EXPIRY' | 'OTHER', [Validators.required]],
@@ -757,8 +757,8 @@ export class StockComponent implements OnInit {
     const variantId = String(raw.variantId || '').trim();
     const notes = String(raw.notes || '').trim();
 
-    if (!Number.isFinite(quantityDelta) || quantityDelta === 0) {
-      this.toast.error('Correction quantity must not be zero.');
+    if (!Number.isFinite(quantityDelta) || quantityDelta <= 0) {
+      this.toast.error('Reduction quantity must be greater than zero.');
       return;
     }
 

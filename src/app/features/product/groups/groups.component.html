@@ -5,17 +5,46 @@
       <gom-lib-button
         type="button"
         variant="secondary"
+        (buttonClick)="downloadTemplate()"
+        gomDisableIfNoFeature="group.create"
+        [disabled]="templateDownloading() || !canCreateGroup()"
+      ><i class="ri-download-2-line" aria-hidden="true"></i> Download Template</gom-lib-button>
+
+      <gom-lib-button
+        type="button"
+        variant="secondary"
+        (buttonClick)="refreshTemplate()"
+        gomDisableIfNoFeature="group.create"
+        [disabled]="templateRefreshing() || !canCreateGroup()"
+      ><i class="ri-refresh-line" aria-hidden="true"></i> Refresh Template</gom-lib-button>
+
+      <gom-lib-button
+        type="button"
+        variant="secondary"
+        (buttonClick)="uploadTemplate()"
+        gomDisableIfNoFeature="group.create"
+        [disabled]="templateUploading() || bulkJobIsActive() || !canCreateGroup()"
+      ><i class="ri-upload-cloud-2-line" aria-hidden="true"></i>
+        {{ templateUploading() ? 'Uploading...' : 'Upload Template' }}
+      </gom-lib-button>
+
+      <gom-lib-button
+        type="button"
+        variant="secondary"
         (buttonClick)="openBulkUpload()"
         gomDisableIfNoFeature="group.bulk_create"
         [disabled]="saving() || !canBulkCreateGroup()"
       ><i class="ri-upload-2-line" aria-hidden="true"></i> Bulk Upload</gom-lib-button>
 
+      <gom-quick-create-group #quickCreateModal (saved)="onQuickCreateSaved()" (closed)="onQuickCreateClosed()"></gom-quick-create-group>
+
       <gom-lib-button
         type="button"
         variant="primary"
         (buttonClick)="openCreateWizard()"
-        gomDisableIfNoFeature="group.create"
-        [disabled]="saving() || !canCreateGroup()"
+        gomDisableIfNoFeature="tap.create_group"
+        [disabled]="saving() || !canCreateTabbedGroup()"
+        *ngIf="canCreateTabbedGroup()"
       ><i class="ri-add-line" aria-hidden="true"></i> Create Group</gom-lib-button>
     </div>
   </header>
@@ -25,6 +54,26 @@
       <div style="display: flex; gap: 0.75rem; align-items: center;">
         <i class="ri-alert-fill" style="font-size: 1.25rem; flex-shrink: 0;" aria-hidden="true"></i>
         <span>{{ errorMessage() }}</span>
+      </div>
+    </div>
+  }
+
+  <!-- Bulk Upload processing / completion alert -->
+  @if (showBulkUploadBanner()) {
+    <div class="bulk-upload-alert" [class.bulk-upload-alert--active]="bulkJobIsActive()" [class.bulk-upload-alert--done]="!bulkJobIsActive()">
+      <i [class]="bulkJobIsActive() ? 'ri-loader-4-line bulk-upload-alert__spin' : (bulkUploadJobStatus()?.totals?.unresolvedRows ? 'ri-error-warning-line' : 'ri-checkbox-circle-line')" aria-hidden="true"></i>
+      <span class="bulk-upload-alert__text">
+        @if (bulkJobIsActive()) {
+          <strong>Processing upload…</strong>
+          @if (bulkUploadJobStatus(); as s) {
+            {{ s.totals.processedRows }}/{{ s.totals.totalRows }} rows processed
+          }
+        } @else if (bulkUploadJobStatus(); as s) {
+          <strong>Upload complete</strong> — {{ s.totals.successRows }} created, {{ s.totals.failedRows }} failed, {{ s.totals.variantWarningRows || 0 }} variant warnings ({{ s.totals.unresolvedRows }} unresolved)
+        }
+      </span>
+      <div class="bulk-upload-alert__actions">
+        <gom-lib-button type="button" variant="secondary" (buttonClick)="openBulkUploadResultModal()">View</gom-lib-button>
       </div>
     </div>
   }
@@ -40,33 +89,6 @@
   }
 
   <article class="master-page__table-shell">
-    @if (selectedGroupRows().length > 0) {
-      <div class="bulk-selection-actions">
-        <span class="bulk-selection-count">
-          {{ selectedGroupRows().length }} group{{ selectedGroupRows().length !== 1 ? 's' : '' }} selected
-        </span>
-        <div class="bulk-selection-buttons">
-          <gom-lib-button
-            type="button"
-            variant="secondary"
-            (buttonClick)="applyStatusToSelectedGroups('ACTIVE')"
-            gomDisableIfNoFeature="group.bulk_create"
-            [disabled]="saving() || !canBulkCreateGroup()"
-          >
-            <i class="ri-check-line" aria-hidden="true"></i> Activate Selected
-          </gom-lib-button>
-          <gom-lib-button
-            type="button"
-            variant="secondary"
-            (buttonClick)="applyStatusToSelectedGroups('INACTIVE')"
-            gomDisableIfNoFeature="group.bulk_create"
-            [disabled]="saving() || !canBulkCreateGroup()"
-          >
-            <i class="ri-close-line" aria-hidden="true"></i> Deactivate Selected
-          </gom-lib-button>
-        </div>
-      </div>
-    }
     <gom-lib-table
       [columns]="columns"
       [rows]="rows()"
@@ -79,9 +101,7 @@
       searchPlaceholder="Search groups"
       emptyMessage="No groups found."
       [mobileCardView]="true"
-      [enableRowSelection]="true"
       (rowAction)="onRowAction($event)"
-      (selectedRowsChange)="onSelectedGroupsChange($event)"
       (queryChange)="onGroupTableQueryChange($event)"
     ></gom-lib-table>
 
@@ -105,10 +125,70 @@
 
 <gom-lib-modal
   [title]="editingGroupId() ? 'Edit Group' : 'Create Group'"
-  [(show)]="wizardOpen"
+  [show]="wizardOpen()"
+  (showChange)="wizardOpen.set($event)"
   (closed)="closeWizard()"
   size="large"
 >
+  @if (editingGroupId() && completionMode()) {
+    <section class="completion-panel">
+      <div class="completion-panel__header">
+        <div>
+          <h3>Post-Create Completion</h3>
+          <p>Finish the remaining setup steps for this group.</p>
+        </div>
+        @if (completionStatus()) {
+          <span class="completion-panel__state">{{ completionStatus()?.completionState }}</span>
+        }
+      </div>
+
+      @if (completionLoading()) {
+        <p class="completion-panel__loading">Loading completion checklist...</p>
+      } @else if (completionStatus(); as status) {
+        <div class="completion-panel__grid">
+          @for (item of status.checklist; track item.item) {
+            <article class="completion-panel__card" [class.is-complete]="item.completed">
+              <div>
+                <strong>{{ getCompletionItemTitle(item.item) }}</strong>
+                <p>{{ item.completed ? 'Completed' : 'Pending' }}</p>
+              </div>
+              @if (!item.completed) {
+                <div class="completion-panel__card-actions">
+                  <gom-lib-button type="button" variant="secondary" (buttonClick)="openCompletionStep(item.item)">
+                    Open
+                  </gom-lib-button>
+                  <gom-lib-button
+                    type="button"
+                    variant="primary"
+                    [disabled]="isCompletionActionRunning(item.item)"
+                    (buttonClick)="runCompletionItem(item.item)"
+                  >
+                    {{ isCompletionActionRunning(item.item) ? 'Saving...' : getCompletionActionLabel(item.item) }}
+                  </gom-lib-button>
+                </div>
+              }
+            </article>
+          }
+        </div>
+
+        @if (!status.allComplete) {
+          <p class="completion-panel__pending">Pending: {{ status.nextPendingItems.join(', ') }}</p>
+        }
+
+        <div class="completion-panel__actions">
+          <gom-lib-button
+            type="button"
+            variant="primary"
+            [disabled]="!status.allComplete"
+            (buttonClick)="completeGroupSetup()"
+          >
+            Complete Setup
+          </gom-lib-button>
+        </div>
+      }
+    </section>
+  }
+
   @if (errorMessage()) {
     <div class="master-page__error wizard__error-banner">
       <div style="display: flex; gap: 0.75rem; align-items: center;">
@@ -413,14 +493,16 @@
             }
           </div>
 
-          <div class="token-list">
-            <gom-lib-button type="button" variant="secondary" (buttonClick)="toggleAdvancedFormulaTools()">
-              {{ showAdvancedFormulaTools() ? 'Hide Manual Formula Edit' : 'Need Manual Formula Edit?' }}
-            </gom-lib-button>
-          </div>
+          @if (editingGroupId()) {
+            <div class="token-list">
+              <gom-lib-button type="button" variant="secondary" (buttonClick)="toggleAdvancedFormulaTools()">
+                {{ showAdvancedFormulaTools() ? 'Hide Manual Formula Edit' : 'Need Manual Formula Edit?' }}
+              </gom-lib-button>
+            </div>
+          }
         </div>
 
-        @if (showAdvancedFormulaTools()) {
+        @if (editingGroupId() && showAdvancedFormulaTools()) {
         <div class="wizard__panel">
           <h4>Insert Into</h4>
           <div class="token-list">
@@ -650,8 +732,77 @@
 </gom-lib-modal>
 
 <gom-lib-modal
+  [title]="'Review Variant Combinations'"
+  [show]="variantReviewOpen()"
+  (showChange)="variantReviewOpen.set($event)"
+  (closed)="closeVariantReview()"
+  size="large"
+>
+  <section class="variant-review">
+    @if (variantReviewLoading()) {
+      <p class="variant-review__loading">Loading combinations...</p>
+    } @else if (variantPreview(); as preview) {
+      <div class="variant-review__summary">
+        <p>Total combinations: <strong>{{ preview.total }}</strong></p>
+        <p>Selected to create: <strong>{{ selectedVariantCombinationCount() }}</strong></p>
+      </div>
+
+      @if (preview.items.length === 0) {
+        <p>No combinations available for this group.</p>
+      } @else {
+        <div class="variant-review__list">
+          @for (item of preview.items; track item.combinationKey) {
+            <label class="variant-review__row" [class.is-existing]="item.exists">
+              <input
+                type="checkbox"
+                [checked]="isVariantCombinationSelected(item.combinationKey, item.exists)"
+                [disabled]="item.exists || variantGenerating()"
+                (change)="toggleVariantCombination(item.combinationKey, item.exists, $any($event.target).checked)"
+              />
+              <div>
+                <strong>{{ item.name }}</strong>
+                <p>
+                  {{ item.exists ? 'Already exists' : 'New' }}
+                  @if (item.optionSelections.length > 0) {
+                    • {{ getVariantOptionText(item) }}
+                  }
+                </p>
+              </div>
+            </label>
+          }
+        </div>
+      }
+    } @else {
+      <p>Variant preview could not be loaded.</p>
+    }
+  </section>
+
+  <footer class="gom-modal__action-layout" gom-modal-actions>
+    <div class="gom-modal__action-layout-start">
+      <gom-lib-button type="button" variant="secondary" (buttonClick)="openVariantsModuleFromReview()">
+        Open Variants Module
+      </gom-lib-button>
+    </div>
+    <div class="gom-modal__action-layout-end">
+      <gom-lib-button type="button" variant="secondary" (buttonClick)="closeVariantReview()" [disabled]="variantGenerating()">
+        Cancel
+      </gom-lib-button>
+      <gom-lib-button
+        type="button"
+        variant="primary"
+        (buttonClick)="createVariantsFromReview()"
+        [disabled]="variantGenerating() || selectedVariantCombinationCount() === 0"
+      >
+        {{ variantGenerating() ? 'Generating...' : 'Generate Selected Variants' }}
+      </gom-lib-button>
+    </div>
+  </footer>
+</gom-lib-modal>
+
+<gom-lib-modal
   [title]="'Group Collections'"
-  [(show)]="groupCollectionsModalOpen"
+  [show]="groupCollectionsModalOpen()"
+  (showChange)="groupCollectionsModalOpen.set($event)"
   (closed)="closeGroupCollectionsModal()"
   size="medium"
 >
@@ -712,3 +863,372 @@
   [existingVideoCount]="videoCount()"
   (imagesSelected)="onImagesSelected($event)"
 ></gom-image-picker>
+
+<!-- Template Refresh Warnings Modal -->
+<gom-lib-modal
+  #templateRefreshWarningsModal
+  [title]="'Master Data Refresh Complete'"
+  [show]="showTemplateRefreshWarningsModal()"
+  (showChange)="showTemplateRefreshWarningsModal.set($event)"
+  (closed)="closeTemplateRefreshWarningsModal()"
+  size="large"
+>
+  <section class="template-refresh-warnings">
+    @if (templateRefreshResult(); as result) {
+
+      <!-- ── Success summary ─────────────────────────────────────── -->
+      <p class="template-refresh-warnings__summary">
+        <i class="ri-checkbox-circle-fill" aria-hidden="true"></i>
+        Template refreshed successfully.
+        <strong>{{ result.rowCount }} row{{ result.rowCount !== 1 ? 's' : '' }}</strong> of your data preserved.
+      </p>
+
+      <!-- ── Newly added section (only shown when there are new items) ── -->
+      @if (
+        result.newlyAdded.categories.length
+        || result.newlyAdded.units.length
+        || result.newlyAdded.pricingTemplates.length
+        || result.newlyAdded.taxProfiles.length
+        || result.newlyAdded.attributes.length
+      ) {
+        <div class="template-refresh-warnings__new-section">
+          <div class="template-refresh-warnings__new-section-title">
+            <i class="ri-add-circle-fill" aria-hidden="true"></i>
+            New Items Added to Dropdowns
+          </div>
+          <div class="template-refresh-warnings__new-rows">
+            @if (result.newlyAdded.categories.length) {
+              <div class="template-refresh-warnings__new-row">
+                <span class="template-refresh-warnings__new-field">Categories Added</span>
+                <div class="template-refresh-warnings__new-chips">
+                  @for (name of result.newlyAdded.categories; track name) {
+                    <span class="template-refresh-warnings__chip template-refresh-warnings__chip--new">
+                      <i class="ri-add-line" aria-hidden="true"></i>{{ name }}
+                    </span>
+                  }
+                </div>
+              </div>
+            }
+            @if (result.newlyAdded.units.length) {
+              <div class="template-refresh-warnings__new-row">
+                <span class="template-refresh-warnings__new-field">Units Added</span>
+                <div class="template-refresh-warnings__new-chips">
+                  @for (name of result.newlyAdded.units; track name) {
+                    <span class="template-refresh-warnings__chip template-refresh-warnings__chip--new">
+                      <i class="ri-add-line" aria-hidden="true"></i>{{ name }}
+                    </span>
+                  }
+                </div>
+              </div>
+            }
+            @if (result.newlyAdded.pricingTemplates.length) {
+              <div class="template-refresh-warnings__new-row">
+                <span class="template-refresh-warnings__new-field">Pricing Templates Added</span>
+                <div class="template-refresh-warnings__new-chips">
+                  @for (name of result.newlyAdded.pricingTemplates; track name) {
+                    <span class="template-refresh-warnings__chip template-refresh-warnings__chip--new">
+                      <i class="ri-add-line" aria-hidden="true"></i>{{ name }}
+                    </span>
+                  }
+                </div>
+              </div>
+            }
+            @if (result.newlyAdded.taxProfiles.length) {
+              <div class="template-refresh-warnings__new-row">
+                <span class="template-refresh-warnings__new-field">Tax Profiles Added</span>
+                <div class="template-refresh-warnings__new-chips">
+                  @for (name of result.newlyAdded.taxProfiles; track name) {
+                    <span class="template-refresh-warnings__chip template-refresh-warnings__chip--new">
+                      <i class="ri-add-line" aria-hidden="true"></i>{{ name }}
+                    </span>
+                  }
+                </div>
+              </div>
+            }
+            @if (result.newlyAdded.attributes.length) {
+              <div class="template-refresh-warnings__new-row">
+                <span class="template-refresh-warnings__new-field">Attributes Added</span>
+                <div class="template-refresh-warnings__new-chips">
+                  @for (name of result.newlyAdded.attributes; track name) {
+                    <span class="template-refresh-warnings__chip template-refresh-warnings__chip--new">
+                      <i class="ri-add-line" aria-hidden="true"></i>{{ name }}
+                    </span>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- ── Full available dropdown reference ──────────────────── -->
+      <details class="template-refresh-warnings__details">
+        <summary class="template-refresh-warnings__details-summary">
+          <i class="ri-database-2-line" aria-hidden="true"></i>
+          View all available dropdown options
+        </summary>
+        <div class="template-refresh-warnings__master-data">
+          @if (result.masterData.categories.length) {
+            <div class="template-refresh-warnings__field-group">
+              <span class="template-refresh-warnings__field-label">Category</span>
+              <div class="template-refresh-warnings__chip-row">
+                @for (name of result.masterData.categories; track name) {
+                  <span class="template-refresh-warnings__chip"
+                    [class.template-refresh-warnings__chip--new]="result.newlyAdded.categories.includes(name)">
+                    {{ name }}
+                    @if (result.newlyAdded.categories.includes(name)) {
+                      <i class="ri-add-circle-fill" aria-hidden="true"></i>
+                    }
+                  </span>
+                }
+              </div>
+            </div>
+          }
+          @if (result.masterData.units.length) {
+            <div class="template-refresh-warnings__field-group">
+              <span class="template-refresh-warnings__field-label">Base / Allowed Units</span>
+              <div class="template-refresh-warnings__chip-row">
+                @for (name of result.masterData.units; track name) {
+                  <span class="template-refresh-warnings__chip"
+                    [class.template-refresh-warnings__chip--new]="result.newlyAdded.units.includes(name)">
+                    {{ name }}
+                    @if (result.newlyAdded.units.includes(name)) {
+                      <i class="ri-add-circle-fill" aria-hidden="true"></i>
+                    }
+                  </span>
+                }
+              </div>
+            </div>
+          }
+          @if (result.masterData.pricingTemplates.length) {
+            <div class="template-refresh-warnings__field-group">
+              <span class="template-refresh-warnings__field-label">Pricing Template</span>
+              <div class="template-refresh-warnings__chip-row">
+                @for (name of result.masterData.pricingTemplates; track name) {
+                  <span class="template-refresh-warnings__chip"
+                    [class.template-refresh-warnings__chip--new]="result.newlyAdded.pricingTemplates.includes(name)">
+                    {{ name }}
+                    @if (result.newlyAdded.pricingTemplates.includes(name)) {
+                      <i class="ri-add-circle-fill" aria-hidden="true"></i>
+                    }
+                  </span>
+                }
+              </div>
+            </div>
+          }
+          @if (result.masterData.taxProfiles.length) {
+            <div class="template-refresh-warnings__field-group">
+              <span class="template-refresh-warnings__field-label">Tax Profile</span>
+              <div class="template-refresh-warnings__chip-row">
+                @for (name of result.masterData.taxProfiles; track name) {
+                  <span class="template-refresh-warnings__chip"
+                    [class.template-refresh-warnings__chip--new]="result.newlyAdded.taxProfiles.includes(name)">
+                    {{ name }}
+                    @if (result.newlyAdded.taxProfiles.includes(name)) {
+                      <i class="ri-add-circle-fill" aria-hidden="true"></i>
+                    }
+                  </span>
+                }
+              </div>
+            </div>
+          }
+          @if (result.masterData.attributes.length) {
+            <div class="template-refresh-warnings__field-group">
+              <span class="template-refresh-warnings__field-label">Attributes</span>
+              <div class="template-refresh-warnings__chip-row">
+                @for (name of result.masterData.attributes; track name) {
+                  <span class="template-refresh-warnings__chip"
+                    [class.template-refresh-warnings__chip--new]="result.newlyAdded.attributes.includes(name)">
+                    {{ name }}
+                    @if (result.newlyAdded.attributes.includes(name)) {
+                      <i class="ri-add-circle-fill" aria-hidden="true"></i>
+                    }
+                  </span>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </details>
+    }
+
+    <!-- ── Upload-risk warnings (red) ──────────────────────────── -->
+    @if (templateRefreshWarnings().length > 0) {
+      <div class="template-refresh-warnings__drift-banner">
+        <i class="ri-error-warning-line" aria-hidden="true"></i>
+        <span>
+          <strong>{{ templateRefreshWarnings().length }} row value{{ templateRefreshWarnings().length !== 1 ? 's' : '' }} will fail during upload</strong>
+          — these items are deleted or inactive. Update them in your Excel before uploading:
+        </span>
+      </div>
+      <div class="template-refresh-warnings__list">
+        @for (warning of templateRefreshWarnings(); track warning.rowNumber) {
+          <div class="template-refresh-warnings__item">
+            <span class="template-refresh-warnings__row-badge">Row {{ warning.rowNumber }}</span>
+            <span class="template-refresh-warnings__msg">{{ warning.message }}</span>
+          </div>
+        }
+      </div>
+    } @else {
+      <p class="template-refresh-warnings__no-drift">
+        <i class="ri-shield-check-line" aria-hidden="true"></i>
+        All your existing row values are still valid — no changes needed.
+      </p>
+    }
+  </section>
+
+  <footer class="gom-modal__action-layout" gom-modal-actions>
+    <div class="gom-modal__action-layout-start"></div>
+    <div class="gom-modal__action-layout-end">
+      <gom-lib-button type="button" variant="secondary" (buttonClick)="closeTemplateRefreshWarningsModal()">
+        Close
+      </gom-lib-button>
+      <gom-lib-button type="button" variant="primary" (buttonClick)="downloadRefreshedTemplate()">
+        <i class="ri-download-2-line" aria-hidden="true"></i> Download Updated Excel
+      </gom-lib-button>
+    </div>
+  </footer>
+</gom-lib-modal>
+
+<!-- Bulk Upload Results Modal -->
+<gom-lib-modal
+  title="Upload Results"
+  [show]="showBulkUploadResultModal()"
+  (showChange)="showBulkUploadResultModal.set($event)"
+  (closed)="closeBulkUploadResultModal()"
+  size="large"
+>
+  <section class="bulk-upload-results">
+    @if (bulkUploadResultsLoading()) {
+      <p class="bulk-upload-results__loading">Loading results…</p>
+    } @else if (bulkUploadResults(); as results) {
+
+      <!-- Summary -->
+      <div class="bulk-upload-results__summary">
+        <div class="bulk-upload-results__stat">
+          <span class="bulk-upload-results__stat-label">Total Rows</span>
+          <span class="bulk-upload-results__stat-value">{{ results.job.totals.totalRows }}</span>
+        </div>
+        <div class="bulk-upload-results__stat bulk-upload-results__stat--success">
+          <span class="bulk-upload-results__stat-label">Created</span>
+          <span class="bulk-upload-results__stat-value">{{ results.job.totals.successRows }}</span>
+        </div>
+        <div class="bulk-upload-results__stat bulk-upload-results__stat--fail">
+          <span class="bulk-upload-results__stat-label">Failed</span>
+          <span class="bulk-upload-results__stat-value">{{ results.job.totals.failedRows }}</span>
+        </div>
+        <div class="bulk-upload-results__stat bulk-upload-results__stat--unresolved">
+          <span class="bulk-upload-results__stat-label">Unresolved</span>
+          <span class="bulk-upload-results__stat-value">{{ results.job.totals.unresolvedRows }}</span>
+        </div>
+      </div>
+
+      <div>
+        <h4 class="bulk-upload-results__section-title">
+          <i class="ri-error-warning-line" aria-hidden="true"></i>
+          Failed Rows ({{ bulkFailedRows().length }})
+        </h4>
+        <gom-lib-table
+          [columns]="bulkFailedColumns"
+          [rows]="bulkFailedRows()"
+          [loading]="bulkUploadResultsLoading()"
+          [dataMode]="'client'"
+          [totalItems]="bulkFailedRows().length"
+          [pageIndex]="0"
+          [pageSize]="10"
+          [pageSizeOptions]="[10, 20, 50]"
+          searchPlaceholder="Search failed rows"
+          emptyMessage="No active failed rows."
+          [mobileCardView]="true"
+          (rowAction)="onBulkFailedRowAction($event)"
+        ></gom-lib-table>
+      </div>
+
+      <div>
+        <h4 class="bulk-upload-results__section-title bulk-upload-results__section-title--success">
+          <i class="ri-checkbox-circle-line" aria-hidden="true"></i>
+          Success Rows ({{ bulkSuccessRows().length }})
+        </h4>
+        <gom-lib-table
+          [columns]="bulkSuccessColumns"
+          [rows]="bulkSuccessRows()"
+          [loading]="bulkUploadResultsLoading()"
+          [dataMode]="'client'"
+          [totalItems]="bulkSuccessRows().length"
+          [pageIndex]="0"
+          [pageSize]="10"
+          [pageSizeOptions]="[10, 20, 50]"
+          searchPlaceholder="Search success rows"
+          emptyMessage="No successful rows yet."
+          [mobileCardView]="true"
+          (rowAction)="onBulkSuccessRowAction($event)"
+        ></gom-lib-table>
+      </div>
+
+      @if (bulkVariantFailureRows().length > 0 && !bulkVariantFailuresHidden()) {
+        <div>
+          <div class="bulk-upload-results__variant-failures-header">
+            <h4 class="bulk-upload-results__section-title bulk-upload-results__section-title--warning">
+              <i class="ri-alert-line" aria-hidden="true"></i>
+              Variant Warnings ({{ bulkVariantFailureRows().length }})
+            </h4>
+            <gom-lib-button
+              type="button"
+              variant="secondary"
+              (buttonClick)="bulkVariantFailuresHidden.set(true)"
+            >Don't show again</gom-lib-button>
+          </div>
+          <p class="bulk-upload-results__variant-failures-info">
+            Groups were created successfully. The following variant entries were skipped because they used units outside the allowed scope for that group.
+            You can manually add these variants from the Variants section.
+          </p>
+          <gom-lib-table
+            [columns]="bulkVariantFailureColumns"
+            [rows]="bulkVariantFailureRows()"
+            [loading]="bulkUploadResultsLoading()"
+            [dataMode]="'client'"
+            [totalItems]="bulkVariantFailureRows().length"
+            [pageIndex]="0"
+            [pageSize]="10"
+            [pageSizeOptions]="[10, 20, 50]"
+            searchPlaceholder="Search variant warnings"
+            emptyMessage="No variant warnings."
+            [mobileCardView]="true"
+          ></gom-lib-table>
+        </div>
+      }
+    }
+  </section>
+
+  <footer class="gom-modal__action-layout" gom-modal-actions>
+    <div class="gom-modal__action-layout-start"></div>
+    <div class="gom-modal__action-layout-end">
+      @if (bulkJobUnresolvedCount() > 0) {
+        <gom-lib-button type="button" variant="primary" (buttonClick)="openBulkUploadAcknowledgeConfirm()">I am good</gom-lib-button>
+      }
+      <gom-lib-button type="button" variant="secondary" (buttonClick)="closeBulkUploadResultModal()">Close</gom-lib-button>
+    </div>
+  </footer>
+</gom-lib-modal>
+
+<gom-lib-confirmation-modal
+  [(show)]="bulkUploadAcknowledgeConfirmOpen"
+  [title]="'Accept Unresolved Upload Errors'"
+  [message]="'Are you sure you want to mark unresolved upload errors as accepted for now? You can continue without fixing them in this phase.'"
+  [confirmText]="'I am good'"
+  [cancelText]="'Cancel'"
+  confirmVariant="primary"
+  (confirmed)="confirmBulkUploadAcknowledgement()"
+  (cancelled)="cancelBulkUploadAcknowledgeConfirm()"
+></gom-lib-confirmation-modal>
+
+<gom-lib-confirmation-modal
+  [(show)]="bulkUploadDeleteConfirmOpen"
+  [title]="'Remove Failed Row from List'"
+  [message]="'Are you sure you want to remove row ' + (bulkUploadRowToDelete()?.rowNumber || 'N/A') + ' from the failed list? It cannot be recovered after this action.'"
+  [confirmText]="'Remove'"
+  [cancelText]="'Cancel'"
+  confirmVariant="danger"
+  (confirmed)="confirmDeleteRow()"
+  (cancelled)="cancelDeleteRowConfirm()"
+></gom-lib-confirmation-modal>

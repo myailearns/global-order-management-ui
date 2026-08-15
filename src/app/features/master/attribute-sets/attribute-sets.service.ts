@@ -17,7 +17,8 @@ export interface AttributeSet {
   name: string;
   description: string;
   attributes: AttributeSetItem[];
-  categoryIds: string[];
+  /** @deprecated Category association removed - attribute sets are now global */
+  categoryIds?: string[];
   status: AttributeSetStatus;
   createdAt?: string;
   updatedAt?: string;
@@ -27,7 +28,8 @@ export interface AttributeSetPayload {
   name: string;
   description: string;
   attributes: AttributeSetItem[];
-  categoryIds: string[];
+  /** @deprecated Category association removed - attribute sets are now global */
+  categoryIds?: string[];
   status: AttributeSetStatus;
 }
 

@@ -1,0 +1,418 @@
+<gom-lib-button
+  type="button"
+  variant="primary"
+  (buttonClick)="openModal()"
+  [gomDisableIfNoFeature]="'group.create'"
+  [disabled]="!canCreateGroup()"
+>
+  <i class="ri-add-line" aria-hidden="true"></i>
+  Create Group
+</gom-lib-button>
+
+<gom-lib-modal
+  [title]="isEditMode() ? 'Edit Group' : (isCloneMode() ? 'Clone Group' : 'Create Group')"
+  [show]="showModal()"
+  (showChange)="showModal.set($event)"
+  (closed)="cancel()"
+  size="large"
+>
+  <form [formGroup]="quickCreateForm" class="quick-create-form">
+    @if (isEditMode() && editingGroupHasVariants()) {
+      <section class="quick-create-form__section quick-create-form__section--warning">
+        <div class="alert alert-info">
+          <i class="ri-information-line" aria-hidden="true"></i>
+          <div>
+            <strong>This group has {{ editingGroupVariantCount() }} variant(s)</strong>
+            <p style="margin-top: 0.5rem; margin-bottom: 0;">
+              Some fields cannot be changed because variants exist. Changing structural fields would break existing variants and orders.
+            </p>
+          </div>
+        </div>
+      </section>
+    }
+    
+    @if (isCloneMode()) {
+      <section class="quick-create-form__section quick-create-form__section--clone">
+        <div class="quick-create-form__section-header">
+          <h3>Clone Options</h3>
+        </div>
+        <p class="quick-create-form__clone-note">
+          Cloning from <strong>{{ cloneSourceGroupName() }}</strong>. Stock and pricing history will not be copied.
+        </p>
+        @if (showCopyAllVariantsOption()) {
+          <gom-lib-checkbox
+            label="Copy all variants"
+            [formControl]="copySourceVariantsControl"
+          ></gom-lib-checkbox>
+        }
+      </section>
+    }
+
+    <section class="quick-create-form__section">
+      <div class="quick-create-form__section-header">
+        <h3>Basic Information</h3>
+      </div>
+
+      <div class="quick-create-form__grid quick-create-form__grid--two">
+        <div>
+          <gom-lib-input
+            label="Group Name *"
+            placeholder="e.g. Gold Ring, Bracelet"
+            [formControl]="quickCreateForm.controls.name"
+            [error]="quickCreateForm.controls.name.touched && quickCreateForm.controls.name.invalid ? 'Group name is required' : ''"
+          ></gom-lib-input>
+        </div>
+
+        <div>
+          <gom-lib-select
+            label="Category *"
+            placeholder="Select category"
+            [options]="categories()"
+            [formControl]="quickCreateForm.controls.categoryId"
+            [searchable]="true"
+            [error]="quickCreateForm.controls.categoryId.touched && quickCreateForm.controls.categoryId.invalid ? 'Category is required' : ''"
+            (valueChange)="onCategoryChange()"
+          ></gom-lib-select>
+          @if (editingGroupHasVariants() && quickCreateForm.controls.categoryId.disabled) {
+            <small class="field-help-text text-muted" style="display: block; margin-top: 0.25rem;">
+              <i class="ri-lock-line"></i> Category cannot be changed once variants exist
+            </small>
+          }
+        </div>
+
+        <div>
+          <gom-lib-select
+            label="Group Type *"
+            placeholder="Select group type"
+            [options]="groupTypeOptions"
+            [formControl]="quickCreateForm.controls.groupType"
+            [error]="quickCreateForm.controls.groupType.touched && quickCreateForm.controls.groupType.invalid ? 'Group type is required' : ''"
+          ></gom-lib-select>
+          @if (editingGroupHasVariants() && quickCreateForm.controls.groupType.disabled) {
+            <small class="field-help-text text-muted" style="display: block; margin-top: 0.25rem;">
+              <i class="ri-lock-line"></i> Group type cannot be changed once variants exist
+            </small>
+          }
+        </div>
+      </div>
+    </section>
+
+    <section class="quick-create-form__section">
+      <div class="quick-create-form__section-header">
+        <h3>Advanced Options</h3>
+      </div>
+
+      <div class="quick-create-form__grid quick-create-form__grid--two">
+        @if (showAttributes()) {
+          <div>
+            <gom-lib-select
+              label="Attributes *"
+              placeholder="Select attributes"
+              [options]="attributes()"
+              [formControl]="quickCreateForm.controls.attributeIds"
+              [searchable]="true"
+              [multiple]="true"
+              [error]="quickCreateForm.controls.attributeIds.touched && quickCreateForm.controls.attributeIds.invalid ? 'At least one attribute is required' : ''"
+            ></gom-lib-select>
+          </div>
+        }
+
+        <div>
+          <gom-lib-select
+            label="Pricing Template *"
+            placeholder="Select pricing template"
+            [options]="pricingTemplates()"
+            [formControl]="quickCreateForm.controls.pricingTemplateId"
+            [searchable]="true"
+            [error]="quickCreateForm.controls.pricingTemplateId.touched && quickCreateForm.controls.pricingTemplateId.invalid ? 'Pricing template is required' : ''"
+          ></gom-lib-select>
+          @if (editingGroupHasVariants() && quickCreateForm.controls.pricingTemplateId.disabled) {
+            <small class="field-help-text text-muted" style="display: block; margin-top: 0.25rem;">
+              <i class="ri-lock-line"></i> Pricing template was used during creation and cannot be changed
+            </small>
+          }
+        </div>
+
+        @if (showUnits()) {
+          <div>
+            <gom-lib-select
+              label="Base Unit *"
+              placeholder="Select base unit"
+              [options]="units()"
+              [formControl]="quickCreateForm.controls.baseUnitId"
+              [searchable]="true"
+              [error]="quickCreateForm.controls.baseUnitId.touched && quickCreateForm.controls.baseUnitId.invalid ? 'Base unit is required' : ''"
+            ></gom-lib-select>
+            @if (editingGroupHasVariants() && quickCreateForm.controls.baseUnitId.disabled) {
+              <small class="field-help-text text-muted" style="display: block; margin-top: 0.25rem;">
+                <i class="ri-lock-line"></i> Base unit cannot be changed once variants exist (affects inventory tracking)
+              </small>
+            }
+          </div>
+        }
+
+        <gom-lib-select
+          *ngIf="showUnits()"
+          label="Allowed Units (Multi-select) *"
+          placeholder="Base unit auto-included"
+          [options]="allowedUnitsOptions()"
+          [formControl]="quickCreateForm.controls.allowedUnitIds"
+          [searchable]="true"
+          [multiple]="true"
+          [error]="quickCreateForm.controls.allowedUnitIds.touched && quickCreateForm.controls.allowedUnitIds.invalid ? 'At least one allowed unit is required' : ''"
+        ></gom-lib-select>
+
+        <gom-lib-select
+          label="Tax Profile *"
+          placeholder="Select tax profile"
+          [options]="taxProfiles()"
+          [formControl]="quickCreateForm.controls.taxProfileId"
+          [searchable]="true"
+          [error]="quickCreateForm.controls.taxProfileId.touched && quickCreateForm.controls.taxProfileId.invalid ? 'Tax profile is required' : ''"
+        ></gom-lib-select>
+
+        <gom-lib-select
+          label="Pricing Refresh Mode *"
+          placeholder="Auto (Default)"
+          [options]="pricingRefreshModeOptions"
+          [formControl]="quickCreateForm.controls.pricingRefreshMode"
+          [error]="quickCreateForm.controls.pricingRefreshMode.touched && quickCreateForm.controls.pricingRefreshMode.invalid ? 'Pricing refresh mode is required' : ''"
+        ></gom-lib-select>
+
+        <gom-lib-select
+          label="Status *"
+          placeholder="Select status"
+          [options]="[{label:'Active',value:'ACTIVE'},{label:'Inactive',value:'INACTIVE'}]"
+          [formControl]="quickCreateForm.controls.status"
+          (valueChange)="onGroupStatusChange($event)"
+          [error]="quickCreateForm.controls.status.touched && quickCreateForm.controls.status.invalid ? 'Status is required' : ''"
+        ></gom-lib-select>
+      </div>
+
+      @if (showAttributes()) {
+        <div class="attribute-selection-section attribute-selection-section--full-width">
+          <h4 class="attribute-selection-section__title">
+            Attribute Values @if (groupType$() === 'ATTRIBUTE' || groupType$() === 'HYBRID') { <span class="required-mark">*</span> }
+          </h4>
+
+          @if (selectedAttributes().length > 0) {
+            @for (attr of selectedAttributes(); track attr.id) {
+              <div class="attribute-group">
+                <div class="attribute-group__header">
+                  <h5>{{ attr.name }}</h5>
+                  <div class="attribute-group__actions">
+                    <gom-lib-button
+                      type="button"
+                      variant="secondary"
+                      [disabled]="areAllAttributeValuesSelected(attr.id)"
+                      (buttonClick)="selectAllAttributeValues(attr.id)"
+                    >
+                      Select All
+                    </gom-lib-button>
+                  </div>
+                </div>
+
+                @if (attr.allowedValues.length > 0) {
+                  <div class="attribute-checkboxes">
+                    @for (value of attr.allowedValues; track value) {
+                      <div class="attribute-checkbox">
+                        <gom-lib-checkbox
+                          [label]="value"
+                          [formControl]="getAttributeValueControl(attr.id, value)"
+                        ></gom-lib-checkbox>
+                      </div>
+                    }
+                  </div>
+                } @else {
+                  <p class="attribute-group__empty">No values configured for this attribute.</p>
+                }
+              </div>
+            }
+          } @else {
+            <p class="attribute-selection-section__empty">Select one or more attributes above to view their values.</p>
+          }
+        </div>
+      }
+
+      @if (showCreateDefaultVariantOption()) {
+        <label class="quick-create-form__checkbox">
+          <input type="checkbox" [formControl]="quickCreateForm.controls.createDefaultVariant" />
+          <span>Create default variant immediately</span>
+        </label>
+      }
+    </section>
+
+    <section class="quick-create-form__section">
+      <div class="quick-create-form__section-header">
+        <h3>Description (Optional)</h3>
+        <span class="quick-create-form__hint">Provide rich product details for storefront and operations.</span>
+      </div>
+
+      <app-rich-text-editor
+        label="Group Description"
+        placeholder="Add detailed description, highlights, and care instructions"
+        [value]="quickCreateForm.controls.description.value || ''"
+        (valueChange)="onDescriptionChanged($event)"
+      ></app-rich-text-editor>
+    </section>
+
+    <section class="quick-create-form__section">
+      <div class="quick-create-form__section-header quick-create-form__section-header--media">
+        <h3>Add Media ({{ imageCount() }}/{{ groupImageLimit() }})</h3>
+        <gom-lib-button
+          type="button"
+          variant="secondary"
+          (buttonClick)="openPicker()"
+          [disabled]="imageCount() >= groupImageLimit()"
+        >
+          <i class="ri-folder-video-line" aria-hidden="true"></i> Add Media
+        </gom-lib-button>
+      </div>
+
+      @if (groupImages().length === 0) {
+        <div class="quick-create-media__empty">
+          <i class="ri-gallery-line" aria-hidden="true"></i>
+          <p>No media added yet. Use Add Media to select images/videos.</p>
+        </div>
+      } @else {
+        <div class="quick-create-media__grid">
+          @for (img of groupImages(); track img.mediaAssetId._id) {
+            <div class="quick-create-media__card">
+              <div class="quick-create-media__card-img-wrapper">
+                @if (img.mediaAssetId.mediaType === 'VIDEO') {
+                  <video [src]="img.mediaAssetId.url" class="quick-create-media__card-img" controls preload="metadata">
+                    <track kind="captions" srclang="en" label="English" [src]="previewCaptionTrack" />
+                  </video>
+                } @else {
+                  <img [src]="img.mediaAssetId.url" [alt]="img.mediaAssetId.name" class="quick-create-media__card-img" loading="lazy" />
+                }
+                <span class="quick-create-media__card-badge" [class.quick-create-media__card-badge--platform]="img.source === 'PLATFORM'">
+                  {{ img.source === 'PLATFORM' ? 'Platform' : 'Own' }}
+                </span>
+              </div>
+              <div class="quick-create-media__card-footer">
+                <span class="quick-create-media__card-name" [title]="img.mediaAssetId.name">{{ img.mediaAssetId.name }}</span>
+                <gom-lib-button type="button" variant="secondary" (buttonClick)="removeImage(img)">
+                  <i class="ri-close-line" aria-hidden="true"></i>
+                </gom-lib-button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </section>
+  </form>
+
+  <footer class="gom-modal__action-layout" gom-modal-actions>
+    <div class="gom-modal__action-layout-start">
+      <gom-lib-button type="button" variant="secondary" (buttonClick)="cancel()" [disabled]="submitting()">
+        Cancel
+      </gom-lib-button>
+    </div>
+    <div class="gom-modal__action-layout-end">
+      <gom-lib-button
+        type="button"
+        variant="primary"
+        (buttonClick)="submit()"
+        [disabled]="!quickCreateForm.valid || submitting() || !preview()?.canCreate"
+      >
+        {{ submitting() ? (isEditMode() ? 'Updating...' : 'Creating...') : (isEditMode() ? 'Update Group' : 'Create Group') }}
+      </gom-lib-button>
+    </div>
+  </footer>
+</gom-lib-modal>
+
+<!-- Status Change Warning Modal -->
+<gom-lib-modal
+  [show]="showStatusChangeWarning()"
+  title="Warning: Group Variants in Customer Orders"
+>
+  <div class="status-change-warning">
+    <div class="warning-icon">
+      <i class="ri-error-warning-line" aria-hidden="true"></i>
+    </div>
+    
+    <p class="warning-message">
+      Marking this group as <strong>INACTIVE</strong> will affect <strong>{{ statusChangeAffectedVariants().length }}</strong> variant(s) currently in customer carts or orders:
+    </p>
+
+    <div class="order-breakdown">
+      @if (statusChangeDraftCount() > 0) {
+        <div class="order-stat order-stat--warning">
+          <i class="ri-shopping-cart-line" aria-hidden="true"></i>
+          <div class="order-stat__content">
+            <span class="order-stat__count">{{ statusChangeDraftCount() }}</span>
+            <span class="order-stat__label">Logged-in Customers with Variants in Cart</span>
+          </div>
+        </div>
+      }
+      
+      @if (statusChangeConfirmedCount() > 0) {
+        <div class="order-stat order-stat--safe">
+          <i class="ri-check-line" aria-hidden="true"></i>
+          <div class="order-stat__content">
+            <span class="order-stat__count">{{ statusChangeConfirmedCount() }}</span>
+            <span class="order-stat__label">Confirmed Orders (Already Placed)</span>
+          </div>
+        </div>
+      }
+    </div>
+
+    @if (statusChangeAffectedVariants().length > 0) {
+      <div class="affected-variants">
+        <h4 class="affected-variants__title">Affected Variants:</h4>
+        <ul class="affected-variants__list">
+          @for (variant of statusChangeAffectedVariants(); track variant.id) {
+            <li class="affected-variants__item">
+              <strong>{{ variant.name }}</strong>
+              @if (variant.sku) {
+                <span class="affected-variants__sku">({{ variant.sku }})</span>
+              }
+            </li>
+          }
+        </ul>
+      </div>
+    }
+
+    <div class="warning-note">
+      <i class="ri-information-line" aria-hidden="true"></i>
+      <span>
+        This includes users who added items before login (anonymous carts are synced after login).
+        Users currently browsing anonymously cannot be detected.
+      </span>
+    </div>
+  </div>
+
+  <footer class="gom-modal__footer">
+    <div class="gom-modal__action-layout">
+      <div class="gom-modal__action-layout-start">
+        <gom-lib-button
+          type="button"
+          variant="secondary"
+          (click)="cancelStatusChange()"
+        >
+          Cancel
+        </gom-lib-button>
+      </div>
+      <div class="gom-modal__action-layout-end">
+        <gom-lib-button
+          type="button"
+          variant="danger"
+          (click)="confirmStatusChange()"
+        >
+          Mark as Inactive Anyway
+        </gom-lib-button>
+      </div>
+    </div>
+  </footer>
+</gom-lib-modal>
+
+<gom-image-picker
+  [(show)]="pickerOpen"
+  [existingImageIds]="existingImageIds()"
+  [canUpload]="canUploadOwn()"
+  [maxImages]="groupImageLimit()"
+  [maxVideos]="groupVideoLimit()"
+  [existingVideoCount]="videoCount()"
+  (imagesSelected)="onImagesSelected($event)"
+></gom-image-picker>
