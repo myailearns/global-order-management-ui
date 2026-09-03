@@ -22,6 +22,7 @@ import { CourierPartnersComponent } from './features/delivery/courier-partners';
 import { EmployeeCodeConfigComponent } from './features/settings/employee-code-config';
 import { ServiceablePincodesConfigComponent } from './features/settings/serviceable-pincodes-config';
 import { StorefrontConfigComponent } from './features/settings/storefront-config';
+import { DeliveryManagementComponent } from './features/settings/delivery-management/delivery-management.component';
 import { ReturnPolicyConfigComponent } from './features/settings/return-policy-config';
 import { PushNotificationsComponent } from './features/settings/push-notifications/push-notifications.component';
 import { NotificationOpsComponent } from './features/settings/notification-ops/notification-ops.component';
@@ -334,6 +335,17 @@ export const routes: Routes = [
 					featureKeys: ['storefront.config'],
 					title: 'Customer Storefront',
 					description: 'Configure your public-facing online store — branding, layout, banners, and payment methods.',
+				},
+			},
+			{
+				path: 'settings/delivery-management',
+				component: DeliveryManagementComponent,
+				data: {
+					actor: 'tenant',
+					capability: 'tenant-admin',
+					featureKeys: ['delivery.management'],
+					title: 'Delivery Management',
+					description: 'Configure delivery options, pickup locations, serviceability zones, and order cancellation policies.',
 				},
 			},
 			{

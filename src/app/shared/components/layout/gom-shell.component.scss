@@ -30,6 +30,7 @@
   align-items: center;
   gap: theme.get-gap(sm);
   min-width: 0;
+  overflow: hidden;
 }
 
 .gom-shell__menu-button {
@@ -344,6 +345,7 @@
 
 .gom-shell__content {
   padding: theme.get-spacing(md);
+  overflow-x: hidden;
 }
 
 @include theme.breakpoint-up(md) {
@@ -379,6 +381,7 @@
 
   .gom-shell__content {
     padding: theme.get-spacing(lg);
+    min-width: 0;
   }
 
   .gom-shell--desktop-collapsed {

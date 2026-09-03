@@ -655,7 +655,7 @@ export class TierManagementComponent implements OnInit {
   private suppressAutoCycleBaseSync = false;
 
   readonly moduleOptions = computed(() => {
-    const modules = [...new Set(this.selectedFeatures().map((item) => String(item.module || '').trim()).filter(Boolean))]
+    const modules = [...new Set(this.features().map((item) => String(item.module || '').trim()).filter(Boolean))]
       .sort((left, right) => left.localeCompare(right, 'en'));
     return [{ value: 'all', label: 'All Modules' }, ...modules.map((moduleName) => ({ value: moduleName, label: moduleName }))];
   });

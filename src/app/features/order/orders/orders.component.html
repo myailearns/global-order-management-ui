@@ -1,22 +1,180 @@
 <section class="master-page">
-  <header class="master-page__header">
-    <h2><i class="ri-file-list-3-line" aria-hidden="true"></i> Orders</h2>
-    <div class="master-page__header-actions">
-      @if (isDevMode && canDeleteOrder()) {
-        <gom-lib-button type="button" variant="danger" (buttonClick)="openPurgeAllModal()">
-          <i class="ri-delete-bin-6-line" aria-hidden="true"></i> Dev: Delete All Orders
+  <header class="orders-header">
+    <div class="orders-header__title-row">
+      <div class="orders-header__title-group">
+        <h2 class="orders-header__heading">Orders</h2>
+        <span class="orders-header__subtitle">Manage and track all customer orders</span>
+      </div>
+      <div class="orders-header__actions">
+        <gom-lib-button
+          type="button"
+          variant="primary"
+          (buttonClick)="openCreate()"
+          gomDisableIfNoFeature="order.create"
+          [disabled]="loading() || !canCreateOrder()"
+        >
+          <i class="ri-add-line" aria-hidden="true"></i> Create Order
         </gom-lib-button>
-      }
-      <gom-lib-button
-        type="button"
-        variant="primary"
-        (buttonClick)="openCreate()"
-        gomDisableIfNoFeature="order.create"
-        [disabled]="loading() || !canCreateOrder()"
-      >
-        <i class="ri-add-line" aria-hidden="true"></i> Create Order
-      </gom-lib-button>
+      </div>
     </div>
+
+    <nav class="orders-date-filters" aria-label="Date range filter">
+      @for (opt of [
+        { key: 'all', label: 'All Time' },
+        { key: 'today', label: 'Today' },
+        { key: 'week', label: 'This Week' },
+        { key: 'month', label: 'This Month' },
+        { key: 'quarter', label: 'This Quarter' },
+        { key: 'year', label: 'This Year' }
+      ]; track opt.key) {
+        <gom-lib-chip
+          [interactive]="true"
+          [selected]="kpiDateRange() === opt.key"
+          size="compact"
+          tone="neutral"
+          (chipClick)="setKpiDateRange(opt.key)"
+        >{{ opt.label }}</gom-lib-chip>
+      }
+      <gom-lib-chip
+        [interactive]="true"
+        [selected]="kpiDateRange() === 'custom'"
+        size="compact"
+        tone="neutral"
+        (chipClick)="setKpiDateRange('custom')"
+      ><i class="ri-calendar-line" aria-hidden="true" style="margin-right: 0.25rem;"></i> Custom</gom-lib-chip>
+    </nav>
+
+    @if (kpiDateRange() === 'custom') {
+      <div class="orders-custom-date-range">
+        <label class="orders-custom-date-range__field">
+          <span class="orders-custom-date-range__label">From</span>
+          <input
+            type="date"
+            class="orders-custom-date-range__input"
+            [value]="customDateFrom()"
+            [max]="customDateTo() || undefined"
+            (change)="setCustomDateFrom($any($event.target).value)"
+          />
+        </label>
+        <label class="orders-custom-date-range__field">
+          <span class="orders-custom-date-range__label">To</span>
+          <input
+            type="date"
+            class="orders-custom-date-range__input"
+            [value]="customDateTo()"
+            [min]="customDateFrom() || undefined"
+            (change)="setCustomDateTo($any($event.target).value)"
+          />
+        </label>
+      </div>
+    }
+
+    <div class="orders-kpi-grid" [class.orders-kpi-grid--loading]="kpiLoading()">
+      <div class="orders-kpi-card orders-kpi-card--total">
+        <div class="orders-kpi-card__icon"><i class="ri-file-list-3-line" aria-hidden="true"></i></div>
+        <div class="orders-kpi-card__body">
+          <span class="orders-kpi-card__label">All Orders</span>
+          <span class="orders-kpi-card__value">{{ kpiTotalOrders }}</span>
+          <span class="orders-kpi-card__desc">Platform cumulative</span>
+        </div>
+        <span class="orders-kpi-card__dot"></span>
+      </div>
+      <div class="orders-kpi-card orders-kpi-card--new">
+        <div class="orders-kpi-card__icon"><i class="ri-shopping-bag-3-line" aria-hidden="true"></i></div>
+        <div class="orders-kpi-card__body">
+          <span class="orders-kpi-card__label">New Orders</span>
+          <span class="orders-kpi-card__value">{{ kpiNewOrders }}</span>
+          <span class="orders-kpi-card__desc">Require urgent attention</span>
+        </div>
+        @if (kpiNewOrders > 0) {
+          <gom-lib-chip class="orders-kpi-card__chip" tone="warning" size="dense">Attention</gom-lib-chip>
+        }
+        <span class="orders-kpi-card__dot"></span>
+      </div>
+      @if (canManageDelivery()) {
+        <div class="orders-kpi-card orders-kpi-card--toship">
+          <div class="orders-kpi-card__icon"><i class="ri-archive-line" aria-hidden="true"></i></div>
+          <div class="orders-kpi-card__body">
+            <span class="orders-kpi-card__label">To Ship</span>
+            <span class="orders-kpi-card__value">{{ kpiToShip }}</span>
+            <span class="orders-kpi-card__desc">Handover ready</span>
+          </div>
+          <span class="orders-kpi-card__dot"></span>
+        </div>
+        <div class="orders-kpi-card orders-kpi-card--outdelivery">
+          <div class="orders-kpi-card__icon"><i class="ri-truck-line" aria-hidden="true"></i></div>
+          <div class="orders-kpi-card__body">
+            <span class="orders-kpi-card__label">Out for Delivery</span>
+            <span class="orders-kpi-card__value">{{ kpiOutForDelivery }}</span>
+            <span class="orders-kpi-card__desc">In transit active</span>
+          </div>
+          <span class="orders-kpi-card__dot"></span>
+        </div>
+      }
+      <div class="orders-kpi-card orders-kpi-card--delivered">
+        <div class="orders-kpi-card__icon"><i class="ri-checkbox-circle-line" aria-hidden="true"></i></div>
+        <div class="orders-kpi-card__body">
+          <span class="orders-kpi-card__label">Delivered</span>
+          <span class="orders-kpi-card__value">{{ kpiDelivered }}</span>
+          <span class="orders-kpi-card__desc">Reached customers</span>
+        </div>
+        <span class="orders-kpi-card__dot"></span>
+      </div>
+      <div class="orders-kpi-card orders-kpi-card--returns">
+        <div class="orders-kpi-card__icon"><i class="ri-arrow-go-back-line" aria-hidden="true"></i></div>
+        <div class="orders-kpi-card__body">
+          <span class="orders-kpi-card__label">Returns</span>
+          <span class="orders-kpi-card__value">{{ kpiReturns }}</span>
+          <span class="orders-kpi-card__desc">Disputes &amp; return tkt</span>
+        </div>
+        <span class="orders-kpi-card__dot"></span>
+      </div>
+      <div class="orders-kpi-card orders-kpi-card--cancelled">
+        <div class="orders-kpi-card__icon"><i class="ri-close-circle-line" aria-hidden="true"></i></div>
+        <div class="orders-kpi-card__body">
+          <span class="orders-kpi-card__label">Cancelled</span>
+          <span class="orders-kpi-card__value">{{ kpiCancelled }}</span>
+          <span class="orders-kpi-card__desc">Voided/failed checks</span>
+        </div>
+        <span class="orders-kpi-card__dot"></span>
+      </div>
+      <div class="orders-kpi-card orders-kpi-card--payment">
+        <div class="orders-kpi-card__icon"><i class="ri-money-dollar-circle-line" aria-hidden="true"></i></div>
+        <div class="orders-kpi-card__body">
+          <span class="orders-kpi-card__label">Payment Pending</span>
+          <span class="orders-kpi-card__value">{{ kpiPaymentPending }}</span>
+          <span class="orders-kpi-card__desc">Awaiting bank recon</span>
+        </div>
+        <span class="orders-kpi-card__dot"></span>
+      </div>
+    </div>
+
+    @if (kpiAttention().paymentPending || kpiAttention().awaitingConfirmation || kpiAttention().returnRequests || (canManageDelivery() && kpiAttention().deliveryDelayed)) {
+      <div class="orders-attention-strip">
+        <i class="ri-alarm-warning-line orders-attention-strip__icon" aria-hidden="true"></i>
+        <span class="orders-attention-strip__label">Needs Attention:</span>
+        @if (kpiAttention().paymentPending) {
+          <button type="button" class="orders-attention-strip__item orders-attention-strip__item--payment" (click)="onAttentionClick('paymentPending')">
+            <i class="ri-money-dollar-circle-line" aria-hidden="true"></i> {{ kpiAttention().paymentPending }} Payment Pending
+          </button>
+        }
+        @if (kpiAttention().awaitingConfirmation) {
+          <button type="button" class="orders-attention-strip__item orders-attention-strip__item--confirm" (click)="onAttentionClick('awaitingConfirmation')">
+            <i class="ri-time-line" aria-hidden="true"></i> {{ kpiAttention().awaitingConfirmation }} Awaiting Confirmation
+          </button>
+        }
+        @if (kpiAttention().returnRequests) {
+          <button type="button" class="orders-attention-strip__item orders-attention-strip__item--return" (click)="onAttentionClick('returnRequests')">
+            <i class="ri-arrow-go-back-line" aria-hidden="true"></i> {{ kpiAttention().returnRequests }} Return Requests
+          </button>
+        }
+        @if (canManageDelivery()) {
+          <button type="button" class="orders-attention-strip__item orders-attention-strip__item--delayed" (click)="onAttentionClick('deliveryDelayed')">
+            <i class="ri-error-warning-line" aria-hidden="true"></i> {{ kpiAttention().deliveryDelayed }} Delivery Delayed
+          </button>
+        }
+      </div>
+    }
   </header>
 
   @if (errorMessage()) {
@@ -34,30 +192,77 @@
       [totalItems]="totalOrders()"
       [pageIndex]="orderTablePageIndex()"
       [pageSize]="orderTablePageSize()"
-      [pageSizeOptions]="serverSidePaginationOrders() ? [50] : [10, 20, 50]"
+      [pageSizeOptions]="[5,10, 20, 50, 100]"
+      [bodyViewportRows]="13"
+      [advancedFilterDefinitions]="visibleOrderTableFilters"
+      [filterNavigationRows]="visibleOrderTableNavigationRows"
+      [showClearFilterButton]="true"
+      [enableRowSelection]="true"
+      [bulkActions]="orderTableBulkActions"
+      [bulkActionBusyKey]="bulkActionBusyKey()"
+      selectionItemLabel="order"
       searchPlaceholder="Search orders"
+      [searchDebounceMs]="450"
       emptyMessage="No orders found."
       [mobileCardView]="true"
+      [mobileCardConfig]="orderMobileCardConfig"
+      [mobileSortKeys]="orderMobileSortKeys"
+      [showExport]="true"
+      (exportClick)="onExportOrders()"
       (rowAction)="onRowAction($event)"
+      (selectedRowsChange)="onSelectedOrderRowsChange($event)"
+      (bulkAction)="onOrderBulkAction($event)"
       (queryChange)="onOrderTableQueryChange($event)"
     ></gom-lib-table>
-
-    @if (serverSidePaginationOrders() && canLoadAllOrders() && !allOrdersLoaded()) {
-      <div class="pagination-controls">
-        <div class="pagination-controls__info">
-          {{ totalOrders() }} orders total. Use table pager for page navigation.
-        </div>
-        <div class="pagination-controls__actions">
-          <gom-lib-button
-            type="button"
-            variant="secondary"
-            [disabled]="loading()"
-            (buttonClick)="loadAllOrders()"
-          ><i class="ri-download-2-line" aria-hidden="true"></i> Load All</gom-lib-button>
-        </div>
-      </div>
-    }
   </article>
+
+  <gom-lib-modal
+    [(show)]="bulkStatusModalOpen"
+    title="Change Selected Order Status"
+    size="small"
+    [closeOnBackdropClick]="!bulkActionBusyKey()"
+    (closed)="closeBulkStatusModal()"
+  >
+    <div class="assign-rider-form" [formGroup]="bulkStatusForm">
+      <div class="edit-policy-hint">
+        <i class="ri-information-line" aria-hidden="true"></i>
+        <span>
+          Updating {{ selectedOrderRows().length }} selected order{{ selectedOrderRows().length === 1 ? '' : 's' }}.
+          Orders that cannot transition to the selected status will be reported as failed.
+        </span>
+      </div>
+      <gom-lib-select
+        label="Target status"
+        formControlName="status"
+        placeholder="Select target status"
+        [options]="bulkStatusOptions"
+      ></gom-lib-select>
+      <gom-lib-input
+        label="Reason"
+        formControlName="reason"
+        placeholder="Reason for bulk status change (optional)"
+      ></gom-lib-input>
+    </div>
+
+    <footer class="gom-confirmation-modal__actions gom-modal__action-layout" gom-modal-actions>
+      <div class="gom-modal__action-layout-start">
+        <gom-lib-button
+          type="button"
+          variant="secondary"
+          [disabled]="bulkActionBusyKey() !== null"
+          (buttonClick)="closeBulkStatusModal()"
+        >Cancel</gom-lib-button>
+      </div>
+      <div class="gom-modal__action-layout-end">
+        <gom-lib-button
+          type="button"
+          variant="primary"
+          [disabled]="bulkActionBusyKey() !== null || !bulkStatusForm.controls.status.value"
+          (buttonClick)="confirmBulkStatusChange()"
+        >{{ bulkActionBusyKey() ? 'Updating...' : 'Update Orders' }}</gom-lib-button>
+      </div>
+    </footer>
+  </gom-lib-modal>
 
   <gom-lib-confirmation-modal
     [(show)]="deleteModalOpen"
@@ -69,18 +274,6 @@
     [busy]="deleting()"
     (confirmed)="confirmDeleteOrder()"
     (cancelled)="closeDeleteModal()"
-  ></gom-lib-confirmation-modal>
-
-  <gom-lib-confirmation-modal
-    [(show)]="purgeAllModalOpen"
-    [title]="'Development: Delete All Orders'"
-    [message]="purgeAllModalMessage"
-    [confirmText]="'Delete All'"
-    [cancelText]="'Cancel'"
-    [confirmVariant]="'danger'"
-    [busy]="purgeAllBusy()"
-    (confirmed)="confirmPurgeAllOrders()"
-    (cancelled)="closePurgeAllModal()"
   ></gom-lib-confirmation-modal>
 
   <gom-lib-confirmation-modal
@@ -557,13 +750,146 @@
       <div class="view-order-return">
         <div class="view-order-return-row">
           <span class="view-order-return-label">Status</span>
-          <span>{{ returnRequest.status }}</span>
+          <span class="view-order-return-status-badge" [attr.data-status]="returnRequest.status">
+            {{ returnRequest.status }}
+          </span>
         </div>
         <div class="view-order-return-row">
-          <span class="view-order-return-label">Customer Comment</span>
-          <p>{{ viewOrderReturnReason }}</p>
+          <span class="view-order-return-label">Refund Status</span>
+          <span>{{ returnRequest.refundStatus }}</span>
         </div>
-        <p class="view-order-return-date">Submitted {{ returnRequest.createdAt | date: 'mediumDate' }}</p>
+        <p class="view-order-return-date">Submitted {{ returnRequest.createdAt | date: 'medium' }}</p>
+        
+        <!-- Return Items Table -->
+        @if (returnRequestItems().length > 0) {
+          <div class="return-items-section">
+            @if (returnRequest.overallType) {
+              <div class="return-overall-type">
+                <span class="return-type-badge" [attr.data-type]="returnRequest.overallType">
+                  @if (returnRequest.overallType === 'REFUND_ONLY') {
+                    <i class="ri-refund-2-line"></i> Refund Only
+                  } @else if (returnRequest.overallType === 'EXCHANGE_ONLY') {
+                    <i class="ri-exchange-2-line"></i> Exchange Only
+                  } @else {
+                    <i class="ri-swap-line"></i> Mixed Request
+                  }
+                </span>
+              </div>
+            }
+            <h5 class="return-items-title">Items Being Returned</h5>
+            <table class="return-items-table">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Action</th>
+                  <th>Quantity</th>
+                  <th>Price</th>
+                  <th>Subtotal</th>
+                  <th>Reason</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of returnRequestItems(); track item.orderItemId) {
+                  <tr>
+                    <td>
+                      <div class="return-item-name">
+                        <strong>{{ item.groupName }}</strong>
+                        <span class="return-item-variant">{{ item.variantName }}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="return-action-badge" [attr.data-action]="item.action">
+                        @if (item.action === 'REFUND') {
+                          <i class="ri-refund-2-line"></i> Refund
+                        } @else {
+                          <i class="ri-exchange-2-line"></i> Exchange
+                        }
+                      </span>
+                    </td>
+                    <td>{{ item.quantity }} {{ item.unit }}</td>
+                    <td>₹{{ item.sellingPrice | number: '1.0-2' }}</td>
+                    <td><strong>₹{{ item.lineTotal | number: '1.0-2' }}</strong></td>
+                    <td class="return-item-reason">{{ item.reason }}</td>
+                  </tr>
+                }
+              </tbody>
+              @if (totalReturnRefundAmount() > 0) {
+                <tfoot>
+                  <tr>
+                    <td colspan="4" class="return-total-label">Total Refund Amount:</td>
+                    <td colspan="2" class="return-total-amount">
+                      <strong>₹{{ totalReturnRefundAmount() | number: '1.0-2' }}</strong>
+                    </td>
+                  </tr>
+                </tfoot>
+              }
+            </table>
+          </div>
+        }
+        
+        <!-- Payment Details for Refund -->
+        @if (returnRequest.overallType !== 'EXCHANGE_ONLY') {
+          <div class="return-payment-section">
+            <h5 class="return-payment-title">
+              <i class="ri-bank-card-line"></i>
+              Refund Payment Details
+            </h5>
+            
+            @if (returnRequest.paymentDetails?.upiId) {
+              <div class="payment-detail-card">
+                <div class="payment-detail-icon">
+                  <i class="ri-smartphone-line"></i>
+                </div>
+                <div class="payment-detail-content">
+                  <span class="payment-detail-label">UPI ID</span>
+                  <span class="payment-detail-value">{{ returnRequest.paymentDetails?.upiId }}</span>
+                </div>
+              </div>
+            }
+            
+            @if (returnRequest.paymentDetails?.bankAccount?.accountNumber) {
+              <div class="payment-detail-card">
+                <div class="payment-detail-icon">
+                  <i class="ri-bank-line"></i>
+                </div>
+                <div class="payment-detail-content">
+                  <span class="payment-detail-label">Bank Transfer</span>
+                  <div class="bank-details">
+                    <div class="bank-detail-row">
+                      <span class="bank-label">Account Holder:</span>
+                      <span class="bank-value">{{ returnRequest.paymentDetails?.bankAccount?.accountHolderName }}</span>
+                    </div>
+                    <div class="bank-detail-row">
+                      <span class="bank-label">Account Number:</span>
+                      <span class="bank-value">{{ returnRequest.paymentDetails?.bankAccount?.accountNumber }}</span>
+                    </div>
+                    <div class="bank-detail-row">
+                      <span class="bank-label">IFSC Code:</span>
+                      <span class="bank-value">{{ returnRequest.paymentDetails?.bankAccount?.ifscCode }}</span>
+                    </div>
+                    <div class="bank-detail-row">
+                      <span class="bank-label">Bank Name:</span>
+                      <span class="bank-value">{{ returnRequest.paymentDetails?.bankAccount?.bankName }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+            
+            @if (!returnRequest.paymentDetails?.upiId && !returnRequest.paymentDetails?.bankAccount?.accountNumber) {
+              <div class="payment-detail-card" style="background-color: #fef3c7; border-color: #fbbf24;">
+                <div class="payment-detail-icon" style="background-color: #fef3c7;">
+                  <i class="ri-information-line" style="color: #d97706;"></i>
+                </div>
+                <div class="payment-detail-content">
+                  <span class="payment-detail-value" style="color: #92400e;">
+                    No payment details provided by customer
+                  </span>
+                </div>
+              </div>
+            }
+          </div>
+        }
       </div>
     } @else {
       <p class="view-order-empty">Return request details are not available.</p>

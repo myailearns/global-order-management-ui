@@ -25,6 +25,29 @@ export interface ApiSuccess<T> {
   data: T;
 }
 
+export interface OrderAttentionCounts {
+  paymentPending: number;
+  awaitingConfirmation: number;
+  returnRequests: number;
+  deliveryDelayed: number;
+}
+
+export interface OrderNavigationCounts {
+  total: number;
+  statuses: Record<string, number>;
+  attention?: OrderAttentionCounts;
+}
+
+export interface BulkOrderStatusResult {
+  successful: Array<{ orderId: string; orderNo: string; status: string }>;
+  failed: Array<{ orderId: string; message: string; statusCode: number }>;
+  summary: {
+    requested: number;
+    updated: number;
+    failed: number;
+  };
+}
+
 export type PincodeFallbackSuggestion = 'CALL_COURIER' | 'CALL_PICKUP';
 export type PincodeMode = 'DISABLED' | 'SERVE_ALL' | 'RESTRICTED';
 
@@ -289,14 +312,25 @@ export interface ReturnRequestItem {
   orderItemId: string;
   quantity: number;
   reason?: string;
+  action?: 'REFUND' | 'EXCHANGE';
 }
 
 export interface ReturnRequest {
   _id: string;
   orderId: string;
+  overallType?: 'REFUND_ONLY' | 'EXCHANGE_ONLY' | 'MIXED';
   status: 'REQUESTED' | 'APPROVED' | 'REJECTED' | 'RETURNED' | 'REFUNDED';
   refundStatus: 'PENDING' | 'PROCESSED';
   items: ReturnRequestItem[];
+  paymentDetails?: {
+    upiId?: string;
+    bankAccount?: {
+      accountHolderName?: string;
+      accountNumber?: string;
+      ifscCode?: string;
+      bankName?: string;
+    };
+  };
   createdAt: string;
   updatedAt: string;
 }
@@ -315,7 +349,10 @@ export class OrdersService {
   listOrders(params?: {
     page?: number;
     limit?: number;
+    paymentStatus?: string;
     status?: string;
+    deliveryDelayed?: string;
+    orderSource?: string;
     customerId?: string;
     from?: string;
     to?: string;
@@ -326,7 +363,10 @@ export class OrdersService {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set('page', String(params.page));
     if (params?.limit) searchParams.set('limit', String(params.limit));
+    if (params?.paymentStatus) searchParams.set('paymentStatus', params.paymentStatus);
     if (params?.status) searchParams.set('status', params.status);
+    if (params?.deliveryDelayed) searchParams.set('deliveryDelayed', params.deliveryDelayed);
+    if (params?.orderSource) searchParams.set('orderSource', params.orderSource);
     if (params?.customerId) searchParams.set('customerId', params.customerId);
     if (params?.from) searchParams.set('from', params.from);
     if (params?.to) searchParams.set('to', params.to);
@@ -337,6 +377,15 @@ export class OrdersService {
     const query = searchParams.toString();
     const url = query ? `${this.ordersUrl}?${query}` : this.ordersUrl;
     return this.http.get<ApiPaginated<Order>>(url);
+  }
+
+  getNavigationCounts(params?: { from?: string; to?: string }): Observable<ApiSuccess<OrderNavigationCounts>> {
+    const searchParams = new URLSearchParams();
+    if (params?.from) searchParams.set('from', params.from);
+    if (params?.to) searchParams.set('to', params.to);
+    const query = searchParams.toString();
+    const url = query ? `${this.ordersUrl}/navigation-counts?${query}` : `${this.ordersUrl}/navigation-counts`;
+    return this.http.get<ApiSuccess<OrderNavigationCounts>>(url);
   }
 
   listVariants(): Observable<ApiPaginated<Variant>> {
@@ -430,6 +479,14 @@ export class OrdersService {
       status,
       reason,
       courierDetails: courierDetails || undefined,
+    });
+  }
+
+  bulkUpdateStatus(orderIds: string[], status: string, reason?: string): Observable<ApiSuccess<BulkOrderStatusResult>> {
+    return this.http.patch<ApiSuccess<BulkOrderStatusResult>>(`${this.ordersUrl}/bulk/status`, {
+      orderIds,
+      status,
+      reason: reason || '',
     });
   }
 

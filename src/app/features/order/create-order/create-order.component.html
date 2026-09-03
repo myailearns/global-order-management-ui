@@ -165,15 +165,17 @@
           <section class="delivery-section">
             <h4 class="delivery-section__title">Order Setup</h4>
             <div class="form-grid">
-              <gom-lib-select
-                label="Order Type"
-                [required]="true"
-                placeholder="Select order type"
-                [options]="orderTypeOptions"
-                [formControl]="form.controls.orderType"
-                [error]="getRequiredError(form.controls.orderType)"
-                (valueChange)="onOrderTypeChange($event)"
-              ></gom-lib-select>
+              @if (canManageDelivery()) {
+                <gom-lib-select
+                  label="Order Type"
+                  [required]="true"
+                  placeholder="Select order type"
+                  [options]="orderTypeOptions"
+                  [formControl]="form.controls.orderType"
+                  [error]="getRequiredError(form.controls.orderType)"
+                  (valueChange)="onOrderTypeChange($event)"
+                ></gom-lib-select>
+              }
 
               <gom-lib-select
                 [label]="'orderEntry.labels.orderIntakeChannel' | translate"
@@ -184,15 +186,17 @@
                 [error]="getRequiredError(form.controls.intakeChannel)"
               ></gom-lib-select>
 
-              <gom-lib-select
-                [label]="'orderEntry.labels.deliveryType' | translate"
-                [required]="true"
-                [placeholder]="'orderEntry.placeholders.deliveryType' | translate"
-                [options]="deliveryTypeOptions"
-                [formControl]="form.controls.deliveryType"
-                [error]="getRequiredError(form.controls.deliveryType)"
-                (valueChange)="onDeliveryTypeChange($event)"
-              ></gom-lib-select>
+              @if (canManageDelivery()) {
+                <gom-lib-select
+                  [label]="'orderEntry.labels.deliveryType' | translate"
+                  [required]="true"
+                  [placeholder]="'orderEntry.placeholders.deliveryType' | translate"
+                  [options]="deliveryTypeOptions"
+                  [formControl]="form.controls.deliveryType"
+                  [error]="getRequiredError(form.controls.deliveryType)"
+                  (valueChange)="onDeliveryTypeChange($event)"
+                ></gom-lib-select>
+              }
             </div>
           </section>
 

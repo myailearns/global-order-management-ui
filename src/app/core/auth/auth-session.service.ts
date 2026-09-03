@@ -131,6 +131,10 @@ export class AuthSessionService {
       return '/settings/storefront';
     }
 
+    if (this.hasFeature('delivery.management')) {
+      return '/settings/delivery-management';
+    }
+
     if (this.hasFeature('pincode.config')) {
       return '/settings/serviceable-pincodes';
     }

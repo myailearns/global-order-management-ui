@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
@@ -15,13 +15,19 @@ import {
   GomSelectOption,
   GomTableColumn,
   GomTableComponent,
+  GomTableBulkAction,
+  GomTableBulkActionEvent,
+  GomTableFilterDefinition,
+  GomTableFilterNavigationRow,
+  GomTableFilterValue,
+  GomTableMobileCardConfig,
   GomTableQuery,
   GomTableRow,
 } from '@gomlibs/ui';
+import { forkJoin } from 'rxjs';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { DisableIfNoFeatureDirective } from '../../../shared/directives/disable-if-no-feature.directive';
-import { CourierPartner, Order, OrderItem, OrderRating, OrdersService, ReturnRequest, Rider, UpdateOrderEditableFieldsPayload, Variant } from './orders.service';
-import { environment } from '../../../../environments/environment';
+import { CourierPartner, Order, OrderAttentionCounts, OrderItem, OrderRating, OrdersService, ReturnRequest, Rider, UpdateOrderEditableFieldsPayload, Variant } from './orders.service';
 
 interface OrderRow extends GomTableRow {
   _id: string;
@@ -29,17 +35,24 @@ interface OrderRow extends GomTableRow {
   customer: string;
   customerName: string;
   source: string;
+  mobileSource: string;
   deliveryType: string;
   orderType: string;
   status: string;
   rawStatus: string;
   paymentStatus: string;
+  mobilePayment: string;
   discount: string;
   couponsUsed: string;
   profit: string;
   total: string;
+  rawTotal: number;
   createdAt: string;
+  mobileCreatedAt: string;
+  rawCreatedAt: string;
+  deliveryDelayedFilter: string;
   assignedRiderName: string;
+  itemCount: string;
   actions: string;
 }
 
@@ -67,21 +80,36 @@ export class OrdersComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly authSession = inject(AuthSessionService);
 
+  @ViewChild(GomTableComponent) private orderTable!: GomTableComponent<OrderRow>;
+
   readonly loading = signal(false);
   readonly canListOrders = computed(() => this.authSession.hasFeature('order.list'));
   readonly canViewOrder = computed(() => this.authSession.hasFeature('order.view'));
   readonly canCreateOrder = computed(() => this.authSession.hasFeature('order.create'));
   readonly canUpdateOrder = computed(() => this.authSession.hasFeature('order.update'));
   readonly canDeleteOrder = computed(() => this.authSession.hasFeature('order.delete'));
+  readonly canManageDelivery = computed(() => this.authSession.hasFeature('delivery.management'));
   readonly deleting = signal(false);
-  readonly purgeAllBusy = signal(false);
+  readonly kpiDateRange = signal<string>('all');
+  readonly kpiCounts = signal<Record<string, number>>({});
+  readonly kpiAttention = signal<OrderAttentionCounts>({ paymentPending: 0, awaitingConfirmation: 0, returnRequests: 0, deliveryDelayed: 0 });
+  readonly kpiLoading = signal(false);
+  readonly customDateFrom = signal('');
+  readonly customDateTo = signal('');
   readonly errorMessage = signal<string | null>(null);
   readonly deleteModalOpen = signal(false);
-  readonly purgeAllModalOpen = signal(false);
+
   readonly deleteTarget = signal<Order | null>(null);
   readonly transitionModalOpen = signal(false);
   readonly transitionBusy = signal(false);
   readonly transitionTarget = signal<{ order: Order; nextStatus: string; reason: string } | null>(null);
+  readonly bulkStatusModalOpen = signal(false);
+  readonly bulkActionBusyKey = signal<string | null>(null);
+  readonly selectedOrderRows = signal<OrderRow[]>([]);
+  readonly bulkStatusForm = new FormGroup({
+    status: new FormControl(''),
+    reason: new FormControl(''),
+  });
 
   readonly assignRiderModalOpen = signal(false);
   readonly assignRiderBusy = signal(false);
@@ -108,6 +136,43 @@ export class OrdersComponent implements OnInit {
   readonly viewOrderRatingLoading = signal(false);
   readonly viewOrderReturnRequest = signal<ReturnRequest | null>(null);
   readonly viewOrderReturnLoading = signal(false);
+  
+  // Computed properties for return request details
+  readonly returnRequestItems = computed(() => {
+    const returnReq = this.viewOrderReturnRequest();
+    const order = this.viewOrderTarget();
+    if (!returnReq || !order || !returnReq.items || !order.items) {
+      return [];
+    }
+
+    return returnReq.items
+      .map((returnItem) => {
+        const orderItem = order.items?.find((oi) => oi._id === returnItem.orderItemId);
+        if (!orderItem) {
+          return null;
+        }
+
+        return {
+          orderItemId: returnItem.orderItemId,
+          groupName: orderItem.groupNameSnapshot,
+          variantName: orderItem.variantNameSnapshot,
+          quantity: returnItem.quantity,
+          unit: orderItem.unitSnapshot,
+          reason: returnItem.reason || '-',
+          action: returnItem.action || 'REFUND',
+          sellingPrice: orderItem.priceSnapshot.sellingPrice,
+          lineTotal: orderItem.priceSnapshot.sellingPrice * returnItem.quantity,
+        };
+      })
+      .filter((item): item is NonNullable<typeof item> => item !== null);
+  });
+
+  readonly totalReturnRefundAmount = computed(() => {
+    return this.returnRequestItems()
+      .filter(item => item.action === 'REFUND')
+      .reduce((sum, item) => sum + item.lineTotal, 0);
+  });
+  
   readonly statusHistoryModalOpen = signal(false);
   readonly statusHistoryLoading = signal(false);
   readonly statusHistoryTarget = signal<Order | null>(null);
@@ -138,15 +203,30 @@ export class OrdersComponent implements OnInit {
   readonly orders = signal<Order[]>([]);
   readonly totalOrders = signal(0);
   readonly orderTablePageIndex = signal(0);
-  readonly orderTablePageSize = signal(50);
+  readonly orderTablePageSize = signal(10);
   readonly canLoadAllOrders = signal(false);
   readonly allOrdersLoaded = signal(false);
-  readonly serverSidePaginationOrders = computed(() => this.totalOrders() > 500);
-  readonly orderTableDataMode = computed<'client' | 'server'>(() => (this.serverSidePaginationOrders() && !this.allOrdersLoaded() ? 'server' : 'client'));
+  readonly serverSidePaginationOrders = computed(() => true);
+  readonly orderTableDataMode = computed<'client' | 'server'>(() => 'server');
   readonly riders = signal<Rider[]>([]);
   readonly courierPartners = signal<CourierPartner[]>([]);
   readonly variants = signal<Variant[]>([]);
-  readonly isDevMode = !environment.production;
+
+  private readonly serverChunkSize = 50;
+  private ordersChunkCache = new Map<number, Order[]>();
+  private activeOrdersQueryKey = '';
+  private latestOrdersRequestId = 0;
+  private lastOrdersQuery: GomTableQuery = {
+    searchTerm: '',
+    sort: { key: '', direction: '' },
+    pageIndex: 0,
+    pageSize: 10,
+    filters: {},
+    visibleColumnKeys: [],
+    advancedFilters: {},
+    globalSearchScope: 'all',
+  };
+
 
   readonly riderOptions = computed<GomSelectOption[]>(() =>
     this.riders().map((rider) => ({
@@ -175,6 +255,133 @@ export class OrdersComponent implements OnInit {
       .filter((variant) => !existingVariantIds.has(String(variant._id)))
       .map((variant) => ({ value: variant._id, label: variant.name }));
   });
+
+  readonly bulkStatusOptions: GomSelectOption[] = [
+    { label: 'Confirmed', value: 'CONFIRMED' },
+    { label: 'Packed', value: 'PACKED' },
+    { label: 'Assigned', value: 'ASSIGNED' },
+    { label: 'Shipped', value: 'SHIPPED' },
+    { label: 'Dispatched', value: 'DISPATCHED' },
+    { label: 'Attempted Delivery', value: 'ATTEMPTED_DELIVERY' },
+    { label: 'Delivered', value: 'DELIVERED' },
+    { label: 'Cancelled', value: 'CANCELLED' },
+    { label: 'Return Requested', value: 'RETURN_REQUESTED' },
+    { label: 'Return in Transit', value: 'RETURN_IN_TRANSIT' },
+    { label: 'Returned', value: 'RETURNED' },
+    { label: 'Refunded', value: 'REFUNDED' },
+  ];
+
+  readonly orderTableBulkActions: GomTableBulkAction<OrderRow>[] = [
+    {
+      actionKey: 'change-status',
+      label: 'Change status',
+      icon: 'ri-exchange-line',
+      variant: 'primary',
+      disabled: () => !this.canUpdateOrder(),
+      disabledTooltip: 'You do not have permission to update orders',
+    },
+  ];
+
+  readonly orderTableFilters: GomTableFilterDefinition<OrderRow>[] = [
+    {
+      key: 'paymentStatus',
+      label: 'Payment',
+      type: 'multi-select',
+      placement: 'both',
+      mobileControl: 'checkboxes',
+      options: [
+        { label: 'Pending', value: 'PENDING' },
+        { label: 'Success', value: 'SUCCESS' },
+        { label: 'Failed', value: 'FAILED' },
+        { label: 'Refunded', value: 'REFUNDED' },
+      ],
+    },
+    {
+      key: 'rawStatus',
+      label: 'Status',
+      type: 'multi-select',
+      placement: 'panel',
+      mobileControl: 'checkboxes',
+      options: [
+        { label: 'Draft', value: 'DRAFT' },
+        { label: 'Placed', value: 'PLACED' },
+        { label: 'Confirmed', value: 'CONFIRMED' },
+        { label: 'Packed', value: 'PACKED' },
+        { label: 'Assigned', value: 'ASSIGNED' },
+        { label: 'Shipped', value: 'SHIPPED' },
+        { label: 'Dispatched', value: 'DISPATCHED' },
+        { label: 'Attempted Delivery', value: 'ATTEMPTED_DELIVERY' },
+        { label: 'Delivered', value: 'DELIVERED' },
+        { label: 'Cancelled', value: 'CANCELLED' },
+        { label: 'Return Requested', value: 'RETURN_REQUESTED' },
+        { label: 'Return in Transit', value: 'RETURN_IN_TRANSIT' },
+        { label: 'Returned', value: 'RETURNED' },
+        { label: 'Refunded', value: 'REFUNDED' },
+      ],
+    },
+    {
+      key: 'source',
+      label: 'Order source',
+      type: 'select',
+      placement: 'panel',
+      optionSource: 'rows',
+      searchable: true,
+      mobileControl: 'chips',
+    },
+    {
+      key: 'rawCreatedAt',
+      label: 'Created date',
+      type: 'date-range',
+      placement: 'panel',
+    },
+    {
+      key: 'deliveryDelayedFilter',
+      label: 'Attention',
+      type: 'select',
+      placement: 'panel',
+      options: [
+        { label: 'Delivery Delayed', value: 'true' },
+      ],
+    },
+  ];
+
+  readonly orderMobileCardConfig: GomTableMobileCardConfig<OrderRow> = {
+    primaryKey: 'orderNo',
+    titleKey: 'customerName',
+    subtitleKey: 'customer',
+    avatarKey: 'customerName',
+    dateKey: 'mobileCreatedAt',
+    summaryStartKey: 'itemCount',
+    summaryCenterKey: 'total',
+    summaryEndKey: 'mobileSource',
+    statusKey: 'status',
+    detailKey: 'deliveryType',
+    paymentKey: 'mobilePayment',
+  };
+
+  orderTableNavigationRows: GomTableFilterNavigationRow<OrderRow>[] = [
+    {
+      key: 'rawStatus',
+      label: 'Status',
+      showCounts: true,
+      options: [
+        { label: 'Draft', value: 'DRAFT' },
+        { label: 'Placed', value: 'PLACED' },
+        { label: 'Confirmed', value: 'CONFIRMED' },
+        { label: 'Packed', value: 'PACKED' },
+        { label: 'Assigned', value: 'ASSIGNED' },
+        { label: 'Shipped', value: 'SHIPPED' },
+        { label: 'Dispatched', value: 'DISPATCHED' },
+        { label: 'Attempted Delivery', value: 'ATTEMPTED_DELIVERY' },
+        { label: 'Delivered', value: 'DELIVERED' },
+        { label: 'Cancelled', value: 'CANCELLED' },
+        { label: 'Return Requested', value: 'RETURN_REQUESTED' },
+        { label: 'Return in Transit', value: 'RETURN_IN_TRANSIT' },
+        { label: 'Returned', value: 'RETURNED' },
+        { label: 'Refunded', value: 'REFUNDED' },
+      ],
+    }
+  ];
 
   readonly columns: GomTableColumn<OrderRow>[] = [
     { key: 'orderNo', header: 'Order No', sortable: true, filterable: true, width: '12rem' },
@@ -229,8 +436,8 @@ export class OrdersComponent implements OnInit {
       width: '10rem',
       tooltip: (_, row) => this.getProfitTooltip(String(row._id || '')),
     },
-    { key: 'total', header: 'Total', sortable: true, width: '8rem' },
-    { key: 'createdAt', header: 'Created', sortable: true, width: '10rem' },
+    { key: 'total', header: 'Total', sortable: true, sortValue: (row) => row.rawTotal, width: '8rem' },
+    { key: 'createdAt', header: 'Created', sortable: true, sortValue: (row) => row.rawCreatedAt, width: '10rem' },
     {
       key: 'actions',
       header: 'Actions',
@@ -383,6 +590,16 @@ export class OrdersComponent implements OnInit {
     },
   ];
 
+  readonly orderMobileSortKeys: Array<keyof OrderRow & string> = [
+    'orderNo',
+    'customerName',
+    'source',
+    'total',
+    'status',
+    'paymentStatus',
+    'createdAt',
+  ];
+
   readonly rows = computed<OrderRow[]>(() =>
     this.orders().map((item) => ({
       discount: `Rs ${Number(item.pricingSnapshot?.discount || 0).toLocaleString()}`,
@@ -393,17 +610,87 @@ export class OrdersComponent implements OnInit {
       orderNo: item.orderNo,
       customer: typeof item.customerId === 'object' ? item.customerId?.phone || '-' : '-',
       source: item.orderSource,
+      mobileSource: this.getMobileOrderSourceLabel(item.orderSource),
       deliveryType: item.deliveryType,
       orderType: item.orderType || 'WALK_IN_INSTANT',
       status: this.getStatusDisplayLabel(item.status, item.deliveryType),
       rawStatus: item.status,
       paymentStatus: item.paymentStatus,
+      mobilePayment: this.getMobilePaymentLabel(item.paymentStatus),
       total: `Rs ${Number(item.pricingSnapshot?.grandTotal || 0).toLocaleString()}`,
+      rawTotal: Number(item.pricingSnapshot?.grandTotal || 0),
       createdAt: new Date(item.createdAt).toLocaleDateString(),
+      mobileCreatedAt: this.getMobileOrderDateLabel(item.createdAt),
+      rawCreatedAt: item.createdAt,
+      deliveryDelayedFilter: this.isOrderDeliveryDelayed(item) ? 'true' : '',
       assignedRiderName: item.assignedRider?.name || '',
+      itemCount: `${item.items?.length || 0} Item${item.items?.length === 1 ? '' : 's'}`,
       actions: 'Actions',
     }))
   );
+
+  private getMobileOrderSourceLabel(source: string): string {
+    const labels: Record<string, string> = {
+      CUSTOMER_WEB: 'Online Store',
+      PHONE: 'Phone',
+      WHATSAPP: 'WhatsApp',
+      SHOP_COUNTER: 'Store',
+      WALK_IN: 'Walk-in',
+      MARKETPLACE: 'Marketplace',
+    };
+    return labels[String(source || '').toUpperCase()] || String(source || '').replaceAll('_', ' ');
+  }
+
+  private getMobilePaymentLabel(status: string): string {
+    const labels: Record<string, string> = {
+      SUCCESS: 'Paid',
+      PENDING: 'Unpaid',
+      FAILED: 'Failed',
+      REFUNDED: 'Refunded',
+      PARTIAL: 'Partial',
+    };
+    return labels[String(status || '').toUpperCase()] || status;
+  }
+
+  private getMobileOrderDateLabel(value: string): string {
+    const date = new Date(value);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    const sameDay = (left: Date, right: Date) => left.toDateString() === right.toDateString();
+    let day = date.toLocaleDateString();
+    if (sameDay(date, today)) {
+      day = 'Today';
+    } else if (sameDay(date, yesterday)) {
+      day = 'Yesterday';
+    }
+    return `${day}, ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+  }
+
+  private isOrderDeliveryDelayed(order: Order): boolean {
+    const status = String(order.status || '').toUpperCase();
+    if (status === 'ATTEMPTED_DELIVERY') {
+      return true;
+    }
+
+    if (status === 'DISPATCHED' && this.isPastDate(order.courierDetails?.estimatedDeliveryDate)) {
+      return true;
+    }
+
+    if (['ASSIGNED', 'SHIPPED'].includes(status) && this.isPastDate(order.deliveryDetails?.preferredDeliveryTime)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  private isPastDate(value?: string | null): boolean {
+    if (!value) {
+      return false;
+    }
+    const date = new Date(value);
+    return !Number.isNaN(date.getTime()) && date.getTime() < Date.now();
+  }
 
   getCouponsUsedLabel(order: Order): string {
     const rawCodes = [
@@ -533,58 +820,404 @@ export class OrdersComponent implements OnInit {
   }
 
   loadInitialData(): void {
-    this.loading.set(true);
     this.errorMessage.set(null);
+    const nextQuery = this.cloneTableQuery({
+      ...this.lastOrdersQuery,
+      pageIndex: 0,
+      pageSize: this.lastOrdersQuery.pageSize || this.orderTablePageSize(),
+    });
+
     this.orderTablePageIndex.set(0);
+    this.orderTablePageSize.set(nextQuery.pageSize);
     this.allOrdersLoaded.set(false);
+    this.lastOrdersQuery = nextQuery;
+    this.loadOrderNavigationCounts();
+    this.fetchOrdersForQuery(nextQuery, { forceRefresh: true });
+  }
 
-    this.service.listOrders({ page: 1, limit: this.orderTablePageSize() }).subscribe({
-      next: (orders) => {
-        const pagination = orders.pagination;
-        this.totalOrders.set(pagination.total);
-        this.canLoadAllOrders.set(pagination.canLoadAll);
-        this.allOrdersLoaded.set(pagination.total <= 500);
+  private loadOrderNavigationCounts(): void {
+    const dateParams = this.getKpiDateParams();
+    this.kpiLoading.set(true);
+    this.service.getNavigationCounts(dateParams).subscribe({
+      next: (response) => {
+        const statuses = response.data?.statuses ?? {};
+        const total = Math.max(0, Number(response.data?.total) || 0);
+        this.kpiCounts.set({ ...statuses, total });
+        this.kpiAttention.set(response.data?.attention ?? { paymentPending: 0, awaitingConfirmation: 0, returnRequests: 0, deliveryDelayed: 0 });
+        this.kpiLoading.set(false);
+        this.orderTableNavigationRows = this.orderTableNavigationRows.map((row) => {
+          if (row.key !== 'rawStatus') {
+            return row;
+          }
+          return {
+            ...row,
+            allOption: { label: 'All', value: '', count: total },
+            options: (row.options ?? []).map((option) => ({
+              ...option,
+              count: Math.max(0, Number(statuses[option.value]) || 0),
+            })),
+          };
+        });
+      },
+      error: () => this.kpiLoading.set(false),
+    });
+  }
 
-        if (pagination.total <= 500 && pagination.hasMore) {
-          this.service.listOrders({ page: 1, limit: pagination.total }).subscribe({
-            next: (allRes) => this.orders.set(allRes.data || []),
-          });
-        } else {
-          this.orders.set(orders.data || []);
+  setKpiDateRange(range: string): void {
+    this.kpiDateRange.set(range);
+    if (range !== 'custom') {
+      this.loadOrderNavigationCounts();
+    }
+  }
+
+  onAttentionClick(type: 'paymentPending' | 'awaitingConfirmation' | 'returnRequests' | 'deliveryDelayed'): void {
+    if (!this.orderTable) {
+      console.warn('[Attention] orderTable ViewChild not available');
+      return;
+    }
+    switch (type) {
+      case 'paymentPending':
+        this.orderTable.setQueryFilters({ paymentStatus: 'PENDING' });
+        break;
+      case 'awaitingConfirmation':
+        this.orderTable.setQueryFilters({ rawStatus: 'PLACED' });
+        break;
+      case 'returnRequests':
+        this.orderTable.setQueryFilters({ rawStatus: 'RETURN_REQUESTED' });
+        break;
+      case 'deliveryDelayed':
+        this.orderTable.setQueryFilters({ deliveryDelayedFilter: 'true' });
+        break;
+    }
+  }
+
+  setCustomDateFrom(value: string): void {
+    this.customDateFrom.set(value);
+    if (value && this.customDateTo()) {
+      this.loadOrderNavigationCounts();
+    }
+  }
+
+  setCustomDateTo(value: string): void {
+    this.customDateTo.set(value);
+    if (value && this.customDateFrom()) {
+      this.loadOrderNavigationCounts();
+    }
+  }
+
+  private getKpiDateParams(): { from?: string; to?: string } {
+    const range = this.kpiDateRange();
+    if (range === 'all') return {};
+    if (range === 'custom') {
+      const from = this.customDateFrom();
+      const to = this.customDateTo();
+      if (!from || !to) return {};
+      return {
+        from: new Date(from + 'T00:00:00').toISOString(),
+        to: new Date(to + 'T23:59:59.999').toISOString(),
+      };
+    }
+    const now = new Date();
+    const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const endOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
+    let from: Date;
+    const to = endOfDay(now);
+    switch (range) {
+      case 'today': from = startOfDay(now); break;
+      case 'week': { const d = startOfDay(now); d.setDate(d.getDate() - d.getDay()); from = d; break; }
+      case 'month': from = new Date(now.getFullYear(), now.getMonth(), 1); break;
+      case 'quarter': { const q = Math.floor(now.getMonth() / 3) * 3; from = new Date(now.getFullYear(), q, 1); break; }
+      case 'year': from = new Date(now.getFullYear(), 0, 1); break;
+      default: return {};
+    }
+    return { from: from.toISOString(), to: to.toISOString() };
+  }
+
+  getKpiCount(key: string): number {
+    return this.kpiCounts()[key] ?? 0;
+  }
+
+  get kpiTotalOrders(): number { return this.getKpiCount('total'); }
+  get kpiNewOrders(): number { return this.getKpiCount('PLACED') + this.getKpiCount('DRAFT'); }
+  get kpiToShip(): number { return this.getKpiCount('CONFIRMED') + this.getKpiCount('PACKED') + this.getKpiCount('ASSIGNED'); }
+  get kpiOutForDelivery(): number { return this.getKpiCount('SHIPPED') + this.getKpiCount('DISPATCHED'); }
+  get kpiDelivered(): number { return this.getKpiCount('DELIVERED'); }
+  get kpiReturns(): number { return this.getKpiCount('RETURN_REQUESTED') + this.getKpiCount('RETURN_IN_TRANSIT') + this.getKpiCount('RETURNED'); }
+  get kpiCancelled(): number { return this.getKpiCount('CANCELLED'); }
+  get kpiPaymentPending(): number { return this.kpiAttention().paymentPending; }
+
+  get visibleOrderTableFilters(): GomTableFilterDefinition<OrderRow>[] {
+    if (this.canManageDelivery()) {
+      return this.orderTableFilters;
+    }
+
+    return this.orderTableFilters
+      .filter((filter) => filter.key !== 'deliveryDelayedFilter')
+      .map((filter) => filter.key === 'rawStatus'
+        ? { ...filter, options: (filter.options || []).filter((option) => !['ASSIGNED', 'SHIPPED', 'DISPATCHED', 'ATTEMPTED_DELIVERY'].includes(option.value)) }
+        : filter);
+  }
+
+  get visibleOrderTableNavigationRows(): GomTableFilterNavigationRow<OrderRow>[] {
+    if (this.canManageDelivery()) {
+      return this.orderTableNavigationRows;
+    }
+
+    return this.orderTableNavigationRows.map((row) => row.key === 'rawStatus'
+      ? { ...row, options: (row.options || []).filter((option) => !['ASSIGNED', 'SHIPPED', 'DISPATCHED', 'ATTEMPTED_DELIVERY'].includes(option.value)) }
+      : row);
+  }
+
+  onOrderTableQueryChange(query: GomTableQuery): void {
+    this.fetchOrdersForQuery(query);
+  }
+
+  onSelectedOrderRowsChange(rows: OrderRow[]): void {
+    this.selectedOrderRows.set(rows);
+  }
+
+  onOrderBulkAction(event: GomTableBulkActionEvent<OrderRow>): void {
+    this.selectedOrderRows.set(event.selectedRows);
+    if (event.actionKey !== 'change-status' || !this.canUpdateOrder()) {
+      return;
+    }
+
+    this.bulkStatusForm.reset({ status: '', reason: '' });
+    this.bulkStatusModalOpen.set(true);
+  }
+
+  closeBulkStatusModal(): void {
+    if (this.bulkActionBusyKey()) {
+      return;
+    }
+    this.bulkStatusModalOpen.set(false);
+    this.bulkStatusForm.reset({ status: '', reason: '' });
+  }
+
+  confirmBulkStatusChange(): void {
+    if (!this.canUpdateOrder() || this.bulkActionBusyKey()) {
+      return;
+    }
+
+    const rows = this.selectedOrderRows();
+    const status = String(this.bulkStatusForm.controls.status.value || '').trim();
+    const reason = String(this.bulkStatusForm.controls.reason.value || '').trim();
+    if (!rows.length) {
+      this.toast.warning('Select at least one order.');
+      this.closeBulkStatusModal();
+      return;
+    }
+    if (!status) {
+      this.toast.warning('Select a target status.');
+      return;
+    }
+
+    this.bulkActionBusyKey.set('change-status');
+    this.service.bulkUpdateStatus(rows.map((row) => row._id), status, reason).subscribe({
+      next: (response) => {
+        const result = response.data;
+        const updated = Number(result?.summary?.updated || 0);
+        const failed = Number(result?.summary?.failed || 0);
+        this.bulkActionBusyKey.set(null);
+
+        if (updated > 0) {
+          const failureSummary = failed ? `; ${failed} failed` : '';
+          this.toast.success(`${updated} order${updated === 1 ? '' : 's'} updated${failureSummary}.`);
+          this.bulkStatusModalOpen.set(false);
+          this.bulkStatusForm.reset({ status: '', reason: '' });
+          this.loadInitialData();
+          return;
         }
+
+        const firstFailure = result?.failed?.[0]?.message;
+        this.toast.error(firstFailure || 'No selected orders could be updated.');
+      },
+      error: (error) => {
+        this.bulkActionBusyKey.set(null);
+        this.toast.error(String(error?.error?.message || 'Failed to update selected orders.'));
+      },
+    });
+  }
+
+  private getTableFilterParam(query: GomTableQuery, key: string): string | undefined {
+    const value = query.advancedFilters?.[key];
+    if (typeof value === 'string') {
+      return value.trim() || undefined;
+    }
+    if (Array.isArray(value)) {
+      return value.filter(Boolean).join(',') || undefined;
+    }
+    return undefined;
+  }
+
+  private getTableDateBoundary(query: GomTableQuery, key: string, boundary: 'from' | 'to'): string | undefined {
+    const value = query.advancedFilters?.[key];
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      return undefined;
+    }
+    if (boundary === 'to' && value.to) {
+      return `${value.to}T23:59:59.999`;
+    }
+    return value[boundary] || undefined;
+  }
+
+  private fetchOrdersForQuery(query: GomTableQuery, options?: { forceRefresh?: boolean }): void {
+    const normalizedQuery = this.cloneTableQuery(query);
+    const queryKey = this.buildOrdersQueryKey(normalizedQuery);
+    const requestedChunks = this.getRequiredChunkIndexes(normalizedQuery.pageIndex, normalizedQuery.pageSize);
+    const shouldResetCache = options?.forceRefresh || queryKey !== this.activeOrdersQueryKey;
+
+    this.errorMessage.set(null);
+    this.lastOrdersQuery = normalizedQuery;
+    this.orderTablePageIndex.set(normalizedQuery.pageIndex);
+    this.orderTablePageSize.set(normalizedQuery.pageSize);
+
+    if (shouldResetCache) {
+      this.ordersChunkCache = new Map<number, Order[]>();
+      this.activeOrdersQueryKey = queryKey;
+    }
+
+    const missingChunks = requestedChunks.filter((chunkIndex) => !this.ordersChunkCache.has(chunkIndex));
+    if (missingChunks.length === 0) {
+      this.applyVisibleOrdersFromCache(normalizedQuery);
+      this.loading.set(false);
+      return;
+    }
+
+    this.loading.set(true);
+    const requestId = ++this.latestOrdersRequestId;
+    const requests = missingChunks.map((chunkIndex) => this.service.listOrders(this.buildOrdersRequestParams(normalizedQuery, chunkIndex)));
+
+    forkJoin(requests).subscribe({
+      next: (responses) => {
+        if (requestId !== this.latestOrdersRequestId) {
+          return;
+        }
+
+        responses.forEach((response, index) => {
+          const chunkIndex = missingChunks[index];
+          this.ordersChunkCache.set(chunkIndex, response.data ?? []);
+          this.totalOrders.set(response.pagination.total);
+          this.canLoadAllOrders.set(false);
+        });
+
+        this.allOrdersLoaded.set(false);
+        this.applyVisibleOrdersFromCache(normalizedQuery);
         this.loading.set(false);
       },
       error: () => {
+        if (requestId !== this.latestOrdersRequestId) {
+          return;
+        }
         this.errorMessage.set('Failed to load orders data.');
         this.loading.set(false);
       },
     });
   }
 
-  onOrderTableQueryChange(query: GomTableQuery): void {
-    if (this.orderTableDataMode() !== 'server') {
-      return;
-    }
+  private applyVisibleOrdersFromCache(query: GomTableQuery): void {
+    const requestedChunks = this.getRequiredChunkIndexes(query.pageIndex, query.pageSize);
+    const startIndex = query.pageIndex * query.pageSize;
+    const firstChunkOffset = requestedChunks.length > 0 ? requestedChunks[0] * this.serverChunkSize : 0;
+    const offsetWithinCache = Math.max(0, startIndex - firstChunkOffset);
+    const mergedOrders = requestedChunks.flatMap((chunkIndex) => this.ordersChunkCache.get(chunkIndex) ?? []);
 
-    this.loading.set(true);
-    this.service.listOrders({
-      page: query.pageIndex + 1,
-      limit: query.pageSize,
+    this.orders.set(mergedOrders.slice(offsetWithinCache, offsetWithinCache + query.pageSize));
+  }
+
+  private getRequiredChunkIndexes(pageIndex: number, pageSize: number): number[] {
+    const startIndex = Math.max(0, pageIndex) * Math.max(1, pageSize);
+    const endIndexExclusive = startIndex + Math.max(1, pageSize);
+    const startChunk = Math.floor(startIndex / this.serverChunkSize);
+    const endChunk = Math.floor((Math.max(endIndexExclusive - 1, startIndex)) / this.serverChunkSize);
+
+    return Array.from({ length: endChunk - startChunk + 1 }, (_, index) => startChunk + index);
+  }
+
+  private buildOrdersRequestParams(query: GomTableQuery, chunkIndex: number): {
+    page: number;
+    limit: number;
+    paymentStatus?: string;
+    status?: string;
+    deliveryDelayed?: string;
+    orderSource?: string;
+    from?: string;
+    to?: string;
+    search?: string;
+    sortBy?: string;
+    order?: 'asc' | 'desc';
+  } {
+    const apiSortFields: Record<string, string> = {
+      orderNo: 'orderNo',
+      customerName: 'addressSnapshot.name',
+      source: 'orderSource',
+      total: 'pricingSnapshot.grandTotal',
+      status: 'status',
+      paymentStatus: 'paymentStatus',
+      createdAt: 'createdAt',
+    };
+    const sortDirection = query.sort?.direction || undefined;
+    const sortBy = sortDirection ? apiSortFields[query.sort.key] : undefined;
+
+    return {
+      page: chunkIndex + 1,
+      limit: this.serverChunkSize,
       search: query.searchTerm?.trim() || undefined,
-      sortBy: query.sort?.key || undefined,
-      order: query.sort?.direction as 'asc' | 'desc' | undefined,
-    }).subscribe({
-      next: (res) => {
-        this.allOrdersLoaded.set(false);
-        this.orders.set(res.data ?? []);
-        this.totalOrders.set(res.pagination.total);
-        this.canLoadAllOrders.set(res.pagination.canLoadAll);
-        this.orderTablePageIndex.set(query.pageIndex);
-        this.orderTablePageSize.set(query.pageSize);
-        this.loading.set(false);
-      },
-      error: () => this.loading.set(false),
+      sortBy,
+      order: sortDirection as 'asc' | 'desc' | undefined,
+      paymentStatus: this.getTableFilterParam(query, 'paymentStatus'),
+      status: this.getTableFilterParam(query, 'rawStatus'),
+      deliveryDelayed: this.getTableFilterParam(query, 'deliveryDelayedFilter') === 'true' ? 'true' : undefined,
+      orderSource: this.getTableFilterParam(query, 'source'),
+      from: this.getTableDateBoundary(query, 'rawCreatedAt', 'from'),
+      to: this.getTableDateBoundary(query, 'rawCreatedAt', 'to'),
+    };
+  }
+
+  private buildOrdersQueryKey(query: GomTableQuery): string {
+    const params = this.buildOrdersRequestParams(query, 0);
+    return JSON.stringify({
+      paymentStatus: params.paymentStatus || '',
+      status: params.status || '',
+      deliveryDelayed: params.deliveryDelayed || '',
+      orderSource: params.orderSource || '',
+      from: params.from || '',
+      to: params.to || '',
+      search: params.search || '',
+      sortBy: params.sortBy || '',
+      order: params.order || '',
     });
+  }
+
+  private cloneTableQuery(query: GomTableQuery): GomTableQuery {
+    return {
+      ...query,
+      sort: { ...query.sort },
+      filters: { ...(query.filters || {}) },
+      visibleColumnKeys: [...(query.visibleColumnKeys || [])],
+      advancedFilters: this.cloneAdvancedFilters(query.advancedFilters),
+      globalSearchScope: query.globalSearchScope,
+    };
+  }
+
+  private cloneAdvancedFilters(filters?: Record<string, GomTableFilterValue>): Record<string, GomTableFilterValue> {
+    const cloned: Record<string, GomTableFilterValue> = {};
+
+    Object.entries(filters || {}).forEach(([key, value]) => {
+      if (Array.isArray(value)) {
+        cloned[key] = [...value];
+        return;
+      }
+
+      if (value && typeof value === 'object') {
+        cloned[key] = { from: value.from, to: value.to };
+        return;
+      }
+
+      cloned[key] = value;
+    });
+
+    return cloned;
   }
 
   loadAllOrders(): void {
@@ -608,6 +1241,10 @@ export class OrdersComponent implements OnInit {
     }
 
     this.router.navigate(['/orders/create']);
+  }
+
+  onExportOrders(): void {
+    this.toast.info('Export feature coming soon.');
   }
 
   onRowAction(event: { actionKey: string; row: GomTableRow }): void {
@@ -1485,44 +2122,7 @@ export class OrdersComponent implements OnInit {
     this.deleteTarget.set(null);
   }
 
-  openPurgeAllModal(): void {
-    if (!this.canDeleteOrder()) {
-      return;
-    }
 
-    this.purgeAllModalOpen.set(true);
-  }
-
-  closePurgeAllModal(): void {
-    this.purgeAllModalOpen.set(false);
-  }
-
-  get purgeAllModalMessage(): string {
-    return `Delete ALL orders for this tenant? This removes orders and linked items/payments/shipments/returns. Current orders: ${this.orders().length}.`;
-  }
-
-  confirmPurgeAllOrders(): void {
-    if (!this.canDeleteOrder()) {
-      this.closePurgeAllModal();
-      return;
-    }
-
-    this.purgeAllBusy.set(true);
-    this.service.purgeAllOrdersDev().subscribe({
-      next: (response) => {
-        const deletedOrders = Number(response?.data?.deleted?.orders || 0);
-        this.toast.success(`Deleted ${deletedOrders} orders (development purge).`);
-        this.purgeAllBusy.set(false);
-        this.closePurgeAllModal();
-        this.loadInitialData();
-      },
-      error: (error) => {
-        const message = String(error?.error?.message || 'Failed to purge all orders.');
-        this.toast.error(message);
-        this.purgeAllBusy.set(false);
-      },
-    });
-  }
 
   confirmDeleteOrder(): void {
     if (!this.canDeleteOrder()) {

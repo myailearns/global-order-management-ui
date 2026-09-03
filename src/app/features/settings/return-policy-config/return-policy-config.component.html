@@ -1,67 +1,580 @@
 <section class="settings-page">
   <header class="settings-page__header">
     <h2>Return &amp; Exchange Policy</h2>
-    <p>Configure whether your store accepts returns, which request types are allowed, and how long customers have to initiate a return.</p>
+    <p>Configure return policies separately for delivery and pickup fulfillment modes.</p>
   </header>
 
   @if (errorMessage()) {
     <div class="settings-page__error">{{ errorMessage() }}</div>
   }
 
-  <form class="settings-card" [formGroup]="policyForm" (ngSubmit)="save()">
-
-    <!-- ─── Return Switch ──────────────────────────── -->
-    <fieldset class="settings-section">
-      <legend>Return Requests</legend>
-      <div class="settings-grid settings-grid--2col">
-        <gom-lib-checkbox
-          label="Enable return requests"
-          hint="When disabled, customers will not see a return option after delivery."
-          [formControl]="policyForm.controls.returnsEnabled"
-        ></gom-lib-checkbox>
+  <!-- Single Mode: No Tabs -->
+  @if (!showTabs()) {
+    @if (deliveryEnabled()) {
+      <!-- Delivery Form (No Tabs) -->
+      <div class="settings-card">
+        <div class="card-header">
+          <h3 class="card-title">Enable Returns (Delivery Orders)</h3>
+          <p class="card-description">Allow customers to request returns and exchanges after receiving their delivery orders.</p>
+        </div>
+        <div class="card-content">
+          <gom-lib-checkbox
+            label="Accept return and exchange requests"
+            hint="Toggle off to completely disable the return option for delivery customers."
+            [formControl]="deliveryForm.controls.returnsEnabled"
+          ></gom-lib-checkbox>
+        </div>
       </div>
-    </fieldset>
 
-    <!-- ─── Allowed Types ─────────────────────────── -->
-    <fieldset class="settings-section">
-      <legend>Allowed Request Types</legend>
-      <p class="settings-section__hint">Select which return types your store supports. At least one option (Refund or Exchange) must be enabled when returns are enabled.</p>
-      <div class="settings-grid settings-grid--2col">
-        <gom-lib-checkbox
-          label="Allow Refund requests"
-          hint="Customers can request a monetary refund."
-          [formControl]="policyForm.controls.allowRefund"
-        ></gom-lib-checkbox>
-        <gom-lib-checkbox
-          label="Allow Exchange requests"
-          hint="Customers can request a product exchange."
-          [formControl]="policyForm.controls.allowExchange"
-        ></gom-lib-checkbox>
+      @if (deliveryReturnsEnabled()) {
+        <div class="settings-card">
+          <div class="card-header">
+            <h3 class="card-title">What Can Customers Request?</h3>
+            <p class="card-description">Choose which options are available. At least one must be enabled.</p>
+          </div>
+          <div class="card-content">
+            <div class="settings-grid">
+              <gom-lib-checkbox
+                label="Refunds (money back)"
+                hint="Customer receives their money back"
+                [formControl]="deliveryForm.controls.allowRefund"
+              ></gom-lib-checkbox>
+              <gom-lib-checkbox
+                label="Exchanges (product swap)"
+                hint="Customer receives a replacement product"
+                [formControl]="deliveryForm.controls.allowExchange"
+              ></gom-lib-checkbox>
+            </div>
+          </div>
+        </div>
+
+        @if (deliveryHasAnyRequestType()) {
+          <div class="settings-card">
+            <div class="card-header">
+              <h3 class="card-title">How Long Do Customers Have?</h3>
+              <p class="card-description">Set the deadline for initiating returns after delivery. Use 0 for no time limit.</p>
+            </div>
+            <div class="card-content">
+              <div class="settings-grid settings-grid--3col">
+                <gom-lib-input
+                  label="Number of"
+                  type="number"
+                  [formControl]="deliveryForm.controls.returnWindowDays"
+                  hint="Enter 0 for unlimited time"
+                ></gom-lib-input>
+                <gom-lib-select
+                  label="Time period"
+                  [options]="windowUnitOptions"
+                  [formControl]="deliveryForm.controls.returnWindowUnit"
+                  hint="Hours, Days, or Months"
+                ></gom-lib-select>
+              </div>
+            </div>
+          </div>
+        }
+
+        @if (deliveryAllowRefund()) {
+          <div class="settings-card">
+            <div class="card-header">
+              <h3 class="card-title">How Should Customers Receive Refunds?</h3>
+              <p class="card-description">Select which payment methods you'll use to send money back to customers.</p>
+            </div>
+            <div class="card-content">
+              <div class="settings-grid">
+                <gom-lib-checkbox
+                  label="UPI"
+                  hint="Allow refunds via UPI"
+                  [formControl]="deliveryForm.controls.allowUpiRefund"
+                ></gom-lib-checkbox>
+                <gom-lib-checkbox
+                  label="Bank Transfer"
+                  hint="Allow refunds via bank account"
+                  [formControl]="deliveryForm.controls.allowBankTransferRefund"
+                ></gom-lib-checkbox>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-card">
+            <div class="card-header">
+              <h3 class="card-title">How Long Does Refund Processing Take?</h3>
+              <p class="card-description">Set the expected timeline for processing refunds after items reach your warehouse.</p>
+            </div>
+            <div class="card-content">
+              <div class="settings-grid settings-grid--3col">
+                <gom-lib-input
+                  label="Processing time"
+                  type="number"
+                  [formControl]="deliveryForm.controls.refundProcessingTime"
+                  hint="Time needed to inspect and process refund"
+                ></gom-lib-input>
+                <gom-lib-select
+                  label="Time unit"
+                  [options]="refundProcessingUnitOptions"
+                  [formControl]="deliveryForm.controls.refundProcessingUnit"
+                  hint="Working Days, Days, or Hours"
+                ></gom-lib-select>
+              </div>
+            </div>
+          </div>
+        }
+
+        @if (deliveryHasAnyRequestType()) {
+          <div class="settings-card">
+            <div class="card-header">
+              <h3 class="card-title">Instructions for Customers</h3>
+              <p class="card-description">Write helpful guidelines that customers will see before requesting a return.</p>
+            </div>
+            <div class="card-content">
+              <gom-lib-textarea
+                label="Return policy instructions (Optional)"
+                placeholder="Example: Items must be in original condition with tags attached. Perishable goods and opened products cannot be returned. Damaged items must be reported within 24 hours of delivery..."
+                [rows]="8"
+                [formControl]="deliveryForm.controls.guidelines"
+                hint="Explain eligible items, required condition, packaging needs, and any restrictions"
+              ></gom-lib-textarea>
+            </div>
+          </div>
+        }
+      }
+
+      <div class="settings-page__actions">
+        <gom-lib-button
+          type="button"
+          variant="primary"
+          [gomDisableIfNoCapability]="'tenant-admin'"
+          [disabled]="loading() || saving() || !canEdit()"
+          (buttonClick)="saveDeliveryPolicy()">
+          {{ saving() ? 'Saving...' : 'Save Delivery Return Policy' }}
+        </gom-lib-button>
       </div>
-    </fieldset>
+    }
 
-    <!-- ─── Return Window ─────────────────────────── -->
-    <fieldset class="settings-section">
-      <legend>Return Window</legend>
-      <div class="settings-grid">
-        <gom-lib-input
-          label="Return window (days)"
-          type="number"
-          [formControl]="policyForm.controls.returnWindowDays"
-          hint="Number of days after delivery within which a customer can raise a return. Set to 0 for no time limit."
-        ></gom-lib-input>
+    @if (pickupEnabled() && !deliveryEnabled()) {
+      <!-- Pickup Form (No Tabs) -->
+      <div class="settings-card">
+        <div class="card-header">
+          <h3 class="card-title">Enable Returns (Pickup Orders)</h3>
+          <p class="card-description">Allow customers to request returns and exchanges after pickup.</p>
+        </div>
+        <div class="card-content">
+          <gom-lib-checkbox
+            label="Accept return and exchange requests"
+            hint="Toggle off to completely disable the return option for pickup customers."
+            [formControl]="pickupForm.controls.returnsEnabled"
+          ></gom-lib-checkbox>
+        </div>
       </div>
-    </fieldset>
 
-    <!-- ─── Actions ───────────────────────────────── -->
-    <div class="settings-page__actions">
-      <gom-lib-button
-        type="submit"
-        variant="primary"
-        [gomDisableIfNoCapability]="'tenant-admin'"
-        [disabled]="loading() || saving() || !canEdit()">
-        {{ saving() ? 'Saving...' : 'Save Return Policy' }}
-      </gom-lib-button>
-    </div>
-  </form>
+      @if (pickupReturnsEnabled()) {
+        <div class="settings-card">
+          <div class="card-header">
+            <h3 class="card-title">What Can Customers Request?</h3>
+            <p class="card-description">Choose which options are available. At least one must be enabled.</p>
+          </div>
+          <div class="card-content">
+            <div class="settings-grid">
+              <gom-lib-checkbox
+                label="Refunds (money back)"
+                hint="Customer receives their money back"
+                [formControl]="pickupForm.controls.allowRefund"
+              ></gom-lib-checkbox>
+              <gom-lib-checkbox
+                label="Exchanges (product swap)"
+                hint="Customer receives a replacement product"
+                [formControl]="pickupForm.controls.allowExchange"
+              ></gom-lib-checkbox>
+            </div>
+          </div>
+        </div>
+
+        @if (pickupHasAnyRequestType()) {
+          <div class="settings-card">
+            <div class="card-header">
+              <h3 class="card-title">How Long Do Customers Have?</h3>
+              <p class="card-description">Set the deadline for initiating returns after pickup. Use 0 for no time limit.</p>
+            </div>
+            <div class="card-content">
+              <div class="settings-grid settings-grid--3col">
+                <gom-lib-input
+                  label="Number of"
+                  type="number"
+                  [formControl]="pickupForm.controls.returnWindowDays"
+                  hint="Enter 0 for unlimited time"
+                ></gom-lib-input>
+                <gom-lib-select
+                  label="Time period"
+                  [options]="windowUnitOptions"
+                  [formControl]="pickupForm.controls.returnWindowUnit"
+                  hint="Hours, Days, or Months"
+                ></gom-lib-select>
+              </div>
+            </div>
+          </div>
+        }
+
+        @if (pickupAllowRefund()) {
+          <div class="settings-card">
+            <div class="card-header">
+              <h3 class="card-title">How Should Customers Receive Refunds?</h3>
+              <p class="card-description">Select which payment methods you'll use to send money back to customers.</p>
+            </div>
+            <div class="card-content">
+              <div class="settings-grid">
+                <gom-lib-checkbox
+                  label="UPI"
+                  hint="Allow refunds via UPI"
+                  [formControl]="pickupForm.controls.allowUpiRefund"
+                ></gom-lib-checkbox>
+                <gom-lib-checkbox
+                  label="Bank Transfer"
+                  hint="Allow refunds via bank account"
+                  [formControl]="pickupForm.controls.allowBankTransferRefund"
+                ></gom-lib-checkbox>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-card">
+            <div class="card-header">
+              <h3 class="card-title">How Long Does Refund Processing Take?</h3>
+              <p class="card-description">Set the expected timeline for processing refunds after items reach your warehouse.</p>
+            </div>
+            <div class="card-content">
+              <div class="settings-grid settings-grid--3col">
+                <gom-lib-input
+                  label="Processing time"
+                  type="number"
+                  [formControl]="pickupForm.controls.refundProcessingTime"
+                  hint="Time needed to inspect and process refund"
+                ></gom-lib-input>
+                <gom-lib-select
+                  label="Time unit"
+                  [options]="refundProcessingUnitOptions"
+                  [formControl]="pickupForm.controls.refundProcessingUnit"
+                  hint="Working Days, Days, or Hours"
+                ></gom-lib-select>
+              </div>
+            </div>
+          </div>
+        }
+
+        @if (pickupHasAnyRequestType()) {
+          <div class="settings-card">
+            <div class="card-header">
+              <h3 class="card-title">Instructions for Customers</h3>
+              <p class="card-description">Write helpful guidelines that customers will see before requesting a return.</p>
+            </div>
+            <div class="card-content">
+              <gom-lib-textarea
+                label="Return policy instructions (Optional)"
+                placeholder="Example: Items must be in original condition with tags attached. Perishable goods and opened products cannot be returned. Damaged items must be reported within 24 hours of pickup..."
+                [rows]="8"
+                [formControl]="pickupForm.controls.guidelines"
+                hint="Explain eligible items, required condition, packaging needs, and any restrictions"
+              ></gom-lib-textarea>
+            </div>
+          </div>
+        }
+      }
+
+      <div class="settings-page__actions">
+        <gom-lib-button
+          type="button"
+          variant="primary"
+          [gomDisableIfNoCapability]="'tenant-admin'"
+          [disabled]="loading() || saving() || !canEdit()"
+          (buttonClick)="savePickupPolicy()">
+          {{ saving() ? 'Saving...' : 'Save Pickup Return Policy' }}
+        </gom-lib-button>
+      </div>
+    }
+  }
+
+  <!-- Both Modes: Show Tabs -->
+  @if (showTabs()) {
+    <gom-lib-tabs [tabs]="visibleTabs()" [activeTab]="activeMode()" (tabChange)="switchMode($event)">
+      
+      <!-- DELIVERY TAB -->
+      <gom-lib-tab-content tabId="delivery" [activeTab]="activeMode()">
+        <div class="settings-card">
+          <div class="card-header">
+            <h3 class="card-title">Enable Returns (Delivery Orders)</h3>
+            <p class="card-description">Allow customers to request returns and exchanges after receiving their delivery orders.</p>
+          </div>
+          <div class="card-content">
+            <gom-lib-checkbox
+              label="Accept return and exchange requests"
+              hint="Toggle off to completely disable the return option for delivery customers."
+              [formControl]="deliveryForm.controls.returnsEnabled"
+            ></gom-lib-checkbox>
+          </div>
+        </div>
+
+        @if (deliveryReturnsEnabled()) {
+          <div class="settings-card">
+            <div class="card-header">
+              <h3 class="card-title">What Can Customers Request?</h3>
+              <p class="card-description">Choose which options are available. At least one must be enabled.</p>
+            </div>
+            <div class="card-content">
+              <div class="settings-grid">
+                <gom-lib-checkbox
+                  label="Refunds (money back)"
+                  hint="Customer receives their money back"
+                  [formControl]="deliveryForm.controls.allowRefund"
+                ></gom-lib-checkbox>
+                <gom-lib-checkbox
+                  label="Exchanges (product swap)"
+                  hint="Customer receives a replacement product"
+                  [formControl]="deliveryForm.controls.allowExchange"
+                ></gom-lib-checkbox>
+              </div>
+            </div>
+          </div>
+
+          @if (deliveryHasAnyRequestType()) {
+            <div class="settings-card">
+              <div class="card-header">
+                <h3 class="card-title">How Long Do Customers Have?</h3>
+                <p class="card-description">Set the deadline for initiating returns after delivery. Use 0 for no time limit.</p>
+              </div>
+              <div class="card-content">
+                <div class="settings-grid settings-grid--3col">
+                  <gom-lib-input
+                    label="Number of"
+                    type="number"
+                    [formControl]="deliveryForm.controls.returnWindowDays"
+                    hint="Enter 0 for unlimited time"
+                  ></gom-lib-input>
+                  <gom-lib-select
+                    label="Time period"
+                    [options]="windowUnitOptions"
+                    [formControl]="deliveryForm.controls.returnWindowUnit"
+                    hint="Hours, Days, or Months"
+                  ></gom-lib-select>
+                </div>
+              </div>
+            </div>
+          }
+
+          @if (deliveryAllowRefund()) {
+            <div class="settings-card">
+              <div class="card-header">
+                <h3 class="card-title">How Should Customers Receive Refunds?</h3>
+                <p class="card-description">Select which payment methods you'll use to send money back to customers.</p>
+              </div>
+              <div class="card-content">
+                <div class="settings-grid">
+                  <gom-lib-checkbox
+                    label="UPI"
+                    hint="Allow refunds via UPI"
+                    [formControl]="deliveryForm.controls.allowUpiRefund"
+                  ></gom-lib-checkbox>
+                  <gom-lib-checkbox
+                    label="Bank Transfer"
+                    hint="Allow refunds via bank account"
+                    [formControl]="deliveryForm.controls.allowBankTransferRefund"
+                  ></gom-lib-checkbox>
+                </div>
+              </div>
+            </div>
+
+            <div class="settings-card">
+              <div class="card-header">
+                <h3 class="card-title">How Long Does Refund Processing Take?</h3>
+                <p class="card-description">Set the expected timeline for processing refunds after items reach your warehouse.</p>
+              </div>
+              <div class="card-content">
+                <div class="settings-grid settings-grid--3col">
+                  <gom-lib-input
+                    label="Processing time"
+                    type="number"
+                    [formControl]="deliveryForm.controls.refundProcessingTime"
+                    hint="Time needed to inspect and process refund"
+                  ></gom-lib-input>
+                  <gom-lib-select
+                    label="Time unit"
+                    [options]="refundProcessingUnitOptions"
+                    [formControl]="deliveryForm.controls.refundProcessingUnit"
+                    hint="Working Days, Days, or Hours"
+                  ></gom-lib-select>
+                </div>
+              </div>
+            </div>
+          }
+
+          @if (deliveryHasAnyRequestType()) {
+            <div class="settings-card">
+              <div class="card-header">
+                <h3 class="card-title">Instructions for Customers</h3>
+                <p class="card-description">Write helpful guidelines that customers will see before requesting a return.</p>
+              </div>
+              <div class="card-content">
+                <gom-lib-textarea
+                  label="Return policy instructions (Optional)"
+                  placeholder="Example: Items must be in original condition with tags attached. Perishable goods and opened products cannot be returned. Damaged items must be reported within 24 hours of delivery..."
+                  [rows]="8"
+                  [formControl]="deliveryForm.controls.guidelines"
+                  hint="Explain eligible items, required condition, packaging needs, and any restrictions"
+                ></gom-lib-textarea>
+              </div>
+            </div>
+          }
+        }
+
+        <div class="settings-page__actions">
+          <gom-lib-button
+            type="button"
+            variant="primary"
+            [gomDisableIfNoCapability]="'tenant-admin'"
+            [disabled]="loading() || saving() || !canEdit()"
+            (buttonClick)="saveDeliveryPolicy()">
+            {{ saving() ? 'Saving...' : 'Save Delivery Return Policy' }}
+          </gom-lib-button>
+        </div>
+      </gom-lib-tab-content>
+
+      <!-- PICKUP TAB -->
+      <gom-lib-tab-content tabId="pickup" [activeTab]="activeMode()">
+        <div class="settings-card">
+          <div class="card-header">
+            <h3 class="card-title">Enable Returns (Pickup Orders)</h3>
+            <p class="card-description">Allow customers to request returns and exchanges after pickup.</p>
+          </div>
+          <div class="card-content">
+            <gom-lib-checkbox
+              label="Accept return and exchange requests"
+              hint="Toggle off to completely disable the return option for pickup customers."
+              [formControl]="pickupForm.controls.returnsEnabled"
+            ></gom-lib-checkbox>
+          </div>
+        </div>
+
+        @if (pickupReturnsEnabled()) {
+          <div class="settings-card">
+            <div class="card-header">
+              <h3 class="card-title">What Can Customers Request?</h3>
+              <p class="card-description">Choose which options are available. At least one must be enabled.</p>
+            </div>
+            <div class="card-content">
+              <div class="settings-grid">
+                <gom-lib-checkbox
+                  label="Refunds (money back)"
+                  hint="Customer receives their money back"
+                  [formControl]="pickupForm.controls.allowRefund"
+                ></gom-lib-checkbox>
+                <gom-lib-checkbox
+                  label="Exchanges (product swap)"
+                  hint="Customer receives a replacement product"
+                  [formControl]="pickupForm.controls.allowExchange"
+                ></gom-lib-checkbox>
+              </div>
+            </div>
+          </div>
+
+          @if (pickupHasAnyRequestType()) {
+            <div class="settings-card">
+              <div class="card-header">
+                <h3 class="card-title">How Long Do Customers Have?</h3>
+                <p class="card-description">Set the deadline for initiating returns after pickup. Use 0 for no time limit.</p>
+              </div>
+              <div class="card-content">
+                <div class="settings-grid settings-grid--3col">
+                  <gom-lib-input
+                    label="Number of"
+                    type="number"
+                    [formControl]="pickupForm.controls.returnWindowDays"
+                    hint="Enter 0 for unlimited time"
+                  ></gom-lib-input>
+                  <gom-lib-select
+                    label="Time period"
+                    [options]="windowUnitOptions"
+                    [formControl]="pickupForm.controls.returnWindowUnit"
+                    hint="Hours, Days, or Months"
+                  ></gom-lib-select>
+                </div>
+              </div>
+            </div>
+          }
+
+          @if (pickupAllowRefund()) {
+            <div class="settings-card">
+              <div class="card-header">
+                <h3 class="card-title">How Should Customers Receive Refunds?</h3>
+                <p class="card-description">Select which payment methods you'll use to send money back to customers.</p>
+              </div>
+              <div class="card-content">
+                <div class="settings-grid">
+                  <gom-lib-checkbox
+                    label="UPI"
+                    hint="Allow refunds via UPI"
+                    [formControl]="pickupForm.controls.allowUpiRefund"
+                  ></gom-lib-checkbox>
+                  <gom-lib-checkbox
+                    label="Bank Transfer"
+                    hint="Allow refunds via bank account"
+                    [formControl]="pickupForm.controls.allowBankTransferRefund"
+                  ></gom-lib-checkbox>
+                </div>
+              </div>
+            </div>
+
+            <div class="settings-card">
+              <div class="card-header">
+                <h3 class="card-title">How Long Does Refund Processing Take?</h3>
+                <p class="card-description">Set the expected timeline for processing refunds after items reach your warehouse.</p>
+              </div>
+              <div class="card-content">
+                <div class="settings-grid settings-grid--3col">
+                  <gom-lib-input
+                    label="Processing time"
+                    type="number"
+                    [formControl]="pickupForm.controls.refundProcessingTime"
+                    hint="Time needed to inspect and process refund"
+                  ></gom-lib-input>
+                  <gom-lib-select
+                    label="Time unit"
+                    [options]="refundProcessingUnitOptions"
+                    [formControl]="pickupForm.controls.refundProcessingUnit"
+                    hint="Working Days, Days, or Hours"
+                  ></gom-lib-select>
+                </div>
+              </div>
+            </div>
+          }
+
+          @if (pickupHasAnyRequestType()) {
+            <div class="settings-card">
+              <div class="card-header">
+                <h3 class="card-title">Instructions for Customers</h3>
+                <p class="card-description">Write helpful guidelines that customers will see before requesting a return.</p>
+              </div>
+              <div class="card-content">
+                <gom-lib-textarea
+                  label="Return policy instructions (Optional)"
+                  placeholder="Example: Items must be in original condition with tags attached. Perishable goods and opened products cannot be returned. Damaged items must be reported within 24 hours of pickup..."
+                  [rows]="8"
+                  [formControl]="pickupForm.controls.guidelines"
+                  hint="Explain eligible items, required condition, packaging needs, and any restrictions"
+                ></gom-lib-textarea>
+              </div>
+            </div>
+          }
+        }
+
+        <div class="settings-page__actions">
+          <gom-lib-button
+            type="button"
+            variant="primary"
+            [gomDisableIfNoCapability]="'tenant-admin'"
+            [disabled]="loading() || saving() || !canEdit()"
+            (buttonClick)="savePickupPolicy()">
+            {{ saving() ? 'Saving...' : 'Save Pickup Return Policy' }}
+          </gom-lib-button>
+        </div>
+      </gom-lib-tab-content>
+
+    </gom-lib-tabs>
+  }
 </section>

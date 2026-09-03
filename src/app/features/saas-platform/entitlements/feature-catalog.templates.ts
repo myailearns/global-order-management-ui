@@ -117,6 +117,7 @@ export const FEATURE_TEMPLATES: FeatureTemplate[] = [
   { featureKey: 'courierPartner.create', displayName: 'Create Courier Partner', module: 'delivery', dependencies: [], filters: [{ key: 'max_count', defaultValue: 100 }] },
   { featureKey: 'courierPartner.edit', displayName: 'Edit Courier Partner', module: 'delivery', dependencies: ['courierPartner.list'] },
   { featureKey: 'courierPartner.delete', displayName: 'Delete Courier Partner', module: 'delivery', dependencies: ['courierPartner.list'] },
+  { featureKey: 'delivery.management', displayName: 'Delivery Management', module: 'delivery', dependencies: [] },
   { featureKey: 'dashboard.view', displayName: 'View Dashboard', module: 'settings', dependencies: [] },
   { featureKey: 'tenantAccount.view', displayName: 'View Accounts', module: 'staff-management', dependencies: [] },
   { featureKey: 'tenantAccount.add', displayName: 'Create Account', module: 'staff-management', dependencies: [], filters: [{ key: 'max_count', defaultValue: 10 }] },

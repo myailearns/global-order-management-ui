@@ -235,6 +235,9 @@ export interface UpdateAccountRequest {
   currency?: string;
   timezone?: string;
   planId?: string;
+  packageId?: string;
+  tierId?: string;
+  tierKey?: string;
   billingEmail?: string;
   businessEmail?: string;
   accountOwnerEmail?: string;

@@ -36,6 +36,7 @@
                                    "employeeCode":  "Employee Code",
                                    "serviceablePincodes":  "Serviceable Pincodes",
                                    "storefrontConfig":  "Customer Storefront",
+                                   "deliveryManagement":  "Delivery Management",
                                    "returnPolicy":  "Return \u0026 Exchange Policy",
                                    "pushNotifications":  "Push Notifications",
                                    "tenantAdmin":  "Tenant Admin",

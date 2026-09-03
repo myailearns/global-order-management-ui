@@ -462,7 +462,8 @@ export class QuickCreateGroupComponent implements OnInit {
       });
   }
 
-  openModal(): void {
+  async openModal(): Promise<void> {
+    await this.refreshAttributesData();
     this.editingGroupId.set(null);
     this.editingSourceGroup.set(null);
     this.cloneSourceGroupId.set(null);
@@ -484,6 +485,7 @@ export class QuickCreateGroupComponent implements OnInit {
   }
 
   async openForEdit(existing: Group): Promise<void> {
+    await this.refreshAttributesData();
     const { attributeIds, selectedValues } = this.resolveAttributesFromGroup(existing);
     const resolvedAllowedUnitIds = this.ensureBaseUnitInAllowedUnits(existing.baseUnitId, existing.allowedUnitIds || []);
 
@@ -544,7 +546,8 @@ export class QuickCreateGroupComponent implements OnInit {
     this.previewLoadDefaults();
   }
 
-  openForClone(existing: Group): void {
+  async openForClone(existing: Group): Promise<void> {
+    await this.refreshAttributesData();
     const { attributeIds, selectedValues } = this.resolveAttributesFromGroup(existing);
     const resolvedAllowedUnitIds = this.ensureBaseUnitInAllowedUnits(existing.baseUnitId, existing.allowedUnitIds || []);
 
@@ -1385,8 +1388,7 @@ export class QuickCreateGroupComponent implements OnInit {
 
     this.attributesService.getAttributes({ status: 'ACTIVE', limit: 1000 }).subscribe({
       next: (response: { data: AttributeDefinition[] }) => {
-        this.attributesData.set(response.data); // Store full data
-        this.attributes.set(response.data.map((attribute: AttributeDefinition) => ({ value: attribute._id || '', label: attribute.name })));
+        this.applyAttributesData(response.data);
 
         const editingGroup = this.editingSourceGroup();
         if (editingGroup && this.showModal()) {
@@ -1432,6 +1434,28 @@ export class QuickCreateGroupComponent implements OnInit {
         console.error('Error loading tax profiles:', err);
       },
     });
+  }
+
+  private async refreshAttributesData(): Promise<void> {
+    try {
+      const response = await firstValueFrom(
+        this.attributesService.getAttributes({ status: 'ACTIVE', limit: 1000 }),
+      );
+      this.applyAttributesData(response.data);
+    } catch (err) {
+      this.toast.error('Failed to refresh attributes');
+      console.error('Error refreshing attributes:', err);
+    }
+  }
+
+  private applyAttributesData(attributes: AttributeDefinition[]): void {
+    this.attributesData.set(attributes);
+    this.attributes.set(
+      attributes.map((attribute) => ({
+        value: attribute._id || '',
+        label: attribute.name,
+      })),
+    );
   }
 
   private trimmedOrUndefined(value: string): string | undefined {

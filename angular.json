@@ -39,6 +39,7 @@
             ],
             "stylePreprocessorOptions": {
               "includePaths": [
+                "../gom-libs/projects/gom-ui/src/lib/theming/styles",
                 "node_modules/@gomlibs/ui/src/lib/theming/styles"
               ]
             }
@@ -80,7 +81,12 @@
               "buildTarget": "gom-ui:build:production"
             },
             "development": {
-              "buildTarget": "gom-ui:build:development"
+              "buildTarget": "gom-ui:build:development",
+              "prebundle": {
+                "exclude": [
+                  "@gomlibs/ui"
+                ]
+              }
             }
           },
           "defaultConfiguration": "development"
@@ -101,7 +107,13 @@
             ],
             "styles": [
               "src/styles.scss"
-            ]
+            ],
+            "stylePreprocessorOptions": {
+              "includePaths": [
+                "../gom-libs/projects/gom-ui/src/lib/theming/styles",
+                "node_modules/@gomlibs/ui/src/lib/theming/styles"
+              ]
+            }
           }
         },
         "storybook": {

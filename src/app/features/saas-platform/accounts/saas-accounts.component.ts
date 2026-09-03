@@ -967,6 +967,9 @@ export class SaasAccountsComponent implements OnInit {
         currency: raw.currency || undefined,
         timezone: raw.timezone || undefined,
         planId: raw.planId || undefined,
+        packageId: raw.packageId || undefined,
+        tierId: raw.tierId || undefined,
+        tierKey: this.selectedTier()?.tierKey || undefined,
         billingEmail: raw.billingEmail || undefined,
         supportPhone: raw.supportPhone || undefined,
         notes: raw.notes || undefined,
@@ -1362,22 +1365,10 @@ export class SaasAccountsComponent implements OnInit {
 
   private setupCreateFlowListeners(): void {
     this.accountForm.controls.packageId.valueChanges.subscribe((packageId) => {
-      // Skip package/tier auto-sync only for classic edit mode (step 1 update flow).
-      // For incomplete-account completion (step 2), defaults must still be applied.
-      const isClassicEditMode = this.editingAccountId() && !this.isCompletingIncomplete() && this.createStep() === 1;
-      if (isClassicEditMode) {
-        return;
-      }
-
       this.loadTiersForPackage(String(packageId || ''));
     });
 
     this.accountForm.controls.tierId.valueChanges.subscribe((tierId) => {
-      const isClassicEditMode = this.editingAccountId() && !this.isCompletingIncomplete() && this.createStep() === 1;
-      if (isClassicEditMode) {
-        return;
-      }
-
       this.applyTierDefaults(String(tierId || ''));
     });
   }
