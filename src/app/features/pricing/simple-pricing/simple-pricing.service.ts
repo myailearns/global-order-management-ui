@@ -24,6 +24,14 @@ export interface ApiPaginated<T> {
   pagination: PaginationMeta;
 }
 
+export interface ApiPaginatedWithExport<T> extends ApiPaginated<T> {
+  export?: {
+    filename: string;
+    contentType: string;
+    content: string;
+  };
+}
+
 export interface ApiSuccess<T> {
   success: boolean;
   message?: string;
@@ -75,6 +83,7 @@ export interface SimplePricingVariant {
   _id: string;
   groupId: string;
   name: string;
+  sku?: string;
   quantity: number;
   unitId: string;
   convertedQuantity: number;
@@ -206,6 +215,32 @@ export interface SimplePricingSearchSuggestion {
   groupId?: string;   // only present when entityType === 'VARIANT'
 }
 
+export interface SimplePricingPriceHistoryEntry {
+  id: string;
+  groupId: string;
+  groupName: string | null;
+  variantId: string;
+  variantName: string | null;
+  scope: 'GROUP' | 'VARIANT';
+  eventType: string;
+  fromPricingMode: 'FORMULA' | 'OVERRIDE' | null;
+  toPricingMode: 'FORMULA' | 'OVERRIDE' | null;
+  oldPrice: {
+    sellingPrice: number;
+    anchorPrice: number;
+    actualPrice: number;
+  };
+  newPrice: {
+    sellingPrice: number;
+    anchorPrice: number;
+    actualPrice: number;
+  };
+  reason: string | null;
+  source: 'MANUAL_PRICING' | 'STOCK_REFRESH' | 'GROUP_REFRESH';
+  actorId: string;
+  createdAt: string;
+}
+
 // ─────────────────────────────────────────────
 // Service
 // ─────────────────────────────────────────────
@@ -315,6 +350,56 @@ export class SimplePricingService {
         headers: this.headers,
         responseType: 'blob' as 'json',
       }
+    );
+  }
+
+  listPriceHistory(params: {
+    groupId?: string;
+    variantId?: string;
+    page?: number;
+    limit?: number;
+    eventType?: string;
+    actorId?: string;
+    dateFrom?: string;
+    dateTo?: string;
+  }): Observable<ApiPaginatedWithExport<SimplePricingPriceHistoryEntry>> {
+    let httpParams = new HttpParams();
+
+    if (params.groupId) httpParams = httpParams.set('groupId', params.groupId);
+    if (params.variantId) httpParams = httpParams.set('variantId', params.variantId);
+    if (params.page) httpParams = httpParams.set('page', String(params.page));
+    if (params.limit) httpParams = httpParams.set('limit', String(params.limit));
+    if (params.eventType) httpParams = httpParams.set('eventType', params.eventType);
+    if (params.actorId) httpParams = httpParams.set('actorId', params.actorId);
+    if (params.dateFrom) httpParams = httpParams.set('dateFrom', params.dateFrom);
+    if (params.dateTo) httpParams = httpParams.set('dateTo', params.dateTo);
+
+    return this.http.get<ApiPaginatedWithExport<SimplePricingPriceHistoryEntry>>(
+      `${this.apiBase}/variants/price-history`,
+      { headers: this.headers, params: httpParams }
+    );
+  }
+
+  exportPriceHistoryCsv(params: {
+    groupId?: string;
+    variantId?: string;
+    eventType?: string;
+    actorId?: string;
+    dateFrom?: string;
+    dateTo?: string;
+  }): Observable<ApiPaginatedWithExport<SimplePricingPriceHistoryEntry>> {
+    let httpParams = new HttpParams().set('format', 'csv');
+
+    if (params.groupId) httpParams = httpParams.set('groupId', params.groupId);
+    if (params.variantId) httpParams = httpParams.set('variantId', params.variantId);
+    if (params.eventType) httpParams = httpParams.set('eventType', params.eventType);
+    if (params.actorId) httpParams = httpParams.set('actorId', params.actorId);
+    if (params.dateFrom) httpParams = httpParams.set('dateFrom', params.dateFrom);
+    if (params.dateTo) httpParams = httpParams.set('dateTo', params.dateTo);
+
+    return this.http.get<ApiPaginatedWithExport<SimplePricingPriceHistoryEntry>>(
+      `${this.apiBase}/variants/price-history`,
+      { headers: this.headers, params: httpParams }
     );
   }
 

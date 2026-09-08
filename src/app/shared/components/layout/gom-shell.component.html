@@ -6,7 +6,7 @@
       <router-outlet></router-outlet>
     </main>
   } @else {
-  <header class="gom-shell__topbar">
+  <header class="gom-shell__topbar" [class.gom-shell__topbar--with-search]="showTopbarSearch()">
     <div class="gom-shell__topbar-start">
       <button
         type="button"
@@ -29,7 +29,35 @@
       </div>
     </div>
 
+    <div class="gom-shell__topbar-center">
+      @if (showTopbarSearch()) {
+        <div class="gom-shell__topbar-search" role="search" aria-label="Product search">
+          <gom-lib-input
+            [ngModel]="topbarSearchValue"
+            (ngModelChange)="onTopbarSearchChange($event)"
+            placeholder="Search product name or scan barcode..."
+          ></gom-lib-input>
+        </div>
+      }
+    </div>
+
     <div class="gom-shell__topbar-actions">
+      @if (isCreateOrderRoute() && catalogStorageEnabled()) {
+        <button
+          type="button"
+          class="gom-shell__action-button"
+          aria-label="Catalog synchronization"
+          title="Catalog synchronization"
+          (click)="openCatalogSyncModal()"
+        >
+          <i
+            class="ri-refresh-line"
+            [class.gom-shell__sync-icon--spinning]="catalogRefreshing()"
+            aria-hidden="true"
+          ></i>
+        </button>
+      }
+
       <label class="gom-shell__lang-picker">
         <span>{{ 'app.language.label' | translate }}</span>
         <gom-lib-select
@@ -90,6 +118,15 @@
             <button type="button" class="gom-shell__notif-backdrop" aria-hidden="true" (click)="closeNotifPanel()"></button>
           }
         </div>
+        <button
+          type="button"
+          class="gom-shell__action-button"
+          aria-label="Clear local Create Order catalog"
+          title="Clear Local Storage"
+          (click)="openClearLocalCatalogConfirmation()"
+        >
+          <i class="ri-database-2-line" aria-hidden="true"></i>
+        </button>
       }
       <button type="button" class="gom-shell__action-button" [attr.aria-label]="'app.actions.logout' | translate" (click)="logout()">
         <i class="ri-logout-box-r-line" aria-hidden="true"></i>
@@ -177,9 +214,61 @@
       }
     </aside>
 
-    <main class="gom-shell__content">
+    <main class="gom-shell__content" [class.gom-shell__content--flush]="isCreateOrderRoute()">
       <router-outlet></router-outlet>
     </main>
   </div>
   }
+
+  <gom-lib-confirmation-modal
+    [show]="clearLocalCatalogConfirmOpen()"
+    title="Clear Local Storage"
+    message="Clear the cached Create Order catalog for this tenant and store? Your current order cart will not be changed."
+    confirmText="Clear Local Storage"
+    cancelText="Cancel"
+    confirmVariant="danger"
+    [busy]="clearingLocalCatalog()"
+    (confirmed)="confirmClearLocalCatalog()"
+    (cancelled)="cancelClearLocalCatalog()"
+  ></gom-lib-confirmation-modal>
+
+  <gom-lib-modal
+    [show]="catalogSyncModalOpen()"
+    title="Catalog Synchronization"
+    size="small"
+    [closeOnBackdropClick]="!catalogRefreshing()"
+    (closed)="closeCatalogSyncModal()"
+  >
+    <div class="gom-shell__catalog-sync">
+      <div class="gom-shell__catalog-sync-status">
+        <i class="ri-database-2-line" aria-hidden="true"></i>
+        <div>
+          <strong>Local catalog</strong>
+          <span>Last updated: {{ formatCatalogLastUpdated() }}</span>
+        </div>
+      </div>
+      <p>Resync downloads all available categories, groups, and every variant page. Your current cart will not be changed.</p>
+      <div class="gom-shell__catalog-sync-actions">
+        <gom-lib-button
+          type="button"
+          variant="secondary"
+          [disabled]="catalogRefreshing()"
+          (buttonClick)="closeCatalogSyncModal()"
+        >Close</gom-lib-button>
+        <gom-lib-button
+          type="button"
+          variant="primary"
+          [disabled]="catalogRefreshing()"
+          (buttonClick)="resyncCatalog()"
+        >
+          <i
+            class="ri-refresh-line"
+            [class.gom-shell__sync-icon--spinning]="catalogRefreshing()"
+            aria-hidden="true"
+          ></i>
+          {{ catalogRefreshing() ? 'Synchronizing...' : 'Resync Catalog' }}
+        </gom-lib-button>
+      </div>
+    </div>
+  </gom-lib-modal>
 </div>

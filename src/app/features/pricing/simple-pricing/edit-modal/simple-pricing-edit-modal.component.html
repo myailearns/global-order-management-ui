@@ -1,70 +1,168 @@
-<dialog class="simple-pricing-edit__modal" open [attr.aria-label]="title()" (click)="$event.stopPropagation()" (keydown)="onDialogKeyDown($event)">
-    <header class="simple-pricing-edit__header">
-      <h2>{{ title() }}</h2>
-      <button type="button" class="simple-pricing-edit__close" (click)="onClose()" aria-label="Close">
-        ×
-      </button>
-    </header>
-
-    <form [formGroup]="form" class="simple-pricing-edit" (ngSubmit)="onSave()">
-      @if (isGroupEntity()) {
-        <section class="simple-pricing-edit__fields">
-          <h3>Formula Inputs</h3>
-          <div class="simple-pricing-edit__fields-grid">
-            @for (field of formulaFields(); track field.fieldId) {
-              <gom-lib-input
-                type="number"
-                [label]="field.label"
-                [formControl]="field.control"
-              ></gom-lib-input>
+<gom-lib-modal
+  [show]="true"
+  [title]="title()"
+  [closeOnBackdropClick]="true"
+  size="large"
+  (closed)="onClose()"
+>
+  <form [formGroup]="form" class="simple-pricing-edit" (ngSubmit)="onSave()">
+    <section class="simple-pricing-edit__item-header">
+      <div class="simple-pricing-edit__item-main">
+        <div class="simple-pricing-edit__thumb" aria-hidden="true">{{ (entity.displayName || 'P').charAt(0) }}</div>
+        <div>
+          <h3>{{ entity.displayName }}</h3>
+          <p>
+            SKU: {{ skuLabel() }}
+            @if (groupTypeLabel()) {
+              <span class="simple-pricing-edit__badge">{{ groupTypeLabel() }}</span>
             }
-          </div>
-        </section>
-
-        <section class="simple-pricing-edit__preview">
-          <div class="simple-pricing-edit__preview-row">
-            <span>Actual Price</span>
-            <strong>{{ preview().actual | number:'1.2-2' }}</strong>
-          </div>
-          <div class="simple-pricing-edit__preview-row">
-            <span>Selling Price</span>
-            <strong>{{ preview().selling | number:'1.2-2' }}</strong>
-          </div>
-          <div class="simple-pricing-edit__preview-row">
-            <span>MRP / Anchor Price</span>
-            <strong>{{ preview().anchor | number:'1.2-2' }}</strong>
-          </div>
-          <div class="simple-pricing-edit__preview-row">
-            <span>Profit %</span>
-            <strong>{{ preview().profit | number:'1.1-1' }}%</strong>
-          </div>
-        </section>
-      } @else {
-        <gom-lib-input
-          type="number"
-          [label]="'Selling Price'"
-          [formControl]="form.controls.sellingPrice"
-          [error]="form.controls.sellingPrice.touched && form.controls.sellingPrice.invalid ? 'Enter valid selling price' : ''"
-        ></gom-lib-input>
-      }
-
-      <div class="simple-pricing-edit__actions">
-        <gom-lib-button
-          type="button"
-          variant="secondary"
-          [disabled]="saving"
-          (buttonClick)="onClose()"
-        >
-          Cancel
-        </gom-lib-button>
-        <gom-lib-button
-          type="submit"
-          variant="primary"
-          [disabled]="saving"
-          (buttonClick)="onSave()"
-        >
-          Save
-        </gom-lib-button>
+          </p>
+        </div>
       </div>
-    </form>
-</dialog>
+
+      <div class="simple-pricing-edit__current-metrics">
+        <div>
+          <span>Current Selling Price</span>
+          <strong>{{ formatCurrency(entity.sellingPrice) }}</strong>
+        </div>
+        <div>
+          <span>Current Margin</span>
+          <strong>{{ formatPercent(currentMargin()) }}</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="simple-pricing-edit__grid">
+      <article class="simple-pricing-edit__panel">
+        <h4>1. Landed Cost Inputs</h4>
+        <div class="simple-pricing-edit__panel-fields">
+          @if (landedCostRows().length === 0) {
+            <p class="simple-pricing-edit__empty">No landed cost inputs available for this row.</p>
+          } @else {
+            @for (row of landedCostRows(); track row.fieldId) {
+              @if (row.control) {
+                <gom-lib-input
+                  type="number"
+                  [label]="row.label"
+                  [formControl]="row.control"
+                ></gom-lib-input>
+              } @else {
+                <div class="simple-pricing-edit__readonly-field">
+                  <span>{{ row.label }}</span>
+                  <strong>{{ formatCurrency(row.value) }}</strong>
+                </div>
+              }
+            }
+          }
+        </div>
+      </article>
+
+      <article class="simple-pricing-edit__total-cost" aria-label="Total cost preview">
+        <span>2. Total Cost</span>
+        <strong>{{ formatCurrency(totalCost()) }}</strong>
+        <small>Auto-summed landed costs</small>
+      </article>
+
+      <article class="simple-pricing-edit__panel simple-pricing-edit__panel--sell">
+        <h4>3. New Selling Price</h4>
+        <div class="simple-pricing-edit__key-field-wrap">
+          <gom-lib-input
+            type="text"
+            inputmode="decimal"
+            label="Desired Selling Price"
+            [formControl]="form.controls.sellingPrice"
+            [error]="sellingPriceError()"
+          ></gom-lib-input>
+        </div>
+
+        <div class="simple-pricing-edit__result-card">
+          <div class="simple-pricing-edit__result-row">
+            <span>Resulting Net Profit:</span>
+            <strong [class.simple-pricing-edit__metric--negative]="(resultingNetProfit() ?? 0) < 0">
+              {{ resultingNetProfit() === null ? '—' : formatCurrency(resultingNetProfit()!) }}
+            </strong>
+          </div>
+          <div class="simple-pricing-edit__result-row">
+            <span>Resulting Margin:</span>
+            <strong [class.simple-pricing-edit__metric--negative]="(resultingMargin() ?? 0) < 0">
+              {{ formatPercent(resultingMargin()) }}
+            </strong>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="simple-pricing-edit__recommendation">
+      <div>
+        <small class="simple-pricing-edit__recommendation-label">System Suggested Price</small>
+        <h5>{{ recommendationSummary() }}</h5>
+        <p>{{ recommendationDetail() }}</p>
+      </div>
+      <gom-lib-button
+        type="button"
+        variant="primary"
+        [disabled]="recommendedSellingPrice() === null"
+        (buttonClick)="applyRecommendedPrice()"
+      >Apply {{ recommendedSellingPrice() === null ? '' : formatCurrency(recommendedSellingPrice()!) }}</gom-lib-button>
+    </section>
+
+    @if (showDerivedCostingSection()) {
+      <section class="simple-pricing-edit__derived" aria-label="Derived product costing changes">
+        <div class="simple-pricing-edit__derived-header">
+          <h4>Derived Product Costing Changes</h4>
+          <p>Visibility only preview for measured/hybrid derived variants.</p>
+        </div>
+
+        @if (derivedVariantsLoading()) {
+          <p class="simple-pricing-edit__derived-loading">Loading derived variants...</p>
+        } @else if (derivedCostRows().length === 0) {
+          <p class="simple-pricing-edit__derived-empty">No derived products found for this item.</p>
+        } @else {
+          <div class="simple-pricing-edit__derived-table-wrap">
+            <table class="simple-pricing-edit__derived-table">
+              <thead>
+                <tr>
+                  <th>Pack Size</th>
+                  <th>Calculation Rule</th>
+                  <th>Current Cost</th>
+                  <th>New Cost</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of derivedCostRows(); track row.variantId) {
+                  <tr>
+                    <td><strong>{{ row.packSize }}</strong></td>
+                    <td>{{ row.calculationRule }}</td>
+                    <td>{{ row.oldCost === null ? '—' : formatCurrency(row.oldCost) }}</td>
+                    <td>{{ row.newCost === null ? '—' : formatCurrency(row.newCost) }}</td>
+                    <td>
+                      <span class="simple-pricing-edit__derived-status">{{ row.status }}</span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </section>
+    }
+  </form>
+
+  <div gom-modal-actions class="gom-modal__action-layout simple-pricing-edit__footer">
+    <div class="gom-modal__action-layout-end">
+      <gom-lib-button
+        type="button"
+        variant="secondary"
+        [disabled]="saving"
+        (buttonClick)="onClose()"
+      >Cancel</gom-lib-button>
+      <gom-lib-button
+        type="button"
+        variant="primary"
+        [disabled]="saving || !!sellingPriceError()"
+        (buttonClick)="onSave()"
+      >{{ saving ? 'Saving...' : 'Save Changes' }}</gom-lib-button>
+    </div>
+  </div>
+</gom-lib-modal>

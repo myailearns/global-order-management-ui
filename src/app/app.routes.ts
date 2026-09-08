@@ -14,9 +14,15 @@ import { StockComponent } from './features/product/stock';
 import { VariantsComponent } from './features/product/variants';
 import { PacksComponent } from './features/product/packs';
 import { ProductCollectionsComponent } from './features/product/product-collections';
-import { SimplePricingComponent } from './features/pricing/simple-pricing/simple-pricing.component';
+import { PricingComponent } from './features/pricing/pricing/pricing.component';
+import { PriceHistoryComponent } from './features/pricing/price-history/price-history.component';
 import { OrdersComponent } from './features/order/orders';
 import { CreateOrderComponent } from './features/order/create-order';
+import { NewCareOrderComponent } from './features/order/new-care-order';
+import { CreateOrderSettingsComponent } from './features/admin-app/create-order-settings/create-order-settings.component';
+import { BillingSettingsComponent } from './features/admin-app/billing-settings/billing-settings.component';
+import { BusinessDetailsComponent } from './features/admin-app/business-details/business-details.component';
+import { PaymentOptionsComponent } from './features/admin-app/payment-options/payment-options.component';
 import { RidersComponent } from './features/delivery/riders';
 import { CourierPartnersComponent } from './features/delivery/courier-partners';
 import { EmployeeCodeConfigComponent } from './features/settings/employee-code-config';
@@ -209,13 +215,24 @@ export const routes: Routes = [
 			},
 			{
 				path: 'pricing/simple',
-				component: SimplePricingComponent,
+				component: PricingComponent,
 				data: {
 					actor: 'tenant',
 					capability: 'product',
 					featureKeys: ['variant.list'],
-					title: 'Simple Pricing',
-					description: 'Quickly review and update selling prices for groups and variants.',
+					title: 'Pricing',
+					description: 'Manage product prices, costs, and profit margins.',
+				},
+			},
+			{
+				path: 'pricing/history',
+				component: PriceHistoryComponent,
+				data: {
+					actor: 'tenant',
+					capability: 'product',
+					featureKeys: ['variant.list'],
+					title: 'Price History',
+					description: 'View product and group price history with trend analytics.',
 				},
 			},
 			{
@@ -250,12 +267,63 @@ export const routes: Routes = [
 			},
 			{
 				path: 'orders/create',
+				component: NewCareOrderComponent,
+				data: {
+					actor: 'tenant',
+					capability: 'orders',				featureKeys: ['order.create'],					title: 'New Care Order',
+					description: 'New order flow coming soon.',
+					ctaLabel: 'Coming Soon',
+				},
+			},
+			{
+				path: 'orders/create-legacy',
 				component: CreateOrderComponent,
 				data: {
 					actor: 'tenant',
-					capability: 'orders',				featureKeys: ['order.create'],					title: 'Create Order',
-					description: 'Billing style order entry with multi-item support.',
+					capability: 'orders',				featureKeys: ['order.create'],					title: 'Create Order (Legacy)',
+					description: 'Legacy billing style order entry kept for reference.',
 					ctaLabel: 'Place Order',
+				},
+			},
+			{
+				path: 'admin-app/create-order-settings',
+				component: CreateOrderSettingsComponent,
+				data: {
+					actor: 'tenant',
+					capability: 'orders',
+					title: 'Create Order Settings',
+					description: 'Configure the create order experience.',
+				},
+			},
+			{
+				path: 'admin-app/billing',
+				component: BillingSettingsComponent,
+				data: {
+					actor: 'tenant',
+					capability: 'orders',
+					title: 'Billing',
+					description: 'Configure billing settings for order processing.',
+				},
+			},
+			{
+				path: 'admin-app/business-details',
+				component: BusinessDetailsComponent,
+				data: {
+					actor: 'tenant',
+					capability: 'tenant-admin',
+					featureKeys: ['roles.view', 'roles.edit'],
+					title: 'Business Details',
+					description: 'Configure tenant business information.',
+				},
+			},
+			{
+				path: 'admin-app/payment-options',
+				component: PaymentOptionsComponent,
+				data: {
+					actor: 'tenant',
+					capability: 'orders',
+					title: 'Payment Options',
+					description: 'Configure payment options for order processing.',
 				},
 			},
 			{

@@ -168,8 +168,8 @@ export class SimplePricingComponent implements OnInit, OnDestroy {
   private readonly categoryMap = signal<Map<string, string>>(new Map<string, string>());
 
   private readonly groupsPageLimit = 20;
-  private readonly attributeVariantsPageLimit = 500;
-  private readonly attributeVariantConcurrency = 3;
+  private readonly variantTrackedPageLimit = 500;
+  private readonly variantTrackedConcurrency = 3;
   private nextGroupsPage = 1;
   private hasMoreGroups = false;
   readonly loadingMore = signal(false);
@@ -221,7 +221,11 @@ export class SimplePricingComponent implements OnInit, OnDestroy {
       if (categoryId && e.categoryId !== categoryId) return false;
       if (groupType && e.groupType !== groupType) return false;
       if (groupId && String(e.group?._id || '') !== groupId) return false;
-      if (search && !e.displayName.toLowerCase().includes(search)) return false;
+      if (search) {
+        const nameMatches = e.displayName.toLowerCase().includes(search);
+        const skuMatches = String(e.variant?.sku || '').toLowerCase().includes(search);
+        if (!nameMatches && !skuMatches) return false;
+      }
       return true;
     });
   });
@@ -1353,41 +1357,14 @@ export class SimplePricingComponent implements OnInit, OnDestroy {
         (group) => this.fetchAllVariantsForGroup(group._id).pipe(
           catchError(() => of([])),
           map((variants) => {
-            if (group.groupType === 'ATTRIBUTE') {
+            if (this.isVariantTrackedGroup(group)) {
               return variants.map((variant) => this.variantToEntity(variant, group, categoryMap));
             }
 
             return [this.groupToEntity(group, categoryMap, variants)];
           })
         ),
-        this.attributeVariantConcurrency
-      ),
-      toArray(),
-      map((entityBatches) => entityBatches.flat())
-    );
-  }
-
-  private fetchAttributeVariantEntities(
-    groups: SimplePricingGroup[],
-    categoryMap: Map<string, string>
-  ): Observable<PricingEntity[]> {
-    if (groups.length === 0) {
-      return of([]);
-    }
-
-    return from(groups).pipe(
-      mergeMap(
-        (group) => this.fetchAllVariantsForGroup(group._id).pipe(
-          catchError(() => of([])),
-          map((variants) => {
-            const entities: PricingEntity[] = [];
-            variants.forEach((variant) => {
-              entities.push(this.variantToEntity(variant, group, categoryMap));
-            });
-            return entities;
-          })
-        ),
-        this.attributeVariantConcurrency
+        this.variantTrackedConcurrency
       ),
       toArray(),
       map((entityBatches) => entityBatches.flat())
@@ -1417,7 +1394,7 @@ export class SimplePricingComponent implements OnInit, OnDestroy {
   private fetchVariantsPage(groupId: string, page: number): Observable<{ data: SimplePricingVariant[]; hasMore: boolean }> {
     return this.service.listVariantsByGroup(groupId, {
       page,
-      limit: this.attributeVariantsPageLimit,
+      limit: this.variantTrackedPageLimit,
     }).pipe(
       catchError(() => of({ data: [], pagination: { hasMore: false } } as any)),
       map((response) => ({
@@ -1518,6 +1495,10 @@ export class SimplePricingComponent implements OnInit, OnDestroy {
       group: g,
       variant: v,
     };
+  }
+
+  private isVariantTrackedGroup(group: SimplePricingGroup): boolean {
+    return group.groupType === 'ATTRIBUTE' || group.groupType === 'HYBRID';
   }
 
   // ─────────────────────────────────────────────
@@ -1699,6 +1680,23 @@ export class SimplePricingComponent implements OnInit, OnDestroy {
     this.reviewModalOpen.set(true);
   }
 
+  discardAllInlineEdits(): void {
+    Object.keys(this.inlinePriceEdits()).forEach((trackId) => {
+      this.resetInlineEditForTrackId(trackId);
+    });
+    this.reviewItems.set([]);
+    this.reviewModalOpen.set(false);
+    document.documentElement.style.overflow = '';
+  }
+
+  saveAllInlineEditsDirectly(): void {
+    if (!this.canSaveAll()) {
+      return;
+    }
+
+    this.onReviewConfirmed(Object.keys(this.inlinePriceEdits()));
+  }
+
   onReviewCancelled(): void {
     // Per requirement: cancel only closes the modal, it should not reset edits.
     this.reviewModalOpen.set(false);
@@ -1752,13 +1750,6 @@ export class SimplePricingComponent implements OnInit, OnDestroy {
 
     this.bulkSaving.set(true);
 
-    const affectedGroupIds = remainingTrackIds
-      .map((trackId) => this.getEntity(trackId))
-      .filter((entity): entity is PricingEntity => Boolean(entity))
-      .map((entity) => (entity.entityType === 'GROUP'
-        ? entity.entityId
-        : String(entity.group?._id || '')));
-
     forkJoin(requests).subscribe({
       next: () => {
         this.applySavedSellingPrices(
@@ -1777,7 +1768,6 @@ export class SimplePricingComponent implements OnInit, OnDestroy {
         this.toast.success(
           this.translate.instant('pricing.simple.toast.bulkUpdated', { count: requests.length })
         );
-        this.refreshGroupsInPlace(affectedGroupIds);
       },
       error: (err) => {
         this.bulkSaving.set(false);
@@ -2693,6 +2683,15 @@ export class SimplePricingComponent implements OnInit, OnDestroy {
         }
 
         const oldSellingPrice = entity.sellingPrice;
+        const cost = entity.actualPrice;
+        const oldProfitAmount = cost === null ? null : oldSellingPrice - cost;
+        const newProfitAmount = cost === null ? null : newSellingPrice - cost;
+        const oldMarginPercent = oldProfitAmount === null || oldSellingPrice <= 0
+          ? null
+          : (oldProfitAmount / oldSellingPrice) * 100;
+        const newMarginPercent = newProfitAmount === null || newSellingPrice <= 0
+          ? null
+          : (newProfitAmount / newSellingPrice) * 100;
         const affectedProfit = entity.actualPrice !== null
           ? this.computeProfit(newSellingPrice, entity.actualPrice, entity.group)
           : null;
@@ -2704,6 +2703,13 @@ export class SimplePricingComponent implements OnInit, OnDestroy {
           entityType: entity.entityType,
           oldSellingPrice,
           newSellingPrice,
+          oldProfitAmount,
+          newProfitAmount,
+          oldMarginPercent,
+          newMarginPercent,
+          impactAmount: oldProfitAmount === null || newProfitAmount === null
+            ? null
+            : newProfitAmount - oldProfitAmount,
           existingProfit: entity.definedProfitPercent !== null
             ? `${entity.definedProfitPercent.toFixed(1)}%`
             : '—',

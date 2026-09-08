@@ -63,6 +63,20 @@ export interface NotificationSettings {
   orderNotifications?: OrderNotificationSettings;
 }
 
+export interface CreateOrderConfig {
+  enableOfflineStorage: boolean;
+  requireMemberForBilling: boolean;
+  paymentStatuses: {
+    pickup: string[];
+    delivery: string[];
+    counter: string[];
+  };
+  orderIntakeChannels: Array<{
+    name: string;
+    enabled: boolean;
+  }>;
+}
+
 export interface TenantConfig {
   tenantId: string;
   staffCodeConfig: StaffCodeConfig;
@@ -74,6 +88,7 @@ export interface TenantConfig {
   pickupReturnPolicy?: ReturnPolicy;
   authSecurityConfig?: AuthSecurityConfig;
   notificationSettings?: NotificationSettings;
+  createOrderConfig?: CreateOrderConfig;
 }
 
 export interface StorefrontPlanSummary {
@@ -408,6 +423,12 @@ export class DeliveryService {
       notificationSettings: {
         orderNotifications: config,
       },
+    });
+  }
+
+  updateCreateOrderConfig(config: CreateOrderConfig): Observable<ApiSuccess<TenantConfig>> {
+    return this.http.patch<ApiSuccess<TenantConfig>>(`${this.tenantConfigUrl}/create-order`, {
+      createOrderConfig: config,
     });
   }
 

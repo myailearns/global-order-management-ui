@@ -1,0 +1,141 @@
+<section class="create-order-settings" aria-labelledby="create-order-settings-title">
+  <header class="create-order-settings__header">
+    <h2 id="create-order-settings-title">{{ 'createOrderSettings.title' | translate }}</h2>
+    <p>{{ 'createOrderSettings.description' | translate }}</p>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="create-order-settings__error" role="alert">{{ errorMessage() }}</div>
+  }
+
+  <gom-lib-tabs [tabs]="tabs" [activeTab]="activeTab()" (tabChange)="switchTab($event)">
+    <gom-lib-tab-content tabId="base" [activeTab]="activeTab()">
+      <form class="create-order-settings__form" [formGroup]="form" (ngSubmit)="save()">
+        <fieldset class="create-order-settings__card create-order-settings__section" [disabled]="loading() || saving() || !canEdit()">
+          <legend>{{ 'createOrderSettings.base.offlineStorageTitle' | translate }}</legend>
+
+          <gom-lib-checkbox
+            [label]="'createOrderSettings.base.enableOfflineStorage' | translate"
+            [hint]="'createOrderSettings.base.enableOfflineStorageHint' | translate"
+            [formControl]="form.controls.enableOfflineStorage"
+          ></gom-lib-checkbox>
+
+          <gom-lib-checkbox
+            [label]="'createOrderSettings.base.requireMemberForBilling' | translate"
+            [hint]="'createOrderSettings.base.requireMemberForBillingHint' | translate"
+            [formControl]="form.controls.requireMemberForBilling"
+          ></gom-lib-checkbox>
+        </fieldset>
+
+        <gom-lib-accordion
+          [title]="'createOrderSettings.paymentStatus.title' | translate"
+          [subtitle]="'createOrderSettings.paymentStatus.description' | translate"
+          [expanded]="paymentStatusExpanded()"
+          [disabled]="loading()"
+          (expandedChange)="paymentStatusExpanded.set($event)"
+        >
+          <fieldset class="create-order-settings__payment" [disabled]="loading() || saving() || !canEdit()">
+            <legend>{{ 'createOrderSettings.paymentStatus.orderType' | translate }}</legend>
+
+            <div class="create-order-settings__order-types">
+              @for (orderType of orderTypes; track orderType) {
+                <gom-lib-button
+                  type="button"
+                  [variant]="selectedOrderType() === orderType ? 'primary' : 'secondary'"
+                  [ariaCurrent]="selectedOrderType() === orderType ? 'page' : null"
+                  (buttonClick)="selectOrderType(orderType)"
+                >
+                  {{ ('createOrderSettings.paymentStatus.orderTypes.' + orderType) | translate }}
+                </gom-lib-button>
+              }
+            </div>
+
+            <div class="create-order-settings__status-list">
+              @for (control of paymentStatusControls(); track control; let index = $index) {
+                <div class="create-order-settings__status-row">
+                  <gom-lib-input
+                    [label]="('createOrderSettings.paymentStatus.statusLabel' | translate) + ' ' + (index + 1)"
+                    [placeholder]="'createOrderSettings.paymentStatus.statusPlaceholder' | translate"
+                    [formControl]="control"
+                    [error]="control.touched && control.invalid ? ('createOrderSettings.paymentStatus.statusRequired' | translate) : ''"
+                  ></gom-lib-input>
+                  <gom-lib-button
+                    type="button"
+                    variant="ghost"
+                    size="compact-icon"
+                    [disabled]="paymentStatusControls().length <= 1"
+                    [ariaLabel]="'createOrderSettings.paymentStatus.remove' | translate"
+                    [buttonTitle]="'createOrderSettings.paymentStatus.remove' | translate"
+                    (buttonClick)="removePaymentStatus(index)"
+                  >
+                    <i class="ri-delete-bin-line" aria-hidden="true"></i>
+                  </gom-lib-button>
+                </div>
+              }
+            </div>
+
+            <gom-lib-button
+              type="button"
+              variant="secondary"
+              [disabled]="paymentStatusControls().length >= 20"
+              (buttonClick)="addPaymentStatus()"
+            >
+              <i class="ri-add-line" aria-hidden="true"></i>
+              {{ 'createOrderSettings.paymentStatus.add' | translate }}
+            </gom-lib-button>
+          </fieldset>
+        </gom-lib-accordion>
+
+        <gom-lib-accordion
+          [title]="'createOrderSettings.orderIntake.title' | translate"
+          [subtitle]="'createOrderSettings.orderIntake.description' | translate"
+          [expanded]="orderIntakeExpanded()"
+          [disabled]="loading()"
+          (expandedChange)="orderIntakeExpanded.set($event)"
+        >
+          <fieldset class="create-order-settings__payment" [disabled]="loading() || saving() || !canEdit()">
+            <legend>{{ 'createOrderSettings.orderIntake.channels' | translate }}</legend>
+
+            <div class="create-order-settings__channel-list">
+              @for (channel of orderIntakeChannelControls(); track channel; let index = $index) {
+                <div class="create-order-settings__channel-row">
+                  <gom-lib-input
+                    [label]="('createOrderSettings.orderIntake.channelLabel' | translate) + ' ' + (index + 1)"
+                    [placeholder]="'createOrderSettings.orderIntake.channelPlaceholder' | translate"
+                    [formControl]="channel.controls.name"
+                    [error]="channel.controls.name.touched && channel.controls.name.invalid ? ('createOrderSettings.orderIntake.channelRequired' | translate) : ''"
+                  ></gom-lib-input>
+                  <gom-lib-checkbox
+                    [label]="'createOrderSettings.orderIntake.enabled' | translate"
+                    [hint]="channel.controls.enabled.value ? ('createOrderSettings.orderIntake.enabledHint' | translate) : ('createOrderSettings.orderIntake.disabledHint' | translate)"
+                    [formControl]="channel.controls.enabled"
+                  ></gom-lib-checkbox>
+                </div>
+              }
+            </div>
+
+            <gom-lib-button
+              type="button"
+              variant="secondary"
+              [disabled]="orderIntakeChannelControls().length >= 30"
+              (buttonClick)="addOrderIntakeChannel()"
+            >
+              <i class="ri-add-line" aria-hidden="true"></i>
+              {{ 'createOrderSettings.orderIntake.add' | translate }}
+            </gom-lib-button>
+          </fieldset>
+        </gom-lib-accordion>
+
+        <div class="create-order-settings__actions">
+          <gom-lib-button
+            type="submit"
+            variant="primary"
+            [disabled]="loading() || saving() || !canEdit()"
+          >
+            {{ (saving() ? 'createOrderSettings.actions.saving' : 'createOrderSettings.actions.save') | translate }}
+          </gom-lib-button>
+        </div>
+      </form>
+    </gom-lib-tab-content>
+  </gom-lib-tabs>
+</section>

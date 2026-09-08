@@ -58,7 +58,12 @@
                                    "platformTemplates":  "Platform Templates",
                                    "businessTemplates":  "Business Templates",
                                    "platformMedia":  "Platform Media",
-                                   "staffManagement":  "Staff Management"
+                                   "staffManagement":  "Staff Management",
+                                   "adminApp":  "Admin App",
+                                   "createOrderSettings":  "Create Order Settings",
+                                   "billing":  "Billing",
+                                   "businessDetails":  "Business Details",
+                                   "paymentOptions":  "Payment Options"
                                },
                 "actions":  {
                                 "notifications":  "Notifications",
@@ -71,7 +76,172 @@
                                  "telugu":  "Telugu",
                                  "hindi":  "Hindi"
                              }
+                },
+            "paymentOptions": {
+                "title": "Payment Options",
+                "description": "Configure the payment methods available for order processing.",
+                "loading": "Loading payment options...",
+                "confirmDelete": "Delete this payment account?",
+                "actions": { "reset": "Reset", "save": "Save Changes", "saving": "Saving...", "addUpi": "Add UPI", "addBank": "Add Bank Account", "edit": "Edit", "delete": "Delete", "cancel": "Cancel", "saveAccount": "Save Account", "uploadQr": "Upload QR Code", "uploading": "Uploading..." },
+                "methods": { "title": "Payment Methods", "description": "Choose the payment methods your business accepts.", "upi": "UPI Payments", "upiHint": "Accept UPI payments using configured IDs and QR codes.", "cash": "Cash", "cashHint": "Accept cash payments when fulfilling orders.", "bankTransfer": "Bank Transfer", "bankHint": "Accept direct transfers to configured bank accounts." },
+                "upi": { "title": "UPI Accounts", "description": "Manage the UPI IDs customers can pay.", "empty": "No UPI accounts configured", "emptyHint": "Add a UPI account to start accepting UPI payments.", "addTitle": "Add UPI Account", "editTitle": "Edit UPI Account" },
+                "bank": { "title": "Bank Accounts", "description": "Manage accounts used for bank transfers.", "empty": "No bank accounts configured", "emptyHint": "Add a bank account to start accepting transfers.", "addTitle": "Add Bank Account", "editTitle": "Edit Bank Account" },
+                "fields": { "providerName": "Display / Provider Name", "upiId": "UPI ID", "qrCode": "QR Code", "qrHint": "PNG, JPG, or WebP up to 5 MB.", "active": "Set as Active", "activeHint": "Only active accounts are available during order processing.", "bankName": "Bank Name", "holderName": "Account Holder Name", "accountNumber": "Account Number", "confirmAccount": "Confirm Account Number", "accountUnchanged": "Leave blank to keep current number", "ifsc": "IFSC Code", "branch": "Branch Name" },
+                "status": { "active": "Active", "inactive": "Inactive" },
+                "orderTypes": { "title": "Order Type Configuration", "description": "Choose which enabled payment methods are available for each order type.", "orderType": "Order Type", "enableFirst": "Enable a payment method above before assigning it to an order type.", "types": { "inStore": "In-Store", "pickup": "Pickup", "delivery": "Delivery" }, "methods": { "UPI": "UPI", "CASH": "Cash", "BANK_TRANSFER": "Bank Transfer" } },
+                "validation": { "required": "This field is required.", "invalid": "Enter a valid value.", "accountMismatch": "Account numbers do not match." },
+                "messages": { "loadError": "Unable to load payment options.", "saveError": "Unable to save payment options.", "saved": "Payment options saved.", "invalidQr": "Select an image no larger than 5 MB.", "uploadError": "Unable to upload the QR code." }
             },
+            "createOrderSettings":  {
+                        "title":  "Create Order Settings",
+                        "description":  "Configure the create order experience for your team.",
+                        "tabs":  {
+                                     "base":  "Base Settings"
+                                 },
+                        "base":  {
+                                     "title":  "Base Settings",
+                                     "description":  "These settings apply to the complete tenant account.",
+                                     "offlineStorageTitle":  "Offline Storage",
+                                     "enableOfflineStorage":  "Enable Offline Storage",
+                                     "enableOfflineStorageHint":  "Allow order data to be stored locally for offline workflows.",
+                                     "requireMemberForBilling": "Adding a member in billing is mandatory",
+                                     "requireMemberForBillingHint": "Require a selected customer member before an order can be billed."
+                                 },
+                        "paymentStatus":  {
+                                              "title":  "Payment Status",
+                                              "description":  "Configure payment status options for each order type.",
+                                              "orderType":  "Order Type",
+                                              "orderTypes":  {
+                                                                   "pickup":  "Pickup",
+                                                                   "delivery":  "Delivery",
+                                                                   "counter":  "Counter"
+                                                               },
+                                              "statusLabel":  "Payment status",
+                                              "statusPlaceholder":  "Enter payment status",
+                                              "statusRequired":  "Payment status is required.",
+                                              "add":  "Add Payment Status",
+                                              "remove":  "Remove payment status"
+                                          },
+                        "orderIntake":  {
+                                             "title":  "Order Intake Channels",
+                                             "description":  "Choose which channels can receive orders and add custom channels.",
+                                             "channels":  "Channels",
+                                             "channelLabel":  "Channel",
+                                             "channelPlaceholder":  "Enter channel name",
+                                             "channelRequired":  "Channel name is required.",
+                                             "enabled":  "Enabled",
+                                             "enabledHint":  "Orders can be received through this channel.",
+                                             "disabledHint":  "This channel is retained but unavailable for new orders.",
+                                             "add":  "Add Intake Channel"
+                                         },
+                        "actions":  {
+                                        "save":  "Save Settings",
+                                        "saving":  "Saving..."
+                                    },
+                        "messages":  {
+                                         "saved":  "Create order settings saved.",
+                                         "loadError":  "Failed to load create order settings.",
+                                         "saveError":  "Failed to save create order settings.",
+                                         "statusRequired":  "Enter a value for every payment status and intake channel before saving.",
+                                         "duplicateChannel":  "Order intake channel names must be unique."
+                                     }
+                        },
+            "billingSettings":  {
+                                      "title":  "Billing",
+                                      "description":  "Configure billing settings for order processing.",
+                                      "comingSoon":  "Coming soon"
+                                  },
+            "businessDetails":  {
+                                      "title":  "Business Details",
+                                      "description":  "Manage your business identity, contact information and branding.",
+                                      "loading": "Loading business details...",
+                                      "actions": {
+                                          "edit": "Edit details",
+                                          "reset": "Reset",
+                                          "cancel": "Cancel",
+                                          "save": "Save changes",
+                                          "saving": "Saving...",
+                                          "retry": "Try again"
+                                      },
+                                      "sections": {
+                                          "identity": "Business identity",
+                                          "identityHint": "The public and legal identity of this account.",
+                                          "contact": "Contact details",
+                                          "contactHint": "How customers and the platform can reach you.",
+                                          "address": "Registered address",
+                                          "addressHint": "The primary legal and operational address.",
+                                          "tax": "Tax registration",
+                                          "taxHint": "India tax registration and identification details.",
+                                          "branding": "Branding",
+                                          "brandingHint": "The visual identity shown across your experience.",
+                                          "hierarchy": "Account hierarchy",
+                                          "hierarchyHint": "System-managed tenant account identifiers."
+                                      },
+                                      "fields": {
+                                          "accountName": "Account name",
+                                          "legalBusinessName": "Legal business name",
+                                          "businessType": "Business type",
+                                          "businessDescription": "Business description",
+                                          "primaryContactPhone": "Primary contact phone",
+                                          "primaryContactEmail": "Primary contact email",
+                                          "website": "Website",
+                                          "supportEmail": "Support email",
+                                          "addressLine1": "Address line 1",
+                                          "addressLine2": "Address line 2 (optional)",
+                                          "city": "City",
+                                          "state": "State / Union territory",
+                                          "country": "Country",
+                                          "postalCode": "Postal code",
+                                          "taxRegistrationType": "Registration type",
+                                          "gstin": "GSTIN",
+                                          "pan": "PAN",
+                                          "brandColor": "Primary brand color",
+                                          "brandAccent": "Accent color",
+                                          "brandTagline": "Brand tagline",
+                                          "tenantCode": "Tenant code",
+                                          "accountId": "Account ID",
+                                          "updatedAt": "Last updated"
+                                      },
+                                      "logo": {
+                                          "title": "Business logo",
+                                          "hint": "PNG, JPG, WebP or another image format, up to 2 MB.",
+                                          "upload": "Upload logo",
+                                          "uploading": "Uploading...",
+                                          "remove": "Remove",
+                                          "previewAlt": "Business logo preview"
+                                      },
+                                      "setup": {
+                                          "title": "Complete your business profile",
+                                          "description": "Review the prefilled account information and add the required details to continue."
+                                      },
+                                      "unsaved": {
+                                          "title": "Unsaved changes",
+                                          "description": "Save or reset the changes made to this profile."
+                                      },
+                                      "readOnlyHierarchy": "These values come from the tenant account and cannot be edited here.",
+                                      "validation": {
+                                          "required": "This field is required.",
+                                          "email": "Enter a valid email address.",
+                                          "phone": "Enter a valid phone number.",
+                                          "url": "Enter a full URL beginning with http:// or https://.",
+                                          "postalCode": "Enter a valid postal code.",
+                                          "gstin": "Enter a valid 15-character GSTIN.",
+                                          "pan": "Enter a valid PAN.",
+                                          "color": "Enter a valid 6-digit hex color.",
+                                          "tooLong": "This value is too long.",
+                                          "invalid": "Enter a valid value."
+                                      },
+                                      "messages": {
+                                          "saved": "Business details saved.",
+                                          "loadError": "Failed to load business details.",
+                                          "saveError": "Failed to save business details.",
+                                          "validationError": "Review the highlighted fields before saving.",
+                                          "logoImageOnly": "Choose an image file for the business logo.",
+                                          "logoTooLarge": "The logo must be 2 MB or smaller.",
+                                          "logoUploaded": "Business logo uploaded.",
+                                          "logoUploadError": "Failed to upload the business logo."
+                                      }
+                                  },
     "common":  {
                    "btn_back":  "Back",
                    "btn_cancel":  "Cancel",

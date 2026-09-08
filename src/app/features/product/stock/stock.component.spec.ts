@@ -57,6 +57,7 @@ describe('StockComponent price approval flow', () => {
       'getSummary',
       'getCostingMethodConfig',
       'getHistory',
+      'addStock',
       'listVariantsByGroup',
       'getVariantStockSummary',
     ]);
@@ -67,6 +68,7 @@ describe('StockComponent price approval flow', () => {
     stockService.getSummary.and.returnValue(of({ data: { onHand: 0, reserved: 0, available: 0, baseUnit: { _id: 'unit-1', name: 'Unit', symbol: 'U' }, reorderLevel: 0, avgCostPerBaseUnit: 0, inventoryCostBasisTotal: 0, lastLandedCostPerBaseUnit: 0, isLowStock: false } } as any));
     stockService.getCostingMethodConfig.and.returnValue(of({ data: { groupId: 'group-a', groupName: 'Group A', supportedMethods: ['WAC'], tenantDefaultMethod: 'WAC', groupCostingMethod: 'WAC', effectiveMethod: 'WAC', effectiveScope: 'GROUP' } } as any));
     stockService.getHistory.and.returnValue(of({ data: [], pagination: { page: 1, limit: 50, total: 0, hasMore: false, totalPages: 1, canLoadAll: true } } as any));
+    stockService.addStock.and.returnValue(of({ success: true, data: {} } as any));
     stockService.listVariantsByGroup.and.returnValue(of({ data: [] } as any));
     stockService.getVariantStockSummary.and.returnValue(of({ data: [] } as any));
 
@@ -180,5 +182,56 @@ describe('StockComponent price approval flow', () => {
     expect(loadStockDataSpy).toHaveBeenCalledWith('group-a');
     expect(closeAddStockSpy).toHaveBeenCalled();
     expect(scheduleRefreshSpy).toHaveBeenCalledWith('group-a', true);
+  });
+
+  it('loads per-variant stock inputs for HYBRID groups', () => {
+    component.groups.set([
+      activeGroup('hybrid-group', 'Sunflower Oil', { groupType: 'HYBRID' }),
+    ]);
+    component.selectedGroupId.set('hybrid-group');
+
+    component.openAddStock();
+
+    expect(component.isVariantTrackedGroup()).toBeTrue();
+    expect(stockService.listVariantsByGroup).toHaveBeenCalledWith('hybrid-group');
+    expect(stockService.getVariantStockSummary).toHaveBeenCalledWith('hybrid-group');
+    expect(component.addStockOpen()).toBeTrue();
+  });
+
+  it('converts HYBRID pack counts to the variant measured quantity when saving', () => {
+    spyOn(component, 'loadStockData').and.stub();
+    spyOn(component, 'loadPendingCount').and.stub();
+    component.groups.set([
+      activeGroup('hybrid-group', 'Sunflower Oil', {
+        groupType: 'HYBRID',
+        baseUnitId: 'litre',
+        allowedUnitIds: ['millilitre'],
+      }),
+    ]);
+    component.units.set([
+      { _id: 'litre', name: 'Litre', symbol: 'L', status: 'ACTIVE' },
+      { _id: 'millilitre', name: 'Millilitre', symbol: 'ml', conversionFactor: 1000, status: 'ACTIVE' },
+    ]);
+    component.selectedGroupId.set('hybrid-group');
+    component.groupVariants.set([
+      {
+        _id: 'gold-drop-low-500ml',
+        name: 'Sunflower Oil - Gold Drop - Low - 500ml',
+        quantity: 500,
+        convertedQuantity: 0.5,
+        unitId: 'millilitre',
+        status: 'ACTIVE',
+      },
+    ]);
+    component.variantAllocationQtys.set({ 'gold-drop-low-500ml': 10 });
+
+    component.saveAddStock();
+
+    expect(stockService.addStock).toHaveBeenCalledWith(expect.objectContaining({
+      groupId: 'hybrid-group',
+      variantId: 'gold-drop-low-500ml',
+      quantity: 5000,
+      unitId: 'millilitre',
+    }));
   });
 });

@@ -173,7 +173,7 @@
           <h3><i class="ri-layout-grid-line" aria-hidden="true"></i> Variant Stock Breakdown</h3>
           <p>
             @if (isHybridGroup()) {
-              Calculated sellable pack availability from shared bulk stock
+              Independently tracked stock for each measured attribute combination
             } @else {
               Stock levels for each variant in this group
             }
@@ -528,15 +528,15 @@
         <div style="border: 1px solid #e0e0e0; border-radius: 4px; overflow: hidden;">
           <div style="display: grid; grid-template-columns: minmax(14rem, 1fr) 4.5rem 5rem 6.5rem; gap: 0.5rem; font-weight: 600; font-size: 0.8rem; padding: 0.5rem 0.75rem; background: #f5f5f5; color: #444; border-bottom: 1px solid #e0e0e0;">
             <span>Variant</span>
-            <span>Unit</span>
+            <span>Pack Size</span>
             <span style="text-align: right;">Available</span>
-            <span style="text-align: right;">Add Qty</span>
+            <span style="text-align: right;">Units to Add</span>
           </div>
 
           @for (v of groupVariants(); track v._id) {
             <div style="display: grid; grid-template-columns: minmax(14rem, 1fr) 4.5rem 5rem 6.5rem; gap: 0.5rem; align-items: center; padding: 0.5rem 0.75rem; border-bottom: 1px solid #eee;">
               <span style="font-size: 0.875rem; font-weight: 500;">{{ v.name }}</span>
-              <span style="font-size: 0.8rem; color: #666;">{{ getVariantUnitSymbol(v.unitId) }}</span>
+              <span style="font-size: 0.8rem; color: #666;">{{ v.quantity | number: '1.0-4' }} {{ getVariantUnitSymbol(v.unitId) }}</span>
               <span style="font-size: 0.8rem; text-align: right; color: #555;">{{ getVariantAvailable(v._id) }}</span>
               <label [for]="'variant-allocation-' + v._id" class="sr-only">Add quantity for {{ v.name }}</label>
               <input

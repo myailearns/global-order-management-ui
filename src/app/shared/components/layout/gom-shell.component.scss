@@ -25,6 +25,18 @@
   background-color: rgba(theme.get-background(standard), 0.92);
 }
 
+.gom-shell__topbar-center {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  justify-content: center;
+}
+
+.gom-shell__topbar-search {
+  width: min(40rem, 100%);
+  position: relative;
+}
+
 .gom-shell__topbar-start {
   display: inline-flex;
   align-items: center;
@@ -138,6 +150,59 @@
 .gom-shell__profile-chip {
   width: 2.75rem;
   font-weight: theme.get-font-weight(semibold);
+}
+
+@keyframes gom-shell-sync-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.gom-shell__sync-icon--spinning {
+  animation: gom-shell-sync-spin 0.8s linear infinite;
+}
+
+.gom-shell__catalog-sync {
+  display: grid;
+  gap: theme.get-gap(md);
+}
+
+.gom-shell__catalog-sync-status {
+  display: flex;
+  align-items: center;
+  gap: theme.get-gap(sm);
+  padding: theme.get-spacing(sm);
+  border: theme.get-border-size(thin) solid theme.get-border(standard);
+  border-radius: theme.get-radius(sm);
+  background: theme.get-background(secondary);
+}
+
+.gom-shell__catalog-sync-status > i {
+  font-size: 1.5rem;
+  color: theme.get-text(primary);
+}
+
+.gom-shell__catalog-sync-status > div {
+  min-width: 0;
+  display: grid;
+  gap: theme.get-gap(xxs);
+}
+
+.gom-shell__catalog-sync-status strong {
+  color: theme.get-text(primary);
+}
+
+.gom-shell__catalog-sync-status span,
+.gom-shell__catalog-sync p {
+  margin: 0;
+  @include theme.typography-body;
+  color: theme.get-text(hint);
+}
+
+.gom-shell__catalog-sync-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: theme.get-gap(xs);
 }
 
 .gom-shell__layout {
@@ -348,6 +413,10 @@
   overflow-x: hidden;
 }
 
+.gom-shell__content.gom-shell__content--flush {
+  padding: 0;
+}
+
 @include theme.breakpoint-up(md) {
   .gom-shell__menu-button {
     display: none;
@@ -382,6 +451,10 @@
   .gom-shell__content {
     padding: theme.get-spacing(lg);
     min-width: 0;
+  }
+
+  .gom-shell__content.gom-shell__content--flush {
+    padding: 0;
   }
 
   .gom-shell--desktop-collapsed {
@@ -446,9 +519,65 @@
   .gom-shell__content {
     padding: theme.get-spacing(xl);
   }
+
+  .gom-shell__content.gom-shell__content--flush {
+    padding: 0;
+  }
 }
 
 @include theme.breakpoint-down(sm) {
+  .gom-shell__topbar.gom-shell__topbar--with-search {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'start actions'
+      'search search';
+    align-items: center;
+    column-gap: theme.get-gap(xs);
+    row-gap: theme.get-gap(xs);
+  }
+
+  .gom-shell__topbar.gom-shell__topbar--with-search .gom-shell__topbar-start {
+    grid-area: start;
+    min-width: 0;
+  }
+
+  .gom-shell__topbar.gom-shell__topbar--with-search .gom-shell__brand-mark {
+    display: none;
+  }
+
+  .gom-shell__topbar.gom-shell__topbar--with-search .gom-shell__brand {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .gom-shell__topbar.gom-shell__topbar--with-search .gom-shell__brand h1 {
+    font-size: 0.95rem;
+  }
+
+  .gom-shell__topbar.gom-shell__topbar--with-search .gom-shell__topbar-actions {
+    grid-area: actions;
+  }
+
+  .gom-shell__topbar.gom-shell__topbar--with-search .gom-shell__lang-picker gom-lib-select {
+    min-width: 4.25rem;
+  }
+
+  .gom-shell__topbar.gom-shell__topbar--with-search .gom-shell__topbar-center {
+    grid-area: search;
+    flex: 0 0 100%;
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .gom-shell__topbar.gom-shell__topbar--with-search .gom-shell__topbar-search {
+    width: 100%;
+  }
+
+  .gom-shell__topbar.gom-shell__topbar--with-search .gom-shell__topbar-search-kbd {
+    right: 0.5rem;
+  }
+
   .gom-shell__brand {
     h1 {
       font-size: 1rem;

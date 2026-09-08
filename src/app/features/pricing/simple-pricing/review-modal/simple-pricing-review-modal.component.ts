@@ -1,7 +1,7 @@
-import { Component, EventEmitter, Input, OnInit, Output, signal } from '@angular/core';
+import { Component, computed, EventEmitter, Input, OnInit, Output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
-import { GomButtonComponent, GomChipComponent, GomModalComponent } from '@gomlibs/ui';
+import { GomButtonComponent, GomModalComponent } from '@gomlibs/ui';
 
 export interface PriceReviewItem {
   trackId: string;
@@ -10,6 +10,11 @@ export interface PriceReviewItem {
   entityType: 'GROUP' | 'VARIANT';
   oldSellingPrice: number;
   newSellingPrice: number;
+  oldProfitAmount: number | null;
+  newProfitAmount: number | null;
+  oldMarginPercent: number | null;
+  newMarginPercent: number | null;
+  impactAmount: number | null;
   existingProfit: string;   // e.g. "30.0%"
   newProfit: string;        // e.g. "26.8%"
   newProfitTone: 'info' | 'success' | 'danger' | 'neutral';
@@ -18,9 +23,9 @@ export interface PriceReviewItem {
 @Component({
   selector: 'gom-simple-pricing-review-modal',
   standalone: true,
-  imports: [CommonModule, TranslateModule, GomModalComponent, GomButtonComponent, GomChipComponent],
+  imports: [CommonModule, TranslateModule, GomModalComponent, GomButtonComponent],
   templateUrl: './simple-pricing-review-modal.component.html',
-  styleUrls: ['./simple-pricing-review-modal.component.scss'],
+  styleUrl: './simple-pricing-review-modal.component.scss',
 })
 export class SimplePricingReviewModalComponent implements OnInit {
   @Input({ required: true }) items: PriceReviewItem[] = [];
@@ -33,6 +38,25 @@ export class SimplePricingReviewModalComponent implements OnInit {
 
   /** Local working copy so removals don't affect the parent until confirmed. */
   readonly reviewItems = signal<PriceReviewItem[]>([]);
+
+  readonly averageMarginChange = computed(() => {
+    const deltas = this.reviewItems().flatMap((item) => {
+      if (item.oldMarginPercent === null || item.newMarginPercent === null) {
+        return [];
+      }
+      return [item.newMarginPercent - item.oldMarginPercent];
+    });
+
+    if (!deltas.length) {
+      return null;
+    }
+
+    return deltas.reduce((sum, value) => sum + value, 0) / deltas.length;
+  });
+
+  readonly totalImpactAmount = computed(() => (
+    this.reviewItems().reduce((sum, item) => sum + (item.impactAmount ?? 0), 0)
+  ));
 
   ngOnInit(): void {
     this.reviewItems.set([...this.items]);
@@ -55,9 +79,41 @@ export class SimplePricingReviewModalComponent implements OnInit {
     return `₹${price.toFixed(2)}`;
   }
 
-  priceDirection(item: PriceReviewItem): 'up' | 'down' | 'same' {
-    if (item.newSellingPrice > item.oldSellingPrice) return 'up';
-    if (item.newSellingPrice < item.oldSellingPrice) return 'down';
-    return 'same';
+  formatAmount(value: number | null): string {
+    return value === null ? '—' : this.formatPrice(value);
+  }
+
+  formatMargin(value: number | null): string {
+    return value === null ? '—' : `${value.toFixed(1)}%`;
+  }
+
+  formatSignedAmount(value: number | null): string {
+    if (value === null) {
+      return '—';
+    }
+    return `${value >= 0 ? '+' : '-'}${this.formatPrice(Math.abs(value))}`;
+  }
+
+  formatSignedPercent(value: number | null): string {
+    if (value === null) {
+      return '—';
+    }
+    return `${value >= 0 ? '+' : ''}${value.toFixed(1)}%`;
+  }
+
+  formatCompactPrice(value: number): string {
+    return `₹${this.formatCompactNumber(value)}`;
+  }
+
+  formatCompactAmount(value: number | null): string {
+    if (value === null) {
+      return '—';
+    }
+    return this.formatCompactPrice(value);
+  }
+
+  private formatCompactNumber(value: number): string {
+    const rounded = Math.round(value * 100) / 100;
+    return Number.isInteger(rounded) ? rounded.toFixed(0) : rounded.toFixed(2);
   }
 }

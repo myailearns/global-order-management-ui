@@ -1,268 +1,307 @@
 @use "theme" as theme;
 
-// ── Modal content ───────────────────────────────────────────────────────────
+:host ::ng-deep .gom-modal__dialog--large {
+  max-width: 56rem;
+  gap: 0;
+  padding: 0;
+}
+
+:host ::ng-deep .gom-modal__header {
+  padding: theme.get-spacing(lg) theme.get-spacing(lg) theme.get-spacing(sm);
+  border-bottom: 0;
+}
+
+:host ::ng-deep .gom-modal__title {
+  color: theme.get-text(default);
+  @include theme.typography-heading(md);
+}
+
+:host ::ng-deep .gom-modal__close {
+  min-width: 2rem;
+  min-height: 2rem;
+  border: 0;
+  color: theme.get-text(default-light);
+}
+
+:host ::ng-deep .gom-modal__content {
+  min-height: 0;
+  overflow: visible;
+}
+
+:host ::ng-deep .gom-modal__footer {
+  padding: theme.get-spacing(md) theme.get-spacing(lg);
+  border-top: theme.get-border-size(hairline) solid theme.get-border(standard);
+}
 
 .sp-review-modal {
-  display: flex;
-  flex-direction: column;
-  background: theme.get-background(standard);
-  max-height: min(72vh, 680px);
+  padding: 0 theme.get-spacing(lg) theme.get-spacing(lg);
+}
 
-  // ── Header ────────────────────────────────────────────────────────────────
+.sp-review-modal__description {
+  margin: 0 0 theme.get-spacing(lg);
+  color: theme.get-text(default-light);
+  font-size: theme.get-font-size(sm);
+}
 
-  &__header {
-    display: flex;
-    align-items: center;
-    gap: theme.get-gap(sm);
-    padding: theme.get-spacing(md) theme.get-spacing(md) theme.get-spacing(sm);
-    border-bottom: 1px solid theme.get-border(standard);
-    flex-shrink: 0;
-  }
+.sp-review-modal__table-wrap {
+  overflow-x: auto;
+  border: theme.get-border-size(hairline) solid theme.get-border(standard);
+  border-radius: theme.get-radius(md);
+}
 
-  &__header-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: theme.get-radius(md);
-    background: theme.get-background(primary-light);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.25rem;
-    color: theme.get-text(primary);
-    flex-shrink: 0;
-  }
+.sp-review-modal__mobile-list {
+  display: none;
+}
 
-  &__header-text {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    min-width: 0;
-  }
+.sp-review-modal__table {
+  width: 100%;
+  min-width: 42rem;
+  border-collapse: collapse;
+  table-layout: fixed;
+  color: theme.get-text(default);
+  font-size: theme.get-font-size(sm);
 
-  &__title {
-    @include theme.typography-heading(sm);
-    color: theme.get-text(default);
-    margin: 0;
-  }
-
-  &__subtitle {
-    font-size: theme.get-font-size(sm);
-    color: theme.get-text(default-light);
-    margin: 0;
-  }
-
-  // ── Scrollable list ───────────────────────────────────────────────────────
-
-  &__list {
-    flex: 1;
-    overflow-y: auto;
+  th,
+  td {
     padding: theme.get-spacing(sm) theme.get-spacing(md);
-    display: flex;
-    flex-direction: column;
-    gap: theme.get-gap(sm);
-    overscroll-behavior: contain;
+    border-bottom: theme.get-border-size(hairline) solid theme.get-border(standard);
+    text-align: left;
+    vertical-align: middle;
+    white-space: nowrap;
   }
 
-  // ── Single item card ──────────────────────────────────────────────────────
-
-  &__item {
-    position: relative;
+  th {
+    color: theme.get-text(default-light);
     background: theme.get-background(secondary);
-    border: 1px solid theme.get-border(standard);
-    border-radius: theme.get-radius(md);
-    padding: theme.get-spacing(sm);
-    padding-right: 44px; // space for remove button
-    display: flex;
-    flex-direction: column;
-    gap: theme.get-gap(xs);
+    font-size: theme.get-font-size(xs);
+    font-weight: 600;
   }
 
-  &__item-name {
-    display: flex;
-    align-items: center;
-    gap: theme.get-gap(xs);
-    flex-wrap: wrap;
+  th:first-child { width: 29%; }
+
+  th:nth-child(2),
+  th:nth-child(3),
+  th:nth-child(4) { width: 19%; }
+
+  th:last-child { width: 14%; }
+
+  tbody tr:last-child td { border-bottom: 0; }
+
+  td i {
+    margin: 0 theme.get-spacing(xxs);
+    color: theme.get-text(hint);
+    font-size: theme.get-font-size(xs);
+  }
+}
+
+.sp-review-modal__product { font-weight: 600; }
+
+.sp-review-modal__old-value { color: theme.get-text(default-light); }
+
+.sp-review-modal__positive { color: theme.get-text(success); }
+
+.sp-review-modal__impact {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.5rem;
+  padding: 0.125rem theme.get-spacing(xs);
+  border-radius: theme.get-radius(sm);
+  color: theme.get-text(success);
+  background: theme.get-background(success-light);
+  font-size: theme.get-font-size(xs);
+  font-weight: 700;
+}
+
+.sp-review-modal__impact--negative {
+  color: theme.get-text(danger);
+  background: theme.get-background(danger-light);
+}
+
+.sp-review-modal__summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: theme.get-spacing(md);
+  margin-top: theme.get-spacing(lg);
+  padding: theme.get-spacing(md);
+  border: theme.get-border-size(hairline) solid #f5c242;
+  border-radius: theme.get-radius(md);
+  color: #9a4c08;
+  background: #fffbeb;
+  font-size: theme.get-font-size(sm);
+
+  strong:last-child { color: theme.get-text(success); }
+
+  p {
+    margin: 0;
+    color: #4b5563;
+    font-size: theme.get-font-size(sm);
+    width: 100%;
   }
 
-  &__item-label {
+  i {
+    margin-right: theme.get-spacing(xs);
+    color: #f59e0b;
+  }
+}
+
+.sp-review-modal__empty {
+  display: flex;
+  min-height: 12rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: theme.get-spacing(sm);
+  color: theme.get-text(default-light);
+}
+
+.sp-review-modal__empty-icon {
+  color: theme.get-text(success);
+  font-size: 2.5rem;
+}
+
+.sp-review-modal__footer { justify-content: flex-end; }
+
+.sp-review-modal__footer .gom-modal__action-layout-end {
+  display: flex;
+  align-items: center;
+  gap: theme.get-spacing(sm);
+}
+
+.sp-review-modal__back-button {
+  background: transparent !important;
+  border: 0 !important;
+  color: #334155 !important;
+  text-decoration: underline;
+  padding: 0 !important;
+  min-height: 0 !important;
+  min-width: 0 !important;
+  box-shadow: none !important;
+}
+
+@include theme.breakpoint-down(sm) {
+  :host ::ng-deep .gom-modal__dialog--large {
+    width: 100vw;
+    max-width: 100vw;
+    min-height: 100dvh;
+    border-radius: 0;
+    margin: 0;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+  }
+
+  :host ::ng-deep .gom-modal__header,
+  :host ::ng-deep .gom-modal__footer {
+    padding: theme.get-spacing(md);
+  }
+
+  :host ::ng-deep .gom-modal__content {
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .sp-review-modal {
+    padding: 0 theme.get-spacing(md) theme.get-spacing(md);
+    overflow-x: hidden;
+  }
+
+  .sp-review-modal__description {
+    margin-bottom: theme.get-spacing(md);
     font-size: theme.get-font-size(body);
-    font-weight: 600;
-    color: theme.get-text(default);
-    overflow-wrap: anywhere;
   }
 
-  &__item-type {
-    font-size: theme.get-font-size(xs);
-    font-weight: 500;
-    color: theme.get-text(primary);
-    background: theme.get-background(primary-light);
-    padding: 1px 7px;
-    border-radius: theme.get-radius(sm);
-    white-space: nowrap;
+  .sp-review-modal__table-wrap {
+    display: none;
   }
 
-  &__item-product {
-    display: flex;
-    align-items: baseline;
-    gap: 6px;
-    min-width: 0;
+  .sp-review-modal__mobile-list {
+    display: grid;
+    gap: theme.get-spacing(md);
   }
 
-  &__item-product-label {
-    font-size: theme.get-font-size(xs);
-    color: theme.get-text(default-light);
-    white-space: nowrap;
-  }
+  .sp-review-modal__mobile-card {
+    border: theme.get-border-size(hairline) solid #dce3f4;
+    border-radius: theme.get-radius(lg);
+    padding: theme.get-spacing(md);
+    background: #fff;
+    overflow-x: hidden;
 
-  &__item-product-value {
-    font-size: theme.get-font-size(sm);
-    color: theme.get-text(default);
-    font-weight: 500;
-    overflow-wrap: anywhere;
-    word-break: break-word;
-  }
-
-  // ── Price change row ──────────────────────────────────────────────────────
-
-  &__price-change {
-    display: flex;
-    align-items: center;
-    gap: theme.get-gap(xs);
-    font-size: theme.get-font-size(body-lg);
-    font-weight: 700;
-    color: theme.get-text(default-light);
-
-    &--up &__price-new   { color: theme.get-text(success); }
-    &--down &__price-new { color: theme.get-text(danger); }
-  }
-
-  &__price-old {
-    color: theme.get-text(default-light);
-    text-decoration: line-through;
-    font-weight: 400;
-    font-size: theme.get-font-size(sm);
-  }
-
-  &__price-arrow {
-    font-size: theme.get-font-size(sm);
-    opacity: 0.6;
-  }
-
-  &__price-new {
-    color: theme.get-text(default);
-    font-size: theme.get-font-size(body-lg);
-    font-weight: 700;
-  }
-
-  // ── Profit row ────────────────────────────────────────────────────────────
-
-  &__profit-row {
-    display: flex;
-    align-items: center;
-    gap: theme.get-gap(sm);
-    flex-wrap: wrap;
-  }
-
-  &__profit-block {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  &__profit-label {
-    font-size: theme.get-font-size(xs);
-    color: theme.get-text(default-light);
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-  }
-
-  &__profit-value {
-    font-size: theme.get-font-size(sm);
-    font-weight: 600;
-    color: theme.get-text(default);
-  }
-
-  &__profit-sep {
-    font-size: theme.get-font-size(sm);
-    color: theme.get-text(default-light);
-    opacity: 0.5;
-    align-self: flex-end;
-    margin-bottom: 2px;
-  }
-
-  // ── Remove button ─────────────────────────────────────────────────────────
-
-  &__remove-btn {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    width: 28px;
-    height: 28px;
-    border: none;
-    background: theme.get-background(danger-light);
-    color: theme.get-text(danger);
-    border-radius: theme.get-radius(sm);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: background 0.15s ease, transform 0.1s ease;
-
-    &:hover {
-      background: theme.get-background(danger);
-      color: #fff;
-    }
-
-    &:active {
-      transform: scale(0.93);
+    h4 {
+      margin: 0 0 theme.get-spacing(sm);
+      color: theme.get-text(default);
+      @include theme.typography-heading(sm);
     }
   }
 
-  // ── Empty state ───────────────────────────────────────────────────────────
+  .sp-review-modal__mobile-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: theme.get-spacing(sm);
 
-  &__empty {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: theme.get-gap(sm);
-    padding: theme.get-spacing(xl);
-    color: theme.get-text(default-light);
-    font-size: theme.get-font-size(sm);
-  }
-
-  &__empty-icon {
-    font-size: 2.5rem;
-    color: theme.get-text(success);
-    opacity: 0.7;
-  }
-
-  // ── Footer ────────────────────────────────────────────────────────────────
-
-  &__footer {
-    border-top: 1px solid theme.get-border(standard);
-    padding-top: theme.get-spacing(sm);
-
-    .gom-modal__action-layout-start {
-      min-width: 0;
+    span {
+      display: block;
+      color: #94a3b8;
+      font-size: theme.get-font-size(xs);
+      margin-bottom: theme.get-spacing(xxs);
     }
 
-    .gom-modal__action-layout-end {
-      display: flex;
+    strong {
+      display: inline-flex;
       align-items: center;
-      gap: theme.get-gap(sm);
-
-      @media (max-width: 767px) {
-        width: 100%;
-        justify-content: stretch;
-
-        > * {
-          flex: 1;
-        }
-      }
+      color: theme.get-text(default);
+      font-size: theme.get-font-size(sm);
+      font-weight: 700;
+      gap: theme.get-spacing(xxs);
+      min-width: 0;
+      white-space: normal;
+      overflow-wrap: anywhere;
     }
+
+    i {
+      color: #94a3b8;
+      font-size: theme.get-font-size(xs);
+    }
+  }
+
+  .sp-review-modal__summary {
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    text-align: center;
+    border-color: #86efac;
+    background: #ecfdf5;
+    color: #064e3b;
+
+    strong:last-child {
+      color: #065f46;
+    }
+
+    p {
+      color: #047857;
+      font-size: theme.get-font-size(sm);
+    }
+
+    i {
+      color: #10b981;
+    }
+  }
+
+  .sp-review-modal__footer .gom-modal__action-layout-end {
+    width: 100%;
+    flex-direction: column-reverse;
+    align-items: center;
+    gap: theme.get-spacing(sm);
+  }
+
+  .sp-review-modal__footer .gom-modal__action-layout-end > * { width: 100%; }
+
+  .sp-review-modal__footer .gom-modal__action-layout-end > .sp-review-modal__back-button {
+    width: auto;
+    align-self: center;
+  }
+
+  .sp-review-modal__back-button {
+    justify-content: center;
   }
 }

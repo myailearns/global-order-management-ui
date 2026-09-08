@@ -128,7 +128,8 @@ export class StockComponent implements OnInit {
   });
 
   readonly isVariantTrackedGroup = computed<boolean>(() => {
-    return this.selectedGroupType() === 'ATTRIBUTE';
+    const groupType = this.selectedGroupType();
+    return groupType === 'ATTRIBUTE' || groupType === 'HYBRID';
   });
 
   readonly isHybridGroup = computed<boolean>(() => this.selectedGroupType() === 'HYBRID');
@@ -1022,7 +1023,7 @@ export class StockComponent implements OnInit {
 
       return this.stockService.addStock({
         groupId,
-        quantity: allocation.quantity,
+        quantity: allocation.quantity * Number(allocation.variant.quantity || 0),
         unitId: allocation.variant.unitId || baseId,
         variantId: allocation.variantId,
         costComponents: this.buildCostComponentsPayload(variantPricingValues),

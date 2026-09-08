@@ -1,0 +1,227 @@
+<section class="billing-settings" [class.billing-settings--editor]="view() === 'editor'">
+  @if (view() === 'templates') {
+    <header class="billing-settings__header billing-settings__header--actions">
+      <div>
+        <h2>Bill Templates</h2>
+        <p>Choose, customize, and assign tenant-specific bill layouts.</p>
+      </div>
+      @if (templates().length) {
+        <gom-lib-button type="button" variant="secondary" (buttonClick)="openAssignments()">
+          <i class="ri-links-line" aria-hidden="true"></i>
+          Template Assignment
+        </gom-lib-button>
+      }
+    </header>
+
+    @if (errorMessage()) {
+      <div class="billing-settings__error" role="alert">
+        <span>{{ errorMessage() }}</span>
+        <gom-lib-button type="button" variant="ghost" (buttonClick)="loadTemplates()">Retry</gom-lib-button>
+      </div>
+    }
+
+    @if (loading()) {
+      <div class="billing-settings__state" aria-live="polite">
+        <i class="ri-loader-4-line billing-settings__spin" aria-hidden="true"></i>
+        <p>Loading bill templates...</p>
+      </div>
+    } @else if (!errorMessage() && !templates().length) {
+      <div class="billing-settings__state">
+        <span class="billing-settings__state-icon" aria-hidden="true"><i class="ri-file-list-3-line"></i></span>
+        <h3>No bill templates configured</h3>
+        <p>Create the four tenant-owned default templates to start customizing and assigning bills.</p>
+        <gom-lib-button type="button" variant="primary" [disabled]="initializing()" (buttonClick)="initializeTemplates()">
+          {{ initializing() ? 'Creating Templates...' : 'Create Default Templates' }}
+        </gom-lib-button>
+      </div>
+    } @else {
+      <div class="billing-settings__template-grid">
+        @for (template of templates(); track template.id) {
+          <gom-lib-card class="billing-template-card">
+            <div class="billing-template-card__preview" [attr.aria-label]="template.name + ' preview'">
+              <gom-bill-preview [configuration]="template.configuration" [compact]="true"></gom-bill-preview>
+            </div>
+            <div class="billing-template-card__body">
+              <div class="billing-template-card__title-row">
+                <h3>{{ template.name }}</h3>
+                @if (template.isDefault) {
+                  <span class="billing-template-card__badge"><i class="ri-check-line" aria-hidden="true"></i> Default</span>
+                }
+              </div>
+              <p>{{ template.description }}</p>
+              <div class="billing-template-card__meta">
+                <span>{{ template.configuration.page.size === 'A4' ? 'A4 document' : '80 mm thermal' }}</span>
+                <span>Version {{ template.version }}</span>
+              </div>
+              <div class="billing-template-card__actions">
+                <gom-lib-button type="button" variant="secondary" (buttonClick)="openEditor(template)">
+                  <i class="ri-settings-3-line" aria-hidden="true"></i> Customize
+                </gom-lib-button>
+                <gom-lib-button
+                  type="button"
+                  variant="primary"
+                  [disabled]="template.isDefault || busyTemplateId() !== null"
+                  (buttonClick)="useTemplate(template)"
+                >
+                  {{ busyTemplateId() === template.id ? 'Applying...' : (template.isDefault ? 'In Use' : 'Use Template') }}
+                </gom-lib-button>
+              </div>
+            </div>
+          </gom-lib-card>
+        }
+      </div>
+    }
+  } @else if (view() === 'editor') {
+    @if (editorDraft(); as draft) {
+      <header class="billing-settings__header billing-settings__header--actions">
+        <div class="billing-settings__heading-with-back">
+          <button type="button" class="billing-settings__back" aria-label="Back to bill templates" (click)="closeEditor()">
+            <i class="ri-arrow-left-line" aria-hidden="true"></i>
+          </button>
+          <div>
+            <h2>Customize {{ draft.name }}</h2>
+            <p>Configure the content and appearance while reviewing the live preview.</p>
+          </div>
+        </div>
+        <div class="billing-settings__heading-actions">
+          <gom-lib-button type="button" variant="secondary" [disabled]="saving()" (buttonClick)="closeEditor()">Cancel</gom-lib-button>
+          <gom-lib-button type="button" variant="primary" [disabled]="saving()" (buttonClick)="saveTemplate()">
+            {{ saving() ? 'Saving...' : 'Save Template' }}
+          </gom-lib-button>
+        </div>
+      </header>
+
+      @if (errorMessage()) { <div class="billing-settings__error" role="alert">{{ errorMessage() }}</div> }
+
+      <div class="billing-editor">
+        <div class="billing-editor__controls">
+          <gom-lib-card class="billing-editor__card">
+            <h3>Template Details</h3>
+            <div class="billing-editor__field-grid">
+              <gom-lib-input label="Template name" [ngModel]="draft.name" (ngModelChange)="updateTemplateText('name', $event)"></gom-lib-input>
+              <gom-lib-textarea label="Description" [rows]="3" [ngModel]="draft.description" (ngModelChange)="updateTemplateText('description', $event)"></gom-lib-textarea>
+            </div>
+          </gom-lib-card>
+
+          <gom-lib-card class="billing-editor__card">
+            <h3>Page &amp; Formatting</h3>
+            <div class="billing-editor__field-grid billing-editor__field-grid--two">
+              <gom-lib-select label="Page size" [options]="pageSizeOptions" [ngModel]="draft.configuration.page.size" (ngModelChange)="updatePageSize($event)"></gom-lib-select>
+              <gom-lib-select label="Font size" [options]="fontSizeOptions" [ngModel]="draft.configuration.formatting.fontSize" (ngModelChange)="updateFontSize($event)"></gom-lib-select>
+              <gom-lib-select label="Logo position" [options]="alignmentOptions" [ngModel]="draft.configuration.formatting.logoPosition" (ngModelChange)="updateLogoPosition($event)"></gom-lib-select>
+              <gom-lib-checkbox label="Compact spacing" hint="Reduce vertical spacing for shorter receipts." [ngModel]="draft.configuration.formatting.compactSpacing" (ngModelChange)="updateCompactSpacing($event)"></gom-lib-checkbox>
+            </div>
+            <div class="billing-editor__palette" aria-label="Accent color">
+              <span>Accent color</span>
+              <div>
+                @for (color of accentColors; track color) {
+                  <button
+                    type="button"
+                    [style.background]="color"
+                    [class.is-selected]="draft.configuration.formatting.accentColor === color"
+                    [attr.aria-label]="'Use accent color ' + color"
+                    [attr.aria-pressed]="draft.configuration.formatting.accentColor === color"
+                    (click)="updateAccentColor(color)"
+                  ></button>
+                }
+              </div>
+            </div>
+          </gom-lib-card>
+
+          <div class="billing-editor__sections">
+            @for (section of draft.configuration.sections; track section.id; let index = $index) {
+              <gom-lib-accordion
+                [title]="section.label"
+                [subtitle]="section.fields.length + ' configurable fields'"
+                [expanded]="expandedSections()[section.id] === true"
+                (expandedChange)="toggleSection(section.id, $event)"
+              >
+                <div class="billing-editor__section-toolbar">
+                  <gom-lib-checkbox label="Show section" [ngModel]="section.visible" (ngModelChange)="updateSectionVisibility(section.id, $event)"></gom-lib-checkbox>
+                  <div>
+                    <gom-lib-button type="button" variant="ghost" size="compact-icon" ariaLabel="Move section up" [disabled]="index === 0" (buttonClick)="moveSection(section.id, -1)"><i class="ri-arrow-up-line" aria-hidden="true"></i></gom-lib-button>
+                    <gom-lib-button type="button" variant="ghost" size="compact-icon" ariaLabel="Move section down" [disabled]="index === draft.configuration.sections.length - 1" (buttonClick)="moveSection(section.id, 1)"><i class="ri-arrow-down-line" aria-hidden="true"></i></gom-lib-button>
+                  </div>
+                </div>
+                <div class="billing-editor__fields">
+                  @for (field of section.fields; track field.id) {
+                    <div class="billing-editor__field-row">
+                      <gom-lib-checkbox
+                        [label]="field.label"
+                        [hint]="field.locked ? 'Required field' : field.source"
+                        [ngModel]="field.visible"
+                        [disabled]="field.locked === true"
+                        (ngModelChange)="updateFieldVisibility(section.id, field.id, $event)"
+                      ></gom-lib-checkbox>
+                      <gom-lib-input label="Display label" [ngModel]="field.label" (ngModelChange)="updateFieldLabel(section.id, field.id, $event)"></gom-lib-input>
+                    </div>
+                  }
+                </div>
+              </gom-lib-accordion>
+            }
+          </div>
+
+          <gom-lib-card class="billing-editor__card">
+            <h3>Footer Content</h3>
+            <div class="billing-editor__field-grid">
+              <gom-lib-input label="Thank-you message" [ngModel]="draft.configuration.footer.thankYouMessage" (ngModelChange)="updateFooter('thankYouMessage', $event)"></gom-lib-input>
+              <gom-lib-textarea label="Notes" [rows]="3" [ngModel]="draft.configuration.footer.notes" (ngModelChange)="updateFooter('notes', $event)"></gom-lib-textarea>
+              <gom-lib-textarea label="Return policy" [rows]="3" [ngModel]="draft.configuration.footer.returnPolicy" (ngModelChange)="updateFooter('returnPolicy', $event)"></gom-lib-textarea>
+            </div>
+          </gom-lib-card>
+        </div>
+
+        <aside class="billing-editor__preview" aria-label="Live bill preview">
+          <div class="billing-editor__preview-heading">
+            <div><h3>Live Preview</h3><p>Updates are shown instantly.</p></div>
+            <span>{{ draft.configuration.page.size === 'A4' ? 'A4' : '80 mm' }}</span>
+          </div>
+          <gom-bill-preview [configuration]="draft.configuration"></gom-bill-preview>
+        </aside>
+      </div>
+    }
+  } @else {
+    <header class="billing-settings__header billing-settings__header--actions">
+      <div class="billing-settings__heading-with-back">
+        <button type="button" class="billing-settings__back" aria-label="Back to bill templates" (click)="backToTemplates()"><i class="ri-arrow-left-line" aria-hidden="true"></i></button>
+        <div>
+          <h2>Template Assignment</h2>
+          <p>Choose the bill template automatically used for each order type.</p>
+        </div>
+      </div>
+      <gom-lib-button type="button" variant="primary" [disabled]="loading() || saving() || !assignmentsDirty()" (buttonClick)="saveAssignments()">
+        {{ saving() ? 'Saving...' : 'Save Configuration' }}
+      </gom-lib-button>
+    </header>
+
+    @if (errorMessage()) { <div class="billing-settings__error" role="alert">{{ errorMessage() }}</div> }
+    @if (loading()) {
+      <div class="billing-settings__state"><i class="ri-loader-4-line billing-settings__spin" aria-hidden="true"></i><p>Loading assignments...</p></div>
+    } @else {
+      <gom-lib-card class="billing-assignments">
+        @for (orderType of orderTypes; track orderType) {
+          <div class="billing-assignments__row">
+            <span class="billing-assignments__icon" aria-hidden="true"><i [class]="orderType === 'DELIVERY' ? 'ri-truck-line' : (orderType === 'PICKUP' ? 'ri-shopping-bag-3-line' : 'ri-store-2-line')"></i></span>
+            <div class="billing-assignments__copy">
+              <h3>{{ orderTypeLabel(orderType) }}</h3>
+              <p>The selected template is resolved automatically when the order is placed.</p>
+            </div>
+            <gom-lib-select
+              [ariaLabel]="'Template for ' + orderTypeLabel(orderType)"
+              [options]="templateOptions()"
+              [ngModel]="assignmentDraft()[orderType]"
+              (ngModelChange)="updateAssignment(orderType, $event)"
+            ></gom-lib-select>
+            @if (assignmentDraft()[orderType]) {
+              <gom-lib-button type="button" variant="ghost" (buttonClick)="editAssignedTemplate(orderType)">Edit</gom-lib-button>
+            }
+          </div>
+        }
+      </gom-lib-card>
+      <div class="billing-assignments__note">
+        <i class="ri-information-line" aria-hidden="true"></i>
+        <p>Assignments are tenant-specific. The resolved template configuration is captured on the order, so historical bills remain unchanged after later template edits.</p>
+      </div>
+    }
+  }
+</section>

@@ -1,0 +1,180 @@
+<section class="business-details" aria-labelledby="business-details-title">
+  <header class="business-details__header">
+    <div>
+      <h2 id="business-details-title">{{ 'businessDetails.title' | translate }}</h2>
+      <p>{{ 'businessDetails.description' | translate }}</p>
+    </div>
+
+    @if (!loading() && savedProfile() && !editing() && canEdit()) {
+      <gom-lib-button type="button" variant="primary" (buttonClick)="edit()">
+        <i class="ri-edit-line" aria-hidden="true"></i>
+        {{ 'businessDetails.actions.edit' | translate }}
+      </gom-lib-button>
+    }
+
+    @if (!loading() && editing()) {
+      <div class="business-details__header-actions">
+        <gom-lib-button type="button" variant="ghost" [disabled]="saving()" (buttonClick)="reset()">
+          {{ 'businessDetails.actions.reset' | translate }}
+        </gom-lib-button>
+        @if (savedProfile()?.completed) {
+          <gom-lib-button type="button" variant="secondary" [disabled]="saving()" (buttonClick)="cancel()">
+            {{ 'businessDetails.actions.cancel' | translate }}
+          </gom-lib-button>
+        }
+        <gom-lib-button type="button" variant="primary" [disabled]="!canEdit() || saving() || uploadingLogo()" (buttonClick)="save()">
+          @if (saving()) { <i class="ri-loader-4-line business-details__spin" aria-hidden="true"></i> }
+          {{ (saving() ? 'businessDetails.actions.saving' : 'businessDetails.actions.save') | translate }}
+        </gom-lib-button>
+      </div>
+    }
+  </header>
+
+  @if (errorMessage()) {
+    <div class="business-details__error" role="alert">
+      <i class="ri-error-warning-line" aria-hidden="true"></i>
+      <span>{{ errorMessage() }}</span>
+      @if (!savedProfile() && !loading()) {
+        <gom-lib-button type="button" variant="ghost" (buttonClick)="load()">{{ 'businessDetails.actions.retry' | translate }}</gom-lib-button>
+      }
+    </div>
+  }
+
+  @if (loading()) {
+    <output class="business-details__loading">
+      <i class="ri-loader-4-line business-details__spin" aria-hidden="true"></i>
+      {{ 'businessDetails.loading' | translate }}
+    </output>
+  } @else if (savedProfile(); as profile) {
+    @if (!editing()) {
+      <div class="business-details__summary">
+        <article class="business-details__hero" [style.--brand-primary]="safeColor(profile.brandColor, '#0a5d8b')" [style.--brand-accent]="safeColor(profile.brandAccent, '#fa5c00')">
+          <div class="business-details__brand-mark">
+            @if (profile.logoUrl) { <img [src]="profile.logoUrl" [alt]="profile.accountName + ' logo'" /> }
+            @else { <span>{{ initials(profile.accountName) }}</span> }
+          </div>
+          <div class="business-details__hero-copy">
+            <div class="business-details__eyebrow">{{ optionLabel(businessTypeOptions, profile.businessType) }}</div>
+            <h3>{{ profile.accountName }}</h3>
+            <p>{{ display(profile.brandTagline || profile.businessDescription) }}</p>
+          </div>
+          <span class="business-details__status" [class.business-details__status--inactive]="profile.accountStatus !== 'ACTIVE'">
+            <span aria-hidden="true"></span>{{ profile.accountStatus }}
+          </span>
+        </article>
+
+        <div class="business-details__summary-grid">
+          <article class="business-details__panel business-details__panel--wide">
+            <div class="business-details__panel-heading"><span class="business-details__panel-icon"><i class="ri-building-4-line" aria-hidden="true"></i></span><div><h3>{{ 'businessDetails.sections.identity' | translate }}</h3><p>{{ 'businessDetails.sections.identityHint' | translate }}</p></div></div>
+            <dl class="business-details__details-grid">
+              <div><dt>{{ 'businessDetails.fields.accountName' | translate }}</dt><dd>{{ display(profile.accountName) }}</dd></div>
+              <div><dt>{{ 'businessDetails.fields.legalBusinessName' | translate }}</dt><dd>{{ display(profile.legalBusinessName) }}</dd></div>
+              <div><dt>{{ 'businessDetails.fields.businessType' | translate }}</dt><dd>{{ optionLabel(businessTypeOptions, profile.businessType) }}</dd></div>
+              <div class="business-details__detail-wide"><dt>{{ 'businessDetails.fields.businessDescription' | translate }}</dt><dd>{{ display(profile.businessDescription) }}</dd></div>
+            </dl>
+          </article>
+
+          <article class="business-details__panel">
+            <div class="business-details__panel-heading"><span class="business-details__panel-icon"><i class="ri-contacts-book-2-line" aria-hidden="true"></i></span><div><h3>{{ 'businessDetails.sections.contact' | translate }}</h3><p>{{ 'businessDetails.sections.contactHint' | translate }}</p></div></div>
+            <dl class="business-details__details-list">
+              <div><dt>{{ 'businessDetails.fields.primaryContactPhone' | translate }}</dt><dd>{{ display(profile.primaryContactPhone) }}</dd></div>
+              <div><dt>{{ 'businessDetails.fields.primaryContactEmail' | translate }}</dt><dd>{{ display(profile.primaryContactEmail) }}</dd></div>
+              <div><dt>{{ 'businessDetails.fields.supportEmail' | translate }}</dt><dd>{{ display(profile.supportEmail) }}</dd></div>
+              <div><dt>{{ 'businessDetails.fields.website' | translate }}</dt><dd>{{ display(profile.website) }}</dd></div>
+            </dl>
+          </article>
+
+          <article class="business-details__panel">
+            <div class="business-details__panel-heading"><span class="business-details__panel-icon"><i class="ri-map-pin-2-line" aria-hidden="true"></i></span><div><h3>{{ 'businessDetails.sections.address' | translate }}</h3><p>{{ 'businessDetails.sections.addressHint' | translate }}</p></div></div>
+            <address>
+              {{ display(profile.address.line1) }}<br />
+              @if (profile.address.line2) { {{ profile.address.line2 }}<br /> }
+              {{ display(profile.address.city) }}, {{ optionLabel(stateOptions, profile.address.state) }} {{ display(profile.address.postalCode) }}<br />
+              {{ optionLabel(countryOptions, profile.address.countryCode) }}
+            </address>
+          </article>
+
+          <article class="business-details__panel">
+            <div class="business-details__panel-heading"><span class="business-details__panel-icon"><i class="ri-bank-card-line" aria-hidden="true"></i></span><div><h3>{{ 'businessDetails.sections.tax' | translate }}</h3><p>{{ 'businessDetails.sections.taxHint' | translate }}</p></div></div>
+            <dl class="business-details__details-list">
+              <div><dt>{{ 'businessDetails.fields.taxRegistrationType' | translate }}</dt><dd>{{ optionLabel(taxRegistrationOptions, profile.taxRegistrationType) }}</dd></div>
+              <div><dt>{{ 'businessDetails.fields.gstin' | translate }}</dt><dd>{{ display(profile.gstin) }}</dd></div>
+              <div><dt>{{ 'businessDetails.fields.pan' | translate }}</dt><dd>{{ display(profile.pan) }}</dd></div>
+            </dl>
+          </article>
+
+        </div>
+      </div>
+    } @else {
+      <form class="business-details__form" [formGroup]="form" (ngSubmit)="save()">
+        @if (!profile.completed) {
+          <output class="business-details__setup-note"><i class="ri-information-line" aria-hidden="true"></i><span><strong>{{ 'businessDetails.setup.title' | translate }}</strong><span>{{ 'businessDetails.setup.description' | translate }}</span></span></output>
+        }
+
+        <fieldset class="business-details__panel business-details__form-section" [disabled]="saving() || !canEdit()">
+          <legend>{{ 'businessDetails.sections.identity' | translate }}</legend>
+          <p class="business-details__section-hint">{{ 'businessDetails.sections.identityHint' | translate }}</p>
+          <div class="business-details__logo-editor">
+            <div class="business-details__logo-preview">
+              @if (logoPreview()) { <img [src]="logoPreview()" [alt]="'businessDetails.logo.previewAlt' | translate" /> }
+              @else { <i class="ri-store-2-line" aria-hidden="true"></i> }
+            </div>
+            <div>
+              <strong>{{ 'businessDetails.logo.title' | translate }}</strong><p>{{ 'businessDetails.logo.hint' | translate }}</p>
+              <label class="business-details__file-input" for="business-logo-file">{{ 'businessDetails.logo.upload' | translate }}</label>
+              <input #logoInput id="business-logo-file" class="business-details__file-input" type="file" accept="image/*" (change)="onLogoSelected($event)" />
+              <div class="business-details__logo-actions">
+                <gom-lib-button type="button" variant="secondary" [disabled]="uploadingLogo()" (buttonClick)="logoInput.click()"><i class="ri-upload-2-line" aria-hidden="true"></i>{{ (uploadingLogo() ? 'businessDetails.logo.uploading' : 'businessDetails.logo.upload') | translate }}</gom-lib-button>
+                @if (logoPreview()) { <gom-lib-button type="button" variant="ghost" [disabled]="uploadingLogo()" (buttonClick)="removeLogo()">{{ 'businessDetails.logo.remove' | translate }}</gom-lib-button> }
+              </div>
+            </div>
+          </div>
+          <div class="business-details__form-grid">
+            <gom-lib-input [label]="'businessDetails.fields.accountName' | translate" [required]="true" [formControl]="form.controls.accountName" [error]="fieldError(form.controls.accountName)"></gom-lib-input>
+            <gom-lib-input [label]="'businessDetails.fields.legalBusinessName' | translate" [required]="true" [formControl]="form.controls.legalBusinessName" [error]="fieldError(form.controls.legalBusinessName)"></gom-lib-input>
+            <gom-lib-select [label]="'businessDetails.fields.businessType' | translate" [required]="true" [options]="businessTypeOptions" [formControl]="form.controls.businessType" [error]="fieldError(form.controls.businessType)"></gom-lib-select>
+            <gom-lib-textarea class="business-details__full" [label]="'businessDetails.fields.businessDescription' | translate" [rows]="4" [formControl]="form.controls.businessDescription" [error]="fieldError(form.controls.businessDescription)"></gom-lib-textarea>
+          </div>
+        </fieldset>
+
+        <fieldset class="business-details__panel business-details__form-section" [disabled]="saving() || !canEdit()">
+          <legend>{{ 'businessDetails.sections.contact' | translate }}</legend><p class="business-details__section-hint">{{ 'businessDetails.sections.contactHint' | translate }}</p>
+          <div class="business-details__form-grid">
+            <gom-lib-input [label]="'businessDetails.fields.primaryContactPhone' | translate" [required]="true" inputmode="tel" [formControl]="form.controls.primaryContactPhone" [error]="fieldError(form.controls.primaryContactPhone, 'businessDetails.validation.phone')"></gom-lib-input>
+            <gom-lib-input [label]="'businessDetails.fields.primaryContactEmail' | translate" [required]="true" type="email" [formControl]="form.controls.primaryContactEmail" [error]="fieldError(form.controls.primaryContactEmail)"></gom-lib-input>
+            <gom-lib-input [label]="'businessDetails.fields.supportEmail' | translate" [required]="true" type="email" [formControl]="form.controls.supportEmail" [error]="fieldError(form.controls.supportEmail)"></gom-lib-input>
+            <gom-lib-input [label]="'businessDetails.fields.website' | translate" inputmode="url" placeholder="https://" [formControl]="form.controls.website" [error]="fieldError(form.controls.website, 'businessDetails.validation.url')"></gom-lib-input>
+          </div>
+        </fieldset>
+
+        <fieldset class="business-details__panel business-details__form-section" formGroupName="address" [disabled]="saving() || !canEdit()">
+          <legend>{{ 'businessDetails.sections.address' | translate }}</legend><p class="business-details__section-hint">{{ 'businessDetails.sections.addressHint' | translate }}</p>
+          <div class="business-details__form-grid">
+            <gom-lib-input class="business-details__full" [label]="'businessDetails.fields.addressLine1' | translate" [required]="true" [formControl]="form.controls.address.controls.line1" [error]="fieldError(form.controls.address.controls.line1)"></gom-lib-input>
+            <gom-lib-input class="business-details__full" [label]="'businessDetails.fields.addressLine2' | translate" [formControl]="form.controls.address.controls.line2" [error]="fieldError(form.controls.address.controls.line2)"></gom-lib-input>
+            <gom-lib-select class="business-details__full" [label]="'businessDetails.fields.country' | translate" [required]="true" [options]="countryOptions" [formControl]="form.controls.address.controls.countryCode" [error]="fieldError(form.controls.address.controls.countryCode)"></gom-lib-select>
+            <gom-lib-input [label]="'businessDetails.fields.city' | translate" [required]="true" [formControl]="form.controls.address.controls.city" [error]="fieldError(form.controls.address.controls.city)"></gom-lib-input>
+            <gom-lib-select [label]="'businessDetails.fields.state' | translate" [required]="true" [searchable]="true" [options]="stateOptions" [formControl]="form.controls.address.controls.state" [error]="fieldError(form.controls.address.controls.state)"></gom-lib-select>
+            <gom-lib-input [label]="'businessDetails.fields.postalCode' | translate" [required]="true" inputmode="numeric" [formControl]="form.controls.address.controls.postalCode" [error]="fieldError(form.controls.address.controls.postalCode, 'businessDetails.validation.postalCode')"></gom-lib-input>
+          </div>
+        </fieldset>
+
+        <fieldset class="business-details__panel business-details__form-section" [disabled]="saving() || !canEdit()">
+          <legend>{{ 'businessDetails.sections.tax' | translate }}</legend><p class="business-details__section-hint">{{ 'businessDetails.sections.taxHint' | translate }}</p>
+          <div class="business-details__form-grid business-details__form-grid--3">
+            <gom-lib-select [label]="'businessDetails.fields.taxRegistrationType' | translate" [required]="true" [options]="taxRegistrationOptions" [formControl]="form.controls.taxRegistrationType" [error]="fieldError(form.controls.taxRegistrationType)"></gom-lib-select>
+            <gom-lib-input [label]="'businessDetails.fields.gstin' | translate" [required]="isTaxIdRequired()" [formControl]="form.controls.gstin" [error]="fieldError(form.controls.gstin, 'businessDetails.validation.gstin')"></gom-lib-input>
+            <gom-lib-input [label]="'businessDetails.fields.pan' | translate" [required]="isTaxIdRequired()" [formControl]="form.controls.pan" [error]="fieldError(form.controls.pan, 'businessDetails.validation.pan')"></gom-lib-input>
+          </div>
+        </fieldset>
+
+        @if (form.dirty) {
+          <output class="business-details__dirty-bar">
+            <div><i class="ri-edit-circle-line" aria-hidden="true"></i><span><strong>{{ 'businessDetails.unsaved.title' | translate }}</strong>{{ 'businessDetails.unsaved.description' | translate }}</span></div>
+            <div class="business-details__dirty-actions"><gom-lib-button type="button" variant="ghost" [disabled]="saving()" (buttonClick)="reset()">{{ 'businessDetails.actions.reset' | translate }}</gom-lib-button><gom-lib-button type="submit" variant="primary" [disabled]="!canEdit() || saving() || uploadingLogo()">{{ (saving() ? 'businessDetails.actions.saving' : 'businessDetails.actions.save') | translate }}</gom-lib-button></div>
+          </output>
+        }
+      </form>
+    }
+  }
+</section>

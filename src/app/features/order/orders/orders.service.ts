@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { forkJoin, Observable } from 'rxjs';
+import { EMPTY, Observable, expand, forkJoin, map, reduce } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
 
@@ -58,9 +58,205 @@ export interface TenantDeliveryPincodeConfig {
   nonServiceableSuggestion: PincodeFallbackSuggestion;
 }
 
+export type TenantPaymentMethod = 'UPI' | 'CASH' | 'BANK_TRANSFER';
+export type TenantPaymentOrderType = 'inStore' | 'pickup' | 'delivery';
+
+export interface TenantPaymentOptionsConfig {
+  enabledMethods?: {
+    upi?: boolean;
+    cash?: boolean;
+    bankTransfer?: boolean;
+  };
+  upiAccounts?: Array<{
+    id?: string;
+    providerName?: string;
+    upiId?: string;
+    qrCodeUrl?: string;
+    active?: boolean;
+  }>;
+  bankAccounts?: Array<{
+    id?: string;
+    bankName?: string;
+    accountHolderName?: string;
+    accountNumberLast4?: string;
+    ifscCode?: string;
+    branchName?: string;
+    active?: boolean;
+  }>;
+  orderTypeMethods?: Partial<Record<TenantPaymentOrderType, TenantPaymentMethod[]>>;
+}
+
+export interface PickupConfig {
+  locationId?: string;
+  locationName?: string;
+  storeAddressLine1?: string;
+  storeAddressLine2?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  mapUrl?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  pickupInstructions?: string;
+  notes?: string;
+  pickupTimingText?: string;
+  pickupAdvanceDays?: number | null;
+  pickupSameDayLeadMinutes?: number | null;
+}
+
+export interface ServiceablePincodeEntry {
+  pincode: string;
+  deliveryChargeOverride?: number | null;
+  estimatedTimeOverride?: number | null;
+  estimatedTimeUnit?: 'DAYS' | 'HOURS' | 'MINUTES';
+  active?: boolean;
+  [key: string]: unknown;
+}
+
 export interface TenantConfigPayload {
   tenantId: string;
   deliveryPincodeConfig?: TenantDeliveryPincodeConfig;
+  paymentOptions?: TenantPaymentOptionsConfig;
+  createOrderConfig?: {
+    enableOfflineStorage?: boolean;
+    requireMemberForBilling?: boolean;
+    paymentStatuses?: {
+      pickup?: string[];
+      delivery?: string[];
+      counter?: string[];
+    };
+    orderIntakeChannels?: Array<{
+      name: string;
+      enabled: boolean;
+    }>;
+  };
+  storefrontConfig?: {
+    storeSlug?: string;
+    deliveryCharge?: number;
+    pincodeServiceabilityMode?: 'SERVE_ALL' | 'RESTRICTED';
+    serviceablePincodes?: ServiceablePincodeEntry[];
+    pickupConfig?: PickupConfig;
+    pickupLocations?: PickupConfig[];
+    pickupAdvanceDays?: number | null;
+    pickupSameDayLeadMinutes?: number | null;
+  };
+  storefrontShare?: {
+    storeSlug?: string;
+  };
+}
+
+export interface ProductsTabGroupSummary {
+  id: string;
+  name: string;
+  imageUrl?: string;
+  variantCount: number;
+  groupType?: 'MEASURED' | 'ATTRIBUTE' | 'HYBRID';
+  baseUnitId?: string;
+  allowedUnits?: Array<{
+    id: string;
+    name: string;
+    symbol: string;
+    baseUnitId?: string | null;
+    conversionFactor: number;
+  }>;
+}
+
+export interface StorefrontGroupDetail extends ProductsTabGroupSummary {
+  description?: string;
+  variants: ProductsTabVariantRow[];
+}
+
+export interface StorefrontPricePreview {
+  convertedQuantity: number;
+  sellingPrice: number;
+  anchorPrice: number;
+  actualPrice: number;
+}
+
+export interface ProductsTabVariantRow {
+  id: string;
+  groupId: string;
+  groupName: string;
+  groupImageUrl?: string;
+  name?: string;
+  quantity: number;
+  unitId: string;
+  unitSymbol?: string;
+  convertedQuantity: number;
+  effectivePrice: {
+    sellingPrice: number;
+    anchorPrice?: number;
+    actualPrice?: number;
+  };
+  status: 'ACTIVE' | 'INACTIVE';
+  images?: Array<{
+    url: string;
+    mediaType?: 'IMAGE' | 'VIDEO';
+    thumbnailUrl?: string;
+  }>;
+}
+
+export interface ProductsTabCategoryDetail {
+  category: {
+    id: string;
+    name: string;
+    imageUrl?: string;
+  };
+  groups: ProductsTabGroupSummary[];
+  activeGroupId: string;
+  variants: ProductsTabVariantRow[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    hasMore: boolean;
+    totalPages: number;
+  };
+}
+
+export interface ProductsTabContext {
+  collections: Array<{
+    id: string;
+    name: string;
+    categories: Array<{
+      id: string;
+      name: string;
+      imageUrl?: string;
+    }>;
+  }>;
+  others: {
+    key: string;
+    categories: Array<{
+      id: string;
+      name: string;
+      imageUrl?: string;
+    }>;
+  };
+}
+
+export interface StorefrontSearchProduct {
+  variantId: string;
+  groupId: string;
+  groupName: string;
+  variantName?: string;
+  variantLabel: string;
+  price: number;
+  imageUrl?: string;
+  categoryId?: string;
+  categoryName: string;
+  unitSymbol?: string;
+}
+
+export interface StorefrontSearchResults {
+  items: StorefrontSearchProduct[];
+  pagination: {
+    page: number;
+    limit: number;
+    totalItems: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
 }
 
 export interface PurgeOrdersResult {
@@ -388,12 +584,103 @@ export class OrdersService {
     return this.http.get<ApiSuccess<OrderNavigationCounts>>(url);
   }
 
-  listVariants(): Observable<ApiPaginated<Variant>> {
-    return this.http.get<ApiPaginated<Variant>>(`${this.variantsUrl}?status=ACTIVE`);
+  listVariants(params?: { groupId?: string; search?: string; page?: number; limit?: number }): Observable<ApiPaginated<Variant>> {
+    const searchParams = new URLSearchParams();
+    searchParams.set('status', 'ACTIVE');
+    if (params?.groupId) searchParams.set('groupId', params.groupId);
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.page) searchParams.set('page', String(params.page));
+    if (params?.limit) searchParams.set('limit', String(params.limit));
+
+    return this.http.get<ApiPaginated<Variant>>(`${this.variantsUrl}?${searchParams.toString()}`);
   }
 
-  listGroups(): Observable<ApiPaginated<Group>> {
-    return this.http.get<ApiPaginated<Group>>(`${environment.apiBaseUrl}/groups?status=ACTIVE`);
+  listGroups(params?: { categoryId?: string; search?: string; page?: number; limit?: number }): Observable<ApiPaginated<Group>> {
+    const searchParams = new URLSearchParams();
+    searchParams.set('status', 'ACTIVE');
+    if (params?.categoryId) searchParams.set('categoryId', params.categoryId);
+    if (params?.search) searchParams.set('search', params.search);
+    if (params?.page) searchParams.set('page', String(params.page));
+    if (params?.limit) searchParams.set('limit', String(params.limit));
+
+    return this.http.get<ApiPaginated<Group>>(`${environment.apiBaseUrl}/groups?${searchParams.toString()}`);
+  }
+
+  getStorefrontCategoryProducts(storeSlug: string, categoryId: string): Observable<ProductsTabCategoryDetail> {
+    const limit = 100;
+    const baseUrl = `${environment.apiBaseUrl}/storefront/${encodeURIComponent(storeSlug)}/products-tab/category/${encodeURIComponent(categoryId)}`;
+    const fetchPage = (page: number) => this.http
+      .get<ApiSuccess<ProductsTabCategoryDetail>>(baseUrl, {
+        params: { page: String(page), limit: String(limit) },
+      })
+      .pipe(map((response) => response.data));
+
+    return fetchPage(1).pipe(
+      expand((detail) => detail.pagination?.hasMore ? fetchPage(detail.pagination.page + 1) : EMPTY),
+      reduce((accumulator, page) => {
+        if (!accumulator) {
+          return page;
+        }
+
+        const existingIds = new Set(accumulator.variants.map((variant) => variant.id));
+        return {
+          ...page,
+          variants: [
+            ...accumulator.variants,
+            ...page.variants.filter((variant) => !existingIds.has(variant.id)),
+          ],
+        };
+      }),
+    );
+  }
+
+  getStorefrontProductsContext(storeSlug: string): Observable<ProductsTabContext> {
+    const url = `${environment.apiBaseUrl}/storefront/${encodeURIComponent(storeSlug)}/products-tab/context`;
+    return this.http.get<ApiSuccess<ProductsTabContext>>(url).pipe(map((response) => response.data));
+  }
+
+  getStorefrontGroup(storeSlug: string, groupId: string): Observable<StorefrontGroupDetail> {
+    const url = `${environment.apiBaseUrl}/storefront/${encodeURIComponent(storeSlug)}/groups/${encodeURIComponent(groupId)}`;
+    return this.http.get<ApiSuccess<StorefrontGroupDetail>>(url).pipe(map((response) => response.data));
+  }
+
+  previewStorefrontGroupPrice(
+    storeSlug: string,
+    groupId: string,
+    quantity: number,
+    unitId: string,
+  ): Observable<StorefrontPricePreview> {
+    const url = `${environment.apiBaseUrl}/storefront/${encodeURIComponent(storeSlug)}/groups/${encodeURIComponent(groupId)}/preview-price`;
+    return this.http.post<ApiSuccess<StorefrontPricePreview>>(url, { quantity, unitId })
+      .pipe(map((response) => response.data));
+  }
+
+  searchStorefrontProducts(storeSlug: string, search: string): Observable<StorefrontSearchResults> {
+    const limit = 100;
+    const url = `${environment.apiBaseUrl}/storefront/${encodeURIComponent(storeSlug)}/search`;
+    const fetchPage = (page: number) => this.http
+      .get<ApiSuccess<StorefrontSearchResults>>(url, {
+        params: { q: search, page: String(page), limit: String(limit) },
+      })
+      .pipe(map((response) => response.data));
+
+    return fetchPage(1).pipe(
+      expand((results) => results.pagination?.hasNextPage ? fetchPage(results.pagination.page + 1) : EMPTY),
+      reduce((accumulator, page) => {
+        if (!accumulator) {
+          return page;
+        }
+
+        const existingIds = new Set(accumulator.items.map((item) => item.variantId));
+        return {
+          ...page,
+          items: [
+            ...accumulator.items,
+            ...page.items.filter((item) => !existingIds.has(item.variantId)),
+          ],
+        };
+      }),
+    );
   }
 
   listTaxProfiles(): Observable<ApiPaginated<TaxProfile>> {
@@ -439,8 +726,8 @@ export class OrdersService {
     return this.http.get<ApiSuccess<TenantConfigPayload>>(this.tenantConfigUrl);
   }
 
-  createDraft(payload: CreateDraftPayload): Observable<ApiSuccess<{ draftId: string }>> {
-    return this.http.post<ApiSuccess<{ draftId: string }>>(`${this.ordersUrl}/draft`, payload);
+  createDraft(payload: CreateDraftPayload): Observable<ApiSuccess<{ draftId: string; orderNo?: string; status?: string }>> {
+    return this.http.post<ApiSuccess<{ draftId: string; orderNo?: string; status?: string }>>(`${this.ordersUrl}/draft`, payload);
   }
 
   checkStock(payload: { items: Array<{ variantId: string; quantity: number }> }): Observable<ApiSuccess<{ items: StockCheckItem[] }>> {
@@ -450,7 +737,7 @@ export class OrdersService {
   placeOrder(
     draftId: string,
     payload?: {
-      paymentMode?: 'CASH' | 'UPI_MANUAL';
+      paymentMode?: 'CASH' | 'UPI_MANUAL' | 'CARD' | 'NET_BANKING';
       paymentCollectionStage?: 'AT_ORDER' | 'AT_FULFILLMENT';
       paymentReceived?: boolean;
     }

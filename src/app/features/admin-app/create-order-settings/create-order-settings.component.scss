@@ -1,0 +1,132 @@
+:host {
+  display: block;
+}
+
+.create-order-settings {
+  padding: 1.5rem;
+
+  &__header {
+    margin-bottom: 1.5rem;
+
+    h2 {
+      margin: 0 0 0.25rem;
+      color: var(--gom-grey-900, #212121);
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+
+    p {
+      margin: 0;
+      color: var(--gom-grey-600, #767676);
+      font-size: 0.875rem;
+    }
+  }
+
+  &__error {
+    margin-bottom: 1rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--gom-red-300, #f15462);
+    border-radius: 0.5rem;
+    background: var(--gom-red-50, #f9d9dc);
+    color: var(--gom-red-700, #a50012);
+  }
+
+  &__form {
+    display: grid;
+    gap: 1rem;
+    margin-top: 1.25rem;
+  }
+
+  &__card {
+    overflow: hidden;
+    border: 1px solid var(--gom-grey-200, #e9e9e9);
+    border-radius: 0.75rem;
+    background: var(--gom-white, #ffffff);
+  }
+
+  &__section {
+    min-width: 0;
+    margin: 0;
+    padding: 1.5rem;
+    border: 0;
+
+    legend {
+      margin: 0 0 0.5rem;
+      color: var(--gom-grey-900, #212121);
+      font-size: 1rem;
+      font-weight: 600;
+    }
+  }
+
+  &__hint {
+    margin: 0 0 1.25rem;
+    color: var(--gom-grey-600, #767676);
+    font-size: 0.875rem;
+  }
+
+  &__actions {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 0.25rem;
+  }
+
+  &__payment {
+    min-width: 0;
+    margin: 0;
+    padding: 1rem 0 0;
+    border: 0;
+
+    legend {
+      margin-bottom: 0.75rem;
+      color: var(--gom-grey-800, #424242);
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+  }
+
+  &__order-types {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+  }
+
+  &__status-list {
+    display: grid;
+    max-width: 40rem;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  &__status-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: 0.5rem;
+  }
+
+  &__channel-list {
+    display: grid;
+    max-width: 48rem;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  &__channel-row {
+    display: grid;
+    grid-template-columns: minmax(14rem, 1fr) minmax(14rem, 1fr);
+    align-items: end;
+    gap: 1rem;
+    padding: 1rem;
+    border: 1px solid var(--gom-grey-200, #e9e9e9);
+    border-radius: 0.5rem;
+    background: var(--gom-grey-25, #fbfcfe);
+  }
+}
+
+@media (max-width: 640px) {
+  .create-order-settings__channel-row {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+}

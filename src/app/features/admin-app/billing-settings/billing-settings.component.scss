@@ -1,0 +1,128 @@
+@use "theme" as theme;
+
+:host { display: block; }
+
+.billing-settings { padding: theme.get-spacing(lg); }
+
+.billing-settings--editor {
+  height: calc(100dvh - 5rem);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  > .billing-settings__header {
+    flex: 0 0 auto;
+  }
+
+  > .billing-settings__error {
+    flex: 0 0 auto;
+  }
+}
+
+.billing-settings__header {
+  margin-bottom: theme.get-spacing(lg);
+  h2 { margin: 0 0 theme.get-spacing(xxs); color: theme.get-text(primary); @include theme.typography-heading(lg); }
+  p { margin: 0; color: theme.get-text(hint); @include theme.typography-body; }
+}
+
+.billing-settings__header--actions,
+.billing-settings__heading-with-back,
+.billing-settings__heading-actions,
+.billing-template-card__title-row,
+.billing-template-card__actions,
+.billing-template-card__meta,
+.billing-editor__section-toolbar,
+.billing-editor__preview-heading {
+  display: flex;
+  align-items: center;
+}
+
+.billing-settings__header--actions { justify-content: space-between; gap: theme.get-gap(md); }
+.billing-settings__heading-with-back { min-width: 0; gap: theme.get-gap(sm); }
+.billing-settings__heading-actions { gap: theme.get-gap(xs); }
+.billing-settings__back {
+  width: 2.5rem; height: 2.5rem; flex: 0 0 auto; border: theme.get-border-size(thin) solid theme.get-border(standard);
+  border-radius: theme.get-radius(sm); background: theme.get-background(standard); color: theme.get-text(primary); cursor: pointer;
+}
+
+.billing-settings__error {
+  display: flex; align-items: center; justify-content: space-between; gap: theme.get-gap(sm); margin-bottom: theme.get-spacing(md);
+  padding: theme.get-spacing(sm); border: theme.get-border-size(thin) solid theme.get-border(danger);
+  border-radius: theme.get-radius(sm); background: theme.get-background(danger-light); color: theme.get-text(danger);
+}
+
+.billing-settings__state {
+  min-height: 20rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: theme.get-gap(sm);
+  padding: theme.get-spacing(xl); border: theme.get-border-size(thin) solid theme.get-border(standard);
+  border-radius: theme.get-radius(md); background: theme.get-background(standard); text-align: center;
+  h3, p { margin: 0; }
+  h3 { color: theme.get-text(primary); @include theme.typography-heading(sm); }
+  p { max-width: 34rem; color: theme.get-text(hint); @include theme.typography-body; }
+}
+.billing-settings__state-icon { width: 3.5rem; height: 3.5rem; display: grid; place-items: center; border-radius: 50%; background: theme.get-background(primary-light); color: theme.get-text(primary); font-size: 1.5rem; }
+.billing-settings__spin { animation: billing-spin .8s linear infinite; font-size: 1.5rem; }
+@keyframes billing-spin { to { transform: rotate(360deg); } }
+
+.billing-settings__template-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: theme.get-gap(md); }
+.billing-template-card { display: grid; grid-template-columns: 9rem minmax(0, 1fr); min-height: 17rem; overflow: hidden; }
+.billing-template-card__preview { display: grid; place-items: center; padding: theme.get-spacing(sm); background: theme.get-background(secondary); border-right: theme.get-border-size(thin) solid theme.get-border(light); }
+.billing-template-card__body { min-width: 0; display: flex; flex-direction: column; gap: theme.get-gap(sm); padding: theme.get-spacing(md); }
+.billing-template-card__title-row { justify-content: space-between; gap: theme.get-gap(xs); }
+.billing-template-card h3 { margin: 0; color: theme.get-text(primary); @include theme.typography-heading(sm); }
+.billing-template-card p { margin: 0; color: theme.get-text(default); @include theme.typography-body; }
+.billing-template-card__badge { display: inline-flex; align-items: center; gap: theme.get-gap(xxs); padding: .2rem .55rem; border-radius: 999px; background: theme.get-background(success-light); color: theme.get-text(success); @include theme.typography-caption; font-weight: theme.get-font-weight(semibold); }
+.billing-template-card__meta { gap: theme.get-gap(sm); color: theme.get-text(hint); @include theme.typography-caption; }
+.billing-template-card__actions { justify-content: flex-end; gap: theme.get-gap(xs); margin-top: auto; }
+
+.billing-editor { min-height: 0; flex: 1 1 auto; display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(22rem, .8fr); gap: theme.get-gap(lg); align-items: stretch; overflow: hidden; }
+.billing-editor__controls { min-height: 0; display: grid; align-content: start; gap: theme.get-gap(md); padding-right: theme.get-spacing(xs); overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }
+.billing-editor__sections { display: grid; gap: theme.get-gap(md); }
+.billing-editor__card { padding: theme.get-spacing(md); }
+.billing-editor__card h3 { margin: 0 0 theme.get-spacing(md); color: theme.get-text(primary); @include theme.typography-heading(sm); }
+.billing-editor__field-grid { display: grid; gap: theme.get-gap(sm); }
+.billing-editor__field-grid--two { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: end; }
+.billing-editor__palette { margin-top: theme.get-spacing(md); display: grid; gap: theme.get-gap(xs); color: theme.get-text(default); @include theme.typography-label; }
+.billing-editor__palette > div { display: flex; gap: theme.get-gap(xs); }
+.billing-editor__palette button { width: 2rem; height: 2rem; border: .18rem solid theme.get-background(standard); border-radius: 50%; box-shadow: 0 0 0 theme.get-border-size(thin) theme.get-border(standard); cursor: pointer; }
+.billing-editor__palette button.is-selected { box-shadow: 0 0 0 .15rem theme.get-border(primary); }
+.billing-editor__section-toolbar { justify-content: space-between; gap: theme.get-gap(sm); margin-bottom: theme.get-spacing(sm); }
+.billing-editor__section-toolbar > div { display: flex; gap: theme.get-gap(xxs); }
+.billing-editor__fields { display: grid; gap: theme.get-gap(xs); }
+.billing-editor__field-row { display: grid; grid-template-columns: minmax(12rem, .8fr) minmax(0, 1.2fr); align-items: end; gap: theme.get-gap(sm); padding: theme.get-spacing(xs); border: theme.get-border-size(thin) solid theme.get-border(light); border-radius: theme.get-radius(xs); background: theme.get-background(secondary); }
+.billing-editor__preview { min-height: 0; height: 100%; padding: theme.get-spacing(md); box-sizing: border-box; overflow: hidden; border: theme.get-border-size(thin) solid theme.get-border(standard); border-radius: theme.get-radius(md); background: theme.get-background(secondary); }
+.billing-editor__preview-heading { justify-content: space-between; margin-bottom: theme.get-spacing(md); }
+.billing-editor__preview-heading h3, .billing-editor__preview-heading p { margin: 0; }
+.billing-editor__preview-heading h3 { color: theme.get-text(primary); @include theme.typography-heading(sm); }
+.billing-editor__preview-heading p, .billing-editor__preview-heading span { color: theme.get-text(hint); @include theme.typography-caption; }
+
+.billing-assignments { display: grid; }
+.billing-assignments__row { display: grid; grid-template-columns: auto minmax(12rem, 1fr) minmax(16rem, .7fr) auto; align-items: center; gap: theme.get-gap(md); padding: theme.get-spacing(md); border-bottom: theme.get-border-size(thin) solid theme.get-border(light); }
+.billing-assignments__row:last-child { border-bottom: 0; }
+.billing-assignments__icon { width: 2.75rem; height: 2.75rem; display: grid; place-items: center; border-radius: theme.get-radius(sm); background: theme.get-background(primary-light); color: theme.get-text(primary); font-size: 1.25rem; }
+.billing-assignments__copy h3, .billing-assignments__copy p { margin: 0; }
+.billing-assignments__copy h3 { color: theme.get-text(primary); @include theme.typography-label; }
+.billing-assignments__copy p { color: theme.get-text(hint); @include theme.typography-caption; }
+.billing-assignments__note { display: flex; align-items: flex-start; gap: theme.get-gap(xs); margin-top: theme.get-spacing(md); padding: theme.get-spacing(sm); border: theme.get-border-size(thin) solid theme.get-border(primary); border-radius: theme.get-radius(sm); background: theme.get-background(primary-light); color: theme.get-text(primary); }
+.billing-assignments__note p { margin: 0; @include theme.typography-body; }
+
+@include theme.breakpoint-down(tablet) {
+  .billing-settings--editor {
+    height: auto;
+    overflow: visible;
+  }
+
+  .billing-settings__template-grid, .billing-editor { grid-template-columns: 1fr; }
+  .billing-editor { overflow: visible; }
+  .billing-editor__controls { overflow: visible; padding-right: 0; }
+  .billing-editor__preview { height: auto; min-height: 38rem; overflow: visible; }
+  .billing-assignments__row { grid-template-columns: auto 1fr; }
+  .billing-assignments__row gom-lib-select { grid-column: 1 / -1; }
+}
+
+@include theme.breakpoint-down(sm) {
+  .billing-settings { padding: theme.get-spacing(sm); }
+  .billing-settings__header--actions { align-items: flex-start; flex-direction: column; }
+  .billing-template-card { grid-template-columns: 6rem minmax(0, 1fr); }
+  .billing-editor__field-grid--two, .billing-editor__field-row { grid-template-columns: 1fr; }
+}

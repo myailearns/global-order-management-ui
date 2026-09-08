@@ -1,24 +1,36 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Component, OnDestroy, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, HostListener, OnDestroy, computed, inject, OnInit, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
-import { Subscription, filter, interval, map, startWith } from 'rxjs';
-import { GomAlertToastComponent, GomSelectComponent, GomSelectOption } from '@gomlibs/ui';
+import { Subscription, filter, firstValueFrom, interval, map, startWith } from 'rxjs';
+import {
+  GomAlertToastComponent,
+  GomAlertToastService,
+  GomButtonComponent,
+  GomConfirmationModalComponent,
+  GomInputComponent,
+  GomModalComponent,
+  GomSelectComponent,
+  GomSelectOption,
+} from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { AppLanguage, I18nService } from '../../../core/i18n/i18n.service';
 import { AppCapability, UserActor } from '../../../core/auth/auth-session.model';
 import { environment } from '../../../../environments/environment';
 import { AdminNotification, AdminNotificationService } from './admin-notification.service';
+import { HeaderSearchService } from './header-search.service';
+import { OrdersService } from '../../../features/order/orders/orders.service';
+import { CreateOrderCatalogCacheService } from '../../../features/order/new-care-order/create-order-catalog-cache.service';
 
 interface NavItem {
   label: string;
   route: string;
   icon: string;
   translationKey: string;
-  section: 'Master Setup' | 'Marketplace' | 'Product Setup' | 'Order Management' | 'Staff Management' | 'Settings';
+  section: 'Master Setup' | 'Marketplace' | 'Product Setup' | 'Order Management' | 'Staff Management' | 'Admin App' | 'Settings';
   actor: UserActor;
   capability?: AppCapability;
   /** If provided, the nav item is shown only when session has at least one of these feature keys. */
@@ -36,6 +48,10 @@ interface NavItem {
     RouterOutlet,
     TranslateModule,
     GomAlertToastComponent,
+    GomButtonComponent,
+    GomConfirmationModalComponent,
+    GomInputComponent,
+    GomModalComponent,
     GomSelectComponent,
   ],
   templateUrl: './gom-shell.component.html',
@@ -47,12 +63,22 @@ export class GomShellComponent implements OnInit, OnDestroy {
   private readonly authSession = inject(AuthSessionService);
   private readonly http = inject(HttpClient);
   private readonly adminNotifService = inject(AdminNotificationService);
+  private readonly headerSearch = inject(HeaderSearchService);
+  private readonly ordersService = inject(OrdersService);
+  private readonly catalogCache = inject(CreateOrderCatalogCacheService);
+  private readonly toast = inject(GomAlertToastService);
 
   readonly menuOpen = signal(false);
   readonly desktopNavCollapsed = signal(false);
   readonly currentLanguage = signal<AppLanguage>(this.i18n.currentLanguage());
   readonly currentSession = this.authSession.session;
   readonly pendingPricingCount = signal(0);
+  readonly clearLocalCatalogConfirmOpen = signal(false);
+  readonly clearingLocalCatalog = signal(false);
+  readonly catalogSyncModalOpen = signal(false);
+  readonly catalogStorageEnabled = this.catalogCache.activeEnabled;
+  readonly catalogLastUpdated = this.catalogCache.activeLastUpdated;
+  readonly catalogRefreshing = this.catalogCache.activeRefreshing;
 
   // Admin in-app notifications
   readonly notifPanelOpen = signal(false);
@@ -76,6 +102,11 @@ export class GomShellComponent implements OnInit, OnDestroy {
     { initialValue: this.router.url },
   );
   readonly isAuthRoute = computed(() => this.currentUrl().startsWith('/auth'));
+  readonly showTopbarSearch = computed(() => this.headerSearch.activeContext() === 'orders-create');
+  readonly isCreateOrderRoute = computed(() => {
+    const url = this.currentUrl();
+    return url.startsWith('/orders/create') || url.startsWith('/orders/new-care-order');
+  });
   readonly languageOptions: Array<{ value: AppLanguage; labelKey: string }> = [
     { value: 'en', labelKey: 'app.language.english' },
     { value: 'te', labelKey: 'app.language.telugu' },
@@ -87,6 +118,7 @@ export class GomShellComponent implements OnInit, OnDestroy {
     'Product Setup': true,
     'Order Management': true,
     'Staff Management': true,
+    'Admin App': true,
     'Settings': true,
   });
 
@@ -144,11 +176,15 @@ export class GomShellComponent implements OnInit, OnDestroy {
     { label: 'Offers', route: '/saas-admin/offers', icon: 'ri-coupon-2-line', translationKey: 'gom.offers.title', section: 'Settings', actor: 'tenant', capability: 'tenant-admin', featureKeys: ['offer.list'] },
     { label: 'Accounts', route: '/saas-admin/employees', icon: 'ri-id-card-line', translationKey: 'app.navigation.tenantEmployees', section: 'Staff Management', actor: 'tenant', capability: 'tenant-admin', featureKeys: ['tenantAccount.view', 'tenantAccount.add', 'tenantAccount.edit', 'tenantAccount.delete'] },
     { label: 'Roles', route: '/saas-admin/roles', icon: 'ri-shield-check-line', translationKey: 'app.navigation.tenantRoles', section: 'Staff Management', actor: 'tenant', capability: 'tenant-admin', featureKeys: ['tenantRole.view', 'tenantRole.add', 'tenantRole.edit', 'tenantRole.delete'] },
+    { label: 'Create Order Settings', route: '/admin-app/create-order-settings', icon: 'ri-settings-3-line', translationKey: 'app.navigation.createOrderSettings', section: 'Admin App', actor: 'tenant', capability: 'orders' },
+    { label: 'Billing', route: '/admin-app/billing', icon: 'ri-bill-line', translationKey: 'app.navigation.billing', section: 'Admin App', actor: 'tenant', capability: 'orders' },
+    { label: 'Business Details', route: '/admin-app/business-details', icon: 'ri-store-2-line', translationKey: 'app.navigation.businessDetails', section: 'Admin App', actor: 'tenant', capability: 'tenant-admin', featureKeys: ['roles.view', 'roles.edit'] },
+    { label: 'Payment Options', route: '/admin-app/payment-options', icon: 'ri-bank-card-line', translationKey: 'app.navigation.paymentOptions', section: 'Admin App', actor: 'tenant', capability: 'orders' },
   ];
 
   readonly sections = computed<Array<NavItem['section']>>(() => {
     const visibleItems = this.visibleNavItems();
-    const orderedSections: Array<NavItem['section']> = ['Master Setup', 'Marketplace', 'Product Setup', 'Order Management', 'Staff Management', 'Settings'];
+    const orderedSections: Array<NavItem['section']> = ['Master Setup', 'Marketplace', 'Product Setup', 'Order Management', 'Staff Management', 'Admin App', 'Settings'];
     return orderedSections.filter((section) => visibleItems.some((item) => item.section === section));
   });
 
@@ -188,6 +224,33 @@ export class GomShellComponent implements OnInit, OnDestroy {
 
   toggleMenu(): void {
     this.menuOpen.update((open) => !open);
+  }
+
+  @HostListener('window:keydown', ['$event'])
+  onGlobalShortcut(event: KeyboardEvent): void {
+    if (!event.altKey || event.ctrlKey || event.metaKey || String(event.key || '').toLowerCase() !== 'n') {
+      return;
+    }
+
+    const session = this.currentSession();
+    if (!session || session.actorType !== 'tenant' || !session.capabilities.includes('orders')) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    this.closeMenu();
+    if (!this.isCreateOrderRoute()) {
+      void this.router.navigateByUrl('/orders/create');
+    }
+  }
+
+  get topbarSearchValue(): string {
+    return this.headerSearch.value();
+  }
+
+  onTopbarSearchChange(value: string): void {
+    this.headerSearch.setValue(value);
   }
 
   ngOnInit(): void {
@@ -382,6 +445,10 @@ export class GomShellComponent implements OnInit, OnDestroy {
       return 'app.navigation.staffManagement';
     }
 
+    if (section === 'Admin App') {
+      return 'app.navigation.adminApp';
+    }
+
     if (section === 'Settings') {
       return 'app.navigation.settings';
     }
@@ -396,6 +463,71 @@ export class GomShellComponent implements OnInit, OnDestroy {
 
     this.i18n.useLanguage(lang);
     this.currentLanguage.set(lang);
+  }
+
+  openClearLocalCatalogConfirmation(): void {
+    this.clearLocalCatalogConfirmOpen.set(true);
+  }
+
+  openCatalogSyncModal(): void {
+    this.catalogSyncModalOpen.set(true);
+  }
+
+  closeCatalogSyncModal(): void {
+    if (!this.catalogRefreshing()) {
+      this.catalogSyncModalOpen.set(false);
+    }
+  }
+
+  async resyncCatalog(): Promise<void> {
+    await this.catalogCache.refreshActiveCatalog();
+  }
+
+  formatCatalogLastUpdated(): string {
+    const value = this.catalogLastUpdated();
+    if (!value) {
+      return 'Catalog has not been synchronized yet.';
+    }
+
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? 'Last update time is unavailable.' : date.toLocaleString();
+  }
+
+  cancelClearLocalCatalog(): void {
+    if (!this.clearingLocalCatalog()) {
+      this.clearLocalCatalogConfirmOpen.set(false);
+    }
+  }
+
+  async confirmClearLocalCatalog(): Promise<void> {
+    if (this.clearingLocalCatalog()) {
+      return;
+    }
+
+    this.clearingLocalCatalog.set(true);
+    try {
+      const response = await firstValueFrom(this.ordersService.getTenantConfig());
+      const config = response.data;
+      const tenantId = String(config?.tenantId || this.currentSession()?.tenantId || '').trim();
+      const storeSlug = String(
+        config?.storefrontConfig?.storeSlug
+        || config?.storefrontShare?.storeSlug
+        || config?.tenantId
+        || '',
+      ).trim().toLowerCase();
+      if (!tenantId || !storeSlug) {
+        throw new Error('Tenant catalog context is unavailable.');
+      }
+
+      await this.catalogCache.clear({ tenantId, storeSlug });
+      this.clearLocalCatalogConfirmOpen.set(false);
+      this.toast.success('Local Create Order catalog cleared.');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to clear the local catalog.';
+      this.toast.error(message);
+    } finally {
+      this.clearingLocalCatalog.set(false);
+    }
   }
 
   logout(): void {

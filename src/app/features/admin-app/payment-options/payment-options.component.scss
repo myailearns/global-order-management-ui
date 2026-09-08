@@ -1,0 +1,63 @@
+@use "theme" as theme;
+
+:host {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
+.payment-options {
+  width: 100%;
+  min-width: 0;
+  min-height: 100%;
+  box-sizing: border-box;
+  padding: theme.get-spacing(lg);
+
+  &__header {
+    display: flex; justify-content: space-between; align-items: flex-start; gap: theme.get-gap(md); margin-bottom: theme.get-spacing(lg);
+    h2 { margin: 0 0 theme.get-spacing(xxs); color: theme.get-text(primary); @include theme.typography-heading(lg); }
+    p { margin: 0; color: theme.get-text(hint); @include theme.typography-body; }
+  }
+  &__actions, &__row-actions { display: flex; align-items: center; gap: theme.get-gap(xs); }
+  &__panel { margin-bottom: theme.get-spacing(lg); padding: theme.get-spacing(lg); border: theme.get-border-size(thin) solid theme.get-border(standard); border-radius: theme.get-radius(lg); background: theme.get-background(standard); }
+  &__section-heading { display: flex; justify-content: space-between; align-items: center; gap: theme.get-gap(md); margin-bottom: theme.get-spacing(md); h3 { margin: 0 0 theme.get-spacing(xxs); color: theme.get-text(primary); @include theme.typography-heading(md); } p { margin: 0; color: theme.get-text(hint); } }
+  &__method-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: theme.get-gap(md); }
+  &__method { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: theme.get-gap(sm); min-height: 6rem; padding: theme.get-spacing(md); border: theme.get-border-size(thin) solid theme.get-border(standard); border-radius: theme.get-radius(md); transition: border-color .2s, box-shadow .2s; h4, p { margin: 0; } h4 { color: theme.get-text(primary); @include theme.typography-heading(sm); } p { margin-top: theme.get-spacing(xxs); color: theme.get-text(hint); @include theme.typography-body; } &--enabled { border-color: theme.get-border(primary); box-shadow: 0 0 0 1px theme.get-border(primary); } }
+  &__method-icon, &__account-logo { display: grid; place-items: center; flex: 0 0 auto; width: 2.75rem; height: 2.75rem; border-radius: theme.get-radius(md); font-size: 1.35rem; background: theme.get-background(secondary); color: theme.get-text(primary); }
+  &__method-icon--upi { color: #6d28d9; background: #f3e8ff; } &__method-icon--cash { color: #15803d; background: #dcfce7; } &__method-icon--bank { color: #1d4ed8; background: #dbeafe; }
+  &__accounts { display: grid; gap: theme.get-gap(sm); }
+  &__account { display: flex; align-items: center; gap: theme.get-gap(md); padding: theme.get-spacing(md); border: theme.get-border-size(thin) solid theme.get-border(standard); border-radius: theme.get-radius(md); }
+  &__account-logo { overflow: hidden; img { width: 100%; height: 100%; object-fit: cover; } }
+  &__account-copy { min-width: 0; flex: 1; > div { display: flex; align-items: center; gap: theme.get-gap(xs); } strong { color: theme.get-text(primary); } p { margin: theme.get-spacing(xxs) 0 0; overflow: hidden; color: theme.get-text(hint); text-overflow: ellipsis; white-space: nowrap; } }
+  &__status { padding: .15rem .5rem; border-radius: 999px; color: #166534; background: #dcfce7; font-size: .75rem; font-weight: 600; &--inactive { color: theme.get-text(hint); background: theme.get-background(secondary); } }
+  &__empty { display: grid; justify-items: center; gap: theme.get-gap(xs); padding: theme.get-spacing(xl); border: theme.get-border-size(thin) dashed theme.get-border(standard); border-radius: theme.get-radius(md); text-align: center; color: theme.get-text(hint); > i { font-size: 2rem; } h4, p { margin: 0; } h4 { color: theme.get-text(primary); } }
+  &__matrix-wrap { overflow-x: auto; }
+  &__matrix { width: 100%; border-collapse: collapse; th, td { padding: theme.get-spacing(sm) theme.get-spacing(md); border-bottom: theme.get-border-size(thin) solid theme.get-border(standard); text-align: center; } th:first-child { text-align: left; } thead th { color: theme.get-text(hint); font-size: .8rem; text-transform: uppercase; } tbody th { color: theme.get-text(primary); font-weight: 600; } }
+  &__matrix-note, &__error, &__loading { display: flex; align-items: center; gap: theme.get-gap(xs); }
+  &__matrix-note { margin: theme.get-spacing(md) 0 0; color: theme.get-text(hint); }
+  &__error { margin-bottom: theme.get-spacing(md); padding: theme.get-spacing(sm); border-radius: theme.get-radius(sm); color: #991b1b; background: #fef2f2; }
+  &__loading { justify-content: center; min-height: 14rem; color: theme.get-text(hint); }
+  &__modal-form { display: grid; gap: theme.get-gap(md); &--two { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  &__modal-full { grid-column: 1 / -1; }
+  &__active-row { display: flex; align-items: center; justify-content: space-between; gap: theme.get-gap(md); padding: theme.get-spacing(md); border: theme.get-border-size(thin) solid theme.get-border(standard); border-radius: theme.get-radius(md); strong { color: theme.get-text(primary); } p { margin: theme.get-spacing(xxs) 0 0; color: theme.get-text(hint); } }
+  &__upload { display: grid; justify-items: start; gap: theme.get-gap(xs); label { color: theme.get-text(primary); font-weight: 600; } input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); } img { width: 7rem; height: 7rem; object-fit: contain; border: theme.get-border-size(thin) solid theme.get-border(standard); border-radius: theme.get-radius(sm); } small { color: theme.get-text(hint); } }
+  &__spin { display: inline-block; animation: payment-options-spin 1s linear infinite; }
+}
+
+@keyframes payment-options-spin { to { transform: rotate(360deg); } }
+
+@include theme.breakpoint-down(md) {
+  .payment-options { &__method-grid { grid-template-columns: 1fr; } }
+}
+
+@include theme.breakpoint-down(sm) {
+  .payment-options {
+    padding: theme.get-spacing(md);
+    &__header, &__section-heading { align-items: stretch; flex-direction: column; }
+    &__actions { justify-content: flex-end; }
+    &__panel { padding: theme.get-spacing(md); }
+    &__account { align-items: flex-start; flex-wrap: wrap; }
+    &__row-actions { margin-left: auto; }
+    &__modal-form--two { grid-template-columns: 1fr; }
+  }
+}
