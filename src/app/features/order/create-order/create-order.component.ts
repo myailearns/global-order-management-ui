@@ -11,6 +11,7 @@ import { GomAlertToastService } from '@gomlibs/ui';
 import { GomButtonContentMode, getButtonContentMode, showButtonIcon, showButtonText } from '@gomlibs/ui';
 import { FormControlsModule, GomButtonComponent, GomSelectOption } from '@gomlibs/ui';
 import { GomTabContentComponent, GomTabsComponent, TabItem } from '@gomlibs/ui';
+import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import {
   Customer,
   Group,
@@ -50,6 +51,7 @@ export class CreateOrderComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly translate = inject(TranslateService);
+  private readonly authSession = inject(AuthSessionService);
 
   readonly loading = signal(false);
   readonly saving = signal(false);
@@ -78,6 +80,7 @@ export class CreateOrderComponent implements OnInit {
     serviceablePincodes: [],
     nonServiceableSuggestion: 'CALL_COURIER',
   });
+  readonly canManageDelivery = computed(() => this.authSession.hasFeature('delivery.management'));
 
   readonly submitMode: GomButtonContentMode = getButtonContentMode('primary-action');
   readonly cancelMode: GomButtonContentMode = getButtonContentMode('dismiss');
@@ -199,6 +202,9 @@ export class CreateOrderComponent implements OnInit {
   }
 
   get deliveryTypeOptions(): GomSelectOption[] {
+    if (!this.canManageDelivery()) {
+      return [{ value: 'PICKUP', label: 'PICKUP' }];
+    }
     return [
       { value: 'PICKUP', label: 'PICKUP' },
       { value: 'DELIVERY', label: 'DELIVERY' },
@@ -206,6 +212,9 @@ export class CreateOrderComponent implements OnInit {
   }
 
   get orderTypeOptions(): GomSelectOption[] {
+    if (!this.canManageDelivery()) {
+      return [{ value: 'WALK_IN_INSTANT', label: 'Walk-in Instant' }];
+    }
     return [
       { value: 'WALK_IN_INSTANT', label: 'Walk-in Instant' },
       { value: 'CALL_PICKUP', label: 'Call — Pickup Later' },
@@ -258,6 +267,14 @@ export class CreateOrderComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    if (!this.canManageDelivery()) {
+      this.form.patchValue({
+        orderType: 'WALK_IN_INSTANT',
+        deliveryType: 'PICKUP',
+        intakeChannel: 'SHOP_COUNTER',
+        paymentCollectionStage: 'AT_ORDER',
+      });
+    }
     this.loadLookups();
     this.loadTenantPincodeConfig();
     this.onOrderTypeChange(String(this.form.controls.orderType.value || 'WALK_IN_INSTANT'));

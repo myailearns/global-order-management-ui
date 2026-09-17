@@ -4,10 +4,9 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
-import { GomAlertToastService } from '@gomlibs/ui';
-import { GomButtonComponent, GomInputComponent, GomSelectComponent, GomSelectOption } from '@gomlibs/ui';
+import { GomAlertToastService, GomButtonComponent, GomInputComponent, GomSelectComponent, GomSelectOption } from '@gomlibs/ui';
 import { TenantAccessService } from '../../services';
-import { CreateEmployeeRequest, EmployeeStatus, UpdateEmployeeRequest, UserWithRoles } from '../../models';
+import { CreateEmployeeRequest, EmployeeStatus, UpdateEmployeeRequest } from '../../models';
 
 @Component({
   selector: 'gom-employee-form',
@@ -38,12 +37,11 @@ export class EmployeeFormComponent implements OnInit, OnChanges {
   private readonly translate = inject(TranslateService);
 
   readonly form = this.fb.group({
-    employeeCode: ['', [Validators.required, Validators.minLength(2)]],
     fullName: ['', [Validators.required, Validators.minLength(2)]],
-    department: [''],
-    designation: [''],
+    email: ['', [Validators.required, Validators.email]],
+    passwordMode: ['auto', [Validators.required]],
+    password: [''],
     status: [EmployeeStatus.ACTIVE, [Validators.required]],
-    userId: [''],
   });
 
   readonly statusOptions: GomSelectOption[] = [
@@ -52,15 +50,14 @@ export class EmployeeFormComponent implements OnInit, OnChanges {
     { value: EmployeeStatus.ON_LEAVE, label: this.translate.instant('saas.admin.employees.status_on_leave') },
   ];
 
-  userOptions: GomSelectOption[] = [{ value: '', label: this.translate.instant('saas.admin.employees.opt_not_linked') }];
-  users: UserWithRoles[] = [];
-
   employeeId: string | null = null;
   submitting = false;
 
   ngOnInit(): void {
-    this.loadUsersForLinking();
     this.initializeFormContext();
+    this.form.controls.passwordMode.valueChanges.subscribe(() => {
+      this.updatePasswordValidators();
+    });
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -84,10 +81,7 @@ export class EmployeeFormComponent implements OnInit, OnChanges {
     if (this.employeeId) {
       const payload: UpdateEmployeeRequest = {
         fullName: this.form.controls.fullName.value || undefined,
-        department: this.form.controls.department.value || undefined,
-        designation: this.form.controls.designation.value || undefined,
         status: (this.form.controls.status.value as EmployeeStatus) || undefined,
-        userId: this.form.controls.userId.value || null,
       };
 
       this.service.updateEmployee(this.employeeId, payload).subscribe({
@@ -104,13 +98,20 @@ export class EmployeeFormComponent implements OnInit, OnChanges {
       return;
     }
 
+    if (this.form.controls.passwordMode.value === 'manual' && !String(this.form.controls.password.value || '').trim()) {
+      this.form.controls.password.setErrors({ required: true });
+      this.toast.error(this.translate.instant('saas.admin.employees.msg_required_fields'));
+      return;
+    }
+
     const payload: CreateEmployeeRequest = {
-      employeeCode: this.form.controls.employeeCode.value || '',
       fullName: this.form.controls.fullName.value || '',
-      department: this.form.controls.department.value || undefined,
-      designation: this.form.controls.designation.value || undefined,
+      email: this.form.controls.email.value || '',
       status: (this.form.controls.status.value as EmployeeStatus) || EmployeeStatus.ACTIVE,
-      userId: this.form.controls.userId.value || undefined,
+      passwordMode: (this.form.controls.passwordMode.value as 'auto' | 'manual') || 'auto',
+      password: this.form.controls.passwordMode.value === 'manual'
+        ? (this.form.controls.password.value || '')
+        : undefined,
     };
 
     this.service.createEmployee(payload).subscribe({
@@ -118,9 +119,18 @@ export class EmployeeFormComponent implements OnInit, OnChanges {
         this.toast.success(this.translate.instant('saas.admin.employees.msg_create_success'));
         this.afterSaveSuccess();
       },
-      error: () => {
+      error: (err) => {
         this.submitting = false;
-        this.toast.error(this.translate.instant('saas.admin.employees.msg_create_failed'));
+        const serverMessage: string = err?.error?.message || '';
+        if (serverMessage === 'employee_code_exists') {
+          this.toast.error(this.translate.instant('saas.admin.employees.err_code_exists'));
+        } else if (serverMessage === 'email_already_in_use') {
+          this.toast.error(this.translate.instant('saas.admin.employees.err_email_exists'));
+        } else if (serverMessage === 'password_min_length_8') {
+          this.toast.error(this.translate.instant('saas.admin.employees.err_password_min_8'));
+        } else {
+          this.toast.error(this.translate.instant('saas.admin.employees.msg_create_failed'));
+        }
       },
     });
   }
@@ -143,20 +153,24 @@ export class EmployeeFormComponent implements OnInit, OnChanges {
     this.submitting = false;
 
     if (this.employeeId) {
-      this.form.controls.employeeCode.disable({ emitEvent: false });
+      this.form.controls.email.disable({ emitEvent: false });
+      this.form.controls.passwordMode.disable({ emitEvent: false });
+      this.form.controls.password.disable({ emitEvent: false });
       this.loadEmployee(this.employeeId);
       return;
     }
 
     this.form.reset({
-      employeeCode: '',
       fullName: '',
-      department: '',
-      designation: '',
+      email: '',
+      passwordMode: 'auto',
+      password: '',
       status: EmployeeStatus.ACTIVE,
-      userId: '',
     });
-    this.form.controls.employeeCode.enable({ emitEvent: false });
+    this.form.controls.email.enable({ emitEvent: false });
+    this.form.controls.passwordMode.enable({ emitEvent: false });
+    this.form.controls.password.enable({ emitEvent: false });
+    this.updatePasswordValidators();
   }
 
   private afterSaveSuccess(): void {
@@ -172,14 +186,11 @@ export class EmployeeFormComponent implements OnInit, OnChanges {
   private loadEmployee(employeeId: string): void {
     this.service.getEmployee(employeeId).subscribe({
       next: (employee) => {
-        const linkedUserId = typeof employee.userId === 'string' ? employee.userId : (employee.userId?._id || '');
+        const email = typeof employee.userId === 'string' ? '' : (employee.userId?.email || '');
         this.form.patchValue({
-          employeeCode: employee.employeeCode,
           fullName: employee.fullName,
-          department: employee.department || '',
-          designation: employee.designation || '',
+          email,
           status: employee.status || EmployeeStatus.ACTIVE,
-          userId: linkedUserId,
         });
       },
       error: () => {
@@ -188,21 +199,19 @@ export class EmployeeFormComponent implements OnInit, OnChanges {
     });
   }
 
-  private loadUsersForLinking(): void {
-    this.service.listUsers(1, 200).subscribe({
-      next: (response) => {
-        this.users = response.users;
-        this.userOptions = [
-          { value: '', label: this.translate.instant('saas.admin.employees.opt_not_linked') },
-          ...response.users.map((user) => ({
-            value: user._id,
-            label: `${user.fullName} (${user.email})`,
-          })),
-        ];
-      },
-      error: () => {
-        this.toast.error(this.translate.instant('saas.admin.employees.msg_load_users_failed'));
-      },
-    });
+  private updatePasswordValidators(): void {
+    if (this.employeeId) {
+      this.form.controls.password.clearValidators();
+      this.form.controls.password.updateValueAndValidity({ emitEvent: false });
+      return;
+    }
+
+    if (this.form.controls.passwordMode.value === 'manual') {
+      this.form.controls.password.setValidators([Validators.required, Validators.minLength(8)]);
+    } else {
+      this.form.controls.password.clearValidators();
+      this.form.controls.password.setValue('', { emitEvent: false });
+    }
+    this.form.controls.password.updateValueAndValidity({ emitEvent: false });
   }
 }

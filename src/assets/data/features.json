@@ -72,6 +72,51 @@
     "actions": ["delete"]
   },
   {
+    "featureKey": "attribute.list",
+    "displayName": "View Attributes",
+    "module": "masters",
+    "description": "List and view all attributes",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["view", "search", "filter"]
+  },
+  {
+    "featureKey": "attribute.view",
+    "displayName": "View Attribute",
+    "module": "masters",
+    "description": "View a single attribute",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": ["attribute.list"],
+    "actions": ["view"]
+  },
+  {
+    "featureKey": "attribute.create",
+    "displayName": "Create Attribute",
+    "module": "masters",
+    "description": "Create new reusable attributes",
+    "planAvailability": ["GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["create"]
+  },
+  {
+    "featureKey": "attribute.edit",
+    "displayName": "Edit Attribute",
+    "module": "masters",
+    "description": "Edit existing attributes",
+    "planAvailability": ["GROWTH", "SCALE"],
+    "dependencies": ["attribute.list"],
+    "actions": ["edit", "update"]
+  },
+  {
+    "featureKey": "attribute.delete",
+    "displayName": "Delete Attribute",
+    "module": "masters",
+    "description": "Delete attributes",
+    "planAvailability": ["SCALE"],
+    "dependencies": ["attribute.list"],
+    "actions": ["delete"]
+  },
+  {
     "featureKey": "fieldGroup.list",
     "displayName": "View Field Groups",
     "module": "masters",
@@ -105,6 +150,51 @@
     "description": "Delete field groups",
     "planAvailability": ["SCALE"],
     "dependencies": ["fieldGroup.list"],
+    "actions": ["delete"]
+  },
+  {
+    "featureKey": "attributeSet.list",
+    "displayName": "View Attribute Sets",
+    "module": "masters",
+    "description": "List and view all attribute sets",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["view", "search", "filter"]
+  },
+  {
+    "featureKey": "attributeSet.view",
+    "displayName": "View Attribute Set",
+    "module": "masters",
+    "description": "View a single attribute set",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": ["attributeSet.list"],
+    "actions": ["view"]
+  },
+  {
+    "featureKey": "attributeSet.create",
+    "displayName": "Create Attribute Set",
+    "module": "masters",
+    "description": "Create new reusable attribute sets",
+    "planAvailability": ["GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["create"]
+  },
+  {
+    "featureKey": "attributeSet.edit",
+    "displayName": "Edit Attribute Set",
+    "module": "masters",
+    "description": "Edit existing attribute sets",
+    "planAvailability": ["GROWTH", "SCALE"],
+    "dependencies": ["attributeSet.list"],
+    "actions": ["edit", "update"]
+  },
+  {
+    "featureKey": "attributeSet.delete",
+    "displayName": "Delete Attribute Set",
+    "module": "masters",
+    "description": "Delete attribute sets",
+    "planAvailability": ["SCALE"],
+    "dependencies": ["attributeSet.list"],
     "actions": ["delete"]
   },
   {
@@ -177,6 +267,51 @@
     "description": "Delete tax profiles",
     "planAvailability": ["GROWTH", "SCALE"],
     "dependencies": ["taxProfile.list"],
+    "actions": ["delete"]
+  },
+  {
+    "featureKey": "pricingTemplate.list",
+    "displayName": "View Pricing Templates",
+    "module": "masters",
+    "description": "List and view all pricing templates",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["view", "search", "filter"]
+  },
+  {
+    "featureKey": "pricingTemplate.view",
+    "displayName": "View Pricing Template",
+    "module": "masters",
+    "description": "View a single pricing template",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": ["pricingTemplate.list"],
+    "actions": ["view"]
+  },
+  {
+    "featureKey": "pricingTemplate.create",
+    "displayName": "Create Pricing Template",
+    "module": "masters",
+    "description": "Create reusable pricing templates",
+    "planAvailability": ["GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["create"]
+  },
+  {
+    "featureKey": "pricingTemplate.edit",
+    "displayName": "Edit Pricing Template",
+    "module": "masters",
+    "description": "Edit existing pricing templates",
+    "planAvailability": ["GROWTH", "SCALE"],
+    "dependencies": ["pricingTemplate.list"],
+    "actions": ["edit", "update"]
+  },
+  {
+    "featureKey": "pricingTemplate.delete",
+    "displayName": "Delete Pricing Template",
+    "module": "masters",
+    "description": "Delete pricing templates",
+    "planAvailability": ["SCALE"],
+    "dependencies": ["pricingTemplate.list"],
     "actions": ["delete"]
   },
   {
@@ -286,6 +421,51 @@
     "planAvailability": ["SCALE"],
     "dependencies": ["pack.list"],
     "actions": ["delete"]
+  },
+  {
+    "featureKey": "productCollection.list",
+    "displayName": "View Product Collections",
+    "module": "product",
+    "description": "List and view product collections",
+    "planAvailability": ["GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["view", "search", "filter"]
+  },
+  {
+    "featureKey": "productCollection.create",
+    "displayName": "Create Product Collection",
+    "module": "product",
+    "description": "Create new product collections",
+    "planAvailability": ["GROWTH", "SCALE"],
+    "dependencies": ["productCollection.list"],
+    "actions": ["create"]
+  },
+  {
+    "featureKey": "productCollection.edit",
+    "displayName": "Edit Product Collection",
+    "module": "product",
+    "description": "Edit product collections",
+    "planAvailability": ["GROWTH", "SCALE"],
+    "dependencies": ["productCollection.list"],
+    "actions": ["edit", "update"]
+  },
+  {
+    "featureKey": "productCollection.delete",
+    "displayName": "Delete Product Collection",
+    "module": "product",
+    "description": "Delete product collections",
+    "planAvailability": ["GROWTH", "SCALE"],
+    "dependencies": ["productCollection.list"],
+    "actions": ["delete"]
+  },
+  {
+    "featureKey": "productCollection.assign",
+    "displayName": "Assign Product Collections",
+    "module": "product",
+    "description": "Assign and unassign groups or variants in collections",
+    "planAvailability": ["GROWTH", "SCALE"],
+    "dependencies": ["productCollection.list"],
+    "actions": ["assign", "remove"]
   },
   {
     "featureKey": "stock.list",
@@ -550,36 +730,36 @@
   },
   {
     "featureKey": "user.list",
-    "displayName": "View Users",
+    "displayName": "View Access Users",
     "module": "tenant-admin",
-    "description": "List and view all tenant users",
+    "description": "List and view all tenant login users",
     "planAvailability": ["STARTER", "GROWTH", "SCALE"],
     "dependencies": [],
     "actions": ["view", "search", "filter", "export"]
   },
   {
     "featureKey": "user.create",
-    "displayName": "Create User",
+    "displayName": "Create Access User",
     "module": "tenant-admin",
-    "description": "Create new tenant users/accounts",
+    "description": "Create new tenant login users",
     "planAvailability": ["STARTER", "GROWTH", "SCALE"],
     "dependencies": [],
     "actions": ["create"]
   },
   {
     "featureKey": "user.edit",
-    "displayName": "Edit User",
+    "displayName": "Edit Access User",
     "module": "tenant-admin",
-    "description": "Edit existing user accounts and permissions",
+    "description": "Edit existing login users and permissions",
     "planAvailability": ["STARTER", "GROWTH", "SCALE"],
     "dependencies": ["user.list"],
     "actions": ["edit", "update", "reset-password", "assign-role"]
   },
   {
     "featureKey": "user.delete",
-    "displayName": "Delete User",
+    "displayName": "Delete Access User",
     "module": "tenant-admin",
-    "description": "Delete tenant users",
+    "description": "Delete tenant login users",
     "planAvailability": ["GROWTH", "SCALE"],
     "dependencies": ["user.list"],
     "actions": ["delete", "deactivate"]
@@ -664,3 +844,5 @@
     "planAvailability": ["GROWTH", "SCALE"],
     "dependencies": [],
     "actions": ["upload", "delete", "list"]
+  }
+]

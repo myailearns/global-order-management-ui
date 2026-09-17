@@ -1,0 +1,1318 @@
+<section
+  class="pos-page"
+  [class.pos-page--mobile-products]="activeMobileTab() === 'products'"
+  [class.pos-page--mobile-cart]="activeMobileTab() === 'cart'"
+  [class.pos-page--mobile-account]="activeMobileTab() === 'account'"
+>
+  <header class="pos-page-header">
+    <div class="pos-page-header__title-group">
+      <h2 class="pos-page-header__heading">Create Order</h2>
+      <span class="pos-page-header__subtitle">Create and manage new customer orders</span>
+    </div>
+
+    <nav class="pos-page-header__menu" aria-label="Create order quick menu">
+      <button
+        type="button"
+        class="pos-page-header__menu-trigger"
+        [class.pos-page-header__menu-trigger--active]="createOrderSubMenuOpen()"
+        [attr.aria-expanded]="createOrderSubMenuOpen()"
+        aria-haspopup="menu"
+        aria-label="Open create order submenu"
+        (click)="toggleCreateOrderSubMenu($event)"
+      >
+        <i class="ri-menu-line" aria-hidden="true"></i>
+      </button>
+
+      @if (createOrderSubMenuOpen()) {
+        <div class="pos-page-header__submenu" role="menu" aria-label="Create order submenu" tabindex="-1" (click)="$event.stopPropagation()" (keydown)="onCreateOrderSubMenuKeydown($event)">
+          <button
+            type="button"
+            role="menuitem"
+            class="pos-page-header__submenu-item"
+            [class.pos-page-header__submenu-item--active]="selectedCreateOrderSubMenu() === 'ORDERS_HISTORY'"
+            (click)="onCreateOrderSubMenuSelect('ORDERS_HISTORY')"
+          >
+            Orders History
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            class="pos-page-header__submenu-item"
+            [class.pos-page-header__submenu-item--active]="selectedCreateOrderSubMenu() === 'HOLDING_ORDERS'"
+            (click)="onCreateOrderSubMenuSelect('HOLDING_ORDERS')"
+          >
+            Holding Orders
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            class="pos-page-header__submenu-item"
+            [class.pos-page-header__submenu-item--active]="selectedCreateOrderSubMenu() === 'SHORTCUTS_LIST'"
+            (click)="onCreateOrderSubMenuSelect('SHORTCUTS_LIST')"
+          >
+            Shortcuts List
+          </button>
+        </div>
+      }
+    </nav>
+  </header>
+
+  <div class="pos-body" [class.pos-body--resizing]="categoryResizeActive()" [style.grid-template-columns]="bodyGridTemplateColumns()">
+    <aside class="pos-categories" aria-label="Categories">
+      <div class="pos-categories__header">
+        <div class="pos-section-title">
+          <h2>CATEGORIES</h2>
+        </div>
+        @if (categoryPanelWidth() !== null) {
+          <button type="button" class="pos-categories__reset" (click)="resetCategoryPanelWidth()">Reset</button>
+        }
+      </div>
+
+      @if (categoriesLoading()) {
+        <div class="pos-categories__loading">
+          @for (placeholder of [1, 2, 3, 4, 5, 6]; track placeholder) {
+            <div class="pos-categories__skeleton"></div>
+          }
+        </div>
+      } @else if (categoriesError()) {
+        <div class="pos-categories__error">
+          <p>{{ categoriesError() }}</p>
+          <gom-lib-button type="button" variant="secondary" (buttonClick)="retryCategories()">Retry</gom-lib-button>
+        </div>
+      } @else {
+        <div class="pos-categories__list">
+          @for (category of visibleCategories(); track category._id) {
+            <button
+              type="button"
+              class="pos-categories__item"
+              [class.pos-categories__item--active]="selectedCategoryId() === category._id"
+              (click)="selectCategory(category._id || '')"
+              (focus)="activeShortcutArea.set('category')"
+              [title]="category.name"
+            >
+              <span class="pos-categories__item-thumb" aria-hidden="true">
+                @if (getCategoryImageUrl(category)) {
+                  <img [src]="getCategoryImageUrl(category)" [alt]="category.name" loading="lazy" />
+                } @else {
+                  <img src="assets/no-image.svg" alt="" loading="lazy" />
+                }
+              </span>
+              <span class="pos-categories__item-label">{{ category.name }}</span>
+            </button>
+          }
+        </div>
+      }
+    </aside>
+
+    <hr
+      class="pos-categories__resizer"
+      aria-orientation="vertical"
+      aria-label="Resize categories panel"
+      (mousedown)="startCategoryResize($event)"
+    />
+
+    <main class="pos-products">
+      <div class="pos-products__header">
+        <div class="pos-products__heading">
+          <h2>{{ productsPanelTitle() }}</h2>
+          <span>{{ visibleVariantCards().length }} items</span>
+        </div>
+      </div>
+
+      @if (productsLoading() && !visibleProducts().length) {
+        <div class="pos-products__grid pos-products__grid--loading">
+          @for (placeholder of [1, 2, 3, 4, 5, 6, 7, 8]; track placeholder) {
+            <div class="pos-product-skeleton"></div>
+          }
+        </div>
+      } @else if (productsError()) {
+        <div class="pos-products__empty">
+          <p>{{ productsError() }}</p>
+          <gom-lib-button type="button" variant="secondary" (buttonClick)="retryProducts()">Retry</gom-lib-button>
+        </div>
+      } @else if (!visibleProducts().length) {
+        <div class="pos-products__empty-state">
+          <div class="pos-products__empty-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" focusable="false">
+              <path d="M4 6C4 4.9 7.1 4 11 4C14.9 4 18 4.9 18 6M4 6V12C4 13.1 7.1 14 11 14C14.9 14 18 13.1 18 12M4 6V12M18 6V10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M18 15L20.5 17.5M16.8 20C14.7013 20 13 18.2987 13 16.2C13 14.1013 14.7013 12.4 16.8 12.4C18.8987 12.4 20.6 14.1013 20.6 16.2C20.6 18.2987 18.8987 20 16.8 20Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+
+          <h3 class="pos-products__empty-title">Product grid is empty</h3>
+          <p class="pos-products__empty-subtitle">No products found for this category. Try another category or search in the top bar.</p>
+        </div>
+      } @else {
+        <div class="pos-products__group-chips" role="tablist" aria-label="Filter by group">
+          <button
+            type="button"
+            class="pos-products__chip"
+            [class.pos-products__chip--active]="selectedGroupId() === 'ALL'"
+            [attr.aria-selected]="selectedGroupId() === 'ALL'"
+            (click)="selectGroup('ALL')"
+            (focus)="activeShortcutArea.set('group')"
+          >
+            All
+          </button>
+          @for (group of groupChips(); track group.id) {
+            <button
+              type="button"
+              class="pos-products__chip"
+              [class.pos-products__chip--active]="selectedGroupId() === group.id"
+              [attr.aria-selected]="selectedGroupId() === group.id"
+              (click)="selectGroup(group.id)"
+              (focus)="activeShortcutArea.set('group')"
+            >
+              {{ group.label }}
+            </button>
+          }
+        </div>
+
+        <div class="pos-products__scroll" (scroll)="onProductsScroll($event)">
+          <div class="pos-products__grid">
+            @for (entry of visibleVariantCards(); track entry.variant._id || entry.variant.id) {
+              <article
+                class="pos-product"
+                [class.pos-product--active]="getVariantCartQuantity(entry.variant) > 0"
+                [class.pos-product--keyboard-selected]="$index === keyboardSelectedProductIndex()"
+              >
+                <button
+                  type="button"
+                  class="pos-product__detail-trigger"
+                  title="Enter to add; Alt + Enter for product details"
+                  (click)="openProductDetail(entry)"
+                  (focus)="activeShortcutArea.set('products'); keyboardSelectedProductIndex.set($index)"
+                >
+                  <div class="pos-product__image">
+                    @if (getVariantCartQuantity(entry.variant) > 0) {
+                      <span class="pos-product__qty-badge">{{ getVariantCartQuantity(entry.variant) }}</span>
+                    }
+                    @if (getVariantImageUrl(entry.group, entry.variant)) {
+                      <img [src]="getVariantImageUrl(entry.group, entry.variant)" [alt]="getVariantDisplayName(entry.group, entry.variant)" />
+                    } @else {
+                      <img class="pos-product__no-image" src="assets/no-image.svg" [alt]="getVariantDisplayName(entry.group, entry.variant)" />
+                    }
+                  </div>
+                  <div class="pos-product__summary">
+                    <div class="pos-product__name">
+                      {{ entry.variant.name || entry.variant.displayName || entry.variant.groupName || entry.group.name || 'Product' }}
+                    </div>
+                    <div class="pos-product__subtext">{{ getVariantUnitText(entry.variant) }}</div>
+                    <div class="pos-product__price-row">
+                      <span class="pos-product__price">
+                        {{ getVariantDisplayPrice(entry.variant) | currency:'INR':'symbol-narrow':'1.0-0' }}
+                      </span>
+                      @if (getVariantMrpPrice(entry.variant) > getVariantDisplayPrice(entry.variant)) {
+                        <span class="pos-product__mrp">
+                          MRP {{ getVariantMrpPrice(entry.variant) | currency:'INR':'symbol-narrow':'1.0-2' }}
+                        </span>
+                      }
+                    </div>
+                  </div>
+                </button>
+                <div class="pos-product__body">
+                  <div class="pos-product__footer">
+                    @if (getVariantCartQuantity(entry.variant) > 0) {
+                      <div class="pos-product__stepper" aria-label="Change quantity">
+                        <button type="button" [disabled]="isOrderFrozen()" (click)="$event.stopPropagation(); decreaseCartItem(entry.variant._id || entry.variant.id || '')" aria-label="Decrease quantity">−</button>
+                        <span>{{ getVariantCartQuantity(entry.variant) }}</span>
+                        <button type="button" [disabled]="isOrderFrozen()" (click)="$event.stopPropagation(); increaseCartItem(entry.variant._id || entry.variant.id || '')" aria-label="Increase quantity">+</button>
+                      </div>
+                    } @else {
+                      <button type="button" class="pos-product__add" [disabled]="isOrderFrozen()" (click)="$event.stopPropagation(); addVariantToCart(entry.group, entry.variant)">ADD</button>
+                    }
+                  </div>
+                </div>
+              </article>
+            }
+          </div>
+
+          @if (productsLoadingMore()) {
+            <p class="pos-products__loading">Loading more products...</p>
+          } @else if (productsHasMore()) {
+            <p class="pos-products__loading">Scroll to load more products</p>
+          }
+        </div>
+      }
+    </main>
+
+    <aside class="pos-cart" aria-label="Current order cart">
+      <div class="pos-cart__header">
+        <div class="pos-section-title">
+          <h2>Current Order ({{ cartDistinctCount() }} items)</h2>
+        </div>
+        <button type="button" class="pos-cart__clear" [disabled]="isOrderFrozen() || cartEmpty()" (click)="clearOrder()">CLEAR</button>
+      </div>
+
+      @if (clearOrderConfirmOpen()) {
+        <div class="pos-cart__clear-confirm" role="alert" aria-live="polite">
+          <p>Clear all items from this order?</p>
+          <div class="pos-cart__clear-confirm-actions">
+            <button type="button" class="pos-cart__clear-cancel" (click)="cancelClearOrder()">Cancel</button>
+            <button type="button" class="pos-cart__clear-confirm-btn" [disabled]="isOrderFrozen()" (click)="confirmClearOrder()">Clear Order</button>
+          </div>
+        </div>
+      }
+
+      <div class="pos-cart__customer" [class.pos-cart__customer--selected]="customer().id">
+        <div class="pos-cart__avatar"></div>
+        <div class="pos-cart__customer-info">
+          <strong>{{ customer().name }}</strong>
+          <span>{{ customer().phone || 'No phone added' }}</span>
+        </div>
+        <button
+          type="button"
+          class="pos-cart__add-customer"
+          [class.pos-cart__add-customer--disconnect]="customer().id"
+          [disabled]="isOrderFrozen()"
+          (click)="customer().id ? disconnectCustomer() : openCustomerEditor()"
+          (focus)="activeShortcutArea.set('customer')"
+        >
+          {{ customer().id ? 'Disconnect' : '+ Add Customer' }}
+        </button>
+      </div>
+
+      @if (canConfigureOrderType()) {
+        <div class="pos-cart__type-row">
+          <span class="pos-cart__type-label">Order Type:</span>
+          <gom-lib-chip tone="info" size="dense">
+            {{ orderTypeLabel() }} · {{ appliedIntakeChannelLabel() }}
+          </gom-lib-chip>
+          <button type="button" class="pos-cart__type-change" [disabled]="isOrderFrozen()" (click)="orderTypeEditorOpen() ? closeOrderTypeEditor() : openOrderTypeEditor()">
+            {{ orderTypeEditorOpen() ? 'Close' : 'Change' }}
+            <i [class]="orderTypeEditorOpen() ? 'ri-arrow-up-s-line' : 'ri-arrow-down-s-line'" aria-hidden="true"></i>
+          </button>
+        </div>
+      }
+
+      @if (canConfigureOrderType() && orderTypeEditorOpen()) {
+        <section class="pos-order-type" aria-label="Select order type" [formGroup]="orderTypeForm">
+          <span class="pos-order-type__eyebrow">SELECT ORDER TYPE</span>
+          <div class="pos-order-type__choices">
+            <button
+              type="button"
+              class="pos-order-type__choice"
+              [class.pos-order-type__choice--active]="draftOrderType() === 'WALK_IN'"
+              [disabled]="isOrderFrozen()"
+              (click)="selectDraftOrderType('WALK_IN')"
+            >
+              <i class="ri-store-2-line" aria-hidden="true"></i>
+              <span>Walk-in / Instant</span>
+              @if (draftOrderType() === 'WALK_IN') { <i class="ri-check-line" aria-hidden="true"></i> }
+            </button>
+            <button
+              type="button"
+              class="pos-order-type__choice"
+              [class.pos-order-type__choice--active]="draftOrderType() === 'PICKUP_LATER'"
+              [disabled]="isOrderFrozen()"
+              (click)="selectDraftOrderType('PICKUP_LATER')"
+            >
+              <i class="ri-time-line" aria-hidden="true"></i>
+              <span>Pickup Later</span>
+              @if (draftOrderType() === 'PICKUP_LATER') { <i class="ri-check-line" aria-hidden="true"></i> }
+            </button>
+            <button
+              type="button"
+              class="pos-order-type__choice"
+              [class.pos-order-type__choice--active]="draftOrderType() === 'HOME_DELIVERY'"
+              [disabled]="isOrderFrozen()"
+              (click)="selectDraftOrderType('HOME_DELIVERY')"
+            >
+              <i class="ri-truck-line" aria-hidden="true"></i>
+              <span>Home Delivery</span>
+              @if (draftOrderType() === 'HOME_DELIVERY') { <i class="ri-check-line" aria-hidden="true"></i> }
+            </button>
+          </div>
+
+          @if (draftOrderType() === 'HOME_DELIVERY') {
+            <gom-lib-input
+              label="Delivery Pincode"
+              placeholder="Enter 6-digit pincode"
+              inputmode="numeric"
+              [formControl]="orderTypeForm.controls.deliveryPincode"
+              [required]="true"
+            ></gom-lib-input>
+            @if (deliveryPincodeMessage()) {
+              <p
+                class="pos-order-type__pincode-status"
+                [class.pos-order-type__pincode-status--success]="deliveryPincodeState() === 'SERVICEABLE'"
+                [class.pos-order-type__pincode-status--error]="deliveryPincodeState() === 'INVALID' || deliveryPincodeState() === 'UNSERVICEABLE'"
+              >{{ deliveryPincodeMessage() }}</p>
+            }
+
+            @if (showDeliveryDetails()) {
+              <gom-lib-input
+                label="Full Delivery Address"
+                placeholder="House number, street, landmark, city"
+                [formControl]="orderTypeForm.controls.deliveryAddress"
+                [required]="true"
+              ></gom-lib-input>
+              <gom-lib-input
+                label="Delivery Date and Time"
+                type="datetime-local"
+                [min]="minimumFulfillmentDateTime"
+                [formControl]="orderTypeForm.controls.deliveryDateTime"
+                [required]="true"
+              ></gom-lib-input>
+              <gom-lib-select
+                label="Intake Channel"
+                [options]="intakeChannelOptions()"
+                [formControl]="orderTypeForm.controls.intakeChannel"
+                [required]="true"
+              ></gom-lib-select>
+              @if (isOtherIntakeChannel()) {
+                <gom-lib-input
+                  label="Other Intake Channel"
+                  placeholder="Enter intake channel"
+                  [formControl]="orderTypeForm.controls.otherIntakeChannel"
+                  [required]="true"
+                ></gom-lib-input>
+              }
+              <gom-lib-select
+                label="Payment Status"
+                [options]="paymentStatusOptions()"
+                [formControl]="orderTypeForm.controls.paymentStatus"
+                [required]="true"
+              ></gom-lib-select>
+            }
+          } @else {
+            @if (draftOrderType() === 'PICKUP_LATER') {
+              <section class="pos-pickup-details">
+                <div class="pos-pickup-details__title">
+                  <i class="ri-store-2-line" aria-hidden="true"></i>
+                  <span>Pickup Details</span>
+                </div>
+                @if (pickupLocations().length > 1) {
+                  <div class="pos-pickup-details__locations">
+                    @for (location of pickupLocations(); track location.locationId || $index) {
+                      <button
+                        type="button"
+                        class="pos-pickup-details__location"
+                        [class.pos-pickup-details__location--selected]="selectedDraftPickupLocation()?.locationId === location.locationId"
+                        (click)="selectPickupLocation(location.locationId || '')"
+                      >
+                        {{ location.locationName || ('Pickup Location ' + ($index + 1)) }}
+                      </button>
+                    }
+                  </div>
+                }
+                <p class="pos-pickup-details__address">{{ formatPickupAddress(selectedDraftPickupLocation()) }}</p>
+                @if (selectedDraftPickupLocation()?.pickupTimingText) {
+                  <p class="pos-pickup-details__meta">
+                    <i class="ri-time-line" aria-hidden="true"></i>
+                    <span>{{ selectedDraftPickupLocation()?.pickupTimingText }}</span>
+                  </p>
+                }
+                @if (selectedDraftPickupLocation()?.pickupInstructions) {
+                  <p class="pos-pickup-details__meta">
+                    <i class="ri-information-line" aria-hidden="true"></i>
+                    <span>{{ selectedDraftPickupLocation()?.pickupInstructions }}</span>
+                  </p>
+                }
+                @if (pickupWindowHint()) {
+                  <p class="pos-pickup-details__window">
+                    <i class="ri-calendar-check-line" aria-hidden="true"></i>
+                    <span>{{ pickupWindowHint() }}</span>
+                  </p>
+                }
+              </section>
+              @if (pickupDateOptions().length) {
+                <gom-lib-select
+                  label="Pickup Date"
+                  placeholder="Choose pickup date"
+                  [options]="pickupDateOptions()"
+                  [formControl]="orderTypeForm.controls.pickupDateValue"
+                  [required]="true"
+                ></gom-lib-select>
+                <gom-lib-select
+                  label="Pickup Time"
+                  placeholder="Choose pickup time"
+                  [options]="pickupTimeOptions()"
+                  [formControl]="orderTypeForm.controls.pickupTimeValue"
+                  [required]="true"
+                ></gom-lib-select>
+              }
+            }
+            <gom-lib-select
+              label="Intake Channel"
+              [options]="intakeChannelOptions()"
+              [formControl]="orderTypeForm.controls.intakeChannel"
+              [required]="true"
+            ></gom-lib-select>
+            @if (isOtherIntakeChannel()) {
+              <gom-lib-input
+                label="Other Intake Channel"
+                placeholder="Enter intake channel"
+                [formControl]="orderTypeForm.controls.otherIntakeChannel"
+                [required]="true"
+              ></gom-lib-input>
+            }
+            <gom-lib-select
+              label="Payment Status"
+              [options]="paymentStatusOptions()"
+              [formControl]="orderTypeForm.controls.paymentStatus"
+              [required]="true"
+            ></gom-lib-select>
+          }
+
+          <div class="pos-order-type__actions">
+            <gom-lib-button type="button" variant="secondary" (buttonClick)="closeOrderTypeEditor()">Cancel</gom-lib-button>
+            <gom-lib-button
+              type="button"
+              variant="primary"
+              [disabled]="isOrderFrozen() || orderTypeForm.invalid || (draftOrderType() === 'HOME_DELIVERY' && deliveryPincodeState() !== 'SERVICEABLE')"
+              (buttonClick)="applyOrderType()"
+            >Apply Order Type</gom-lib-button>
+          </div>
+        </section>
+      } @else if (canConfigureOrderType() && orderType() !== 'WALK_IN') {
+        <section class="pos-order-type-summary">
+          @if (orderType() === 'PICKUP_LATER') {
+            <div><span>Pickup Location:</span><strong>{{ appliedPickupLocation()?.locationName || 'Main Store' }}</strong></div>
+            <div><span>Pickup Address:</span><strong>{{ formatPickupAddress(appliedPickupLocation()) }}</strong></div>
+            <div><span>Pickup Time:</span><strong>{{ appliedPickupDateLabel() }} {{ appliedPickupTimeLabel() }}</strong></div>
+          } @else {
+            <div><span>Delivery Pincode:</span><strong>{{ appliedOrderDetails().deliveryPincode }}</strong></div>
+            <div><span>Delivery Address:</span><strong>{{ appliedOrderDetails().deliveryAddress }}</strong></div>
+            <div><span>Delivery Time:</span><strong>{{ formatFulfillmentDateTime(appliedOrderDetails().deliveryDateTime) }}</strong></div>
+            <div><span>Delivery Charge:</span><strong>{{ deliveryCharge() | currency:'INR':'symbol-narrow':'1.0-0' }}</strong></div>
+          }
+          <div><span>Payment Status:</span><strong>{{ appliedOrderDetails().paymentStatus }}</strong></div>
+        </section>
+      }
+
+      @if (customerEditorOpen()) {
+        <section class="pos-customer-flow" aria-label="Customer selection">
+          @if (customerEditorMode() === 'SEARCH') {
+            <div class="pos-customer-flow__heading">
+              <strong>Find Customer</strong>
+              <button type="button" aria-label="Close customer search" (click)="closeCustomerEditor()">×</button>
+            </div>
+
+            <gom-lib-input
+              label="Mobile Number"
+              placeholder="Enter 10-digit mobile number"
+              [formControl]="customerSearchControl"
+            ></gom-lib-input>
+
+            @if (customerSearchControl.value && customerSearchControl.value.length < 3) {
+              <p class="pos-customer-flow__hint">Enter at least 3 digits to search.</p>
+            }
+            @if (customerSearchLoading()) {
+              <p class="pos-customer-flow__status">Searching customers...</p>
+            } @else if (customerSearchError()) {
+              <p class="pos-customer-flow__error">{{ customerSearchError() }}</p>
+            } @else if (customerSearchResults().length) {
+              <p class="pos-customer-flow__matches">
+                {{ customerSearchResults().length }} {{ customerSearchResults().length === 1 ? 'match' : 'matches' }} found
+              </p>
+              <div class="pos-customer-flow__results">
+                @for (result of customerSearchResults(); track result._id) {
+                  <article class="pos-customer-result">
+                    <div class="pos-cart__avatar"></div>
+                    <div class="pos-customer-result__details">
+                      <strong>{{ result.name }}</strong>
+                      <span>{{ result.phone }}</span>
+                      @if (result.email) {
+                        <small>{{ result.email }}</small>
+                      }
+                    </div>
+                    <gom-lib-button type="button" variant="primary" (buttonClick)="selectCustomer(result)">SELECT</gom-lib-button>
+                  </article>
+                }
+              </div>
+            } @else if (customerSearchAttempted()) {
+              <div class="pos-customer-flow__not-found">
+                <strong>No customer found</strong>
+                <span>No profile exists for {{ customerSearchControl.value }}.</span>
+              </div>
+              <gom-lib-button type="button" variant="primary" [disabled]="isOrderFrozen()" (buttonClick)="showCreateCustomer()">
+                + Create New Customer
+              </gom-lib-button>
+            }
+
+            <div class="pos-customer-flow__divider"><span>or</span></div>
+            <button type="button" class="pos-customer-flow__walk-in" [disabled]="isOrderFrozen()" (click)="skipCustomerSelection()">
+              Skip — Continue as Walk-in Sale
+            </button>
+          } @else {
+            <div class="pos-customer-flow__heading">
+              <strong>Create New Profile</strong>
+              <button type="button" aria-label="Back to customer search" (click)="backToCustomerSearch()">×</button>
+            </div>
+            <div class="pos-customer-flow__form" [formGroup]="customerForm">
+              <gom-lib-input
+                label="Mobile Number"
+                placeholder="10-digit mobile number"
+                formControlName="phone"
+                [required]="true"
+              ></gom-lib-input>
+              @if (customerForm.controls.phone.touched && customerForm.controls.phone.invalid) {
+                <p class="pos-customer-flow__error">Enter a valid 10-digit mobile number.</p>
+              }
+              <gom-lib-input
+                label="Customer Name"
+                placeholder="Enter customer name"
+                formControlName="name"
+                [required]="true"
+              ></gom-lib-input>
+              @if (customerForm.controls.name.touched && customerForm.controls.name.invalid) {
+                <p class="pos-customer-flow__error">Customer name is required.</p>
+              }
+              <gom-lib-input
+                label="Email Address (Optional)"
+                type="email"
+                placeholder="name@example.com"
+                formControlName="email"
+              ></gom-lib-input>
+              @if (customerForm.controls.email.touched && customerForm.controls.email.invalid) {
+                <p class="pos-customer-flow__error">Enter a valid email address.</p>
+              }
+              @if (customerCreateError()) {
+                <p class="pos-customer-flow__error">{{ customerCreateError() }}</p>
+              }
+              <div class="pos-customer-flow__form-actions">
+                <gom-lib-button
+                  type="button"
+                  variant="primary"
+                  [disabled]="isOrderFrozen() || customerForm.invalid || customerCreating()"
+                  (buttonClick)="createAndSelectCustomer()"
+                >
+                  {{ customerCreating() ? 'CREATING...' : 'CREATE & SELECT' }}
+                </gom-lib-button>
+                <gom-lib-button type="button" variant="secondary" (buttonClick)="backToCustomerSearch()">Cancel</gom-lib-button>
+              </div>
+            </div>
+          }
+        </section>
+      }
+
+      <div class="pos-cart__items">
+        @if (cartEmpty()) {
+          <div class="pos-cart__empty">Add products to begin billing.</div>
+        } @else {
+          @for (item of cartItems(); track item.variantId) {
+            <article
+              class="pos-line-item"
+              [class.pos-line-item--selected]="selectedCartVariantId() === item.variantId"
+            >
+              <button
+                type="button"
+                class="pos-line-item__top pos-line-item__select"
+                [attr.aria-pressed]="selectedCartVariantId() === item.variantId"
+                (click)="selectCartItem(item.variantId)"
+                (focus)="selectCartItem(item.variantId)"
+              >
+                <span class="pos-line-item__name">
+                  <strong>{{ item.groupName }}</strong>
+                  @if (item.customMeasured) {
+                    <small>{{ item.unitLabel }} custom quantity</small>
+                  }
+                  @if (getB1g1SuggestionForVariant(item.variantId)) {
+                    <small class="pos-line-item__offer-hint">{{ getB1g1SuggestionForVariant(item.variantId) }}</small>
+                  }
+                </span>
+                <span>{{ item.lineTotal | currency:'INR':'symbol-narrow':'1.0-0' }}</span>
+              </button>
+
+              <div class="pos-line-item__bottom">
+                <div class="pos-line-item__qty">
+                  <button type="button" [disabled]="isOrderFrozen()" (click)="decreaseCartItem(item.variantId)">-</button>
+                  <span>{{ item.quantity }}</span>
+                  <button type="button" [disabled]="isOrderFrozen()" (click)="increaseCartItem(item.variantId)">+</button>
+                </div>
+                <button type="button" class="pos-line-item__remove" [disabled]="isOrderFrozen()" (click)="removeCartItem(item.variantId)">Remove</button>
+              </div>
+            </article>
+          }
+        }
+      </div>
+
+      @if (offerSuggestionMessages().length) {
+        <div class="pos-cart__offer-hints" aria-live="polite">
+          @for (message of offerSuggestionMessages(); track message) {
+            <p>{{ message }}</p>
+          }
+        </div>
+      }
+      @if (appliedOfferLabels().length) {
+        <div class="pos-cart__applied-offers">
+          @for (label of appliedOfferLabels(); track label) {
+            <span>{{ label }}</span>
+          }
+        </div>
+      }
+
+      <div class="pos-cart__summary">
+        <div><span>Subtotal</span><strong>{{ cartSubtotal() | currency:'INR':'symbol-narrow':'1.0-0' }}</strong></div>
+        <div><span>Offers Discount</span><strong>-{{ cartDiscount() | currency:'INR':'symbol-narrow':'1.0-0' }}</strong></div>
+        <div><span>Tax (GST 5%)</span><strong>{{ cartTax() | currency:'INR':'symbol-narrow':'1.0-0' }}</strong></div>
+        <div><span>Delivery Charge</span><strong>{{ deliveryCharge() | currency:'INR':'symbol-narrow':'1.0-0' }}</strong></div>
+        <div class="pos-cart__total"><span>TOTAL BILL</span><strong>{{ payableTotal() | currency:'INR':'symbol-narrow':'1.2-2' }}</strong></div>
+      </div>
+
+      <div class="pos-cart__meta-actions">
+        <button type="button" [disabled]="isOrderFrozen()" (click)="openOrderNoteModal()">{{ orderStaffNote() ? 'Edit Note' : '+ Add Note' }}</button>
+        @if (hasConfiguredOffers()) {
+          <button type="button" [disabled]="isOrderFrozen()" (click)="openOffersPanel()">Offers ({{ configuredOffersCount() }})</button>
+        }
+        <button type="button" [disabled]="isOrderFrozen()" (click)="openHoldOrderModal()">Hold</button>
+      </div>
+
+      @if (orderStaffNote()) {
+        <p class="pos-cart__staff-note">
+          <i class="ri-sticky-note-line" aria-hidden="true"></i>
+          {{ orderStaffNote() }}
+        </p>
+      }
+
+      <div class="pos-cart__payments">
+        @for (method of availablePaymentMethods(); track method) {
+          <button type="button" class="pos-cart__pay-mode" [disabled]="isOrderFrozen()" [class.pos-cart__pay-mode--active]="selectedPaymentMode() === method" (click)="selectPaymentMode(method)" (focus)="activeShortcutArea.set('payment')">{{ paymentMethodLabel(method) }}</button>
+        } @empty {
+          <p class="pos-cart__payment-empty">No payment methods are configured for this order type.</p>
+        }
+      </div>
+
+      @if (billingMemberMissing()) {
+        <p class="pos-cart__member-required"><i class="ri-information-line" aria-hidden="true"></i> Adding a member is mandatory for billing.</p>
+      }
+
+      <button type="button" class="pos-cart__pay-btn" [disabled]="isOrderFrozen() || cartEmpty() || billingMemberMissing()" (click)="placeOrder()">
+        PAY {{ payableTotal() | currency:'INR':'symbol-narrow':'1.2-2' }} (F8)
+      </button>
+    </aside>
+
+    <section class="pos-mobile-account" aria-label="Account panel">
+      <div class="pos-mobile-account__inner">
+        <h3>Account</h3>
+        <p>Account actions will be available here.</p>
+      </div>
+    </section>
+  </div>
+
+  <aside #shortcutsSection class="pos-shortcuts" aria-label="Cashier keyboard shortcuts">
+    <div class="pos-shortcuts__title">
+      <i class="ri-keyboard-line" aria-hidden="true"></i>
+      <span>Keyboard Shortcuts</span>
+    </div>
+    <div class="pos-shortcuts__list">
+      <span><kbd>Alt + N</kbd> New Order</span>
+      <span><kbd>Alt + M</kbd> Open Menu</span>
+      <span><kbd>Alt + H</kbd> Hold Order</span>
+      <span><kbd>Alt + L</kbd> Holding Orders</span>
+      <span><kbd>Alt + 1</kbd> Search</span>
+      <span><kbd>Alt + 2</kbd> Category</span>
+      <span><kbd>Alt + 3</kbd> Group</span>
+      <span><kbd>Alt + 4</kbd> Products</span>
+      <span><kbd>Alt + 5</kbd> Current Order</span>
+      <span><kbd>Alt + 6</kbd> Payment</span>
+      <span><kbd>Alt + 7</kbd> Customer</span>
+      <span><kbd>Alt + 8</kbd> Delivery</span>
+      <span><kbd>Alt + 9</kbd> Place Order</span>
+      @if (canConfigureOrderType()) {
+        <span><kbd>Alt + T</kbd> Order Type</span>
+        <span><kbd>Alt + T, 1</kbd> In-Store</span>
+        <span><kbd>Alt + T, 2</kbd> Pickup</span>
+        <span><kbd>Alt + T, 3</kbd> Delivery</span>
+      }
+      <span><kbd>↑ ↓ ← →</kbd> Navigate</span>
+      <span><kbd>Enter</kbd> Add Product</span>
+      <span><kbd>Alt + Enter</kbd> Product Details</span>
+      <span><kbd>+ / −</kbd> Quantity</span>
+      <span><kbd>Delete</kbd> Remove</span>
+      <span><kbd>Esc</kbd> Back/Cancel</span>
+    </div>
+  </aside>
+
+  <nav class="pos-mobile-nav" aria-label="Order mobile navigation">
+    <button
+      type="button"
+      class="pos-mobile-nav__item"
+      [class.pos-mobile-nav__item--active]="activeMobileTab() === 'products'"
+      (click)="setMobileTab('products')"
+    >
+      <span class="pos-mobile-nav__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" focusable="false">
+          <path d="M7 4H17L19 7V19H5V7L7 4Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+          <path d="M9 11H15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+        </svg>
+      </span>
+      <span>Products</span>
+    </button>
+
+    <button
+      type="button"
+      class="pos-mobile-nav__item"
+      [class.pos-mobile-nav__item--active]="activeMobileTab() === 'cart'"
+      (click)="setMobileTab('cart')"
+    >
+      <span class="pos-mobile-nav__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" focusable="false">
+          <path d="M3 5H5L7 15H18L20 8H8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+          <circle cx="9" cy="19" r="1.4" fill="currentColor"></circle>
+          <circle cx="17" cy="19" r="1.4" fill="currentColor"></circle>
+        </svg>
+        @if (cartDistinctCount() > 0) {
+          <span class="pos-mobile-nav__badge" aria-label="{{ cartDistinctCount() }} items in cart">{{ cartDistinctCount() > 99 ? '99+' : cartDistinctCount() }}</span>
+        }
+      </span>
+      <span>Cart</span>
+    </button>
+
+    <button
+      type="button"
+      class="pos-mobile-nav__item"
+      [class.pos-mobile-nav__item--active]="activeMobileTab() === 'account'"
+      (click)="setMobileTab('account')"
+    >
+      <span class="pos-mobile-nav__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" focusable="false">
+          <circle cx="12" cy="8" r="3.2" stroke="currentColor" stroke-width="1.8"></circle>
+          <path d="M6 19C6 16.8 8.7 15 12 15C15.3 15 18 16.8 18 19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+        </svg>
+      </span>
+      <span>Account</span>
+    </button>
+  </nav>
+
+  <gom-lib-modal
+    [show]="offersPanelOpen()"
+    title="Offers"
+    size="medium"
+    [closeOnBackdropClick]="true"
+    (closed)="closeOffersPanel()"
+  >
+    <section class="pos-offers-panel">
+      <div class="pos-offers-panel__header">
+        <div>
+          <p class="pos-offers-panel__eyebrow">Configured Offers</p>
+          <h4>{{ configuredOffersCount() }} {{ configuredOffersCount() === 1 ? 'offer' : 'offers' }} available</h4>
+        </div>
+        @if (configuredOffersCount()) {
+          <span class="pos-offers-panel__count">{{ configuredOffersCount() }}</span>
+        }
+      </div>
+
+      @if (appliedCouponList().length) {
+        <div class="pos-offers-panel__applied-coupons">
+          <p>Applied coupons</p>
+          <div>
+            @for (code of appliedCouponList(); track code) {
+              <button type="button" class="pos-offers-panel__coupon-chip" (click)="removeOfferCoupon(code)">
+                <span>{{ code }}</span>
+                <span aria-hidden="true">×</span>
+              </button>
+            }
+          </div>
+        </div>
+      }
+
+      @if (configuredOffersLoading()) {
+        <p class="pos-offers-panel__state">Loading configured offers...</p>
+      } @else if (!configuredOfferRows().length) {
+        <p class="pos-offers-panel__state">No offers configured yet.</p>
+      } @else {
+        <div class="pos-offers-panel__rows">
+          @for (row of configuredOfferRows(); track row.id) {
+            <article class="pos-offers-panel__card" [class.is-applied]="row.eligibilityTone === 'applied'" [class.is-eligible]="row.eligibilityTone === 'eligible'" [class.is-locked]="row.eligibilityTone === 'locked'">
+              <div class="pos-offers-panel__card-head">
+                <strong>{{ row.name }}</strong>
+                <span class="pos-offers-panel__status">{{ row.statusLabel }}</span>
+              </div>
+              <div class="pos-offers-panel__meta">
+                <span>{{ row.typeLabel }}</span>
+                <span>{{ row.triggerLabel }}</span>
+                @if (row.couponCode) {
+                  <span class="pos-offers-panel__coupon-code">{{ row.couponCode }}</span>
+                }
+              </div>
+              <p class="pos-offers-panel__summary">{{ row.summary }}</p>
+              @if (row.progressPercent !== null) {
+                <div class="pos-offers-panel__progress-wrap" aria-hidden="true">
+                  <div class="pos-offers-panel__progress-track">
+                    <div class="pos-offers-panel__progress-fill" [style.width.%]="row.progressPercent"></div>
+                  </div>
+                  <small>{{ row.progressHint }}</small>
+                </div>
+              }
+              <div class="pos-offers-panel__eligibility-row">
+                <span class="pos-offers-panel__eligibility" [class.is-applied]="row.eligibilityTone === 'applied'" [class.is-eligible]="row.eligibilityTone === 'eligible'" [class.is-locked]="row.eligibilityTone === 'locked'">{{ row.eligibilityLabel }}</span>
+                <span class="pos-offers-panel__state-badge" [class.is-applied]="row.eligibilityTone === 'applied'" [class.is-eligible]="row.eligibilityTone === 'eligible'" [class.is-locked]="row.eligibilityTone === 'locked'">{{ row.stateBadgeLabel }}</span>
+                @if (row.canApplyCoupon) {
+                  <button type="button" class="pos-offers-panel__apply" [disabled]="isOrderFrozen()" (click)="applyOfferCoupon(row.couponCode)">Apply</button>
+                } @else if (row.couponApplied) {
+                  <button type="button" class="pos-offers-panel__remove" [disabled]="isOrderFrozen()" (click)="removeOfferCoupon(row.couponCode)">Remove</button>
+                }
+              </div>
+            </article>
+          }
+        </div>
+      }
+    </section>
+  </gom-lib-modal>
+
+  <gom-lib-modal
+    [show]="orderNoteModalOpen()"
+    title="Add Order Note"
+    size="small"
+    [closeOnBackdropClick]="true"
+    (closed)="closeOrderNoteModal()"
+  >
+    <section class="pos-order-note-modal">
+      <p>Add a note for staff instructions or customer context.</p>
+      <gom-lib-textarea
+        label="Note"
+        [rows]="4"
+        placeholder="Example: Customer will pay balance at pickup"
+        [formControl]="orderNoteControl"
+      ></gom-lib-textarea>
+    </section>
+
+    <footer class="gom-confirmation-modal__actions gom-modal__action-layout" gom-modal-actions>
+      <div class="gom-modal__action-layout-start">
+        <gom-lib-button type="button" variant="secondary" (buttonClick)="closeOrderNoteModal()">Cancel</gom-lib-button>
+      </div>
+      <div class="gom-modal__action-layout-end">
+        <gom-lib-button type="button" variant="primary" (buttonClick)="saveOrderNote()">Save Note</gom-lib-button>
+      </div>
+    </footer>
+  </gom-lib-modal>
+
+  <gom-lib-modal
+    [(show)]="holdOrderModalOpen"
+    title="Hold Order"
+    size="small"
+    [closeOnBackdropClick]="!holdOrderSubmitting()"
+    (closed)="closeHoldOrderModal()"
+  >
+    <div class="pos-hold-order-modal">
+      <div class="pos-hold-order-modal__hero">
+        <span class="pos-hold-order-modal__eyebrow">Save this cart for later</span>
+        <h3>Hold the current order</h3>
+        <p>Enter a short reference so the cashier can find this cart later in Holding Orders.</p>
+      </div>
+
+      <gom-lib-input
+        label="Reference / Note (Optional)"
+        placeholder="Example: Ramesh phone order"
+        [formControl]="holdOrderReferenceControl"
+      ></gom-lib-input>
+    </div>
+
+    <footer class="gom-confirmation-modal__actions gom-modal__action-layout" gom-modal-actions>
+      <div class="gom-modal__action-layout-start">
+        <gom-lib-button type="button" variant="secondary" [disabled]="holdOrderSubmitting()" (buttonClick)="closeHoldOrderModal()">
+          Cancel
+        </gom-lib-button>
+      </div>
+      <div class="gom-modal__action-layout-end">
+        <gom-lib-button type="button" variant="primary" [disabled]="holdOrderSubmitting()" (buttonClick)="confirmHoldOrder()">
+          {{ holdOrderSubmitting() ? 'Holding...' : 'Hold Order' }}
+        </gom-lib-button>
+      </div>
+    </footer>
+  </gom-lib-modal>
+
+  <gom-lib-modal
+    [(show)]="holdingOrdersModalOpen"
+    title="Holding Orders"
+    size="large"
+    [closeOnBackdropClick]="!(holdingOrdersLoading() || holdingOrdersDeleting())"
+    (closed)="closeHoldingOrdersModal()"
+  >
+    <div class="pos-hold-list-modal">
+      <div class="pos-hold-list-modal__header">
+        <div>
+          <h3>Saved carts waiting to resume</h3>
+          <p>{{ holdingOrders().length }} order{{ holdingOrders().length === 1 ? '' : 's' }} on hold</p>
+        </div>
+        <button type="button" class="pos-hold-list-modal__refresh" [disabled]="holdingOrdersLoading() || holdingOrdersDeleting()" (click)="loadHoldingOrders()">Refresh</button>
+      </div>
+
+      <gom-lib-input
+        label="Search holding orders"
+        placeholder="Search by reference, order number, or note"
+        [formControl]="holdingOrdersSearchControl"
+      ></gom-lib-input>
+
+      @if (holdingOrdersLoading()) {
+        <div class="pos-hold-list-modal__empty pos-hold-list-modal__empty--loading">
+          <span class="pos-hold-list-modal__spinner"></span>
+          <p>Loading holding orders...</p>
+        </div>
+      } @else if (!holdingOrders().length) {
+        <div class="pos-hold-list-modal__empty">
+          <i class="ri-inbox-archive-line" aria-hidden="true"></i>
+          <h4>No Orders on Hold</h4>
+          <p>Orders you put on hold will appear here.</p>
+        </div>
+      } @else {
+        <div class="pos-hold-list-modal__list">
+          @for (order of holdingOrders(); track order._id) {
+            <article class="pos-hold-card">
+              <div class="pos-hold-card__main">
+                <div class="pos-hold-card__title-row">
+                  <strong>{{ order.orderNo }}</strong>
+                  <gom-lib-chip tone="info" size="dense">Draft</gom-lib-chip>
+                </div>
+                <p class="pos-hold-card__note">{{ order.notes || 'No reference added' }}</p>
+                <div class="pos-hold-card__meta">
+                  <span>Customer: {{ getHeldOrderCustomerName(order) }}</span>
+                  <span>{{ order.items?.length || 0 }} item{{ (order.items?.length || 0) === 1 ? '' : 's' }}</span>
+                  <span>Total: {{ order.pricingSnapshot.grandTotal | currency:'INR':'symbol-narrow':'1.0-0' }}</span>
+                  <span>Held {{ order.createdAt | date:'medium' }}</span>
+                </div>
+              </div>
+              <div class="pos-hold-card__actions">
+                <button type="button" class="pos-hold-card__delete" [disabled]="holdingOrdersDeleting()" (click)="openDeleteHoldingOrderConfirm(order)">
+                  <i class="ri-delete-bin-line" aria-hidden="true"></i>
+                </button>
+                <gom-lib-button type="button" variant="primary" [disabled]="holdingOrdersLoading() || holdingOrdersDeleting()" (buttonClick)="resumeHoldingOrder(order)">
+                  Resume Order
+                </gom-lib-button>
+              </div>
+            </article>
+          }
+        </div>
+      }
+    </div>
+  </gom-lib-modal>
+
+  <gom-lib-modal
+    [show]="switchHoldOrderModalOpen()"
+    title="Switch to Hold Order?"
+    size="small"
+    [closeOnBackdropClick]="true"
+    (closed)="closeSwitchHoldOrderModal()"
+  >
+    <div class="pos-switch-hold-modal">
+      <p class="pos-switch-hold-modal__lead">
+        You have an active order with {{ cartDistinctCount() }} item{{ cartDistinctCount() === 1 ? '' : 's' }} ({{ payableTotal() | currency:'INR':'symbol-narrow':'1.0-0' }}).
+        What would you like to do with it?
+      </p>
+
+      @if (switchHoldOrderTarget(); as target) {
+        <article class="pos-switch-hold-modal__card">
+          <div class="pos-switch-hold-modal__card-top">
+            <strong>{{ target.orderNo }}</strong>
+            <gom-lib-chip tone="warning" size="dense">Holding Order</gom-lib-chip>
+          </div>
+          <div class="pos-switch-hold-modal__meta">
+            <span>{{ getHeldOrderCustomerName(target) }}</span>
+            <span>{{ target.items?.length || 0 }} item{{ (target.items?.length || 0) === 1 ? '' : 's' }}</span>
+            <span>Total: {{ target.pricingSnapshot.grandTotal | currency:'INR':'symbol-narrow':'1.0-0' }}</span>
+            <span>Held {{ target.createdAt | date:'medium' }}</span>
+          </div>
+          <p class="pos-switch-hold-modal__note">{{ target.notes || 'No reference added' }}</p>
+        </article>
+      }
+
+      <div class="pos-switch-hold-modal__actions">
+        <gom-lib-button type="button" variant="primary" [disabled]="holdingOrdersLoading() || holdOrderSubmitting()" (buttonClick)="holdCurrentAndResumeSelected()">
+          Hold Current &amp; Resume Selected
+        </gom-lib-button>
+        <gom-lib-button type="button" variant="secondary" [disabled]="holdingOrdersLoading() || holdOrderSubmitting()" (buttonClick)="discardCurrentAndResumeSelected()">
+          Discard Current &amp; Resume Selected
+        </gom-lib-button>
+      </div>
+
+      <button type="button" class="pos-switch-hold-modal__cancel" (click)="closeSwitchHoldOrderModal()">Cancel</button>
+    </div>
+  </gom-lib-modal>
+
+  <gom-lib-confirmation-modal
+    [(show)]="holdingOrderDeleteConfirmOpen"
+    title="Discard Hold Order?"
+    [message]="'Are you sure you want to discard this hold order? This action cannot be undone.'"
+    confirmText="Discard Order"
+    cancelText="Cancel"
+    confirmVariant="danger"
+    [busy]="holdingOrdersDeleting()"
+    (confirmed)="confirmDeleteHoldingOrder()"
+    (cancelled)="closeDeleteHoldingOrderConfirm()"
+  ></gom-lib-confirmation-modal>
+
+  <gom-lib-modal
+    [show]="paymentUpiModalOpen()"
+    [title]="selectedPaymentMode() === 'UPI' ? 'UPI Payment' : selectedPaymentMode() === 'BANK_TRANSFER' ? 'Bank Transfer Payment' : 'Cash Payment'"
+    size="medium"
+    [closeOnBackdropClick]="true"
+    (closed)="closeUpiPaymentModal()"
+  >
+    <section class="pos-payment-upi">
+      <header class="pos-payment-upi__header">
+        <p>Payment Method</p>
+        <div class="pos-payment-upi__headline-row">
+          <h3>{{ selectedPaymentMode() === 'UPI' ? 'UPI PAYMENT' : selectedPaymentMode() === 'BANK_TRANSFER' ? 'BANK TRANSFER PAYMENT' : 'CASH PAYMENT' }}</h3>
+          <span class="pos-payment-upi__mode-chip">{{ selectedPaymentMode() === 'UPI' ? 'UPI' : selectedPaymentMode() === 'BANK_TRANSFER' ? 'Bank Transfer' : 'Cash' }}</span>
+        </div>
+      </header>
+
+      <div class="pos-payment-upi__amount">
+        <small>Amount to Pay</small>
+        <strong>{{ payableTotal() | currency:'INR':'symbol-narrow':'1.2-2' }}</strong>
+      </div>
+
+      @if (selectedPaymentMode() === 'UPI' && activeUpiAccounts().length > 1) {
+        <div class="pos-payment-upi__providers" role="tablist" aria-label="UPI apps">
+          @for (account of activeUpiAccounts(); track account.id) {
+            <button
+              type="button"
+              class="pos-payment-upi__provider-btn"
+              [class.active]="selectedUpiAccount()?.id === account.id"
+              (click)="selectUpiAccount(account.id)"
+            >
+              {{ account.providerName }}
+            </button>
+          }
+        </div>
+      }
+
+      @if (selectedPaymentMode() === 'BANK_TRANSFER' && activeBankAccounts().length > 1) {
+        <div class="pos-payment-upi__providers" role="tablist" aria-label="Bank accounts">
+          @for (account of activeBankAccounts(); track account.id) {
+            <button
+              type="button"
+              class="pos-payment-upi__provider-btn"
+              [class.active]="selectedBankAccount()?.id === account.id"
+              (click)="selectBankAccount(account.id)"
+            >
+              {{ account.bankName }}
+            </button>
+          }
+        </div>
+      }
+
+      @if (selectedPaymentMode() === 'UPI') {
+        @if (selectedUpiAccount()?.qrCodeUrl) {
+          <div class="pos-payment-upi__qr-wrap">
+            <div class="pos-payment-upi__qr-card">
+              <img [src]="selectedUpiAccount()?.qrCodeUrl || ''" alt="UPI QR code" />
+            </div>
+          </div>
+        } @else {
+          <p class="pos-payment-upi__hint">No QR code is configured for this UPI account.</p>
+        }
+
+        <div class="pos-payment-upi__account">
+          <strong><i class="ri-shield-check-line" aria-hidden="true"></i> {{ selectedUpiAccount()?.providerName || 'UPI Account' }}</strong>
+          <span>UPI ID: {{ selectedUpiAccount()?.upiId || '-' }}</span>
+        </div>
+      }
+
+      @if (selectedPaymentMode() === 'BANK_TRANSFER') {
+        <div class="pos-payment-upi__account">
+          <strong><i class="ri-bank-card-line" aria-hidden="true"></i> {{ selectedBankAccount()?.bankName || 'Bank Account' }}</strong>
+          <span>Account Holder: {{ selectedBankAccount()?.accountHolderName || '-' }}</span>
+          <span>Account Number: •••• {{ selectedBankAccount()?.accountNumberLast4 || '-' }}</span>
+          <span>IFSC: {{ selectedBankAccount()?.ifscCode || '-' }}</span>
+          <span>Branch: {{ selectedBankAccount()?.branchName || '-' }}</span>
+        </div>
+      }
+
+      @if (selectedPaymentMode() === 'UPI') {
+        <gom-lib-button class="pos-payment-upi__confirm" type="button" variant="primary" [disabled]="!selectedUpiAccount() || orderSubmitting()" (buttonClick)="confirmUpiPaymentReceived()">
+          {{ orderSubmitting() ? 'CREATING ORDER...' : 'PAYMENT RECEIVED' }}
+        </gom-lib-button>
+      } @else if (selectedPaymentMode() === 'BANK_TRANSFER') {
+        <gom-lib-button class="pos-payment-upi__confirm" type="button" variant="primary" [disabled]="!selectedBankAccount() || orderSubmitting()" (buttonClick)="confirmBankTransferPaymentReceived()">
+          {{ orderSubmitting() ? 'CREATING ORDER...' : 'PAYMENT RECEIVED' }}
+        </gom-lib-button>
+      } @else {
+        <gom-lib-button class="pos-payment-upi__confirm" type="button" variant="primary" [disabled]="orderSubmitting()" (buttonClick)="confirmCashPaymentReceived()">
+          {{ orderSubmitting() ? 'CREATING ORDER...' : 'PAYMENT RECEIVED' }}
+        </gom-lib-button>
+      }
+      <p class="pos-payment-upi__footnote">Click only after verifying customer payment proof</p>
+      <button type="button" class="pos-payment-upi__cancel" (click)="closeUpiPaymentModal()">Cancel Payment</button>
+    </section>
+  </gom-lib-modal>
+
+  <gom-lib-modal
+    [show]="paymentCompleteModalOpen()"
+    title="Transaction Complete"
+    size="large"
+    [closeOnBackdropClick]="true"
+    (closed)="closePaymentCompleteModal()"
+  >
+    <section class="pos-payment-done">
+      <div class="pos-payment-done__preview">
+        <div class="pos-payment-done__receipt-shell" #billPdfTarget>
+        @if (billTemplateLoading()) {
+          <p>Loading bill preview...</p>
+        } @else if (billTemplateConfig(); as billTemplate) {
+            <gom-bill-preview
+              class="pos-payment-done__bill"
+              [configuration]="billTemplate"
+              [values]="modalBillPreviewValues()"
+              [items]="modalBillPreviewItems()"
+            ></gom-bill-preview>
+        } @else {
+          <p>No bill template assigned for this order type.</p>
+        }
+        </div>
+      </div>
+
+      <div class="pos-payment-done__actions">
+        <p class="pos-payment-done__status">{{ modalPaymentStatus() }} / {{ modalOrderStatus() }} <i class="ri-check-line" aria-hidden="true"></i></p>
+        <h3>Transaction Complete</h3>
+        @if (billTemplateName()) {
+          <p class="pos-payment-done__template-name">Template: {{ billTemplateName() }}</p>
+        }
+        <p class="pos-payment-done__subtitle">Choose how you would like to share the bill with the customer.</p>
+
+        <div class="pos-payment-done__quick-actions">
+          <gom-lib-button class="pos-payment-done__btn pos-payment-done__btn--print" type="button" variant="primary" (buttonClick)="onFuturePaymentActionClick()">Print Bill</gom-lib-button>
+          <gom-lib-button class="pos-payment-done__btn pos-payment-done__btn--whatsapp" type="button" variant="primary" (buttonClick)="onFuturePaymentActionClick()">Share via WhatsApp</gom-lib-button>
+          <gom-lib-button class="pos-payment-done__btn pos-payment-done__btn--email" type="button" variant="secondary" (buttonClick)="onFuturePaymentActionClick()">Share via Email</gom-lib-button>
+        </div>
+
+        <gom-lib-button class="pos-payment-done__btn pos-payment-done__btn--new-order" type="button" variant="secondary" (buttonClick)="startNewOrder()">NEW ORDER (F10)</gom-lib-button>
+
+        <gom-lib-button class="pos-payment-done__btn pos-payment-done__btn--download" type="button" variant="secondary" [disabled]="billTemplateLoading() || !billTemplateConfig() || billPdfDownloading()" (buttonClick)="downloadBillPdf()">
+          {{ billPdfDownloading() ? 'Downloading...' : 'Download PDF' }}
+        </gom-lib-button>
+      </div>
+    </section>
+
+    <div class="pos-payment-done__pdf-export" aria-hidden="true">
+      @if (billTemplateConfig(); as billTemplate) {
+        <div class="pos-payment-done__pdf-sheet" #billPdfExportTarget>
+          <gom-bill-preview
+            [configuration]="billTemplate"
+            [values]="modalBillPreviewValues()"
+            [items]="modalBillPreviewItems()"
+          ></gom-bill-preview>
+        </div>
+      }
+    </div>
+  </gom-lib-modal>
+
+  <gom-lib-modal
+    [show]="productDetailOpen()"
+    [title]="detailGroup()?.name || 'Product Details'"
+    size="large"
+    mobilePresentation="fullscreen"
+    [closeOnBackdropClick]="true"
+    (closed)="closeProductDetail()"
+  >
+    @if (detailGroup(); as group) {
+      @if (detailVariant(); as variant) {
+        <div class="pos-detail">
+          <div class="pos-detail__media">
+            @if (getVariantImageUrl(group, variant)) {
+              <img [src]="getVariantImageUrl(group, variant)" [alt]="getVariantDisplayName(group, variant)" />
+            } @else {
+              <img src="assets/no-image.svg" [alt]="getVariantDisplayName(group, variant)" />
+            }
+          </div>
+
+          <div class="pos-detail__content">
+            <h3>{{ getVariantDisplayName(group, variant) }}</h3>
+
+            <div class="pos-detail__price-row">
+              <strong>{{ getVariantDisplayPrice(variant) | currency:'INR':'symbol-narrow':'1.0-0' }}</strong>
+              @if (getVariantMrpPrice(variant) > getVariantDisplayPrice(variant)) {
+                <span class="pos-detail__mrp">MRP {{ getVariantMrpPrice(variant) | currency:'INR':'symbol-narrow':'1.0-2' }}</span>
+                <span class="pos-detail__discount">{{ getVariantDiscountPercent(variant) }}% OFF</span>
+              }
+              <span class="pos-detail__unit">/ {{ getVariantUnitText(variant) }}</span>
+            </div>
+
+            @if (detailVariants().length > 1) {
+              <section class="pos-detail__section" aria-labelledby="pack-size-title">
+                <h4 id="pack-size-title">Select Pack Size</h4>
+                <div class="pos-detail__variants">
+                  @for (option of detailVariants(); track option._id || option.id) {
+                    <button
+                      type="button"
+                      class="pos-detail__variant"
+                      [class.pos-detail__variant--selected]="(detailVariant()?._id || detailVariant()?.id) === (option._id || option.id)"
+                      (click)="selectDetailVariant(option)"
+                    >
+                      <strong>{{ getVariantUnitText(option) }}</strong>
+                      <span>{{ getVariantDisplayPrice(option) | currency:'INR':'symbol-narrow':'1.0-0' }}</span>
+                      @if (getVariantMrpPrice(option) > getVariantDisplayPrice(option)) {
+                        <small>{{ getVariantMrpPrice(option) | currency:'INR':'symbol-narrow':'1.0-2' }}</small>
+                      }
+                    </button>
+                  }
+                </div>
+              </section>
+            }
+
+            @if (customQuantityEnabled() && customUnitOptions().length) {
+              <section class="pos-detail__section pos-detail__custom" aria-labelledby="custom-quantity-title">
+                <h4 id="custom-quantity-title">Or enter custom quantity</h4>
+                <div class="pos-detail__custom-fields">
+                  <gom-lib-input
+                    label="Quantity"
+                    type="number"
+                    min="0.001"
+                    step="any"
+                    placeholder="Enter quantity"
+                    [formControl]="customQuantityControl"
+                  ></gom-lib-input>
+                  <gom-lib-select
+                    [options]="customUnitOptions()"
+                    placeholder="Select unit"
+                    [ngModel]="customUnitId()"
+                    (ngModelChange)="setCustomUnit($event)"
+                  ></gom-lib-select>
+                </div>
+                <div class="pos-detail__custom-summary">
+                  <span>
+                    @if (customPriceLoading()) {
+                      Calculating price...
+                    } @else if (customPriceError()) {
+                      {{ customPriceError() }}
+                    } @else if (customPreviewBaseQuantity() > 0) {
+                      {{ customPreviewBaseQuantity() | number:'1.0-3' }} base units
+                    } @else {
+                      Enter a quantity to calculate price
+                    }
+                  </span>
+                  <strong>{{ customMeasuredAmount() | currency:'INR':'symbol-narrow':'1.2-2' }}</strong>
+                </div>
+                <gom-lib-button
+                  type="button"
+                  variant="primary"
+                  [disabled]="isOrderFrozen() || !customQuantityValid()"
+                  (buttonClick)="addCustomMeasuredToCart()"
+                >Add Custom Quantity</gom-lib-button>
+              </section>
+            }
+
+            <div class="pos-detail__divider"></div>
+            <div class="pos-detail__quantity-row">
+              <span>Quantity</span>
+              @if (getVariantCartQuantity(variant) > 0) {
+                <div class="pos-detail__stepper">
+                  <button
+                    type="button"
+                    [disabled]="isOrderFrozen() || getVariantCartQuantity(variant) <= 1"
+                    (click)="decreaseDetailQuantity(variant)"
+                    aria-label="Decrease quantity"
+                  >−</button>
+                  <strong>{{ getVariantCartQuantity(variant) }}</strong>
+                  <button type="button" [disabled]="isOrderFrozen()" (click)="increaseDetailQuantity(variant)" aria-label="Increase quantity">+</button>
+                </div>
+              } @else {
+                <button type="button" class="pos-detail__add" [disabled]="isOrderFrozen()" (click)="addVariantToCart(group, variant)">Add to Order</button>
+              }
+            </div>
+
+            @if (group.description) {
+              <div class="pos-detail__divider"></div>
+              <section class="pos-detail__section">
+                <h4>About this product</h4>
+                <p>{{ group.description }}</p>
+              </section>
+            }
+          </div>
+        </div>
+      }
+    }
+  </gom-lib-modal>
+</section>

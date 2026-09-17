@@ -1,12 +1,12 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormControl } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 import {
   GomAlertToastService,
   GomButtonComponent,
-  GomInputComponent,
+  GomChipComponent,
   GomModalComponent,
   GomTableColumn,
   GomTableComponent,
@@ -17,18 +17,14 @@ import { AuthSessionService } from '../../../../core/auth/auth-session.service';
 import { TenantAccessService } from '../../services';
 import { EmployeeProfile } from '../../models';
 import { TRANSLATION_KEYS, UI_CONFIG } from '../../constants';
-import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { EmployeeFormComponent } from '../form/employee-form.component';
 import { DisableIfNoFeatureDirective } from '../../../../shared/directives/disable-if-no-feature.directive';
 
 interface EmployeeRow extends GomTableRow {
   employeeId: string;
-  code: string;
   name: string;
-  department: string;
-  designation: string;
+  email: string;
   status: string;
-  linkedUser: string;
 }
 
 /**
@@ -44,7 +40,7 @@ interface EmployeeRow extends GomTableRow {
     TranslateModule,
     DisableIfNoFeatureDirective,
     GomButtonComponent,
-    GomInputComponent,
+    GomChipComponent,
     GomTableComponent,
     GomModalComponent,
     EmployeeFormComponent,
@@ -61,7 +57,6 @@ export class EmployeesListComponent implements OnInit {
   readonly loading = signal(false);
   readonly canWrite = computed(() => this.authSession.canWrite('tenant-admin'));
   readonly errorMessage = signal<string | null>(null);
-  readonly searchControl = new FormControl('');
 
   readonly employees = signal<EmployeeProfile[]>([]);
   readonly page = signal(1);
@@ -70,39 +65,35 @@ export class EmployeesListComponent implements OnInit {
   readonly formModalOpen = signal(false);
   readonly editingEmployeeId = signal<string | null>(null);
 
-  readonly filteredEmployees = computed<EmployeeRow[]>(() => {
-    const search = this.searchControl.value?.trim().toLowerCase() || '';
+  readonly maxEmployees = signal<number | null>(null);
+  readonly deleteConfirmModalOpen = signal(false);
+  readonly deletingEmployeeId = signal<string | null>(null);
+  readonly employeeToDelete = signal<string>('');
+  readonly atQuota = computed(() => {
+    const max = this.maxEmployees();
+    return max !== null && this.total() >= max;
+  });
+  readonly quotaLabel = computed(() => {
+    const max = this.maxEmployees();
+    if (max === null) return null;
+    return `${this.total()} / ${max}`;
+  });
 
+  readonly filteredEmployees = computed<EmployeeRow[]>(() => {
     return this.employees()
-      .filter((emp) => {
-        if (!search) return true;
-        return (
-          emp.employeeCode.toLowerCase().includes(search)
-          || emp.fullName.toLowerCase().includes(search)
-          || (emp.department?.toLowerCase()?.includes(search) || false)
-        );
-      })
       .map((emp) => ({
         employeeId: emp._id,
-        code: emp.employeeCode,
         name: emp.fullName,
-        department: emp.department || '-',
-        designation: emp.designation || '-',
+        email: typeof emp.userId === 'string' ? '-' : (emp.userId?.email || '-'),
         status: emp.status,
-        linkedUser: typeof emp.userId === 'string'
-          ? this.translate.instant('saas.admin.employees.val_linked')
-          : (emp.userId?.email || this.translate.instant('saas.admin.employees.opt_not_linked')),
       }));
   });
 
   readonly columns = computed<GomTableColumn<EmployeeRow>[]>(() => {
     const baseColumns: GomTableColumn<EmployeeRow>[] = [
-      { key: 'code', header: this.translate.instant(TRANSLATION_KEYS.TBL_EMPLOYEE_CODE), sortable: true, width: '10rem' },
       { key: 'name', header: this.translate.instant(TRANSLATION_KEYS.TBL_EMPLOYEE_NAME), sortable: true, width: '15rem' },
-      { key: 'department', header: this.translate.instant(TRANSLATION_KEYS.TBL_EMPLOYEE_DEPT), width: '12rem' },
-      { key: 'designation', header: this.translate.instant('saas.admin.employees.lbl_designation'), width: '14rem' },
+      { key: 'email', header: this.translate.instant('saas.admin.employees.tbl_email'), sortable: true, width: '18rem' },
       { key: 'status', header: this.translate.instant('saas.admin.employees.lbl_status'), width: '10rem' },
-      { key: 'linkedUser', header: this.translate.instant('saas.admin.employees.lbl_linked_user'), width: '14rem' },
     ];
 
     if (!this.canWrite()) {
@@ -114,10 +105,10 @@ export class EmployeesListComponent implements OnInit {
       {
         key: 'actions',
         header: this.translate.instant('common.labels.actions'),
-        width: '14rem',
+        width: '8rem',
         actionButtons: [
-          { label: this.translate.instant('common.actions.edit'), actionKey: 'edit', variant: 'secondary' },
-          { label: this.translate.instant('saas.admin.employees.btn_link_user'), actionKey: 'link', variant: 'primary' },
+          { label: this.translate.instant('common.actions.edit'), actionKey: 'edit', variant: 'secondary', icon: 'ri-pencil-line' },
+          { label: this.translate.instant('common.actions.delete'), actionKey: 'delete', variant: 'danger', icon: 'ri-delete-bin-line' },
         ],
       },
     ];
@@ -127,11 +118,7 @@ export class EmployeesListComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadEmployees();
-    this.searchControl.valueChanges
-      .pipe(debounceTime(UI_CONFIG.DEBOUNCE_SEARCH_MS), distinctUntilChanged())
-      .subscribe(() => {
-        this.page.set(1);
-      });
+    this.loadQuota();
   }
 
   loadEmployees(): void {
@@ -145,15 +132,30 @@ export class EmployeesListComponent implements OnInit {
         this.loading.set(false);
       },
       error: () => {
-        this.errorMessage.set('Failed to load employees');
-        this.toast.error('Failed to load employees');
+        this.errorMessage.set(this.translate.instant('saas.admin.employees.msg_load_failed'));
+        this.toast.error(this.translate.instant('saas.admin.employees.msg_load_failed'));
         this.loading.set(false);
+      },
+    });
+  }
+
+  loadQuota(): void {
+    this.service.getTenantAdminSummary().subscribe({
+      next: (summary) => {
+        this.maxEmployees.set(summary.limits?.maxEmployees ?? null);
+      },
+      error: () => {
+        // Non-critical — quota display is best-effort
       },
     });
   }
 
   onCreateEmployee(): void {
     if (!this.canWrite()) {
+      return;
+    }
+    if (this.atQuota()) {
+      this.toast.error(this.translate.instant('saas.admin.employees.msg_quota_exceeded'));
       return;
     }
     this.openEmployeeForm(null);
@@ -164,15 +166,10 @@ export class EmployeesListComponent implements OnInit {
       return;
     }
     const { actionKey, row } = event;
-    switch (actionKey) {
-      case 'edit':
-        this.openEmployeeForm(row.employeeId);
-        break;
-      case 'link':
-        this.openEmployeeForm(row.employeeId);
-        break;
-      default:
-        break;
+    if (actionKey === 'edit') {
+      this.openEmployeeForm(row.employeeId);
+    } else if (actionKey === 'delete') {
+      this.onDeleteEmployee(row.employeeId, row.name);
     }
   }
 
@@ -199,6 +196,46 @@ export class EmployeesListComponent implements OnInit {
     this.editingEmployeeId.set(null);
   }
 
+  onDeleteEmployee(employeeId: string, employeeName: string): void {
+    this.deletingEmployeeId.set(employeeId);
+    this.employeeToDelete.set(employeeName);
+    this.deleteConfirmModalOpen.set(true);
+  }
+
+  onDeleteConfirmClosed(): void {
+    this.deleteConfirmModalOpen.set(false);
+    this.deletingEmployeeId.set(null);
+    this.employeeToDelete.set('');
+  }
+
+  onConfirmDeleteEmployee(): void {
+    const employeeId = this.deletingEmployeeId();
+    if (!employeeId) {
+      return;
+    }
+
+    this.loading.set(true);
+    this.deleteConfirmModalOpen.set(false);
+    this.service.deleteEmployee(employeeId).subscribe({
+      next: () => {
+        this.toast.success(this.translate.instant('saas.admin.employees.msg_delete_success'));
+        this.deletingEmployeeId.set(null);
+        this.employeeToDelete.set('');
+        this.loadEmployees();
+      },
+      error: (err) => {
+        this.loading.set(false);
+        const serverMessage: string = err?.error?.message || '';
+        if (serverMessage === 'employee_has_open_assignments') {
+          this.toast.error(this.translate.instant('saas.admin.employees.err_delete_has_assignments'));
+        } else {
+          this.toast.error(this.translate.instant('saas.admin.employees.msg_delete_failed'));
+        }
+        this.deletingEmployeeId.set(null);
+        this.employeeToDelete.set('');
+      },
+    });
+  }
   private openEmployeeForm(employeeId: string | null): void {
     this.editingEmployeeId.set(employeeId);
     this.formModalOpen.set(true);

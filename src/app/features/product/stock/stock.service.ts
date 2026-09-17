@@ -31,11 +31,20 @@ export interface GroupResolvedField {
   value: number;
 }
 
+export interface GroupFormula {
+  actualPrice?: string;
+  sellingPrice?: string;
+  anchorPrice?: string;
+}
+
 export interface Group {
   _id: string;
   name: string;
   baseUnitId: string;
   allowedUnitIds: string[];
+  groupType?: 'MEASURED' | 'ATTRIBUTE' | 'HYBRID';
+  pricingRefreshMode?: 'FIXED' | 'MANUAL_REFRESH' | 'AUTO_REFRESH';
+  formula?: GroupFormula;
   resolvedFields: GroupResolvedField[];
   status: 'ACTIVE' | 'INACTIVE';
 }
@@ -47,6 +56,12 @@ export interface Unit {
   conversionFactor?: number;
   status: 'ACTIVE' | 'INACTIVE';
 }
+
+export type StockMovementType = 'IN' | 'OUT' | 'ADJUST';
+export type StockReferenceType = 'purchase' | 'sale' | 'adjustment' | 'return';
+export type CorrectionReasonType = 'DAMAGE' | 'RETURN' | 'EXPIRY' | 'OTHER';
+export type CostingMethodType = 'WAC' | 'LATEST' | 'FIFO';
+export type CostingMethodScopeType = 'GROUP' | 'TENANT_DEFAULT';
 
 export interface StockSummary {
   groupId: string;
@@ -60,13 +75,36 @@ export interface StockSummary {
   reserved: number;
   available: number;
   reorderLevel: number;
+  costingMethod?: CostingMethodType;
+  costingMethodScope?: CostingMethodScopeType;
+  tenantDefaultCostingMethod?: CostingMethodType | null;
+  effectiveCostPerBaseUnit?: number;
+  effectiveInventoryCostBasisTotal?: number;
+  costingSnapshot?: {
+    wac: { costPerBaseUnit: number; inventoryCostBasisTotal: number };
+    latest: { costPerBaseUnit: number; inventoryCostBasisTotal: number };
+    fifo: { costPerBaseUnit: number; inventoryCostBasisTotal: number };
+  };
+  avgCostPerBaseUnit: number;
+  inventoryCostBasisTotal: number;
+  lastLandedCostPerBaseUnit: number;
   isLowStock: boolean;
+}
+
+export interface CostingMethodConfig {
+  groupId: string;
+  groupName: string;
+  supportedMethods: Array<CostingMethodType>;
+  tenantDefaultMethod: CostingMethodType;
+  groupCostingMethod: CostingMethodType | null;
+  effectiveMethod: CostingMethodType;
+  effectiveScope: CostingMethodScopeType;
 }
 
 export interface StockHistoryEntry {
   _id: string;
   groupId: string;
-  movementType: 'IN' | 'OUT' | 'ADJUST';
+  movementType: StockMovementType;
   quantity: number;
   convertedQuantityInBase: number;
   unitId: {
@@ -74,10 +112,93 @@ export interface StockHistoryEntry {
     name: string;
     symbol: string;
   };
-  referenceType: 'purchase' | 'sale' | 'adjustment' | 'return';
+  referenceType: StockReferenceType;
   referenceId: string | null;
   notes: string | null;
+  costComponents?: Array<{
+    key: string;
+    label: string;
+    value: number;
+    isRequired?: boolean;
+  }>;
+  costSummary?: {
+    totalCost: number;
+    costPerBaseUnit: number;
+    componentCount: number;
+  };
+  pricingImpact?: {
+    mode: 'FIXED' | 'MANUAL_REFRESH' | 'AUTO_REFRESH';
+    triggerSource: string;
+    planCount: number;
+    appliedCount: number;
+    suggestionCount: number;
+    historyCount: number;
+    totals: {
+      sellingPrice: number;
+      anchorPrice: number;
+      actualPrice: number;
+      marginPercent: number;
+      profitValue: number;
+    };
+    variantChanges: Array<{
+      variantId: string;
+      variantName: string;
+      triggerSource: string;
+      before: {
+        sellingPrice: number;
+        anchorPrice: number;
+        actualPrice: number;
+        marginPercent: number;
+        profitValue: number;
+      };
+      after: {
+        sellingPrice: number;
+        anchorPrice: number;
+        actualPrice: number;
+        marginPercent: number;
+        profitValue: number;
+      };
+      delta: {
+        sellingPrice: number;
+        anchorPrice: number;
+        actualPrice: number;
+        marginPercent: number;
+        profitValue: number;
+      };
+    }>;
+  } | null;
+  variantAllocations?: Array<{
+    variantId: string;
+    quantity: number;
+    convertedQuantityInBase: number;
+  }>;
   createdBy: string;
+  createdAt: string;
+}
+
+export interface GroupPricingHistoryEntry {
+  id: string;
+  groupId: string;
+  groupName: string | null;
+  variantId: string;
+  variantName: string | null;
+  scope: 'GROUP' | 'VARIANT';
+  eventType: string;
+  fromPricingMode: 'FORMULA' | 'OVERRIDE' | null;
+  toPricingMode: 'FORMULA' | 'OVERRIDE' | null;
+  oldPrice: {
+    sellingPrice: number;
+    anchorPrice: number;
+    actualPrice: number;
+  };
+  newPrice: {
+    sellingPrice: number;
+    anchorPrice: number;
+    actualPrice: number;
+  };
+  reason: string | null;
+  source: 'MANUAL_PRICING' | 'STOCK_REFRESH' | 'GROUP_REFRESH';
+  actorId: string;
   createdAt: string;
 }
 
@@ -85,14 +206,55 @@ export interface AddStockPayload {
   groupId: string;
   quantity: number;
   unitId: string;
+  variantId?: string;
+  variantAllocations?: Array<{
+    variantId: string;
+    quantity: number;
+  }>;
+  costComponents?: Array<{
+    key: string;
+    label: string;
+    value: number;
+    isRequired?: boolean;
+  }>;
   referenceId?: string;
+  notes?: string;
+}
+
+export interface AdjustStockPayload {
+  groupId: string;
+  quantityDelta: number;
+  unitId: string;
+  variantId?: string;
+  correctionReason: CorrectionReasonType;
   notes?: string;
 }
 
 export interface UpdateStockPayload {
   quantity: number;
   unitId: string;
+  correctionReason?: CorrectionReasonType;
   notes?: string;
+}
+
+export interface StockVariantItem {
+  _id: string;
+  name: string;
+  quantity: number;
+  convertedQuantity: number;
+  unitId: string;
+  status: 'ACTIVE' | 'INACTIVE';
+}
+
+export interface VariantStockInfo {
+  variantId: string;
+  variantName: string;
+  quantity: number;
+  convertedQuantity: number;
+  unit: { _id: string; name: string; symbol: string } | null;
+  onHand: number;
+  reserved: number;
+  available: number;
 }
 
 @Injectable({
@@ -121,8 +283,8 @@ export class StockService {
     groupId: string;
     page?: number;
     limit?: number;
-    movementType?: 'IN' | 'OUT' | 'ADJUST';
-    transactionType?: 'IN' | 'OUT' | 'ADJUST';
+    movementType?: StockMovementType;
+    transactionType?: StockMovementType;
     dateFrom?: string;
     dateTo?: string;
   }): Observable<ApiPaginated<StockHistoryEntry>> {
@@ -142,6 +304,10 @@ export class StockService {
     return this.http.post<ApiSuccess<unknown>>(`${this.stockUrl}/in`, payload);
   }
 
+  adjustStock(payload: AdjustStockPayload): Observable<ApiSuccess<unknown>> {
+    return this.http.post<ApiSuccess<unknown>>(`${this.stockUrl}/adjust`, payload);
+  }
+
   updateStockEntry(id: string, payload: UpdateStockPayload): Observable<ApiSuccess<unknown>> {
     return this.http.put<ApiSuccess<unknown>>(`${this.stockUrl}/history/${id}`, payload);
   }
@@ -159,5 +325,57 @@ export class StockService {
       customFields: fields,
     };
     return this.http.put<ApiSuccess<unknown>>(`${this.groupsUrl}/${groupId}`, payload);
+  }
+
+  listVariantsByGroup(groupId: string): Observable<ApiPaginated<StockVariantItem>> {
+    return this.http.get<ApiPaginated<StockVariantItem>>(
+      `${environment.apiBaseUrl}/variants?groupId=${groupId}&status=ACTIVE&limit=200`
+    );
+  }
+
+  getVariantStockSummary(groupId: string): Observable<ApiSuccess<VariantStockInfo[]>> {
+    return this.http.get<ApiSuccess<VariantStockInfo[]>>(
+      `${this.stockUrl}/variant-summary?groupId=${groupId}`
+    );
+  }
+
+  getCostingMethodConfig(groupId: string): Observable<ApiSuccess<CostingMethodConfig>> {
+    return this.http.get<ApiSuccess<CostingMethodConfig>>(`${this.stockUrl}/costing-method?groupId=${groupId}`);
+  }
+
+  updateGroupCostingMethod(groupId: string, costingMethod: 'WAC' | 'LATEST' | 'FIFO'): Observable<ApiSuccess<unknown>> {
+    return this.http.patch<ApiSuccess<unknown>>(`${this.stockUrl}/costing-method`, {
+      scope: 'GROUP',
+      groupId,
+      costingMethod,
+    });
+  }
+
+  listPricingRefreshSuggestions(groupId: string): Observable<ApiPaginated<{ _id: string; variantId: string; status: string; previousSnapshot: { name: string; effectivePrice: { sellingPrice: number }; additionalPrice?: number }; suggestedSnapshot: { name: string; effectivePrice: { sellingPrice: number }; additionalPrice?: number }; marginImpact?: { oldMarginPercent: number; newMarginPercent: number; changePercent: number; isBelowThreshold: boolean } }>> {
+    return this.http.get<ApiPaginated<never>>(`${this.groupsUrl}/${groupId}/pricing-refresh-suggestions?status=PENDING`);
+  }
+
+  approvePricingRefreshSuggestions(groupId: string, payload: { reason: string; suggestionIds?: string[] }): Observable<ApiSuccess<{ approvedCount: number; appliedCount: number }>> {
+    return this.http.post<ApiSuccess<{ approvedCount: number; appliedCount: number }>>(`${this.groupsUrl}/${groupId}/pricing-refresh-suggestions/approve`, payload);
+  }
+
+  rejectPricingRefreshSuggestions(groupId: string, payload: { reason: string; suggestionIds?: string[] }): Observable<ApiSuccess<{ rejectedCount: number }>> {
+    return this.http.post<ApiSuccess<{ rejectedCount: number }>>(`${this.groupsUrl}/${groupId}/pricing-refresh-suggestions/reject`, payload);
+  }
+
+  getPendingPricingSuggestionsCount(): Observable<ApiSuccess<{ count: number }>> {
+    return this.http.get<ApiSuccess<{ count: number }>>(`${this.groupsUrl}/pricing-refresh-suggestions/pending-count`);
+  }
+
+  getPendingGroupsSummary(): Observable<ApiSuccess<{ totalPending: number; groups: Array<{ groupId: string; groupName: string; pendingCount: number; lastCreatedAt: string }> }>> {
+    return this.http.get<ApiSuccess<{ totalPending: number; groups: Array<{ groupId: string; groupName: string; pendingCount: number; lastCreatedAt: string }> }>>(`${this.groupsUrl}/pricing-refresh-suggestions/pending-groups`);
+  }
+
+  listGroupPricingHistory(groupId: string, limit = 25): Observable<ApiPaginated<GroupPricingHistoryEntry>> {
+    const query = new URLSearchParams();
+    query.set('groupId', groupId);
+    query.set('page', '1');
+    query.set('limit', String(limit));
+    return this.http.get<ApiPaginated<GroupPricingHistoryEntry>>(`${environment.apiBaseUrl}/variants/price-history?${query.toString()}`);
   }
 }

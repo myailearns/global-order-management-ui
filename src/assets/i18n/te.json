@@ -4,17 +4,35 @@
     "module": "ప్రోడక్ట్ క్రియేషన్ మాడ్యూల్",
     "navigation": {
       "toggle": "నావిగేషన్ మార్చు",
+        "groupSearch": "Search groups",
+        "tabsAria": "Collection mapping tabs",
+        "allTab": "All",
+        "allVariantsTitle": "All Variants",
+        "groupVariantsTitle": "Group Variants",
       "close": "మెను మూసివేయి",
       "workspace": "వర్క్‌స్పేస్",
       "menu": "నావిగేషన్",
       "expand": "{{section}} విస్తరించు",
       "collapse": "{{section}} కుదించు",
       "expandSidebar": "సైడ్‌బార్ విస్తరించు",
+        "remove": "Remove",
+        "addGroup": "Add Group",
+        "removeGroup": "Remove Group",
+        "addAgain": "Add Again",
+        "selectGroupToManage": "Select Add Group first to manage exclusions for this group.",
+        "recentlyRemovedGroups": "Recently Removed Groups",
+        "removedVariants": "Removed Variants",
+        "noRemovedGroups": "No removed groups.",
+        "noRemovedVariants": "No removed variants.",
+        "noVisibleVariants": "No visible variants in this tab.",
       "collapseSidebar": "సైడ్‌బార్ కుదించు",
       "masterSetup": "మాస్టర్ సెటప్",
       "productSetup": "ప్రొడక్ట్ సెటప్",
       "categories": "కేటగిరీలు",
       "fields": "ఫీల్డ్స్",
+      "attributes": "Attributes",
+      "attributeSets": "Attribute Sets",
+      "pricingTemplates": "Pricing Templates",
       "fieldGroups": "ఫీల్డ్ గ్రూప్స్",
       "units": "యూనిట్స్",
       "taxProfiles": "ట్యాక్స్ ప్రొఫైల్స్",
@@ -23,17 +41,27 @@
       "variants": "వేరియంట్లు",
       "packs": "ప్యాక్స్",
       "mediaLibrary": "మీడియా లైబ్రరీ",
+      "productCollections": "ప్రోడక్ట్ కలెక్షన్స్",
       "orders": "ఆర్డర్లు",
       "orderManagement": "ఆర్డర్ మేనేజ్‌మెంట్",
       "riders": "రైడర్స్",
       "courierPartners": "కూరియర్ పార్ట్నర్స్",
       "settings": "సెట్టింగ్లు",
+      "webApp": "వెబ్ యాప్",
+      "notifications": "నోటిఫికేషన్స్",
+      "notificationsSetting": "నోటిఫికేషన్ సెట్టింగ్",
       "employeeCode": "ఎంప్లాయీ కోడ్",
       "serviceablePincodes": "సర్వీస్ చేయగల పిన్‌కోడ్‌లు",
+      "deliveryManagement": "డెలివరీ నిర్వహణ",
       "tenantAdmin": "టెనెంట్ అడ్మిన్",
       "tenantDashboard": "టెనెంట్ డ్యాష్‌బోర్డ్",
-      "tenantUsers": "టెనెంట్ యూజర్లు",
-      "tenantEmployees": "టెనెంట్ ఉద్యోగులు",
+      "tenantUsers": "యాక్సెస్ యూజర్లు",
+      "tenantEmployees": "ఉద్యోగులు",
+      "storefront": "స్టోర్‌ఫ్రంట్",
+      "branding": "బ్రాండింగ్",
+      "homePage": "హోమ్ పేజీ",
+      "catalog": "క్యాటలాగ్",
+      "checkoutPayments": "చెక్‌ఔట్ & చెల్లింపులు",
       "saasAccounts": "సాస్ అకౌంట్లు",
       "saasPackages": "సాస్ ప్యాకేజీలు",
       "platformUsers": "ప్లాట్‌ఫార్మ్ యూజర్లు",
@@ -43,9 +71,15 @@
       "tenantRoles": "టెనెంట్ పాత్రలు",
       "categoryTemplates": "కేటగిరీ టెంప్లేట్లు",
       "marketplace": "మార్కెట్‌ప్లేస్",
+      "accountManagement": "అకౌంట్ మేనేజ్‌మెంట్",
       "customers": "కస్టమర్లు",
       "customerGroups": "కస్టమర్ గ్రూపులు",
-      "platformMedia": "ప్లాట్‌ఫార్మ్ మీడియా"
+      "platformMedia": "ప్లాట్‌ఫార్మ్ మీడియా",
+      "adminApp": "అడ్మిన్ యాప్",
+      "createOrderSettings": "ఆర్డర్ సృష్టి సెట్టింగ్‌లు",
+      "billing": "బిల్లింగ్",
+      "businessDetails": "వ్యాపార వివరాలు",
+      "paymentOptions": "చెల్లింపు ఎంపికలు"
     },
     "actions": {
       "notifications": "నోటిఫికేషన్స్",
@@ -58,6 +92,107 @@
       "telugu": "తెలుగు",
       "hindi": "హిందీ"
     }
+  },
+  "paymentOptions": {
+    "title": "చెల్లింపు ఎంపికలు",
+    "description": "ఆర్డర్ ప్రాసెసింగ్ కోసం అందుబాటులో ఉన్న చెల్లింపు పద్ధతులను కాన్ఫిగర్ చేయండి.",
+    "loading": "చెల్లింపు ఎంపికలు లోడ్ అవుతున్నాయి...",
+    "confirmDelete": "ఈ చెల్లింపు ఖాతాను తొలగించాలా?",
+    "actions": { "reset": "రీసెట్", "save": "మార్పులు సేవ్ చేయండి", "saving": "సేవ్ అవుతోంది...", "addUpi": "UPI జోడించండి", "addBank": "బ్యాంక్ ఖాతా జోడించండి", "edit": "సవరించండి", "delete": "తొలగించండి", "cancel": "రద్దు చేయండి", "saveAccount": "ఖాతా సేవ్ చేయండి", "uploadQr": "QR కోడ్ అప్‌లోడ్ చేయండి", "uploading": "అప్‌లోడ్ అవుతోంది..." },
+    "methods": { "title": "చెల్లింపు పద్ధతులు", "description": "మీ వ్యాపారం అంగీకరించే చెల్లింపు పద్ధతులను ఎంచుకోండి.", "upi": "UPI చెల్లింపులు", "upiHint": "కాన్ఫిగర్ చేసిన IDలు మరియు QR కోడ్‌లతో UPI చెల్లింపులను స్వీకరించండి.", "cash": "నగదు", "cashHint": "ఆర్డర్ పూర్తి చేసేటప్పుడు నగదు చెల్లింపులను స్వీకరించండి.", "bankTransfer": "బ్యాంక్ బదిలీ", "bankHint": "కాన్ఫిగర్ చేసిన బ్యాంక్ ఖాతాలకు ప్రత్యక్ష బదిలీలను స్వీకరించండి." },
+    "upi": { "title": "UPI ఖాతాలు", "description": "కస్టమర్లు చెల్లించగల UPI IDలను నిర్వహించండి.", "empty": "UPI ఖాతాలు కాన్ఫిగర్ చేయలేదు", "emptyHint": "UPI చెల్లింపులను స్వీకరించడానికి ఖాతాను జోడించండి.", "addTitle": "UPI ఖాతా జోడించండి", "editTitle": "UPI ఖాతాను సవరించండి" },
+    "bank": { "title": "బ్యాంక్ ఖాతాలు", "description": "బ్యాంక్ బదిలీల కోసం ఖాతాలను నిర్వహించండి.", "empty": "బ్యాంక్ ఖాతాలు కాన్ఫిగర్ చేయలేదు", "emptyHint": "బదిలీలను స్వీకరించడానికి బ్యాంక్ ఖాతాను జోడించండి.", "addTitle": "బ్యాంక్ ఖాతా జోడించండి", "editTitle": "బ్యాంక్ ఖాతాను సవరించండి" },
+    "fields": { "providerName": "ప్రదర్శన / ప్రొవైడర్ పేరు", "upiId": "UPI ID", "qrCode": "QR కోడ్", "qrHint": "5 MB వరకు PNG, JPG లేదా WebP.", "active": "యాక్టివ్‌గా సెట్ చేయండి", "activeHint": "యాక్టివ్ ఖాతాలు మాత్రమే ఆర్డర్ ప్రాసెసింగ్‌లో అందుబాటులో ఉంటాయి.", "bankName": "బ్యాంక్ పేరు", "holderName": "ఖాతాదారు పేరు", "accountNumber": "ఖాతా సంఖ్య", "confirmAccount": "ఖాతా సంఖ్యను నిర్ధారించండి", "accountUnchanged": "ప్రస్తుత సంఖ్యను ఉంచడానికి ఖాళీగా వదలండి", "ifsc": "IFSC కోడ్", "branch": "బ్రాంచ్ పేరు" },
+    "status": { "active": "యాక్టివ్", "inactive": "ఇన్‌యాక్టివ్" },
+    "orderTypes": { "title": "ఆర్డర్ రకం కాన్ఫిగరేషన్", "description": "ప్రతి ఆర్డర్ రకానికి అందుబాటులో ఉన్న చెల్లింపు పద్ధతులను ఎంచుకోండి.", "orderType": "ఆర్డర్ రకం", "enableFirst": "కేటాయించే ముందు పైన చెల్లింపు పద్ధతిని ప్రారంభించండి.", "types": { "inStore": "ఇన్-స్టోర్", "pickup": "పికప్", "delivery": "డెలివరీ" }, "methods": { "UPI": "UPI", "CASH": "నగదు", "BANK_TRANSFER": "బ్యాంక్ బదిలీ" } },
+    "validation": { "required": "ఈ ఫీల్డ్ తప్పనిసరి.", "invalid": "చెల్లుబాటు అయ్యే విలువను నమోదు చేయండి.", "accountMismatch": "ఖాతా సంఖ్యలు సరిపోలడం లేదు." },
+    "messages": { "loadError": "చెల్లింపు ఎంపికలను లోడ్ చేయలేకపోయాము.", "saveError": "చెల్లింపు ఎంపికలను సేవ్ చేయలేకపోయాము.", "saved": "చెల్లింపు ఎంపికలు సేవ్ అయ్యాయి.", "invalidQr": "5 MB కంటే చిన్న చిత్రాన్ని ఎంచుకోండి.", "uploadError": "QR కోడ్‌ను అప్‌లోడ్ చేయలేకపోయాము." }
+  },
+  "createOrderSettings": {
+    "title": "ఆర్డర్ సృష్టి సెట్టింగ్‌లు",
+    "description": "మీ బృందం కోసం ఆర్డర్ సృష్టి అనుభవాన్ని కాన్ఫిగర్ చేయండి.",
+    "tabs": {
+      "base": "ప్రాథమిక సెట్టింగ్‌లు"
+    },
+    "base": {
+      "title": "ప్రాథమిక సెట్టింగ్‌లు",
+      "description": "ఈ సెట్టింగ్‌లు మొత్తం టెనెంట్ ఖాతాకు వర్తిస్తాయి.",
+      "offlineStorageTitle": "ఆఫ్‌లైన్ నిల్వ",
+      "enableOfflineStorage": "ఆఫ్‌లైన్ నిల్వను ప్రారంభించండి",
+      "enableOfflineStorageHint": "ఆఫ్‌లైన్ వర్క్‌ఫ్లోల కోసం ఆర్డర్ డేటాను స్థానికంగా నిల్వ చేయడానికి అనుమతించండి.",
+      "requireMemberForBilling": "బిల్లింగ్‌లో సభ్యుడిని జోడించడం తప్పనిసరి",
+      "requireMemberForBillingHint": "ఆర్డర్ బిల్లింగ్‌కు ముందు కస్టమర్ సభ్యుడిని ఎంచుకోవడం తప్పనిసరి చేయండి."
+    },
+    "paymentStatus": {
+      "title": "చెల్లింపు స్థితి",
+      "description": "ప్రతి ఆర్డర్ రకం కోసం చెల్లింపు స్థితి ఎంపికలను కాన్ఫిగర్ చేయండి.",
+      "orderType": "ఆర్డర్ రకం",
+      "orderTypes": {
+        "pickup": "పికప్",
+        "delivery": "డెలివరీ",
+        "counter": "కౌంటర్"
+      },
+      "statusLabel": "చెల్లింపు స్థితి",
+      "statusPlaceholder": "చెల్లింపు స్థితిని నమోదు చేయండి",
+      "statusRequired": "చెల్లింపు స్థితి అవసరం.",
+      "add": "చెల్లింపు స్థితిని జోడించండి",
+      "remove": "చెల్లింపు స్థితిని తొలగించండి"
+    },
+    "orderIntake": {
+      "title": "ఆర్డర్ స్వీకరణ ఛానెల్‌లు",
+      "description": "ఏ ఛానెల్‌ల ద్వారా ఆర్డర్లు స్వీకరించాలో ఎంచుకుని, అనుకూల ఛానెల్‌లను జోడించండి.",
+      "channels": "ఛానెల్‌లు",
+      "channelLabel": "ఛానెల్",
+      "channelPlaceholder": "ఛానెల్ పేరును నమోదు చేయండి",
+      "channelRequired": "ఛానెల్ పేరు అవసరం.",
+      "enabled": "ప్రారంభించబడింది",
+      "enabledHint": "ఈ ఛానెల్ ద్వారా ఆర్డర్లు స్వీకరించవచ్చు.",
+      "disabledHint": "ఈ ఛానెల్ అలాగే ఉంటుంది, కానీ కొత్త ఆర్డర్లకు అందుబాటులో ఉండదు.",
+      "add": "ఆర్డర్ స్వీకరణ ఛానెల్‌ను జోడించండి"
+    },
+    "actions": {
+      "save": "సెట్టింగ్‌లను సేవ్ చేయండి",
+      "saving": "సేవ్ అవుతోంది..."
+    },
+    "messages": {
+      "saved": "ఆర్డర్ సృష్టి సెట్టింగ్‌లు సేవ్ అయ్యాయి.",
+      "loadError": "ఆర్డర్ సృష్టి సెట్టింగ్‌లను లోడ్ చేయడం విఫలమైంది.",
+      "saveError": "ఆర్డర్ సృష్టి సెట్టింగ్‌లను సేవ్ చేయడం విఫలమైంది.",
+      "statusRequired": "సేవ్ చేయడానికి ముందు ప్రతి చెల్లింపు స్థితి మరియు స్వీకరణ ఛానెల్‌కు విలువను నమోదు చేయండి.",
+      "duplicateChannel": "ఆర్డర్ స్వీకరణ ఛానెల్ పేర్లు ప్రత్యేకంగా ఉండాలి."
+    }
+  },
+  "billingSettings": {
+    "title": "బిల్లింగ్",
+    "description": "ఆర్డర్ ప్రాసెసింగ్ కోసం బిల్లింగ్ సెట్టింగ్‌లను కాన్ఫిగర్ చేయండి.",
+    "comingSoon": "త్వరలో వస్తుంది"
+  },
+  "businessDetails": {
+    "title": "వ్యాపార వివరాలు",
+    "description": "మీ వ్యాపార గుర్తింపు, సంప్రదింపు సమాచారం మరియు బ్రాండింగ్‌ను నిర్వహించండి.",
+    "loading": "వ్యాపార వివరాలు లోడ్ అవుతున్నాయి...",
+    "actions": { "edit": "వివరాలను సవరించండి", "reset": "రీసెట్ చేయండి", "cancel": "రద్దు", "save": "మార్పులను సేవ్ చేయండి", "saving": "సేవ్ అవుతోంది...", "retry": "మళ్లీ ప్రయత్నించండి" },
+    "sections": {
+      "identity": "వ్యాపార గుర్తింపు", "identityHint": "ఈ ఖాతా యొక్క పబ్లిక్ మరియు చట్టపరమైన గుర్తింపు.",
+      "contact": "సంప్రదింపు వివరాలు", "contactHint": "కస్టమర్‌లు మరియు ప్లాట్‌ఫారమ్ మిమ్మల్ని సంప్రదించే మార్గాలు.",
+      "address": "నమోదిత చిరునామా", "addressHint": "ప్రాథమిక చట్టపరమైన మరియు నిర్వహణ చిరునామా.",
+      "tax": "పన్ను నమోదు", "taxHint": "భారత పన్ను నమోదు మరియు గుర్తింపు వివరాలు.",
+      "branding": "బ్రాండింగ్", "brandingHint": "మీ అనుభవంలో కనిపించే దృశ్య గుర్తింపు.",
+      "hierarchy": "ఖాతా క్రమం", "hierarchyHint": "సిస్టమ్ నిర్వహించే టెనెంట్ ఖాతా గుర్తింపులు."
+    },
+    "fields": {
+      "accountName": "ఖాతా పేరు", "legalBusinessName": "చట్టపరమైన వ్యాపార పేరు", "businessType": "వ్యాపార రకం", "businessDescription": "వ్యాపార వివరణ",
+      "primaryContactPhone": "ప్రాథమిక సంప్రదింపు ఫోన్", "primaryContactEmail": "ప్రాథమిక సంప్రదింపు ఇమెయిల్", "website": "వెబ్‌సైట్", "supportEmail": "సహాయ ఇమెయిల్",
+      "addressLine1": "చిరునామా లైన్ 1", "addressLine2": "చిరునామా లైన్ 2 (ఐచ్ఛికం)", "city": "నగరం", "state": "రాష్ట్రం / కేంద్రపాలిత ప్రాంతం", "country": "దేశం", "postalCode": "పిన్ కోడ్",
+      "taxRegistrationType": "నమోదు రకం", "gstin": "GSTIN", "pan": "PAN", "brandColor": "ప్రధాన బ్రాండ్ రంగు", "brandAccent": "యాక్సెంట్ రంగు", "brandTagline": "బ్రాండ్ ట్యాగ్‌లైన్",
+      "tenantCode": "టెనెంట్ కోడ్", "accountId": "ఖాతా ID", "updatedAt": "చివరిగా నవీకరించబడింది"
+    },
+    "logo": { "title": "వ్యాపార లోగో", "hint": "PNG, JPG, WebP లేదా ఇతర చిత్రం, గరిష్ఠంగా 2 MB.", "upload": "లోగో అప్‌లోడ్ చేయండి", "uploading": "అప్‌లోడ్ అవుతోంది...", "remove": "తొలగించండి", "previewAlt": "వ్యాపార లోగో ప్రివ్యూ" },
+    "setup": { "title": "మీ వ్యాపార ప్రొఫైల్‌ను పూర్తి చేయండి", "description": "ముందే నింపిన ఖాతా సమాచారాన్ని సమీక్షించి అవసరమైన వివరాలను జోడించండి." },
+    "unsaved": { "title": "సేవ్ చేయని మార్పులు", "description": "ఈ ప్రొఫైల్ మార్పులను సేవ్ చేయండి లేదా రీసెట్ చేయండి." },
+    "readOnlyHierarchy": "ఈ విలువలు టెనెంట్ ఖాతా నుండి వస్తాయి; ఇక్కడ సవరించలేరు.",
+    "validation": { "required": "ఈ ఫీల్డ్ తప్పనిసరి.", "email": "చెల్లుబాటు అయ్యే ఇమెయిల్ నమోదు చేయండి.", "phone": "చెల్లుబాటు అయ్యే ఫోన్ నంబర్ నమోదు చేయండి.", "url": "http:// లేదా https:// తో మొదలయ్యే పూర్తి URL నమోదు చేయండి.", "postalCode": "చెల్లుబాటు అయ్యే పిన్ కోడ్ నమోదు చేయండి.", "gstin": "చెల్లుబాటు అయ్యే 15-అక్షరాల GSTIN నమోదు చేయండి.", "pan": "చెల్లుబాటు అయ్యే PAN నమోదు చేయండి.", "color": "చెల్లుబాటు అయ్యే 6-అంకెల హెక్స్ రంగును నమోదు చేయండి.", "tooLong": "ఈ విలువ చాలా పొడవుగా ఉంది.", "invalid": "చెల్లుబాటు అయ్యే విలువను నమోదు చేయండి." },
+    "messages": { "saved": "వ్యాపార వివరాలు సేవ్ అయ్యాయి.", "loadError": "వ్యాపార వివరాలను లోడ్ చేయడం విఫలమైంది.", "saveError": "వ్యాపార వివరాలను సేవ్ చేయడం విఫలమైంది.", "validationError": "సేవ్ చేయడానికి ముందు గుర్తించిన ఫీల్డ్‌లను సమీక్షించండి.", "logoImageOnly": "వ్యాపార లోగో కోసం చిత్రం ఫైల్‌ను ఎంచుకోండి.", "logoTooLarge": "లోగో 2 MB లేదా అంతకంటే తక్కువగా ఉండాలి.", "logoUploaded": "వ్యాపార లోగో అప్‌లోడ్ అయింది.", "logoUploadError": "వ్యాపార లోగో అప్‌లోడ్ విఫలమైంది." }
   },
   "common": {
     "btn_cancel": "రద్దు",
@@ -92,6 +227,216 @@
     },
     "messages": {
       "closeErrorBanner": "లోపపు బ్యానర్ మూసివేయి"
+    }
+  },
+  "productCollections": {
+    "title": "ప్రోడక్ట్ కలెక్షన్స్",
+    "actions": {
+      "create": "కలెక్షన్ సృష్టించండి",
+      "edit": "కలెక్షన్ సవరించండి",
+      "delete": "కలెక్షన్ తొలగించండి",
+      "save": "కలెక్షన్ సేవ్ చేయండి",
+      "apply": "వర్తించు",
+      "clear": "క్లియర్ చేయి",
+      "prev": "మునుపటి",
+      "next": "తదుపరి"
+    },
+    "labels": {
+      "page": "పేజీ",
+      "total": "మొత్తం"
+    },
+    "filters": {
+      "search": "శోధన",
+      "status": "స్థితి"
+    },
+    "form": {
+      "name": "కలెక్షన్ పేరు",
+      "description": "వివరణ",
+      "status": "స్థితి",
+      "assignmentType": "అసైన్‌మెంట్ రకం"
+    },
+    "mapping": {
+      "title": "కేటగిరీ-ఫస్ట్ మ్యాపింగ్",
+      "category": "కేటగిరీ",
+      "categoryPlaceholder": "కేటగిరీని ఎంచుకోండి",
+      "search": "పేరుతో ప్రోడక్ట్‌ను వెతకండి",
+      "searchVariants": "వేరియంట్లను వెతకండి",
+      "groupSearch": "గ్రూపులను వెతకండి",
+      "tabsAria": "కలెక్షన్ మ్యాపింగ్ ట్యాబ్స్",
+      "allTab": "All",
+      "allVariantsTitle": "All Variants",
+      "groupVariantsTitle": "Group Variants",
+      "groups": "గ్రూపులు",
+      "groupsPlaceholder": "ఒకటి లేదా అంతకంటే ఎక్కువ గ్రూపులను ఎంచుకోండి",
+      "variants": "వేరియంట్లు",
+      "variantsPlaceholder": "ఒకటి లేదా అంతకంటే ఎక్కువ వేరియంట్లను ఎంచుకోండి",
+      "selectAllGroups": "అన్ని గ్రూపులను ఎంచుకోండి",
+      "selectAllVariants": "అన్ని వేరియంట్లను ఎంచుకోండి",
+      "remove": "Remove",
+      "addGroup": "Add Group",
+      "removeGroup": "Remove Group",
+      "addAgain": "Add Again",
+      "selectGroupToManage": "ఈ గ్రూప్ కోసం మినహాయింపులను నిర్వహించాలంటే ముందుగా Add Group ఎంచుకోండి.",
+      "recentlyRemovedGroups": "Recently Removed Groups",
+      "removedVariants": "Removed Variants",
+      "noRemovedGroups": "No removed groups.",
+      "noRemovedVariants": "No removed variants.",
+      "noVisibleVariants": "No visible variants in this tab.",
+      "selectedItems": "ఎంచుకున్న అసైన్‌మెంట్లు",
+      "noSelections": "ఇప్పటివరకు ఎలాంటి గ్రూపులు లేదా వేరియంట్లు ఎంచుకోలేదు."
+    },
+    "summary": {
+      "categories": "ఎంచుకున్న కేటగిరీలు",
+      "groups": "ఎంచుకున్న గ్రూపులు",
+      "variants": "ఎంచుకున్న వేరియంట్లు",
+      "resolvedVariants": "రిసాల్వ్ అయిన వేరియంట్లు",
+      "totalVariantsAdded": "మొత్తం జోడించిన వేరియంట్లు"
+    },
+    "details": {
+      "title": "కలెక్షన్ వివరాలు",
+      "categories": "కేటగిరీ సందర్భం",
+      "totalResolved": "మొత్తం రిసాల్వ్ అయిన వేరియంట్లు",
+      "groups": "అసైన్ చేసిన గ్రూపులు",
+      "groupVariants": "రిసాల్వ్ అయిన వేరియంట్లు",
+      "directVariants": "డైరెక్ట్ వేరియంట్లు",
+      "noGroups": "ఏ గ్రూపులు అసైన్ కాలేదు.",
+      "noVariants": "ఏ డైరెక్ట్ వేరియంట్లు అసైన్ కాలేదు."
+    },
+    "delete": {
+      "title": "కలెక్షన్ తొలగించండి",
+      "message": "మీరు ఈ కలెక్షన్ తొలగించాలనుకుంటున్నారా: {{name}}?"
+    },
+    "toast": {
+      "created": "కలెక్షన్ విజయవంతంగా సృష్టించబడింది.",
+      "updated": "కలెక్షన్ విజయవంతంగా నవీకరించబడింది.",
+      "deleted": "కలెక్షన్ విజయవంతంగా తొలగించబడింది.",
+      "errorLoad": "ప్రోడక్ట్ కలెక్షన్స్ లోడ్ కాలేదు.",
+      "errorSave": "ప్రోడక్ట్ కలెక్షన్ సేవ్ కాలేదు.",
+      "errorDelete": "ప్రోడక్ట్ కలెక్షన్ తొలగించలేకపోయాము."
+    }
+  },
+  "attributes": {
+    "title": "Attributes",
+    "add": "Add Attribute",
+    "search": "Search attributes",
+    "empty": "No attributes found.",
+    "labels": {
+      "name": "Attribute Name",
+      "key": "Attribute Key",
+      "label": "Display Label",
+      "inputType": "Input Type",
+      "allowedValues": "Allowed Values",
+      "status": "Status"
+    },
+    "types": {
+      "text": "Text",
+      "singleSelect": "Single Select",
+      "multiSelect": "Multi Select"
+    },
+    "form": {
+      "titleCreate": "Add Attribute",
+      "titleEdit": "Edit Attribute"
+    },
+    "validation": {
+      "nameRequired": "Attribute name is required",
+      "keyRequired": "Attribute key is required",
+      "allowedValuesRequired": "Allowed values are required for select-based attributes"
+    },
+    "toast": {
+      "successCreate": "Attribute created successfully.",
+      "successUpdate": "Attribute updated successfully.",
+      "successDelete": "Attribute deleted successfully.",
+      "errorLoad": "Failed to load attributes. Please try again.",
+      "errorSave": "Failed to save attribute. Please try again.",
+      "errorDelete": "Failed to delete attribute. Please try again."
+    },
+    "deleteConfirm": {
+      "title": "Delete Attribute",
+      "message": "Are you sure you want to delete attribute: {{name}}?"
+    }
+  },
+  "attributeSets": {
+    "title": "Attribute Sets",
+    "add": "Add Attribute Set",
+    "search": "Search attribute sets",
+    "empty": "No attribute sets found.",
+    "labels": {
+      "name": "Attribute Set Name",
+      "description": "Description",
+      "status": "Status",
+      "categories": "Categories",
+      "attributes": "Attributes"
+    },
+    "placeholders": {
+      "attributes": "Comma-separated attribute IDs",
+      "categories": "Comma-separated category IDs"
+    },
+    "required": {
+      "inherit": "Inherit",
+      "required": "Required",
+      "optional": "Optional"
+    },
+    "hint": "Enter attribute IDs and category IDs as comma-separated values for this first implementation.",
+    "form": {
+      "titleCreate": "Add Attribute Set",
+      "titleEdit": "Edit Attribute Set"
+    },
+    "validation": {
+      "nameRequired": "Attribute set name is required",
+      "attributesRequired": "Add at least one attribute to the set"
+    },
+    "toast": {
+      "successCreate": "Attribute set created successfully.",
+      "successUpdate": "Attribute set updated successfully.",
+      "successDelete": "Attribute set deleted successfully.",
+      "errorLoad": "Failed to load attribute sets. Please try again.",
+      "errorSave": "Failed to save attribute set. Please try again.",
+      "errorDelete": "Failed to delete attribute set. Please try again."
+    },
+    "deleteConfirm": {
+      "title": "Delete Attribute Set",
+      "message": "Are you sure you want to delete attribute set: {{name}}?"
+    }
+  },
+  "pricingTemplates": {
+    "title": "Pricing Templates",
+    "add": "Add Pricing Template",
+    "search": "Search pricing templates",
+    "empty": "No pricing templates found.",
+    "labels": {
+      "name": "Template Name",
+      "description": "Description",
+      "status": "Status",
+      "fieldKeys": "Supported Field Keys",
+      "categories": "Categories",
+      "actualPriceFormula": "Actual Price Formula",
+      "sellingPriceFormula": "Selling Price Formula",
+      "anchorPriceFormula": "Anchor Price Formula"
+    },
+    "placeholders": {
+      "fieldKeys": "Comma-separated field keys",
+      "categories": "Comma-separated category IDs"
+    },
+    "hint": "Use comma-separated field keys and keep formulas in the same order as the current pricing logic.",
+    "form": {
+      "titleCreate": "Add Pricing Template",
+      "titleEdit": "Edit Pricing Template"
+    },
+    "validation": {
+      "nameRequired": "Pricing template name is required",
+      "formulasRequired": "All formulas are required"
+    },
+    "toast": {
+      "successCreate": "Pricing template created successfully.",
+      "successUpdate": "Pricing template updated successfully.",
+      "successDelete": "Pricing template deleted successfully.",
+      "errorLoad": "Failed to load pricing templates. Please try again.",
+      "errorSave": "Failed to save pricing template. Please try again.",
+      "errorDelete": "Failed to delete pricing template. Please try again."
+    },
+    "deleteConfirm": {
+      "title": "Delete Pricing Template",
+      "message": "Are you sure you want to delete pricing template: {{name}}?"
     }
   },
   "storefrontConfig": {
@@ -590,14 +935,27 @@
         "err_code_exists": "ఉద్యోగి కోడ్ ఇప్పటికే ఉంది."
       },
       "users": {
-        "title": "యూజర్లు",
-        "subtitle": "టేనెంట్ యూజర్లను నిర్వహించండి, యాక్సెస్ లాక్ చేయండి మరియు రోల్స్ కేటాయించండి.",
-        "btn_invite": "యూజర్ ఆహ్వానించు",
+        "title": "యాక్సెస్ యూజర్లు",
+        "subtitle": "టెనెంట్ లాగిన్ యూజర్లు, రోల్స్ మరియు యాక్సెస్ స్థితిని నిర్వహించండి.",
+        "title_create": "యాక్సెస్ యూజర్ సృష్టించండి",
+        "title_edit": "యాక్సెస్ యూజర్ సవరించండి",
+        "title_delete": "యాక్సెస్ యూజర్ తొలగించండి",
+        "btn_invite": "యూజర్ జోడించండి",
+        "btn_create": "యూజర్ సృష్టించండి",
+        "btn_update": "యూజర్ అప్డేట్ చేయండి",
+        "btn_add_role": "రోల్ జోడించండి",
         "btn_assign_roles": "రోల్స్ కేటాయించు",
+        "lbl_full_name": "పేరు",
+        "lbl_mobile": "మొబైల్ నంబర్",
+        "lbl_whatsapp": "వాట్సాప్ నంబర్",
+        "lbl_same_whatsapp": "వాట్సాప్ కోసం ఇదే మొబైల్ నంబర్ ఉపయోగించండి",
+        "hint_same_whatsapp": "వాట్సాప్ నంబర్ వేరుగా ఉన్నప్పుడు మాత్రమే ఇది ఆఫ్ చేయండి.",
         "lbl_roles": "రోల్స్",
-        "ph_search": "ఇమెయిల్ లేదా ఫోన్ ద్వారా యూజర్లను వెతకండి",
+        "ph_search": "ఇమెయిల్ లేదా ఫోన్ ద్వారా యాక్సెస్ యూజర్లను వెతకండి",
+        "tbl_name": "పేరు",
         "tbl_email": "ఇమెయిల్",
-        "tbl_phone": "ఫోన్",
+        "tbl_phone": "మొబైల్",
+        "tbl_whatsapp": "వాట్సాప్",
         "tbl_status": "స్థితి",
         "tbl_roles": "రోల్స్",
         "tbl_last_login": "చివరి లాగిన్",
@@ -605,15 +963,29 @@
         "opt_invited": "ఆహ్వానించబడ్డారు",
         "opt_active": "సక్రియంగా ఉన్నారు",
         "opt_locked": "లాక్ చేయబడ్ది",
-        "opt_disabled": "నిష్క్రియం చేయబడ్ది",
+        "opt_disabled": "ఇన్‌యాక్టివ్",
         "msg_showing": "ఈ పేజ్లో {{count}} యూజర్లు చూపిస్తున్నాము (మొత్తం: {{total}})",
         "msg_loading": "యూజర్లు లోడ్ అవుతున్నాయి...",
+        "msg_required_fields": "దయచేసి అవసరమైన అన్ని యూజర్ ఫీల్డ్స్ పూర్తి చేయండి.",
+        "msg_load_failed": "యూజర్లను లోడ్ చేయడం విఫలమైంది.",
+        "msg_create_success": "యూజర్ విజయవంతంగా సృష్టించబడ్డారు.",
+        "msg_create_failed": "యూజర్ సృష్టించడం విఫలమైంది.",
+        "msg_update_success": "యూజర్ విజయవంతంగా అప్డేట్ అయ్యారు.",
+        "msg_update_failed": "యూజర్ అప్డేట్ చేయడం విఫలమైంది.",
+        "msg_delete_success": "యూజర్ విజయవంతంగా తొలగించబడ్డారు.",
+        "msg_delete_failed": "యూజర్ తొలగించడం విఫలమైంది.",
+        "msg_delete_confirm": "ఈ యూజర్‌ను తొలగించాలా: {{name}}?",
+        "msg_role_update_success": "యూజర్ రోల్స్ విజయవంతంగా అప్డేట్ అయ్యాయి.",
         "btn_prev": "ముందుది",
         "btn_next": "తరువాతిది",
         "lbl_page": "పేజ్ {{page}} / {{total}}",
         "title_assign_roles": "రోల్స్ కేటాయించండి",
         "msg_loading_assignments": "అసైన్మెంట్లు లోడ్ అవుతున్నాయి...",
-        "btn_save_roles": "రోల్స్ సేవ్ చేయండి"
+        "btn_save_roles": "రోల్స్ సేవ్ చేయండి",
+        "err_email_exists": "ఇమెయిల్ ఇప్పటికే ఉపయోగంలో ఉంది.",
+        "err_phone_invalid": "చెల్లుబాటు అయ్యే 10 అంకెల మొబైల్ నంబర్ నమోదు చేయండి.",
+        "err_whatsapp_invalid": "చెల్లుబాటు అయ్యే 10 అంకెల వాట్సాప్ నంబర్ నమోదు చేయండి.",
+        "err_role_required": "కనీసం ఒక రోల్ ఎంచుకోండి."
       },
       "dashboard": {
         "title": "టేనెంట్ డ్యాష్‌బోర్డ్",
@@ -623,6 +995,10 @@
         "lbl_entitled_features": "అర్హ లక్షణాలు",
         "msg_no_features": "అర్హమైన లక్షణాలు ఏవీ లేవు.",
         "lbl_tier": "టియర్",
+        "lbl_package_type": "ప్యాకేజ్ రకం",
+        "opt_package_type_online": "ఆన్‌లైన్",
+        "opt_package_type_offline": "ఆఫ్‌లైన్",
+        "opt_package_type_both": "రెండూ",
         "lbl_status": "స్థితి",
         "card_users": "యూజర్లు",
         "card_employees": "ఉద్యోగుల",
@@ -724,8 +1100,15 @@
       "packages": {
         "title": "ప్యాకేజేస్",
         "btn_create": "ప్యాకేజ్ తయారుచేయండి",
+        "btn_manage_tiers": "టియర్స్ నిర్వహించండి",
         "title_create": "ప్యాకేజ్ తయారుచేయండి",
         "title_edit": "ప్యాకేజ్ సంపాదించండి",
+        "col_tiers": "టియర్స్",
+        "info_manage_tiers": "ప్యాకేజ్ సృష్టించిన తర్వాత, ఈ ప్యాకేజ్ కోసం ఫీచర్లు మరియు టియర్స్‌ను కాన్ఫిగర్ చేయడానికి Manage Tiers బటన్ ఉపయోగించండి.",
+        "tiers_title": "ప్యాకేజ్ టియర్స్",
+        "tiers_subtitle": "ఈ ప్యాకేజ్ కోసం టియర్స్ నిర్వహణ",
+        "tiers_loading": "టియర్స్ లోడ్ అవుతున్నాయి...",
+        "tiers_empty": "ఈ ప్యాకేజ్‌కు టియర్స్ లేవు.",
         "lbl_plan_id": "ప్లాన్ ఆయ్డీ",
         "lbl_plan_name": "ప్లాన్ పేరు",
         "lbl_description": "వివరణ",
@@ -1125,6 +1508,78 @@
       "cancel": "రద్దు",
       "previous": "మునుపటి",
       "next": "తదుపరి"
+    },
+    "variantsWorkspace": {
+      "title": "వన్-పేజ్ వేరియంట్ వర్క్‌స్పేస్",
+      "subtitle": "ఒకే చోట పలు వేరియంట్లను రో-లెవల్ ప్రివ్యూతో సృష్టించండి.",
+      "actions": {
+        "autoGenerate": "ఆటో జనరేట్",
+        "addRow": "రో జోడించు",
+        "duplicate": "డూప్లికేట్",
+        "clearRows": "రోలు క్లియర్ చేయి",
+        "saveSelected": "ఎంచుకున్నవి సేవ్ చేయి ({{count}})",
+        "saving": "సేవ్ అవుతోంది...",
+        "remove": "తీసివేయి",
+        "addOverride": "ఫీల్డ్ జోడించు",
+        "removeOverride": "ఓవర్‌రైడ్ తొలగించు"
+      },
+      "bulkApply": {
+        "additionalChargeLabel": "బల్క్ అదనపు చార్జ్",
+        "additionalChargePlaceholder": "మొత్తం నమోదు చేయండి",
+        "applyToSelected": "ఎంచుకున్నవాటికి వర్తింపజేయి",
+        "fieldOverridesLabel": "బల్క్ ఫీల్డ్ ఓవర్‌రైడ్స్ (JSON)",
+        "fieldOverridesPlaceholder": "{\"fabricCost\": 250, \"laborCharge\": 70}",
+        "applyOverridesToSelected": "ఎంచుకున్నవాటికి ఓవర్‌రైడ్స్ వర్తింపజేయి"
+      },
+      "summary": {
+        "totalRows": "మొత్తం రోలు: {{count}}",
+        "selectedRows": "ఎంచుకున్నవి: {{count}}",
+        "errorRows": "లోపాలున్న రోలు: {{count}}"
+      },
+      "columns": {
+        "select": "ఎంచుకోండి",
+        "quantity": "పరిమాణం",
+        "unit": "యూనిట్",
+        "options": "ఆప్షన్లు",
+        "additionalCharge": "అదనపు చార్జ్",
+        "fieldOverrides": "ఫీల్డ్ ఓవర్‌రైడ్స్",
+        "displayName": "డిస్ప్లే పేరు",
+        "derivedSelling": "లెక్కించిన అమ్మక ధర",
+        "status": "స్థితి",
+        "action": "చర్య"
+      },
+      "placeholders": {
+        "quantity": "పరిమాణం",
+        "unit": "యూనిట్",
+        "displayName": "ఖాళీగా ఉంటే ఆటో పేరు",
+        "fieldOverrides": "ఓవర్‌రైడ్ ఇన్‌పుట్‌ల JSON ఆబ్జెక్ట్",
+        "fieldKey": "ఫీల్డ్ కీ",
+        "fieldValue": "విలువ"
+      },
+      "state": {
+        "ready": "సిద్ధం"
+      },
+      "toast": {
+        "selectGroupFirst": "ముందుగా ఒక గ్రూప్‌ను ఎంచుకోండి.",
+        "noCombinations": "కొత్త కాంబినేషన్లు లభించలేదు.",
+        "autoGenerateFailed": "వేరియంట్ కాంబినేషన్లు రూపొందించడంలో విఫలమైంది.",
+        "selectOneRow": "సేవ్ చేయడానికి కనీసం ఒక రోను ఎంచుకోండి.",
+        "fixRowErrors": "ఎంచుకున్న వేరియంట్లను సేవ్ చేయడానికి ముందు రోలోపాలను సరిచేయండి.",
+        "invalidBulkAdditionalCharge": "చెల్లుబాటు అయ్యే, ఋణేతర అదనపు చార్జ్‌ను నమోదు చేయండి.",
+        "bulkApplySuccess": "ఎంచుకున్న రోలపై అదనపు చార్జ్ వర్తింపజేయబడింది.",
+        "bulkOverridesApplySuccess": "ఎంచుకున్న రోలపై ఫీల్డ్ ఓవర్‌రైడ్స్ వర్తింపజేయబడ్డాయి.",
+        "saveFailed": "రోల నుండి వేరియంట్లను సృష్టించడంలో విఫలమైంది.",
+        "saveSuccess": "{{count}} వేరియంట్(లు) విజయవంతంగా సృష్టించబడ్డాయి."
+      },
+      "errors": {
+        "quantityPositive": "పరిమాణం సున్నా కంటే ఎక్కువగా ఉండాలి.",
+        "unitRequired": "యూనిట్ అవసరం.",
+        "additionalChargeNonNegative": "అదనపు చార్జ్ సున్నా లేదా అంతకంటే ఎక్కువగా ఉండాలి.",
+        "previewFailed": "ఈ రోకు ధర ప్రివ్యూ పొందడం సాధ్యపడలేదు.",
+        "fieldOverridesInvalid": "ఫీల్డ్ ఓవర్‌రైడ్స్ సంఖ్యాత్మక విలువలతో సరైన JSON ఆబ్జెక్ట్‌గా ఉండాలి.",
+        "duplicateCombination": "ఎంచుకున్న రోలలో డూప్లికేట్ వేరియంట్ కాంబినేషన్ కనిపించింది."
+      },
+      "empty": "ప్రారంభించడానికి మాన్యువల్‌గా రోలు జోడించండి లేదా ఆటో జనరేట్ వాడండి."
     },
     "offers": {
       "title": "Offers",

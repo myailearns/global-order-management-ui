@@ -1,0 +1,186 @@
+<div class="category-defaults-container">
+  <div class="defaults-header">
+    <h1>Category Defaults</h1>
+    <div class="header-actions">
+      <button
+        *ngIf="canEditDefaults"
+        class="btn btn-primary"
+        (click)="openDefaultsEditor()"
+        [disabled]="isSaving">
+        <i class="icon-plus"></i> New Defaults
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading States -->
+  <div *ngIf="isLoadingDefaults" class="loading-spinner">
+    <div class="spinner"></div>
+    <p>Loading category defaults...</p>
+  </div>
+
+  <!-- Defaults Table -->
+  <div *ngIf="!isLoadingDefaults && categoryDefaults.length > 0" class="defaults-table-container">
+    <table #categoryDefaultsTable class="table table-hover">
+      <thead>
+        <tr>
+          <th>Category</th>
+          <th>Field Group</th>
+          <th>Attribute Set</th>
+          <th>Pricing Template</th>
+          <th>Base Unit</th>
+          <th>Tax Profile</th>
+          <th>Group Type</th>
+          <th>Refresh Mode</th>
+          <th>Last Updated</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let defaults of categoryDefaults" [attr.data-id]="defaults._id">
+          <td>
+            <strong>{{ getCategoryName(defaults) }}</strong>
+          </td>
+          <td>{{ getRefName(defaults.fieldGroupId) }}</td>
+          <td>{{ getRefName(defaults.attributeSetId) }}</td>
+          <td>{{ getRefName(defaults.pricingTemplateId) }}</td>
+          <td>{{ getRefName(defaults.baseUnitId) }}</td>
+          <td>{{ getRefName(defaults.taxProfileId) }}</td>
+          <td>{{ defaults.groupType || '-' }}</td>
+          <td>{{ defaults.pricingRefreshMode || '-' }}</td>
+          <td>{{ defaults.updatedAt | date: 'medium' }}</td>
+          <td class="action-buttons">
+            <button
+              *ngIf="canEditDefaults"
+              class="btn btn-sm btn-edit"
+              (click)="openDefaultsEditor(defaults)"
+              title="Edit">
+              <i class="icon-edit"></i>
+            </button>
+            <button
+              *ngIf="canEditDefaults"
+              class="btn btn-sm btn-delete"
+              (click)="deleteDefaults(typeof defaults.categoryId === 'string' ? defaults.categoryId : defaults.categoryId._id)"
+              title="Delete">
+              <i class="icon-trash"></i>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!isLoadingDefaults && categoryDefaults.length === 0" class="empty-state">
+    <div class="empty-icon">
+      <i class="icon-folder-open"></i>
+    </div>
+    <h3>No Category Defaults Found</h3>
+    <p>Create default template/unit/style choices for quick group creation.</p>
+    <button
+      *ngIf="canEditDefaults"
+      class="btn btn-primary"
+      (click)="openDefaultsEditor()">
+      Create Defaults
+    </button>
+  </div>
+
+  <!-- Defaults Modal -->
+  <div *ngIf="showDefaultsModal" class="modal-overlay" (click)="showDefaultsModal = false">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ editingMode ? 'Edit' : 'Create' }} Category Defaults</h2>
+        <button class="btn-close" (click)="showDefaultsModal = false">×</button>
+      </div>
+
+      <form [formGroup]="defaultsForm" (ngSubmit)="saveDefaults()" class="modal-body">
+        <div class="form-section">
+          <label class="form-label">Category</label>
+          <select
+            formControlName="categoryId"
+            class="form-control"
+            [disabled]="editingMode">
+            <option value="">Select Category</option>
+            <option *ngFor="let option of categories" [value]="option._id">{{ option.name }}</option>
+          </select>
+        </div>
+
+        <div class="form-section">
+          <label class="form-label">Field Group</label>
+          <select formControlName="fieldGroupId" class="form-control">
+            <option value="">Not Set</option>
+            <option *ngFor="let option of fieldGroups" [value]="option._id">{{ option.name }}</option>
+          </select>
+        </div>
+
+        <div class="form-section">
+          <label class="form-label">Attribute Set</label>
+          <select formControlName="attributeSetId" class="form-control">
+            <option value="">Not Set</option>
+            <option *ngFor="let option of attributeSets" [value]="option._id">{{ option.name }}</option>
+          </select>
+        </div>
+
+        <div class="form-section">
+          <label class="form-label">Pricing Template</label>
+          <select formControlName="pricingTemplateId" class="form-control">
+            <option value="">Not Set</option>
+            <option *ngFor="let option of pricingTemplates" [value]="option._id">{{ option.name }}</option>
+          </select>
+        </div>
+
+        <div class="form-section">
+          <label class="form-label">Base Unit</label>
+          <select formControlName="baseUnitId" class="form-control">
+            <option value="">Not Set</option>
+            <option *ngFor="let option of units" [value]="option._id">{{ option.name }}</option>
+          </select>
+        </div>
+
+        <div class="form-section">
+          <label class="form-label">Tax Profile</label>
+          <select formControlName="taxProfileId" class="form-control">
+            <option value="">Not Set</option>
+            <option *ngFor="let option of taxProfiles" [value]="option._id">{{ option.name }}</option>
+          </select>
+        </div>
+
+        <div class="form-section">
+          <label class="form-label">Group Type</label>
+          <select formControlName="groupType" class="form-control">
+            <option *ngFor="let option of groupTypeOptions" [value]="option.value">{{ option.label }}</option>
+          </select>
+        </div>
+
+        <div class="form-section">
+          <label class="form-label">Pricing Refresh Mode</label>
+          <select formControlName="pricingRefreshMode" class="form-control">
+            <option *ngFor="let option of pricingRefreshModeOptions" [value]="option.value">{{ option.label }}</option>
+          </select>
+        </div>
+
+        <div class="form-section">
+          <label class="form-label">Status</label>
+          <select formControlName="status" class="form-control">
+            <option *ngFor="let option of statusOptions" [value]="option.value">{{ option.label }}</option>
+          </select>
+        </div>
+
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-outline"
+            (click)="showDefaultsModal = false"
+            [disabled]="isSaving">
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="btn btn-primary"
+            [disabled]="!defaultsForm.valid || isSaving || isLoadingLookups">
+            {{ isSaving ? 'Saving...' : (editingMode ? 'Update' : 'Create') }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

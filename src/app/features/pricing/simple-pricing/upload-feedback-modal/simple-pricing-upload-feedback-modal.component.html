@@ -1,0 +1,74 @@
+<gom-lib-modal
+  [show]="true"
+  title="Upload Results"
+  [closeOnBackdropClick]="true"
+  size="medium"
+  (closed)="closed.emit()"
+>
+  <section class="sp-upload-feedback">
+    @if (loading) {
+      <p class="sp-upload-feedback__loading">Loading results...</p>
+    } @else if (results; as r) {
+      <div class="sp-upload-feedback__summary">
+        <div class="sp-upload-feedback__stat">
+          <span class="sp-upload-feedback__label">Total</span>
+          <strong>{{ r.job.totals.totalRows }}</strong>
+        </div>
+        <div class="sp-upload-feedback__stat sp-upload-feedback__stat--success">
+          <span class="sp-upload-feedback__label">Success</span>
+          <strong>{{ r.job.totals.successRows }}</strong>
+        </div>
+        <div class="sp-upload-feedback__stat sp-upload-feedback__stat--danger">
+          <span class="sp-upload-feedback__label">Failed</span>
+          <strong>{{ r.job.totals.failedRows }}</strong>
+        </div>
+        <div class="sp-upload-feedback__stat sp-upload-feedback__stat--warning">
+          <span class="sp-upload-feedback__label">Unresolved</span>
+          <strong>{{ r.job.totals.unresolvedRows }}</strong>
+        </div>
+      </div>
+
+      <div class="sp-upload-feedback__section">
+        <h4>Failed Rows ({{ failedRows().length }})</h4>
+        <gom-lib-table
+          [columns]="failedColumns"
+          [rows]="failedRows()"
+          [loading]="loading"
+          [dataMode]="'client'"
+          [totalItems]="failedRows().length"
+          [pageIndex]="0"
+          [pageSize]="10"
+          [pageSizeOptions]="[10, 20, 50]"
+          emptyMessage="No active failed rows."
+          [mobileCardView]="true"
+          (rowAction)="onFailedRowAction($event)"
+        ></gom-lib-table>
+      </div>
+
+      <div class="sp-upload-feedback__section">
+        <h4>Success Rows ({{ successRows().length }})</h4>
+        <gom-lib-table
+          [columns]="successColumns"
+          [rows]="successRows()"
+          [loading]="loading"
+          [dataMode]="'client'"
+          [totalItems]="successRows().length"
+          [pageIndex]="0"
+          [pageSize]="10"
+          [pageSizeOptions]="[10, 20, 50]"
+          emptyMessage="No success rows."
+          [mobileCardView]="true"
+        ></gom-lib-table>
+      </div>
+    }
+  </section>
+
+  <div gom-modal-actions class="gom-modal__action-layout sp-upload-feedback__actions">
+    <div class="gom-modal__action-layout-end">
+      <gom-lib-button type="button" variant="secondary" (buttonClick)="closed.emit()">Close</gom-lib-button>
+      @if (showAcknowledge) {
+        <gom-lib-button type="button" variant="primary" (buttonClick)="acknowledgeAll.emit()">I am good</gom-lib-button>
+      }
+    </div>
+  </div>
+</gom-lib-modal>

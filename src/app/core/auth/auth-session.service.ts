@@ -46,7 +46,16 @@ export class AuthSessionService {
       map((response) => response.data),
       tap((session) => this.setSession(this.sanitizeSession(session))),
       map(() => ({ success: true })),
-      catchError(() => of({ success: false, errorKey: 'auth.errors.invalid_tenant_credentials' })),
+      catchError((error) => {
+        const serverKey: string = error?.error?.message || error?.error?.errorKey || '';
+        if (serverKey === 'auth.errors.account_locked') {
+          return of({ success: false, errorKey: 'auth.errors.account_locked' });
+        }
+        if (serverKey === 'auth.errors.no_assigned_roles') {
+          return of({ success: false, errorKey: 'auth.errors.no_assigned_roles' });
+        }
+        return of({ success: false, errorKey: 'auth.errors.invalid_tenant_credentials' });
+      }),
     );
   }
 
@@ -82,7 +91,61 @@ export class AuthSessionService {
       return '/auth';
     }
 
-    return session.actorType === 'platform' ? '/settings/saas-accounts' : '/saas-admin/dashboard';
+    // Platform users always go to SaaS Accounts
+    if (session.actorType === 'platform') {
+      return '/settings/saas-accounts';
+    }
+
+    // For tenant users, try to find the first accessible route based on their features
+    // Priority order: Dashboard -> Users -> Employees -> Categories -> Orders -> Settings
+    if (this.hasFeature('dashboard.view')) {
+      return '/saas-admin/dashboard';
+    }
+
+    if (this.hasFeature('user.list')) {
+      return '/saas-admin/users';
+    }
+
+    if (this.hasFeature('tenantAccount.view')) {
+      return '/saas-admin/employees';
+    }
+
+    if (this.hasFeature('category.list')) {
+      return '/masters/categories';
+    }
+
+    if (this.hasFeature('order.list')) {
+      return '/orders';
+    }
+
+    if (this.hasFeature('group.list')) {
+      return '/product/groups';
+    }
+
+    if (this.hasFeature('offer.list')) {
+      return '/saas-admin/offers';
+    }
+
+    // Check settings pages
+    if (this.hasFeature('storefront.config')) {
+      return '/settings/web-app/storefront';
+    }
+
+    if (this.hasFeature('delivery.management')) {
+      return '/settings/delivery-management';
+    }
+
+    if (this.hasFeature('notification.manage')) {
+      return '/settings/notification-settings';
+    }
+
+    if (this.hasFeature('employeeCode.config')) {
+      return '/settings/employee-code';
+    }
+
+    // If user has no accessible features, redirect to access-denied
+    // This shouldn't normally happen as users should have at least one feature
+    return '/auth/access-denied?reason=feature_disabled';
   }
 
   getLoginRouteForActor(actor: UserActor): string {
@@ -119,12 +182,18 @@ export class AuthSessionService {
 
     const session = this.sessionState();
     if (!session) {
+      console.log('[DEBUG] hasFeature: No session found');
       return false;
     }
 
     // Platform admins bypass all feature entitlement checks
     if (session.actorType === 'platform') {
       return true;
+    }
+
+    // When effectivePermissionKeys is present (role-gated employees), use it for fine-grained checks
+    if (Array.isArray(session.effectivePermissionKeys) && session.effectivePermissionKeys.length > 0) {
+      return session.effectivePermissionKeys.includes(normalized);
     }
 
     const keys = Array.isArray(session.featureKeys)
@@ -191,6 +260,9 @@ export class AuthSessionService {
     nextSession.featureKeys = Array.isArray(session.featureKeys)
       ? [...new Set(session.featureKeys.map((item) => String(item || '').trim().toLowerCase()).filter(Boolean))]
       : [];
+    nextSession.effectivePermissionKeys = Array.isArray(session.effectivePermissionKeys)
+      ? [...new Set(session.effectivePermissionKeys.map((item) => String(item || '').trim().toLowerCase()).filter(Boolean))]
+      : undefined;
     nextSession.effectiveFeatureConfigs = this.normalizeEffectiveFeatureConfigs(session.effectiveFeatureConfigs);
     if (session.actorType === 'tenant') {
       nextSession.tenantCode = String(session.tenantCode || '').trim().toUpperCase();

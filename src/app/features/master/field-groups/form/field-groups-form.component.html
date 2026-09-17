@@ -28,15 +28,7 @@
         [formControl]="form.controls.status"
       ></gom-lib-select>
 
-      <gom-lib-select
-        [label]="('fieldGroups.labels.mappedCategories' | translate)"
-        [placeholder]="('fieldGroups.placeholders.mappedCategories' | translate)"
-        [multiple]="true"
-        [options]="categoryOptions()"
-        [selectedValues]="selectedCategoryIds"
-        [closeMenuTrigger]="categorySelectCloseToken"
-        (selectedValuesChange)="onMappedCategorySelectionChange($event)"
-      ></gom-lib-select>
+      <!-- Category association removed - field groups are now global and can be used across all categories -->
     </div>
 
     <div class="field-group-form__panel">

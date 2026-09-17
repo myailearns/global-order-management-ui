@@ -1,0 +1,125 @@
+<gom-lib-modal
+  [show]="true"
+  [title]="'pricing.simple.review.title' | translate"
+  [closeOnBackdropClick]="true"
+  size="large"
+  (closed)="cancel()"
+>
+
+  <section class="sp-review-modal">
+    <p class="sp-review-modal__description">
+      {{ reviewItems().length }} {{ reviewItems().length === 1 ? 'product will' : 'products will' }} be updated. Confirm changes to apply to store.
+    </p>
+
+    @if (reviewItems().length === 0) {
+      <div class="sp-review-modal__empty">
+        <i class="ri-checkbox-circle-line sp-review-modal__empty-icon" aria-hidden="true"></i>
+        <p>{{ 'pricing.simple.review.empty' | translate }}</p>
+      </div>
+    } @else {
+      <div class="sp-review-modal__table-wrap">
+        <table class="sp-review-modal__table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Old → New Price</th>
+              <th>Old → New Profit</th>
+              <th>Old → New Margin</th>
+              <th>Impact Change</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of reviewItems(); track item.trackId) {
+              <tr>
+                <td class="sp-review-modal__product">{{ item.productName }}</td>
+                <td>
+                  <span class="sp-review-modal__old-value">{{ formatPrice(item.oldSellingPrice) }}</span>
+                  <i class="ri-arrow-right-line" aria-hidden="true"></i>
+                  <strong>{{ formatPrice(item.newSellingPrice) }}</strong>
+                </td>
+                <td>
+                  <span class="sp-review-modal__old-value">{{ formatAmount(item.oldProfitAmount) }}</span>
+                  <i class="ri-arrow-right-line" aria-hidden="true"></i>
+                  <strong class="sp-review-modal__positive">{{ formatAmount(item.newProfitAmount) }}</strong>
+                </td>
+                <td>
+                  <span class="sp-review-modal__old-value">{{ formatMargin(item.oldMarginPercent) }}</span>
+                  <i class="ri-arrow-right-line" aria-hidden="true"></i>
+                  <strong class="sp-review-modal__positive">{{ formatMargin(item.newMarginPercent) }}</strong>
+                </td>
+                <td>
+                  <span
+                    class="sp-review-modal__impact"
+                    [class.sp-review-modal__impact--negative]="(item.impactAmount ?? 0) < 0">
+                    {{ formatSignedAmount(item.impactAmount) }}
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="sp-review-modal__mobile-list">
+        @for (item of reviewItems(); track item.trackId) {
+          <article class="sp-review-modal__mobile-card">
+            <h4>{{ item.productName }}</h4>
+            <div class="sp-review-modal__mobile-grid">
+              <div>
+                <span>Price</span>
+                <strong>
+                  {{ formatCompactPrice(item.oldSellingPrice) }}
+                  <i class="ri-arrow-right-line" aria-hidden="true"></i>
+                  {{ formatCompactPrice(item.newSellingPrice) }}
+                </strong>
+              </div>
+              <div>
+                <span>Profit</span>
+                <strong class="sp-review-modal__positive">
+                  {{ formatCompactAmount(item.oldProfitAmount) }}
+                  <i class="ri-arrow-right-line" aria-hidden="true"></i>
+                  {{ formatCompactAmount(item.newProfitAmount) }}
+                </strong>
+              </div>
+              <div>
+                <span>Margin %</span>
+                <strong class="sp-review-modal__positive">
+                  {{ formatMargin(item.oldMarginPercent) }}
+                  <i class="ri-arrow-right-line" aria-hidden="true"></i>
+                  {{ formatMargin(item.newMarginPercent) }}
+                </strong>
+              </div>
+            </div>
+          </article>
+        }
+      </div>
+
+      <div class="sp-review-modal__summary">
+        <strong><i class="ri-line-chart-line" aria-hidden="true"></i> Total products affected: {{ reviewItems().length }}</strong>
+        <strong>Average margin change: {{ formatSignedPercent(averageMarginChange()) }}</strong>
+        <p>Estimated monthly revenue profit change: {{ formatSignedAmount(totalImpactAmount()) }}</p>
+      </div>
+    }
+
+  </section>
+
+  <div gom-modal-actions class="gom-modal__action-layout sp-review-modal__footer">
+    <div class="gom-modal__action-layout-end">
+      <gom-lib-button
+        variant="ghost"
+        type="button"
+        class="sp-review-modal__back-button"
+        (buttonClick)="cancel()">
+        Back to Editing
+      </gom-lib-button>
+      <gom-lib-button
+        variant="primary"
+        type="button"
+        [disabled]="reviewItems().length === 0"
+        (buttonClick)="confirm()">
+        Confirm and Publish Changes
+      </gom-lib-button>
+    </div>
+  </div>
+
+</gom-lib-modal>

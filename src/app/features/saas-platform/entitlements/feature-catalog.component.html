@@ -2,7 +2,10 @@
   <header class="epic2-page__header">
     <h1>{{ 'saas.platform.features.title' | translate }}</h1>
     @if (canWrite()) {
-    <gom-lib-button (buttonClick)="openCreate()">{{ 'saas.platform.features.btn_add' | translate }}</gom-lib-button>
+    <div class="epic2-page__header-actions">
+      <gom-lib-button (buttonClick)="syncAllFeatures()" [disabled]="loading() || deleteAllBusy()">{{ 'saas.platform.features.btn_add' | translate }}</gom-lib-button>
+      <gom-lib-button variant="danger" (buttonClick)="openDeleteAllConfirm()" [disabled]="loading() || deleteAllBusy()">Delete All Features</gom-lib-button>
+    </div>
     }
   </header>
 
@@ -14,6 +17,18 @@
     (rowAction)="onRowAction($event)"
   ></gom-lib-table>
 </section>
+
+<gom-lib-confirmation-modal
+  [(show)]="deleteAllConfirmOpen"
+  title="Delete All Features"
+  [message]="'This will delete all feature catalog records. This is intended for temporary development use only. Do you want to continue?'"
+  confirmText="Delete All"
+  cancelText="Cancel"
+  confirmVariant="danger"
+  [busy]="deleteAllBusy()"
+  (confirmed)="confirmDeleteAllFeatures()"
+  (cancelled)="closeDeleteAllConfirm()"
+></gom-lib-confirmation-modal>
 
 <gom-lib-modal [title]="selectedId() ? ('saas.platform.features.title_edit' | translate) : ('saas.platform.features.title_create' | translate)" [(show)]="modalOpen" size="large">
   <form class="epic2-page__form" [formGroup]="form">

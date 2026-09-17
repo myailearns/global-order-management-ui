@@ -8,6 +8,7 @@ export interface Category {
   _id?: string;
   name: string;
   description?: string;
+  groupCount?: number;
   imageAssetId?: string | null;
   imageUrl?: string;
   status?: 'ACTIVE' | 'INACTIVE';

@@ -5,7 +5,10 @@
       <p>{{ 'saas.platform.accounts.subtitle' | translate }}</p>
     </div>
     @if (canWrite()) {
-    <gom-lib-button (buttonClick)="openCreate()">{{ 'saas.platform.accounts.btn_create' | translate }}</gom-lib-button>
+    <div class="epic2-page__header-actions">
+      <gom-lib-button (buttonClick)="openCreate()" [disabled]="loading() || deleteAllBusy()">{{ 'saas.platform.accounts.btn_create' | translate }}</gom-lib-button>
+      <gom-lib-button variant="danger" (buttonClick)="openDeleteAllConfirm()" [disabled]="loading() || deleteAllBusy()">Delete All Accounts</gom-lib-button>
+    </div>
     }
   </header>
 
@@ -52,10 +55,55 @@
   @if (lastBootstrapMessage()) {
     <div class="saas-accounts__loading" aria-live="polite">{{ lastBootstrapMessage() }}</div>
   }
+
+  <section class="saas-accounts__pending-panel">
+    <header class="saas-accounts__pending-header">
+      <h2>Pending Payment Verification</h2>
+      <p>Support verification queue data source (Sprint 2)</p>
+    </header>
+
+    <gom-lib-table
+      [columns]="pendingColumns"
+      [rows]="pendingRows()"
+      [loading]="pendingLoading()"
+      dataMode="client"
+      [pageSizeOptions]="[20, 50, 100]"
+      (rowAction)="onPendingTableAction($event)"
+    ></gom-lib-table>
+  </section>
 </section>
 
-<gom-lib-modal [title]="editingAccountId() ? ('saas.platform.accounts.title_edit' | translate) : ('saas.platform.accounts.title_create' | translate)" [(show)]="formModalOpen" size="large">
+<gom-lib-confirmation-modal
+  [(show)]="deleteAllConfirmOpen"
+  title="Delete All Accounts"
+  [message]="'This will delete all SaaS accounts and their bootstrap tenant records, including tenant config, entitlements, roles, users, role assignments, tax profiles, and tenant audit logs. Broader tenant business data is not removed. This is intended for temporary development use only. Do you want to continue?'"
+  confirmText="Delete All"
+  cancelText="Cancel"
+  confirmVariant="danger"
+  [busy]="deleteAllBusy()"
+  (confirmed)="confirmDeleteAllAccounts()"
+  (cancelled)="closeDeleteAllConfirm()"
+></gom-lib-confirmation-modal>
+
+<gom-lib-confirmation-modal
+  [(show)]="deleteConfirmOpen"
+  title="Delete Account"
+  [message]="deleteConfirmMessage()"
+  confirmText="Delete"
+  cancelText="Cancel"
+  confirmVariant="danger"
+  [busy]="deleteBusy()"
+  (confirmed)="confirmDeleteAccount()"
+  (cancelled)="closeDeleteConfirm()"
+></gom-lib-confirmation-modal>
+
+<gom-lib-modal [title]="editingAccountId() ? ('saas.platform.accounts.title_edit' | translate) : ('saas.platform.accounts.title_create' | translate)" [show]="formModalOpen()" (showChange)="cancelForm()" size="large">
   <form class="saas-accounts__form" [formGroup]="accountForm">
+    <div class="saas-accounts__step-indicator">
+      <strong>Step {{ createStep() }} of 2</strong>
+      <span>@if (createStep() === 1) { Business Contact } @else { Subscription + Super Admin }</span>
+    </div>
+
     @if (validationErrors().length) {
       <div class="saas-accounts__validation-summary" role="alert">
         <h4>{{ 'saas.platform.accounts.lbl_validation_header' | translate }}</h4>
@@ -67,81 +115,65 @@
       </div>
     }
 
-    <h3>{{ 'saas.platform.accounts.section_account_details' | translate }}</h3>
-    <gom-lib-input formControlName="accountName" [label]="'saas.platform.accounts.lbl_account_name' | translate" [required]="true"></gom-lib-input>
-    <gom-lib-input formControlName="legalBusinessName" [label]="'saas.platform.accounts.lbl_legal_business_name' | translate" [required]="true"></gom-lib-input>
-    <gom-lib-input formControlName="tenantCode" [label]="'saas.platform.accounts.lbl_tenant_code' | translate" [required]="true"></gom-lib-input>
-    @if (!editingAccountId()) {
-      <div class="saas-accounts__tenant-code-mode">
-        <p>
-          {{ 'saas.platform.accounts.lbl_tenant_code_mode' | translate }}
-          <strong>{{ tenantCodeAutoMode() ? ('saas.platform.accounts.val_tenant_code_auto' | translate) : ('saas.platform.accounts.val_tenant_code_manual' | translate) }}</strong>
-        </p>
-        <gom-lib-button type="button" variant="secondary" (buttonClick)="toggleTenantCodeInputMode()">
-          {{ tenantCodeAutoMode() ? ('saas.platform.accounts.btn_switch_manual' | translate) : ('saas.platform.accounts.btn_switch_auto' | translate) }}
-        </gom-lib-button>
-      </div>
+    @if (createStep() === 1) {
+      <h3>Step 1: Business Contact</h3>
+      <gom-lib-input formControlName="accountName" label="Business Name" [required]="true"></gom-lib-input>
+      <gom-lib-input formControlName="primaryContactPhone" label="Mobile Number" [required]="true"></gom-lib-input>
+      <gom-lib-input formControlName="primaryContactEmail" label="Contact Email" [required]="true" type="email"></gom-lib-input>
+      <gom-lib-input formControlName="countryCode" label="Country" [required]="true"></gom-lib-input>
     }
 
-    <h3>{{ 'saas.platform.accounts.section_contact' | translate }}</h3>
-    <gom-lib-input formControlName="primaryContactName" [label]="'saas.platform.accounts.lbl_primary_contact_name' | translate" [required]="true"></gom-lib-input>
-    <gom-lib-input formControlName="primaryContactPhone" [label]="'saas.platform.accounts.lbl_primary_contact_phone' | translate" [required]="true"></gom-lib-input>
-    <gom-lib-input formControlName="primaryContactEmail" [label]="'saas.platform.accounts.lbl_primary_contact_email' | translate" [required]="true"></gom-lib-input>
+    @if (createStep() === 2) {
+      <h3>Step 2: Subscription and Super Admin</h3>
+      <gom-lib-select formControlName="packageId" label="Package" [required]="true" [options]="packageOptions()"></gom-lib-select>
+      <gom-lib-select formControlName="tierId" label="Tier" [required]="true" [options]="tierOptions()"></gom-lib-select>
 
-    <h3>{{ 'saas.platform.accounts.section_first_admin' | translate }}</h3>
-    <gom-lib-input
-      formControlName="firstTenantAdminName"
-      [label]="'saas.platform.accounts.lbl_first_admin_name' | translate"
-      [required]="!editingAccountId()"
-    ></gom-lib-input>
-    <gom-lib-input
-      formControlName="firstTenantAdminEmail"
-      [label]="'saas.platform.accounts.lbl_first_admin_email' | translate"
-      type="email"
-      [required]="!editingAccountId()"
-    ></gom-lib-input>
-    @if (!editingAccountId()) {
-      <gom-lib-input
-        formControlName="firstTenantAdminPassword"
-        label="First Tenant Admin Password"
-        type="password"
-        [required]="true"
-      ></gom-lib-input>
+      @if (!tierOptions().length) {
+      <p class="saas-accounts__plan-help">No tiers found for selected package. Create tiers before onboarding account.</p>
+      }
+
+      @if (selectedTier()) {
+      <p class="saas-accounts__plan-help">Trial settings below are configured for <strong>{{ selectedTier()?.displayName || selectedTier()?.tierKey }}</strong> tier. Change to override if allowed.</p>
+      }
+
+      <gom-lib-select formControlName="trialMode" label="Trial Mode" [required]="true" [options]="createTrialModeOptions()"></gom-lib-select>
+      <gom-lib-input formControlName="trialDurationDays" type="number" label="Trial Duration (Days)" [required]="true"></gom-lib-input>
+
+      <gom-lib-input formControlName="firstTenantAdminName" label="Super Admin Name" [required]="!editingAccountId() || isCompletingIncomplete()"></gom-lib-input>
+      <gom-lib-input formControlName="firstTenantAdminEmail" label="Super Admin Email" type="email" [required]="!editingAccountId() || isCompletingIncomplete()"></gom-lib-input>
+      <gom-lib-input formControlName="firstTenantAdminPassword" label="Super Admin Password" type="password" [required]="!editingAccountId() || isCompletingIncomplete()" [placeholder]="editingAccountId() && !isCompletingIncomplete() ? 'Leave empty to keep current password' : ''"></gom-lib-input>
+
+      <section class="saas-accounts__summary-card">
+        <h4>Provisioning Summary</h4>
+        <p><strong>Package:</strong> {{ accountForm.controls.packageId.value || '-' }}</p>
+        <p><strong>Tier:</strong> {{ selectedTier()?.displayName || selectedTier()?.tierKey || '-' }}</p>
+        <p><strong>Trial Mode:</strong> {{ accountForm.controls.trialMode.value || '-' }}</p>
+        <p><strong>Trial Days:</strong> {{ accountForm.controls.trialDurationDays.value || '-' }}</p>
+        @if (!tierAllowsTrialOverride()) {
+        <p>Trial override is disabled for this tier.</p>
+        }
+      </section>
     }
-
-    <gom-lib-input formControlName="countryCode" [label]="'saas.platform.accounts.lbl_country_code' | translate" [required]="true"></gom-lib-input>
-    <gom-lib-input formControlName="currency" [label]="'saas.platform.accounts.lbl_currency' | translate" [required]="true"></gom-lib-input>
-    <gom-lib-input
-      [label]="'saas.platform.accounts.lbl_search_timezone' | translate"
-      [placeholder]="'saas.platform.accounts.ph_search_timezone' | translate"
-      (valueChange)="onTimezoneSearchChange($event)"
-    ></gom-lib-input>
-    <gom-lib-select formControlName="timezone" [label]="'saas.platform.accounts.lbl_timezone' | translate" [required]="true" [options]="filteredTimezoneOptions()"></gom-lib-select>
-
-    <h3>{{ 'saas.platform.accounts.section_subscription' | translate }}</h3>
-    <gom-lib-select formControlName="planId" [label]="'saas.platform.accounts.lbl_plan' | translate" [required]="true" [options]="planOptions()"></gom-lib-select>
-    @if (!hasPlanOptions()) {
-      <p class="saas-accounts__plan-help">
-        {{ 'saas.platform.accounts.msg_no_plans' | translate }}
-      </p>
-    }
-    <gom-lib-select formControlName="trialMode" [label]="'saas.platform.accounts.lbl_trial_mode' | translate" [options]="trialModeOptions"></gom-lib-select>
-    <gom-lib-input formControlName="trialDurationDays" type="number" [label]="'saas.platform.accounts.lbl_trial_duration' | translate" [required]="true"></gom-lib-input>
-
-    <h3>{{ 'saas.platform.accounts.section_optional' | translate }}</h3>
-    <gom-lib-input formControlName="billingEmail" [label]="'saas.platform.accounts.lbl_billing_email' | translate" type="email"></gom-lib-input>
-    <gom-lib-input formControlName="supportPhone" [label]="'saas.platform.accounts.lbl_support_phone' | translate"></gom-lib-input>
-    <gom-lib-textarea formControlName="notes" [label]="'saas.platform.accounts.lbl_notes' | translate" [rows]="3"></gom-lib-textarea>
   </form>
 
   <footer class="gom-modal__action-layout" gom-modal-actions>
     <div class="gom-modal__action-layout-start"></div>
     <div class="gom-modal__action-layout-end">
-      @if (!editingAccountId()) {
+      @if (!editingAccountId() && createStep() === 1) {
         <gom-lib-button type="button" variant="secondary" (buttonClick)="saveDraft()">{{ 'saas.platform.accounts.btn_save_draft' | translate }}</gom-lib-button>
       }
-      <gom-lib-button type="button" variant="secondary" (buttonClick)="formModalOpen.set(false)">{{ 'common.btn_cancel' | translate }}</gom-lib-button>
-      <gom-lib-button type="button" (buttonClick)="saveAccount()" [disabled]="loading() || !hasPlanOptions()">{{ 'saas.platform.accounts.btn_save' | translate }}</gom-lib-button>
+      @if (createStep() === 2) {
+        <gom-lib-button type="button" variant="secondary" (buttonClick)="backToStep1()">Back</gom-lib-button>
+      }
+      <gom-lib-button type="button" variant="secondary" (buttonClick)="cancelForm()">{{ 'common.btn_cancel' | translate }}</gom-lib-button>
+      @if (createStep() === 1) {
+        <gom-lib-button type="button" (buttonClick)="saveAndContinueStep1()" [disabled]="loading()">
+          {{ editingAccountId() && !isCompletingIncomplete() ? 'Next' : 'Save And Continue' }}
+        </gom-lib-button>
+      }
+      @if (createStep() === 2) {
+        <gom-lib-button type="button" (buttonClick)="saveAccount()" [disabled]="loading() || (!editingAccountId() && !tierOptions().length)">{{ 'saas.platform.accounts.btn_save' | translate }}</gom-lib-button>
+      }
     </div>
   </footer>
 </gom-lib-modal>
@@ -200,6 +232,175 @@
     <div class="gom-modal__action-layout-start"></div>
     <div class="gom-modal__action-layout-end">
       <gom-lib-button type="button" variant="secondary" (buttonClick)="auditModalOpen.set(false)">{{ 'common.actions.close' | translate }}</gom-lib-button>
+    </div>
+  </footer>
+</gom-lib-modal>
+
+<gom-lib-modal [title]="'Record Manual Payment Request'" [show]="paymentModalOpen()" (showChange)="cancelPaymentRequest()" size="medium">
+  <form class="saas-accounts__dialog-form" [formGroup]="paymentRequestForm">
+    <p>Account: <strong>{{ selectedPaymentAccount()?.accountName }}</strong></p>
+
+    <gom-lib-select formControlName="tierId" label="Tier / Type" [required]="true" [options]="paymentTierOptions()"></gom-lib-select>
+    <gom-lib-select formControlName="durationCode" label="Payment Duration" [required]="true" [options]="paymentDurationOptions()"></gom-lib-select>
+
+    @if (selectedPaymentAccount()?.tierId) {
+      <p class="saas-accounts__plan-help">Current Tier on account: <strong>{{ selectedPaymentAccount()?.selectedTierDisplayName || selectedPaymentAccount()?.tierKey || selectedPaymentAccount()?.tierId }}</strong></p>
+    }
+
+    <gom-lib-accordion [title]="'Pricing Details'" [expanded]="true">
+      <section class="saas-accounts__accordion-content">
+        @if (getPaymentPricingPreview()) {
+          <section class="saas-accounts__summary-card">
+            <p><strong>Base Price:</strong> {{ getPaymentPricingPreview()?.currency }} {{ getPaymentPricingPreview()?.baseAmount | number:'1.2-2' }}</p>
+            <p><strong>Tier Discount:</strong> {{ getPaymentPricingPreview()?.tierDiscountPercent | number:'1.2-2' }}% ({{ getPaymentPricingPreview()?.currency }} {{ getPaymentPricingPreview()?.tierDiscountAmount | number:'1.2-2' }})</p>
+            <p><strong>Price After Tier Discount:</strong> {{ getPaymentPricingPreview()?.currency }} {{ getPaymentPricingPreview()?.tierFinalAmount | number:'1.2-2' }}</p>
+            <p><strong>Additional Discount:</strong> {{ getPaymentPricingPreview()?.manualDiscountPercent | number:'1.2-2' }}% ({{ getPaymentPricingPreview()?.currency }} {{ getPaymentPricingPreview()?.manualDiscountAmount | number:'1.2-2' }})</p>
+            <p><strong>Final Expected Price:</strong> {{ getPaymentPricingPreview()?.currency }} {{ getPaymentPricingPreview()?.expectedAmount | number:'1.2-2' }}</p>
+            @if (paymentContext()?.previousPayment) {
+              <p><strong>Delta vs Previous Expected:</strong> {{ getPaymentPricingPreview()?.currency }} {{ getPriceDeltaAgainstPrevious() | number:'1.2-2' }}</p>
+            }
+            <p>
+              <strong>Action Hint:</strong>
+              <span [class]="getPaymentActionHintChipClass()">{{ paymentActionHint() }}</span>
+            </p>
+          </section>
+          <gom-lib-input formControlName="paidAmount" type="number" label="Paid Amount" [required]="true"></gom-lib-input>
+          <section class="saas-accounts__payment-match-panel">
+            <p>
+              <strong>{{ getPaymentDifferenceLabel() }}:</strong>
+              {{ getPaymentPricingPreview()?.currency }}
+              {{ getPaymentDifferenceAmount() | number:'1.2-2' }}
+            </p>
+            <span [class]="getPaymentMatchBadgeClass()">{{ getPaymentPricingPreview()?.amountMatchStatus }}</span>
+          </section>
+        } @else {
+          <p class="saas-accounts__plan-help">Selected tier does not have an enabled pricing cycle for this duration.</p>
+        }
+      </section>
+    </gom-lib-accordion>
+
+    <gom-lib-accordion [title]="'Subscription Snapshot'" [expanded]="false">
+      <section class="saas-accounts__accordion-content">
+        @if (paymentContext()) {
+          <section class="saas-accounts__summary-card">
+            <h4>Current Subscription Status</h4>
+            <p><strong>Current Tier:</strong> {{ paymentContext()?.currentSubscription?.tierDisplayName || paymentContext()?.currentSubscription?.tierKey || '-' }}</p>
+            <p>
+              <strong>Status:</strong>
+              <span [class]="getCurrentSubscriptionStatusChipClass()">{{ getCurrentSubscriptionStatusLabel() }}</span>
+              @if (paymentContext()?.currentSubscription?.subscriptionEndAt) {
+                <span>{{ paymentContext()?.currentSubscription?.subscriptionEndAt | date:'mediumDate' }}</span>
+              }
+            </p>
+            <p><strong>Timeline:</strong> {{ getCurrentSubscriptionDaysLabel() }}</p>
+          </section>
+
+          <section class="saas-accounts__summary-card">
+            <h4>Previous Payment Snapshot</h4>
+            @if (paymentContext()?.previousPayment) {
+              <p><strong>Verified At:</strong> {{ paymentContext()?.previousPayment?.verifiedAt ? (paymentContext()?.previousPayment?.verifiedAt | date:'medium') : '-' }}</p>
+              <p><strong>Previous Tier:</strong> {{ paymentContext()?.previousPayment?.tierDisplayName || paymentContext()?.previousPayment?.tierKey || '-' }}</p>
+              <p><strong>Previous Duration:</strong> {{ paymentContext()?.previousPayment?.durationCode }}</p>
+              <p><strong>Previous Expected:</strong> {{ paymentContext()?.previousPayment?.currency }} {{ paymentContext()?.previousPayment?.expectedAmountAtRequest | number:'1.2-2' }}</p>
+              <p><strong>Previous Paid:</strong> {{ paymentContext()?.previousPayment?.currency }} {{ paymentContext()?.previousPayment?.paidAmountAtRequest | number:'1.2-2' }}</p>
+              <p><strong>Previous Discount:</strong> Tier {{ paymentContext()?.previousPayment?.tierDiscountPercent | number:'1.2-2' }}% + Manual {{ paymentContext()?.previousPayment?.manualDiscountPercent | number:'1.2-2' }}%</p>
+            } @else {
+              <p>No previous verified payment found for this account.</p>
+            }
+          </section>
+        } @else {
+          <p class="saas-accounts__plan-help">Subscription context is not available for this account.</p>
+        }
+      </section>
+    </gom-lib-accordion>
+
+    <gom-lib-accordion [title]="'Additional Discount'" [expanded]="false">
+      <section class="saas-accounts__accordion-content">
+        <gom-lib-input formControlName="manualDiscountPercent" type="number" label="Additional Discount (%)"></gom-lib-input>
+        <gom-lib-textarea formControlName="manualDiscountReason" label="Additional Discount Reason" [rows]="3"></gom-lib-textarea>
+      </section>
+    </gom-lib-accordion>
+
+    @if (paymentValidationErrors().length) {
+      <div class="saas-accounts__validation-summary" role="alert">
+        <h4>Payment validation</h4>
+        <ul>
+          @for (item of paymentValidationErrors(); track item) {
+            <li>{{ item }}</li>
+          }
+        </ul>
+      </div>
+    }
+
+    <gom-lib-input formControlName="paymentId" label="Payment ID" [required]="true"></gom-lib-input>
+    <gom-lib-select formControlName="paymentMethod" label="Payment Method" [required]="true" [options]="paymentMethodOptions"></gom-lib-select>
+    <gom-lib-input formControlName="referenceNumber" label="Reference Number (optional)"></gom-lib-input>
+    <gom-lib-input formControlName="paymentProof" label="Payment Proof URL (optional)"></gom-lib-input>
+  </form>
+
+  <footer class="gom-modal__action-layout" gom-modal-actions>
+    <div class="gom-modal__action-layout-start"></div>
+    <div class="gom-modal__action-layout-end">
+      <gom-lib-button type="button" variant="secondary" (buttonClick)="cancelPaymentRequest()">Cancel</gom-lib-button>
+      <gom-lib-button type="button" (buttonClick)="savePaymentRequest()" [disabled]="loading()">Submit Payment Request</gom-lib-button>
+    </div>
+  </footer>
+</gom-lib-modal>
+
+<gom-lib-modal [title]="pendingActionTitle()" [show]="pendingActionModalOpen()" (showChange)="closePendingActionModal()" size="medium">
+  <section class="saas-accounts__dialog-form">
+    <p>
+      Payment:
+      <strong>{{ selectedPendingPayment()?.paymentId }}</strong>
+      @if (selectedPendingPayment()?.accountId?.accountName) {
+        <span> · {{ selectedPendingPayment()?.accountId?.accountName }}</span>
+      }
+    </p>
+
+    @if (pendingActionValidationErrors().length) {
+      <div class="saas-accounts__validation-summary" role="alert">
+        <h4>Action validation</h4>
+        <ul>
+          @for (item of pendingActionValidationErrors(); track item) {
+            <li>{{ item }}</li>
+          }
+        </ul>
+      </div>
+    }
+
+    @if (pendingActionType() === 'verify') {
+      <form [formGroup]="pendingVerifyForm" class="saas-accounts__dialog-form">
+        <gom-lib-textarea label="Verification Note (optional)" formControlName="reason" [rows]="3"></gom-lib-textarea>
+        <gom-lib-textarea label="Override Reason (required only for mismatch override)" formControlName="overrideReason" [rows]="3"></gom-lib-textarea>
+      </form>
+    }
+
+    @if (pendingActionType() === 'reject') {
+      <form [formGroup]="pendingRejectForm" class="saas-accounts__dialog-form">
+        <gom-lib-textarea label="Rejection Reason" formControlName="reason" [rows]="3" [required]="true"></gom-lib-textarea>
+      </form>
+    }
+
+    @if (pendingActionType() === 'apply-tier') {
+      <form [formGroup]="pendingApplyTierForm" class="saas-accounts__dialog-form">
+        <gom-lib-select label="Target Tier" formControlName="tierId" [required]="true" [options]="pendingActionTierOptions()"></gom-lib-select>
+        <gom-lib-textarea label="Reason (optional)" formControlName="reason" [rows]="3"></gom-lib-textarea>
+      </form>
+    }
+
+    @if (pendingActionType() === 'set-duration') {
+      <form [formGroup]="pendingSetDurationForm" class="saas-accounts__dialog-form">
+        <gom-lib-select label="Duration" formControlName="durationCode" [required]="true" [options]="durationCodeOptions"></gom-lib-select>
+        <gom-lib-textarea label="Reason (optional)" formControlName="reason" [rows]="3"></gom-lib-textarea>
+      </form>
+    }
+  </section>
+
+  <footer class="gom-modal__action-layout" gom-modal-actions>
+    <div class="gom-modal__action-layout-start"></div>
+    <div class="gom-modal__action-layout-end">
+      <gom-lib-button type="button" variant="secondary" (buttonClick)="closePendingActionModal()">Cancel</gom-lib-button>
+      <gom-lib-button type="button" (buttonClick)="savePendingAction()" [disabled]="loading()">Submit</gom-lib-button>
     </div>
   </footer>
 </gom-lib-modal>

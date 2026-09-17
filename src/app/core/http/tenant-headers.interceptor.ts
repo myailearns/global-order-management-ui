@@ -6,9 +6,12 @@ import { AuthSessionService } from '../auth/auth-session.service';
 
 const TENANT_ROUTE_PREFIXES = [
   '/categories',
+  '/attributes',
+  '/attribute-sets',
   '/fields',
   '/field-groups',
   '/units',
+  '/pricing-templates',
   '/groups',
   '/variants',
   '/packs',
@@ -21,9 +24,11 @@ const TENANT_ROUTE_PREFIXES = [
   '/orders',
   '/returns',
   '/payments',
+  '/billing',
   '/riders',
   '/courier-partners',
   '/tenant-config',
+  '/tenant-account',
   '/tenant-access',
   '/tenant/templates',
   '/media',
@@ -37,7 +42,11 @@ function isTenantApiRequest(url: string): boolean {
   const path = url.slice(baseUrl.length);
   return (
     TENANT_ROUTE_PREFIXES.some((prefix) => path.startsWith(prefix)) ||
-    path.startsWith('/notifications')
+    path.startsWith('/notifications') ||
+    path.startsWith('/notification-templates') ||
+    path.startsWith('/notification-campaigns') ||
+    path.startsWith('/notification-dispatches') ||
+    path.startsWith('/admin-notifications')
   );
 }
 

@@ -1,0 +1,432 @@
+<section class="notifications-settings-page">
+  <header class="notifications-settings-page__header">
+    <gom-page-heading navRoute="/settings/notification-settings"></gom-page-heading>
+    <p>Manage templates and channel preferences.</p>
+  </header>
+
+  <gom-lib-tabs [tabs]="tabs" [activeTab]="activeTab()" (tabChange)="switchTab($event)">
+    <gom-lib-tab-content tabId="templates" [activeTab]="activeTab()">
+      @if (errorMessage()) {
+        <section class="notifications-settings-page__error">{{ errorMessage() }}</section>
+      }
+
+      @if (!editorOpen()) {
+        @if (hasVisibleTemplates() || loading()) {
+          <section class="template-list">
+            <div class="template-list__toolbar">
+              <gom-lib-button type="button" variant="primary" [disabled]="loading()" (buttonClick)="openCreateTemplate()">
+                + Create Template
+              </gom-lib-button>
+            </div>
+
+            <gom-lib-table
+              [columns]="columns"
+              [rows]="templateRows()"
+              [loading]="loading()"
+              [advancedFilterDefinitions]="filterDefinitions"
+              [filterNavigationRows]="filterNavigationRows"
+              [showClearFilterButton]="true"
+              [pageIndex]="tableQuery().pageIndex"
+              [pageSize]="tableQuery().pageSize"
+              [pageSizeOptions]="[10, 20, 50]"
+              [totalItems]="templateRows().length"
+              searchPlaceholder="Search templates"
+              emptyMessage="No templates found."
+              [mobileCardView]="true"
+              (rowAction)="onTemplateRowAction($event)"
+              (queryChange)="onTableQueryChange($event)"
+            ></gom-lib-table>
+          </section>
+        } @else {
+          <section class="template-empty-state">
+            <div class="template-empty-state__card">
+              <div class="template-empty-state__icon"><i class="ri-file-list-3-line" aria-hidden="true"></i></div>
+              <h3>No templates found</h3>
+              <p>Create default templates for order status events. You can edit any template later.</p>
+              <gom-lib-button type="button" variant="primary" [disabled]="initializingDefaults()" (buttonClick)="createDefaultTemplates()">
+                Create Default Templates
+              </gom-lib-button>
+            </div>
+          </section>
+        }
+      } @else {
+        <section class="template-editor">
+          <header class="template-editor__header">
+            <button type="button" class="template-editor__back" (click)="closeEditor()">
+              <i class="ri-arrow-left-line" aria-hidden="true"></i>
+              Edit Template
+            </button>
+            <div class="template-editor__actions">
+              <gom-lib-button type="button" variant="secondary" (buttonClick)="closeEditor()">Cancel</gom-lib-button>
+              <gom-lib-button type="button" variant="secondary" [disabled]="saving()" (buttonClick)="saveTemplate()">Save as Draft</gom-lib-button>
+              <gom-lib-button type="button" variant="primary" [disabled]="saving()" (buttonClick)="saveTemplate()">Save & Activate</gom-lib-button>
+            </div>
+          </header>
+
+          <div class="template-editor__body" [formGroup]="editForm">
+            <section class="template-editor__form">
+              <div class="template-editor__grid">
+                <gom-lib-input
+                  label="Template Name"
+                  [required]="true"
+                  [formControl]="editForm.controls.templateName"
+                  [error]="editForm.controls.templateName.touched && editForm.controls.templateName.invalid ? 'Template name is required' : ''"
+                ></gom-lib-input>
+
+                <gom-lib-select
+                  label="Event"
+                  [required]="true"
+                  [options]="eventOptions()"
+                  [formControl]="editForm.controls.eventCode"
+                ></gom-lib-select>
+              </div>
+
+              <div class="template-editor__grid">
+                <gom-lib-select
+                  label="Channel"
+                  [required]="true"
+                  [options]="channelOptions"
+                  [formControl]="editForm.controls.channel"
+                ></gom-lib-select>
+                <gom-lib-select
+                  label="Recipient Type"
+                  [required]="true"
+                  [options]="recipientOptions"
+                  [formControl]="editForm.controls.recipientType"
+                ></gom-lib-select>
+              </div>
+
+              <gom-lib-input
+                label="Subject Line"
+                [formControl]="editForm.controls.subject"
+              ></gom-lib-input>
+
+              <gom-lib-textarea
+                label="Template Body"
+                [required]="true"
+                [rows]="10"
+                [formControl]="editForm.controls.body"
+                [error]="editForm.controls.body.touched && editForm.controls.body.invalid ? 'Template body is required' : ''"
+              ></gom-lib-textarea>
+
+              <gom-lib-select
+                label="Status"
+                [options]="statusOptions"
+                [formControl]="editForm.controls.status"
+              ></gom-lib-select>
+            </section>
+
+            <aside class="template-editor__tokens">
+              <h4>Dynamic Fields</h4>
+              <p>Click a variable to insert it into template body.</p>
+
+              @for (group of dynamicFieldGroups; track group.title) {
+                <div class="template-editor__token-group">
+                  <h5>{{ group.title }}</h5>
+                  <div class="template-editor__token-list">
+                    @for (token of group.fields; track token) {
+                      <button type="button" class="template-editor__token-chip" (click)="insertDynamicField(token)">
+                        {{ token }}
+                      </button>
+                    }
+                  </div>
+                </div>
+              }
+            </aside>
+          </div>
+        </section>
+      }
+    </gom-lib-tab-content>
+
+    <gom-lib-tab-content tabId="settings" [activeTab]="activeTab()">
+      <section class="notification-settings">
+        <header class="notification-settings__header">
+          <h3>Order Notifications</h3>
+          <p>Control which channels are enabled for each order status.</p>
+        </header>
+
+        <div class="notification-settings__list">
+          @for (row of settingsRows(); track row.eventCode) {
+            <article class="notification-settings__row">
+              <div class="notification-settings__left">
+                <gom-lib-switch
+                  [checked]="row.enabled"
+                  [disabled]="settingsBusy()"
+                  [ariaLabel]="'Toggle ' + row.eventLabel"
+                  (checkedChange)="toggleSettingRow(row.eventCode, $event)"
+                ></gom-lib-switch>
+
+                <div class="notification-settings__event">
+                  <h4>{{ row.eventLabel }}</h4>
+                  <p>{{ row.eventHint }}</p>
+                </div>
+              </div>
+
+              <div class="notification-settings__meta">
+                <span class="notification-settings__chip notification-settings__chip--active">
+                  {{ row.activeChannelCount }} channel{{ row.activeChannelCount === 1 ? '' : 's' }} active
+                </span>
+                <span class="notification-settings__chip">
+                  {{ row.recipientCount }} recipient{{ row.recipientCount === 1 ? '' : 's' }}
+                </span>
+                <gom-lib-button
+                  type="button"
+                  variant="secondary"
+                  [disabled]="settingsBusy() || diagnosticsLoading()"
+                  (buttonClick)="openDiagnostics(row)"
+                >
+                  Diagnostics
+                </gom-lib-button>
+                <gom-lib-button
+                  type="button"
+                  variant="secondary"
+                  [disabled]="settingsBusy()"
+                  (buttonClick)="openSettingsEditor(row)"
+                >
+                  Manage
+                </gom-lib-button>
+              </div>
+            </article>
+          }
+        </div>
+      </section>
+    </gom-lib-tab-content>
+  </gom-lib-tabs>
+</section>
+
+<gom-lib-modal
+  [(show)]="previewOpen"
+  [title]="previewTemplate()?.templateName || 'Template Preview'"
+  size="medium"
+  [closeOnBackdropClick]="true"
+  (closed)="closePreview()"
+>
+  <section class="template-preview">
+    <p><strong>Event:</strong> {{ previewTemplate()?.eventLabel }}</p>
+    <p><strong>Channel:</strong> {{ previewTemplate()?.channel }}</p>
+    <p><strong>Recipient:</strong> {{ previewTemplate()?.recipientType }}</p>
+    @if (previewTemplate()?.subject) {
+      <p><strong>Subject:</strong> {{ previewTemplate()?.subject }}</p>
+    }
+    <pre>{{ previewTemplate()?.body }}</pre>
+  </section>
+
+  <footer class="gom-modal__action-layout" gom-modal-actions>
+    <div class="gom-modal__action-layout-start"></div>
+    <div class="gom-modal__action-layout-end">
+      <gom-lib-button type="button" variant="primary" (buttonClick)="closePreview()">Close</gom-lib-button>
+    </div>
+  </footer>
+</gom-lib-modal>
+
+<gom-lib-modal
+  [(show)]="diagnosticsOpen"
+  [title]="(diagnosticsEventLabel() || 'Notification Diagnostics') + ' Delivery Logs'"
+  size="large"
+  [closeOnBackdropClick]="!diagnosticsLoading()"
+  (closed)="closeDiagnostics()"
+>
+  <section class="notification-diagnostics">
+    <header class="notification-diagnostics__header">
+      <div>
+        <h4>{{ diagnosticsEventLabel() || 'Notification Diagnostics' }}</h4>
+        <p>Latest delivery attempts for this order status.</p>
+      </div>
+      <span class="notification-settings__chip">{{ diagnosticsRows().length }} recent record{{ diagnosticsRows().length === 1 ? '' : 's' }}</span>
+    </header>
+
+    @if (diagnosticsError()) {
+      <div class="notification-diagnostics__error">{{ diagnosticsError() }}</div>
+    }
+
+    @if (diagnosticsLoading()) {
+      <div class="notification-diagnostics__empty">Loading delivery diagnostics...</div>
+    } @else if (!diagnosticsRows().length) {
+      <div class="notification-diagnostics__empty">No dispatch records found for this status yet.</div>
+    } @else {
+      <div class="notification-diagnostics__list">
+        @for (item of diagnosticsRows(); track item.id) {
+          <article class="notification-diagnostics__row">
+            <div class="notification-diagnostics__row-main">
+              <div class="notification-diagnostics__row-top">
+                <strong>{{ item.orderNo }}</strong>
+                <span class="notification-settings__chip notification-settings__chip--active">{{ item.channel }}</span>
+                <span class="notification-settings__chip">{{ item.state }}</span>
+              </div>
+              <div class="notification-diagnostics__row-meta">
+                <span>Template: {{ item.templateKey }}</span>
+                <span>Attempts: {{ item.attempts }}/{{ item.maxAttempts }}</span>
+                <span>Created: {{ item.createdAt | date: 'medium' }}</span>
+                @if (item.sentAt) {
+                  <span>Sent: {{ item.sentAt | date: 'medium' }}</span>
+                }
+                @if (item.nextRetryAt) {
+                  <span>Next retry: {{ item.nextRetryAt | date: 'medium' }}</span>
+                }
+              </div>
+            </div>
+
+            @if (item.lastError) {
+              <div class="notification-diagnostics__error-message">
+                <strong>{{ item.failureCategory || 'Result' }}:</strong> {{ item.lastError }}
+              </div>
+            }
+          </article>
+        }
+      </div>
+    }
+  </section>
+
+  <footer class="gom-modal__action-layout" gom-modal-actions>
+    <div class="gom-modal__action-layout-start"></div>
+    <div class="gom-modal__action-layout-end">
+      <gom-lib-button type="button" variant="primary" [disabled]="diagnosticsLoading()" (buttonClick)="closeDiagnostics()">Close</gom-lib-button>
+    </div>
+  </footer>
+</gom-lib-modal>
+
+<gom-lib-modal
+  [(show)]="settingsEditorOpen"
+  [title]="(selectedSettingRow()?.eventLabel || 'Notification Settings') + ' Channels'"
+  size="medium"
+  [closeOnBackdropClick]="!settingsBusy()"
+  (closed)="closeSettingsEditor()"
+>
+  <section class="notification-settings-modal">
+    <div class="notification-settings-modal__master">
+      <div>
+        <h4>Enable Notifications</h4>
+        <p>Turn on to send notifications for this order status.</p>
+      </div>
+      <gom-lib-switch
+        [checked]="settingsEventEnabledDraft()"
+        [disabled]="settingsBusy()"
+        ariaLabel="Enable status notifications"
+        (checkedChange)="setSettingsEventEnabled($event)"
+      ></gom-lib-switch>
+    </div>
+
+    <div class="notification-settings-modal__channels">
+      <div class="notification-settings-modal__channel-row">
+        <div>
+          <strong>In-App Notification</strong>
+          <p>Shown inside the app notification center.</p>
+        </div>
+        <gom-lib-switch
+          [checked]="settingsChannelDraft().IN_APP"
+          [disabled]="settingsBusy() || !settingsEventEnabledDraft()"
+          ariaLabel="Toggle in-app channel"
+          (checkedChange)="setSettingsChannel('IN_APP', $event)"
+        ></gom-lib-switch>
+      </div>
+
+      <div class="notification-settings-modal__channel-row">
+        <div>
+          <strong>Push Notification</strong>
+          <p>Sent to customer device as a push alert.</p>
+        </div>
+        <gom-lib-switch
+          [checked]="settingsChannelDraft().PUSH"
+          [disabled]="settingsBusy() || !settingsEventEnabledDraft()"
+          ariaLabel="Toggle push channel"
+          (checkedChange)="setSettingsChannel('PUSH', $event)"
+        ></gom-lib-switch>
+      </div>
+
+      <div class="notification-settings-modal__channel-row">
+        <div>
+          <strong>Email</strong>
+          <p>Sent as transactional email to recipients.</p>
+        </div>
+        <gom-lib-switch
+          [checked]="settingsChannelDraft().EMAIL"
+          [disabled]="settingsBusy() || !settingsEventEnabledDraft()"
+          ariaLabel="Toggle email channel"
+          (checkedChange)="setSettingsChannel('EMAIL', $event)"
+        ></gom-lib-switch>
+      </div>
+
+      <div class="notification-settings-modal__future-row">
+        <span>WhatsApp</span>
+        <span class="notification-settings__chip">Soon</span>
+      </div>
+
+      <div class="notification-settings-modal__future-row">
+        <span>SMS</span>
+        <span class="notification-settings__chip">Soon</span>
+      </div>
+    </div>
+
+    <div class="notification-settings-modal__recipients">
+      <header class="notification-settings-modal__recipients-header">
+        <div>
+          <h4>Recipients</h4>
+          <p>Choose who receives notifications for this status.</p>
+        </div>
+        <span class="notification-settings__chip notification-settings__chip--active">
+          {{ selectedRecipientDraftCount() }} recipient{{ selectedRecipientDraftCount() === 1 ? '' : 's' }}
+        </span>
+      </header>
+
+      @if (recipientConfigLoading() || recipientOptionsLoading()) {
+        <div class="notification-settings-modal__loading">Loading recipient options...</div>
+      }
+
+      <div class="notification-settings-modal__recipient-switches">
+        <div class="notification-settings-modal__channel-row">
+          <div>
+            <strong>Include Customer</strong>
+            <p>Send to the order customer email.</p>
+          </div>
+          <gom-lib-switch
+            [checked]="settingsIncludeCustomerDraft()"
+            [disabled]="settingsBusy() || recipientConfigLoading()"
+            ariaLabel="Toggle customer recipient"
+            (checkedChange)="setSettingsIncludeCustomer($event)"
+          ></gom-lib-switch>
+        </div>
+
+        <div class="notification-settings-modal__channel-row">
+          <div>
+            <strong>Include All Active Users</strong>
+            <p>Send to every active admin user email.</p>
+          </div>
+          <gom-lib-switch
+            [checked]="settingsIncludeAllUsersDraft()"
+            [disabled]="settingsBusy() || recipientConfigLoading()"
+            ariaLabel="Toggle all active users recipient"
+            (checkedChange)="setSettingsIncludeAllUsers($event)"
+          ></gom-lib-switch>
+        </div>
+      </div>
+
+      <div class="notification-settings-modal__recipient-selects">
+        <gom-lib-select
+          label="Admin Roles"
+          placeholder="Select roles"
+          [multiple]="true"
+          [options]="recipientRoleSelectOptions()"
+          [selectedValues]="settingsRoleIdsDraft()"
+          (selectedValuesChange)="setSettingsRoleIds($event)"
+        ></gom-lib-select>
+
+        <gom-lib-select
+          label="Active Users"
+          placeholder="Select users"
+          [multiple]="true"
+          [options]="recipientUserSelectOptions()"
+          [selectedValues]="settingsUserIdsDraft()"
+          (selectedValuesChange)="setSettingsUserIds($event)"
+        ></gom-lib-select>
+      </div>
+    </div>
+  </section>
+
+  <footer class="gom-modal__action-layout" gom-modal-actions>
+    <div class="gom-modal__action-layout-start"></div>
+    <div class="gom-modal__action-layout-end">
+      <gom-lib-button type="button" variant="secondary" [disabled]="settingsBusy()" (buttonClick)="closeSettingsEditor()">Cancel</gom-lib-button>
+      <gom-lib-button type="button" variant="primary" [disabled]="settingsBusy()" (buttonClick)="saveSettingsEditor()">Save</gom-lib-button>
+    </div>
+  </footer>
+</gom-lib-modal>

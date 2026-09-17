@@ -1,21 +1,23 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { TranslateModule } from '@ngx-translate/core';
+import { Router } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Subject, takeUntil } from 'rxjs';
 
-import { GomAlertToastService, GomButtonComponent, GomInputComponent, GomModalComponent, GomSelectComponent, GomTableColumn, GomTableComponent, GomTableRow, GomTextareaComponent } from '@gomlibs/ui';
+import { GomAlertToastService, GomButtonComponent, GomConfirmationModalComponent, GomInputComponent, GomModalComponent, GomSelectComponent, GomSwitchComponent, GomTableColumn, GomTableComponent, GomTableRow, GomTextareaComponent } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { EntitlementsService } from './entitlements.service';
-import { FeatureCatalogItem, FeatureConfigOverride, PackagePlan } from './entitlements.model';
+import { FeatureCatalogItem, FeatureConfigOverride, PackagePlan, PostTrialAction, TrialMode } from './entitlements.model';
 
 interface PackageRow extends GomTableRow {
   id: string;
   planId: string;
   name: string;
   tier: string;
+  packageType: string;
   status: string;
-  featureCount: number;
+  tierCount: number;
 }
 
 @Component({
@@ -26,8 +28,10 @@ interface PackageRow extends GomTableRow {
     ReactiveFormsModule,
     TranslateModule,
     GomButtonComponent,
+    GomConfirmationModalComponent,
     GomInputComponent,
     GomSelectComponent,
+    GomSwitchComponent,
     GomTextareaComponent,
     GomModalComponent,
     GomTableComponent,
@@ -47,6 +51,8 @@ export class PackagePlansComponent implements OnInit, OnDestroy {
   private readonly toast = inject(GomAlertToastService);
   private readonly fb = inject(FormBuilder);
   private readonly authSession = inject(AuthSessionService);
+  private readonly router = inject(Router);
+  private readonly translate = inject(TranslateService);
   private readonly destroy$ = new Subject<void>();
 
   readonly loading = signal(false);
@@ -54,6 +60,11 @@ export class PackagePlansComponent implements OnInit, OnDestroy {
   readonly packages = signal<PackagePlan[]>([]);
   readonly features = signal<FeatureCatalogItem[]>([]);
   readonly modalOpen = signal(false);
+  readonly deleteAllConfirmOpen = signal(false);
+  readonly deleteAllBusy = signal(false);
+  readonly deletePackageConfirmOpen = signal(false);
+  readonly deletePackageBusy = signal(false);
+  readonly deleteTarget = signal<PackagePlan | null>(null);
   readonly selectedId = signal<string | null>(null);
   readonly featureKeysSig = signal<string[]>([]);
   private pendingFeatureConfigs: Record<string, FeatureConfigOverride[]> = {};
@@ -80,14 +91,33 @@ export class PackagePlansComponent implements OnInit, OnDestroy {
   readonly featureSearch = signal('');
   readonly activeBuilderTab = signal<'features' | 'configs'>('features');
 
+  // Sprint 1: Two-step flow - create form only captures metadata
   readonly form = this.fb.group({
     planId: ['', [Validators.required]],
     name: ['', [Validators.required]],
     description: [''],
     tier: ['STARTER', [Validators.required]],
+    packageType: ['BOTH', [Validators.required]],
     status: ['ACTIVE', [Validators.required]],
-    featureKeys: this.fb.control<string[]>([]),
+    trialEnabledDefault: [true],
+    defaultTrialMode: ['PLAN_BASED_TRIAL' as TrialMode, [Validators.required]],
+    defaultTrialDurationDays: [14, [Validators.required, Validators.min(1), Validators.max(365)]],
+    defaultPostTrialAction: ['SUSPEND_PREMIUM_ACCESS' as PostTrialAction, [Validators.required]],
+    allowAccountLevelTrialOverride: [true],
+    featureKeys: this.fb.control<string[]>([]), // For backward compat with existing packages (edit mode)
   });
+
+  readonly packageTrialModeOptions = [
+    { value: 'PLAN_BASED_TRIAL', label: 'Plan Based Trial' },
+    { value: 'FULL_APP_TRIAL', label: 'Full App Trial' },
+    { value: 'NONE', label: 'No Trial' },
+  ];
+
+  readonly postTrialActionOptions = [
+    { value: 'SUSPEND_PREMIUM_ACCESS', label: 'Suspend Premium Access' },
+    { value: 'DOWNGRADE_TO_TIER', label: 'Downgrade To Tier' },
+    { value: 'CONVERT_TO_PAID', label: 'Convert To Paid' },
+  ];
 
   readonly moduleList = computed<string[]>(() =>
     [...new Set(this.features().map((feature) => String(feature.module || '').trim()).filter(Boolean))]
@@ -122,8 +152,9 @@ export class PackagePlansComponent implements OnInit, OnDestroy {
       planId: item.planId,
       name: item.name,
       tier: item.tier,
+      packageType: item.packageType || 'BOTH',
       status: item.status,
-      featureCount: item.featureKeys.length,
+      tierCount: (item.tiers?.length || 0) + (item.featureKeys?.length > 0 ? 1 : 0), // Count tiers + legacy package
     })),
   );
 
@@ -131,13 +162,23 @@ export class PackagePlansComponent implements OnInit, OnDestroy {
     { key: 'planId', header: 'Plan Id', sortable: true, width: '12rem' },
     { key: 'name', header: 'Name', sortable: true, width: '16rem' },
     { key: 'tier', header: 'Tier', width: '10rem' },
+    { key: 'packageType', header: 'Package Type', width: '10rem' },
     { key: 'status', header: 'Status', width: '10rem' },
-    { key: 'featureCount', header: 'Features', width: '8rem' },
+    { key: 'tierCount', header: this.translate.instant('saas.platform.packages.col_tiers'), width: '8rem' },
     {
       key: 'id',
       header: 'Actions',
-      width: '10rem',
-      actionButtons: [{ label: 'Edit', actionKey: 'edit', variant: 'secondary' }],
+      width: '15rem',
+      actionButtons: [
+        {
+          label: this.translate.instant('saas.platform.packages.btn_manage_tiers'),
+          icon: 'ri-stack-line',
+          actionKey: 'manage-tiers',
+          variant: 'primary',
+        },
+        { label: 'Edit', actionKey: 'edit', variant: 'secondary' },
+        { label: 'Delete', icon: 'ri-delete-bin-line', actionKey: 'delete', variant: 'danger' },
+      ],
     },
   ];
 
@@ -372,6 +413,92 @@ export class PackagePlansComponent implements OnInit, OnDestroy {
     });
   }
 
+  openDeleteAllConfirm(): void {
+    if (!this.canWrite() || this.loading() || this.deleteAllBusy()) {
+      return;
+    }
+    this.deleteAllConfirmOpen.set(true);
+  }
+
+  closeDeleteAllConfirm(): void {
+    if (this.deleteAllBusy()) {
+      return;
+    }
+    this.deleteAllConfirmOpen.set(false);
+  }
+
+  openDeletePackageConfirm(item: PackagePlan): void {
+    if (!this.canWrite() || this.loading() || this.deletePackageBusy()) {
+      return;
+    }
+    this.deleteTarget.set(item);
+    this.deletePackageConfirmOpen.set(true);
+  }
+
+  closeDeletePackageConfirm(): void {
+    if (this.deletePackageBusy()) {
+      return;
+    }
+    this.deletePackageConfirmOpen.set(false);
+    this.deleteTarget.set(null);
+  }
+
+  confirmDeletePackage(): void {
+    const target = this.deleteTarget();
+    if (!this.canWrite() || !target?._id || this.deletePackageBusy()) {
+      return;
+    }
+
+    this.deletePackageBusy.set(true);
+    this.service.deletePackage(target._id).subscribe({
+      next: () => {
+        this.deletePackageBusy.set(false);
+        this.deletePackageConfirmOpen.set(false);
+        this.deleteTarget.set(null);
+        this.toast.success('Package deleted successfully');
+        this.load();
+      },
+      error: (error) => {
+        this.deletePackageBusy.set(false);
+        this.toast.error(String(error?.error?.message || 'Failed to delete package'));
+      },
+    });
+  }
+
+  get deletePackageConfirmMessage(): string {
+    const target = this.deleteTarget();
+    if (!target) {
+      return 'Are you sure you want to delete this package?';
+    }
+    return `Are you sure you want to delete package ${target.name} (${target.planId})? This action cannot be undone.`;
+  }
+
+  confirmDeleteAllPackages(): void {
+    if (!this.canWrite() || this.deleteAllBusy()) {
+      return;
+    }
+
+    this.deleteAllBusy.set(true);
+    this.service.deleteAllPackages().subscribe({
+      next: (result) => {
+        this.deleteAllBusy.set(false);
+        this.deleteAllConfirmOpen.set(false);
+
+        if (result.deletedCount === 0) {
+          this.toast.info('No packages to delete.');
+          return;
+        }
+
+        this.toast.success(`Deleted ${result.deletedCount} packages.`);
+        this.load();
+      },
+      error: (error) => {
+        this.deleteAllBusy.set(false);
+        this.toast.error(String(error?.error?.message || 'Failed to delete all packages'));
+      },
+    });
+  }
+
   openCreate(): void {
     this.selectedId.set(null);
     this.pendingFeatureConfigs = {};
@@ -380,8 +507,17 @@ export class PackagePlansComponent implements OnInit, OnDestroy {
     this.activeBuilderTab.set('features');
     this._rebuildConfigOverrides([], {});
     this.featureKeysSig.set([]);
-    this.form.reset({ planId: '', name: '', description: '', tier: 'STARTER', status: 'ACTIVE', featureKeys: [] });
-    this.form.controls.planId.enable();
+    this.form.reset({ planId: '', name: '', description: '', tier: 'STARTER', packageType: 'BOTH', status: 'ACTIVE', featureKeys: [] });
+    this.form.patchValue({
+      trialEnabledDefault: true,
+      defaultTrialMode: 'PLAN_BASED_TRIAL',
+      defaultTrialDurationDays: 14,
+      defaultPostTrialAction: 'SUSPEND_PREMIUM_ACCESS',
+      allowAccountLevelTrialOverride: true,
+    }, { emitEvent: false });
+    // Metadata-first create: planId is auto-generated by backend, tier is configured in Manage Tiers.
+    this.form.controls.planId.disable();
+    this.form.controls.tier.disable();
     this.modalOpen.set(true);
   }
 
@@ -389,6 +525,22 @@ export class PackagePlansComponent implements OnInit, OnDestroy {
     if (!this.canWrite()) {
       return;
     }
+
+    if (event.actionKey === 'manage-tiers') {
+      // Navigate to tier management page for this package
+      this.router.navigate(['/saas-platform/packages', event.row.id, 'tiers']);
+      return;
+    }
+
+    if (event.actionKey === 'delete') {
+      const deleteItem = this.packages().find((x) => x._id === event.row.id);
+      if (!deleteItem) {
+        return;
+      }
+      this.openDeletePackageConfirm(deleteItem);
+      return;
+    }
+
     if (event.actionKey !== 'edit') {
       return;
     }
@@ -406,7 +558,13 @@ export class PackagePlansComponent implements OnInit, OnDestroy {
       name: item.name,
       description: item.description || '',
       tier: item.tier,
+      packageType: item.packageType || 'BOTH',
       status: item.status,
+      trialEnabledDefault: item.trialEnabledDefault ?? true,
+      defaultTrialMode: item.defaultTrialMode || 'PLAN_BASED_TRIAL',
+      defaultTrialDurationDays: Number(item.defaultTrialDurationDays ?? 14),
+      defaultPostTrialAction: item.defaultPostTrialAction || 'SUSPEND_PREMIUM_ACCESS',
+      allowAccountLevelTrialOverride: item.allowAccountLevelTrialOverride ?? true,
       featureKeys: item.featureKeys,
     }, { emitEvent: false });
     this.featureKeysSig.set(item.featureKeys ?? []);
@@ -416,6 +574,7 @@ export class PackagePlansComponent implements OnInit, OnDestroy {
     // Pre-populate config overrides from saved plan
     this._rebuildConfigOverrides(item.featureKeys, this.pendingFeatureConfigs);
     this.form.controls.planId.disable();
+    this.form.controls.tier.enable();
     this.modalOpen.set(true);
   }
 
@@ -461,12 +620,18 @@ export class PackagePlansComponent implements OnInit, OnDestroy {
       name: String(raw.name || '').trim(),
       description: String(raw.description || '').trim(),
       tier: String(raw.tier || 'STARTER').trim().toUpperCase(),
+      packageType: String(raw.packageType || 'BOTH').trim().toUpperCase(),
       status: String(raw.status || 'ACTIVE').trim().toUpperCase(),
+      trialEnabledDefault: Boolean(raw.trialEnabledDefault),
+      defaultTrialMode: String(raw.defaultTrialMode || 'PLAN_BASED_TRIAL').trim().toUpperCase() as TrialMode,
+      defaultTrialDurationDays: Number(raw.defaultTrialDurationDays || 14),
+      defaultPostTrialAction: String(raw.defaultPostTrialAction || 'SUSPEND_PREMIUM_ACCESS').trim().toUpperCase() as PostTrialAction,
+      allowAccountLevelTrialOverride: Boolean(raw.allowAccountLevelTrialOverride),
       featureKeys: Array.isArray(raw.featureKeys)
         ? raw.featureKeys.map((value) => String(value).trim().toLowerCase()).filter(Boolean)
         : [],
       featureConfigs,
-    } as Partial<PackagePlan> & Pick<PackagePlan, 'planId' | 'name' | 'tier'>;
+    } as Partial<PackagePlan>;
 
     const id = this.selectedId();
     this.loading.set(true);
@@ -487,7 +652,19 @@ export class PackagePlansComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.service.createPackage(payload).subscribe({
+    const createPayload = {
+      name: payload.name,
+      description: payload.description,
+      packageType: payload.packageType,
+      status: payload.status,
+      trialEnabledDefault: payload.trialEnabledDefault,
+      defaultTrialMode: payload.defaultTrialMode,
+      defaultTrialDurationDays: payload.defaultTrialDurationDays,
+      defaultPostTrialAction: payload.defaultPostTrialAction,
+      allowAccountLevelTrialOverride: payload.allowAccountLevelTrialOverride,
+    } as Partial<PackagePlan> & Pick<PackagePlan, 'name'>;
+
+    this.service.createPackage(createPayload).subscribe({
       next: () => {
         this.loading.set(false);
         this.modalOpen.set(false);

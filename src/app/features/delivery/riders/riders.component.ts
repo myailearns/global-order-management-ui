@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, DestroyRef, HostListener, computed, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { catchError, combineLatest, debounceTime, of, startWith, switchMap } from 'rxjs';
+import { startWith } from 'rxjs';
 
 import {
   FormControlsModule,
@@ -18,6 +18,7 @@ import {
 import { DeliveryService, EmployeeCodePreview, Rider, RiderPayload, RiderStatus } from '../delivery.service';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { DisableIfNoFeatureDirective } from '../../../shared/directives/disable-if-no-feature.directive';
+import { PageHeadingComponent } from '../../../shared/components/page-heading/page-heading.component';
 
 interface RiderRow extends GomTableRow {
   _id: string;
@@ -43,6 +44,7 @@ interface RiderRow extends GomTableRow {
     GomTableComponent,
     GomModalComponent,
     GomConfirmationModalComponent,
+    PageHeadingComponent,
   ],
   templateUrl: './riders.component.html',
   styleUrl: './riders.component.scss',
@@ -55,7 +57,11 @@ export class RidersComponent implements OnInit {
   private readonly authSession = inject(AuthSessionService);
 
   readonly loading = signal(false);
-  readonly canCreateRider = computed(() => this.authSession.hasFeature('rider.create') && (this.riderCreateRemaining() ?? Infinity) > 0);
+  readonly viewportWidth = signal<number>(window.innerWidth);
+  readonly isMobileHeader = computed<boolean>(() => this.viewportWidth() <= 768);
+  readonly canListRiders = computed(() => this.authSession.hasFeature('rider.list'));
+  readonly canViewRider = computed(() => this.authSession.hasFeature('rider.view'));
+  readonly canCreateRider = computed(() => this.authSession.hasFeature('rider.create'));
   readonly canUpdateRider = computed(() => this.authSession.hasFeature('rider.update'));
   readonly canDeleteRider = computed(() => this.authSession.hasFeature('rider.delete'));
   readonly riderCreateLimit = computed(() => this.authSession.getFeatureConfigNumber('rider.create', 'max_count'));
@@ -93,6 +99,11 @@ export class RidersComponent implements OnInit {
   readonly allowManualOverride = signal(false);
   readonly selectedStatus = signal<'ALL' | RiderStatus>('ALL');
   readonly leaveModalOpen = signal(false);
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.viewportWidth.set(window.innerWidth);
+  }
 
   readonly riderForm = this.fb.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
@@ -249,6 +260,18 @@ export class RidersComponent implements OnInit {
   }
 
   openCreate(): void {
+    if (!this.authSession.hasFeature('rider.create')) {
+      this.toast.warning('No permission to create riders.');
+      return;
+    }
+
+    const limit = this.riderCreateLimit();
+    const remaining = this.riderCreateRemaining();
+    if (limit !== null && remaining !== null && remaining <= 0) {
+      this.toast.error(`Rider creation limit reached. You can create up to ${limit} riders.`);
+      return;
+    }
+
     this.editingId.set(null);
     this.riderForm.reset({
       name: '',
@@ -650,7 +673,7 @@ export class RidersComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (response) => {
-          const cfg = response.data?.employeeCodeConfig;
+          const cfg = response.data?.staffCodeConfig;
           if (cfg?.allowManualOverride) {
             this.allowManualOverride.set(true);
           }
@@ -662,30 +685,20 @@ export class RidersComponent implements OnInit {
   }
 
   private setupEmployeeCodePreview(): void {
-    combineLatest([
-      this.riderForm.controls.name.valueChanges.pipe(startWith(this.riderForm.controls.name.value)),
-      this.riderForm.controls.phone.valueChanges.pipe(startWith(this.riderForm.controls.phone.value)),
-    ])
-      .pipe(
-        debounceTime(400),
-        switchMap(([name, phone]) => {
-          if (this.editingId()) return of(null);
-          const n = String(name || '').trim();
-          const p = String(phone || '').replace(/\D/g, '');
-          if (n.length < 2 || p.length < 4) return of(null);
-          return this.service.previewEmployeeCode(n, p).pipe(catchError(() => of(null)));
-        }),
-        takeUntilDestroyed(this.destroyRef)
-      )
+    if (this.editingId()) return;
+    this.service.previewEmployeeCode()
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((result) => {
         if (!result) return;
         const preview: EmployeeCodePreview = result.data;
         if (!this.allowManualOverride()) {
           this.riderForm.controls.employeeCode.setValue(preview.employeeCode, { emitEvent: false });
         }
-        if (preview.allowManualOverride && !this.allowManualOverride()) {
+        if (preview.allowManualOverride) {
           this.allowManualOverride.set(true);
           this.riderForm.controls.employeeCode.enable({ emitEvent: false });
+        } else {
+          this.riderForm.controls.employeeCode.disable({ emitEvent: false });
         }
       });
   }

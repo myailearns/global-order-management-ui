@@ -17,6 +17,7 @@ import {
 } from '../categories.service';
 
 interface ApiSuccess<T> { success: boolean; data: T; }
+type AssociationPagerResource = 'fieldGroups' | 'units' | 'groups' | 'availableFieldGroups' | 'availableUnits';
 
 export interface CategoryAssociationsApiProvider {
   getAssociations(id: string): Observable<ApiSuccess<CategoryAssociations>>;
@@ -36,6 +37,7 @@ export interface CategoryAssociationsApiProvider {
 export class CategoryAssociationsModalComponent implements OnChanges {
   @Input() isOpen = false;
   @Input() category: Category | null = null;
+  @Input() initialTab: 'fieldGroups' | 'units' | 'groups' = 'fieldGroups';
   @Input() apiProvider: CategoryAssociationsApiProvider | null = null;
   @Output() closed = new EventEmitter<void>();
   @Output() updated = new EventEmitter<void>();
@@ -83,6 +85,7 @@ export class CategoryAssociationsModalComponent implements OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['isOpen'] && this.isOpen && this.category?._id) {
+      this.activeTab.set(this.initialTab || 'fieldGroups');
       this.loadAssociations();
     }
   }
@@ -203,7 +206,7 @@ export class CategoryAssociationsModalComponent implements OnChanges {
     });
   }
 
-  previousPage(resource: 'fieldGroups' | 'units' | 'groups' | 'availableFieldGroups' | 'availableUnits'): void {
+  previousPage(resource: AssociationPagerResource): void {
     if (resource === 'fieldGroups' && this.fieldGroupsPage() > 1) {
       this.fieldGroupsPage.update((p) => p - 1);
       this.loadAssociations();
@@ -230,7 +233,7 @@ export class CategoryAssociationsModalComponent implements OnChanges {
     }
   }
 
-  nextPage(resource: 'fieldGroups' | 'units' | 'groups' | 'availableFieldGroups' | 'availableUnits'): void {
+  nextPage(resource: AssociationPagerResource): void {
     if (resource === 'fieldGroups' && this.fieldGroupsPagination()?.hasMore) {
       this.fieldGroupsPage.update((p) => p + 1);
       this.loadAssociations();
@@ -257,7 +260,7 @@ export class CategoryAssociationsModalComponent implements OnChanges {
     }
   }
 
-  loadAll(resource: 'fieldGroups' | 'units' | 'groups' | 'availableFieldGroups' | 'availableUnits'): void {
+  loadAll(resource: AssociationPagerResource): void {
     const categoryId = this.category?._id;
     if (!categoryId) {
       return;

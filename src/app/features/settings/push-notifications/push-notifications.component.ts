@@ -1,102 +1,180 @@
 import { CommonModule } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 
-import { GomAlertToastService, FormControlsModule, GomButtonComponent } from '@gomlibs/ui';
+import { GomAlertToastService, GomButtonComponent } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { DisableIfNoFeatureDirective } from '../../../shared/directives/disable-if-no-feature.directive';
-import { environment } from '../../../../environments/environment';
+import {
+  NotificationCampaign,
+  NotificationCenterStore,
+  NotificationStatus,
+  NotificationTab,
+} from './notification-center.store';
 
-interface BroadcastResult {
-  sent: number;
-  failed: number;
-  total: number;
-  disabled?: boolean;
+interface StatusMeta {
+  label: string;
+  tone: 'success' | 'warning' | 'danger' | 'neutral' | 'info';
 }
 
 @Component({
   selector: 'gom-push-notifications',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormControlsModule, GomButtonComponent, DisableIfNoFeatureDirective],
+  imports: [CommonModule, GomButtonComponent, DisableIfNoFeatureDirective],
   templateUrl: './push-notifications.component.html',
   styleUrl: './push-notifications.component.scss',
 })
 export class PushNotificationsComponent implements OnInit {
-  private readonly http = inject(HttpClient);
-  private readonly fb = inject(FormBuilder);
+  private readonly router = inject(Router);
   private readonly toast = inject(GomAlertToastService);
   private readonly authSession = inject(AuthSessionService);
-
-  private readonly baseUrl = environment.apiBaseUrl;
+  private readonly store = inject(NotificationCenterStore);
 
   readonly loading = signal(false);
-  readonly sending = signal(false);
-  readonly subscriberCount = signal<number | null>(null);
-  readonly lastResult = signal<BroadcastResult | null>(null);
-  readonly canWrite = computed(() => this.authSession.canWrite('tenant-admin'));
+  readonly activeTab = signal<NotificationTab>('all');
+  readonly campaigns = computed(() => this.store.campaigns().filter((campaign) => this.matchesTab(campaign, this.activeTab())));
+  readonly isEmpty = computed(() => this.campaigns().length === 0);
+  readonly tabCounts = computed(() => {
+    const campaigns = this.store.campaigns();
 
-  readonly broadcastForm = this.fb.group({
-    title: ['', [Validators.required, Validators.maxLength(80)]],
-    message: ['', [Validators.required, Validators.maxLength(200)]],
+    return {
+      all: campaigns.filter((campaign) => campaign.status !== 'Cancelled').length,
+      drafts: campaigns.filter((campaign) => campaign.status === 'Draft').length,
+      scheduled: campaigns.filter((campaign) => campaign.status === 'Scheduled').length,
+      sent: campaigns.filter((campaign) => campaign.status === 'Sent').length,
+      failed: campaigns.filter((campaign) => campaign.status === 'Failed').length,
+    };
   });
 
+  readonly canBroadcast = computed(() => this.authSession.hasFeature('notification.broadcast'));
+  readonly tabs: Array<{ id: NotificationTab; label: string; count: number }> = [
+    { id: 'all', label: 'All', count: 0 },
+    { id: 'drafts', label: 'Drafts', count: 0 },
+    { id: 'scheduled', label: 'Scheduled', count: 0 },
+    { id: 'sent', label: 'Sent', count: 0 },
+    { id: 'failed', label: 'Failed', count: 0 },
+  ];
+
+  readonly statusMeta: Record<NotificationStatus, StatusMeta> = {
+    Draft: { label: 'Draft', tone: 'neutral' },
+    Scheduled: { label: 'Scheduled', tone: 'warning' },
+    Sending: { label: 'Sending', tone: 'info' },
+    Sent: { label: 'Sent', tone: 'success' },
+    Failed: { label: 'Failed', tone: 'danger' },
+    Cancelled: { label: 'Cancelled', tone: 'neutral' },
+  };
+
   ngOnInit(): void {
-    this.loadSubscriberCount();
+    this.reload();
   }
 
-  private loadSubscriberCount(): void {
+  reload(): void {
     this.loading.set(true);
-    this.http
-      .get<{ success: boolean; data: { count: number } }>(`${this.baseUrl}/notifications/subscribers/count`)
-      .subscribe({
-        next: (res) => {
-          this.subscriberCount.set(res.data.count);
-          this.loading.set(false);
-        },
-        error: () => {
-          this.subscriberCount.set(0);
-          this.loading.set(false);
-        },
+    this.store
+      .loadCampaigns('all')
+      .catch(() => {
+        this.toast.error('Failed to load notifications.');
+      })
+      .finally(() => {
+        this.loading.set(false);
       });
   }
 
-  sendBroadcast(): void {
-    if (!this.canWrite()) {
+  setTab(tab: NotificationTab): void {
+    this.activeTab.set(tab);
+  }
+
+  countFor(tab: NotificationTab): number {
+    return this.tabCounts()[tab] ?? 0;
+  }
+
+  openCreateNotification(): void {
+    if (!this.canBroadcast()) {
+      this.toast.error('You do not have permission to create notifications.');
       return;
     }
 
-    if (this.broadcastForm.invalid || this.sending()) return;
+    this.router.navigate(['/settings/push-notifications/create']);
+  }
 
-    this.sending.set(true);
-    this.lastResult.set(null);
+  viewNotification(campaign: NotificationCampaign): void {
+    if (campaign.errorMessage) {
+      this.toast.info(`${campaign.title}: ${campaign.errorMessage}`);
+      return;
+    }
 
-    const { title, message } = this.broadcastForm.getRawValue();
+    this.toast.info(`${campaign.title} is ${campaign.status.toLowerCase()}.`);
+  }
 
-    this.http
-      .post<{ success: boolean; data: BroadcastResult }>(`${this.baseUrl}/notifications/broadcast`, {
-        title,
-        message,
+  editNotification(campaign: NotificationCampaign): void {
+    if (campaign.status !== 'Draft') {
+      this.toast.warning('Only draft notifications can be edited.');
+      return;
+    }
+
+    this.router.navigate(['/settings/push-notifications/create'], { queryParams: { copyFrom: campaign.id } });
+  }
+
+  rescheduleNotification(campaign: NotificationCampaign): void {
+    this.router.navigate(['/settings/push-notifications/create'], {
+      queryParams: {
+        copyFrom: campaign.id,
+        forceSchedule: 'true',
+      },
+    });
+  }
+
+  duplicateNotification(campaign: NotificationCampaign): void {
+    this.store
+      .duplicateCampaign(campaign.id)
+      .then(() => {
+        this.toast.success('Notification duplicated as a new draft.');
+        this.reload();
+        this.activeTab.set('drafts');
       })
-      .subscribe({
-        next: (res) => {
-          this.lastResult.set(res.data);
-          this.sending.set(false);
-          if (res.data.disabled) {
-            this.toast.warning('Push notifications are not configured on the server (VAPID keys missing).');
-          } else if (res.data.total === 0) {
-            this.toast.info('No subscribers found. No notifications were sent.');
-          } else {
-            this.toast.success(
-              `Sent to ${res.data.sent} subscriber${res.data.sent !== 1 ? 's' : ''}${res.data.failed ? ` (${res.data.failed} failed)` : ''}.`,
-            );
-            this.broadcastForm.reset();
-          }
-        },
-        error: () => {
-          this.sending.set(false);
-          this.toast.error('Failed to send broadcast. Please try again.');
-        },
+      .catch(() => {
+        this.toast.error('Unable to duplicate notification.');
       });
+  }
+
+  cancelNotification(campaign: NotificationCampaign): void {
+    this.store
+      .cancelCampaign(campaign.id)
+      .then(() => {
+        this.toast.success('Notification cancelled.');
+        this.reload();
+      })
+      .catch(() => {
+        this.toast.error('Unable to cancel notification.');
+      });
+  }
+
+  retryNotification(campaign: NotificationCampaign): void {
+    this.store
+      .retryCampaign(campaign.id)
+      .then(() => {
+        this.toast.success('Retry started.');
+        this.reload();
+      })
+      .catch(() => {
+        this.toast.error('Unable to retry notification.');
+      });
+  }
+
+  statusTone(status: NotificationStatus): StatusMeta['tone'] {
+    return this.statusMeta[status]?.tone ?? 'neutral';
+  }
+
+  private matchesTab(campaign: NotificationCampaign, tab: NotificationTab): boolean {
+    if (tab === 'all') {
+      return campaign.status !== 'Cancelled';
+    }
+
+    if (tab === 'drafts') return campaign.status === 'Draft';
+    if (tab === 'scheduled') return campaign.status === 'Scheduled';
+    if (tab === 'sent') return campaign.status === 'Sent';
+    if (tab === 'failed') return campaign.status === 'Failed';
+
+    return true;
   }
 }

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, ViewChild, computed, inject, signal } from '@angular/core';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { forkJoin, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
@@ -61,6 +61,8 @@ export class FieldsComponent implements OnInit {
   pendingDeleteField = signal<Field | null>(null);
   deleteConfirmOpen = signal(false);
   errorMessage = signal<string | null>(null);
+
+  @ViewChild(FieldsFormComponent) fieldsFormComponent!: FieldsFormComponent;
 
   readonly fieldGroupUsageByFieldId = computed<Record<string, string[]>>(() => {
     const usage: Record<string, string[]> = {};
@@ -356,8 +358,16 @@ export class FieldsComponent implements OnInit {
         const fieldId = response?.data?._id;
 
         if (!fieldId) {
-          this.formOpen.set(false);
-          this.selectedField.set(null);
+          // Keep modal open after create, close after edit
+          if (isEdit) {
+            this.formOpen.set(false);
+            this.selectedField.set(null);
+          } else {
+            this.selectedField.set(null);
+            if (this.fieldsFormComponent) {
+              this.fieldsFormComponent.resetForNewEntry();
+            }
+          }
           this.toast.success(this.translate.instant(isEdit ? this.text.successUpdate : this.text.successCreate));
           this.loadFields();
           return;
@@ -366,8 +376,17 @@ export class FieldsComponent implements OnInit {
         this.syncFieldGroupAssignments(fieldId, formData.fieldGroupIds)
           .subscribe({
             next: () => {
-              this.formOpen.set(false);
-              this.selectedField.set(null);
+              // Keep modal open after create to add more fields quickly
+              if (isEdit) {
+                this.formOpen.set(false);
+                this.selectedField.set(null);
+              } else {
+                // Reset form for new entry - don't close modal
+                this.selectedField.set(null);
+                if (this.fieldsFormComponent) {
+                  this.fieldsFormComponent.resetForNewEntry();
+                }
+              }
               this.toast.success(this.translate.instant(isEdit ? this.text.successUpdate : this.text.successCreate));
               this.loadFields();
             },

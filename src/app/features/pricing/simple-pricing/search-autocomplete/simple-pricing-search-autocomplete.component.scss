@@ -1,0 +1,144 @@
+@use "theme" as theme;
+
+.sp-search {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+
+  &__input-wrap {
+    position: relative;
+  }
+
+  &__spinner {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: theme.get-font-size(sm);
+    color: theme.get-text(default-light);
+    pointer-events: none;
+    animation: sp-search-spin 0.8s linear infinite;
+  }
+
+  @keyframes sp-search-spin {
+    to { transform: translateY(-50%) rotate(360deg); }
+  }
+
+  // ── Dropdown ─────────────────────────────────────────────
+
+  &__dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    z-index: 300;
+    background: theme.get-background(standard);
+    border: 1px solid theme.get-border(standard);
+    border-radius: theme.get-radius(md);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.14);
+    list-style: none;
+    margin: 0;
+    padding: 4px 0;
+    max-height: 280px;
+    overflow-y: auto;
+  }
+
+  &__item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: theme.get-gap(sm);
+    padding: 8px theme.get-spacing(sm);
+    cursor: pointer;
+    transition: background 0.12s ease;
+
+    &:hover,
+    &:focus {
+      background: theme.get-background(primary-hover);
+      outline: none;
+    }
+  }
+
+  &__item-name {
+    font-size: theme.get-font-size(body);
+    color: theme.get-text(default);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+  }
+
+  &__item-badge {
+    flex-shrink: 0;
+    font-size: theme.get-font-size(xs);
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: theme.get-radius(sm);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+
+    &--measured {
+      background: rgba(59, 130, 246, 0.1);
+      color: theme.get-text(primary);
+    }
+
+    &--hybrid {
+      background: rgba(139, 92, 246, 0.1);
+      color: #7c3aed;
+    }
+
+    &--attribute {
+      background: rgba(16, 185, 129, 0.1);
+      color: #059669;
+    }
+  }
+
+  // ── Selection chip ────────────────────────────────────────
+
+  &__chip-wrap {
+    display: flex;
+    align-items: center;
+  }
+
+  &__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: theme.get-background(standard);
+    border: 1px solid theme.get-border(primary);
+    border-radius: theme.get-radius(md);
+    padding: 8px 12px;
+    font-size: theme.get-font-size(sm);
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  &__chip-type {
+    font-weight: 600;
+    color: theme.get-text(primary);
+    flex-shrink: 0;
+  }
+
+  &__chip-name {
+    color: theme.get-text(default);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__chip-clear {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    color: theme.get-text(default-light);
+    font-size: theme.get-font-size(sm);
+    flex-shrink: 0;
+
+    &:hover {
+      color: theme.get-text(danger);
+    }
+  }
+}

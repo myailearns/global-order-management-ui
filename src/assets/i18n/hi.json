@@ -4,17 +4,35 @@
     "module": "प्रोडक्ट क्रिएशन मॉड्यूल",
     "navigation": {
       "toggle": "नेविगेशन बदलें",
+        "groupSearch": "Search groups",
+        "tabsAria": "Collection mapping tabs",
+        "allTab": "All",
+        "allVariantsTitle": "All Variants",
+        "groupVariantsTitle": "Group Variants",
       "close": "मेनू बंद करें",
       "workspace": "वर्कस्पेस",
       "menu": "नेविगेशन",
       "expand": "{{section}} खोलें",
       "collapse": "{{section}} बंद करें",
       "expandSidebar": "साइडबार खोलें",
+        "remove": "Remove",
+        "addGroup": "Add Group",
+        "removeGroup": "Remove Group",
+        "addAgain": "Add Again",
+        "selectGroupToManage": "Select Add Group first to manage exclusions for this group.",
+        "recentlyRemovedGroups": "Recently Removed Groups",
+        "removedVariants": "Removed Variants",
+        "noRemovedGroups": "No removed groups.",
+        "noRemovedVariants": "No removed variants.",
+        "noVisibleVariants": "No visible variants in this tab.",
       "collapseSidebar": "साइडबार बंद करें",
       "masterSetup": "मास्टर सेटअप",
       "productSetup": "प्रोडक्ट सेटअप",
       "categories": "कैटेगरी",
       "fields": "फील्ड्स",
+      "attributes": "Attributes",
+      "attributeSets": "Attribute Sets",
+      "pricingTemplates": "Pricing Templates",
       "fieldGroups": "फील्ड ग्रुप्स",
       "units": "यूनिट्स",
       "taxProfiles": "टैक्स प्रोफाइल्स",
@@ -23,17 +41,27 @@
       "variants": "वैरिएंट्स",
       "packs": "पैक्स",
       "mediaLibrary": "मीडिया लाइब्रेरी",
+      "productCollections": "प्रोडक्ट कलेक्शंस",
       "orders": "ऑर्डर्स",
       "orderManagement": "ऑर्डर प्रबंधन",
       "riders": "राइडर्स",
       "courierPartners": "कूरियर पार्टनर्स",
       "settings": "सेटिंग्स",
+      "webApp": "वेब ऐप",
+      "notifications": "सूचनाएं",
+      "notificationsSetting": "सूचना सेटिंग",
       "employeeCode": "कर्मचारी कोड",
       "serviceablePincodes": "सेवे योग्य पिनकोड",
+      "deliveryManagement": "डिलीवरी प्रबंधन",
       "tenantAdmin": "टेनेंट एडमिन",
       "tenantDashboard": "टेनेंट डैशबोर्ड",
-      "tenantUsers": "टेनेंट यूज़र्स",
-      "tenantEmployees": "टेनेंट कर्मचारी",
+      "tenantUsers": "एक्सेस यूज़र्स",
+      "tenantEmployees": "कर्मचारी",
+      "storefront": "स्टोरफ्रंट",
+      "branding": "ब्रांडिंग",
+      "homePage": "होम पेज",
+      "catalog": "कैटलॉग",
+      "checkoutPayments": "चेकआउट और भुगतान",
       "saasAccounts": "सास अकाउंट्स",
       "saasPackages": "सास पैकेजेस",
       "platformUsers": "प्लेटफॉर्म यूज़र्स",
@@ -43,9 +71,15 @@
       "tenantRoles": "टेनेंट रोल्स",
       "categoryTemplates": "कैटेगरी टेम्प्लेट्स",
       "marketplace": "मार्केटप्लेस",
+      "accountManagement": "अकाउंट मैनेजमेंट",
       "customers": "ग्राहक",
       "customerGroups": "ग्राहक समूह",
-      "platformMedia": "प्लेटफॉर्म मीडिया"
+      "platformMedia": "प्लेटफॉर्म मीडिया",
+      "adminApp": "एडमिन ऐप",
+      "createOrderSettings": "ऑर्डर बनाने की सेटिंग्स",
+      "billing": "बिलिंग",
+      "businessDetails": "व्यवसाय विवरण",
+      "paymentOptions": "भुगतान विकल्प"
     },
     "actions": {
       "notifications": "सूचनाएं",
@@ -58,6 +92,105 @@
       "telugu": "तेलुगु",
       "hindi": "हिंदी"
     }
+  },
+  "paymentOptions": {
+    "title": "भुगतान विकल्प",
+    "description": "ऑर्डर प्रोसेसिंग के लिए उपलब्ध भुगतान विधियों को कॉन्फ़िगर करें।",
+    "loading": "भुगतान विकल्प लोड हो रहे हैं...",
+    "confirmDelete": "क्या यह भुगतान खाता हटाएं?",
+    "actions": { "reset": "रीसेट", "save": "बदलाव सहेजें", "saving": "सहेजा जा रहा है...", "addUpi": "UPI जोड़ें", "addBank": "बैंक खाता जोड़ें", "edit": "संपादित करें", "delete": "हटाएं", "cancel": "रद्द करें", "saveAccount": "खाता सहेजें", "uploadQr": "QR कोड अपलोड करें", "uploading": "अपलोड हो रहा है..." },
+    "methods": { "title": "भुगतान विधियां", "description": "आपका व्यवसाय जिन भुगतान विधियों को स्वीकार करता है उन्हें चुनें।", "upi": "UPI भुगतान", "upiHint": "कॉन्फ़िगर किए गए ID और QR कोड से UPI भुगतान स्वीकार करें।", "cash": "नकद", "cashHint": "ऑर्डर पूरा करते समय नकद भुगतान स्वीकार करें।", "bankTransfer": "बैंक ट्रांसफर", "bankHint": "कॉन्फ़िगर बैंक खातों में सीधे ट्रांसफर स्वीकार करें।" },
+    "upi": { "title": "UPI खाते", "description": "ग्राहकों के लिए उपलब्ध UPI ID प्रबंधित करें।", "empty": "कोई UPI खाता कॉन्फ़िगर नहीं है", "emptyHint": "UPI भुगतान स्वीकार करने के लिए खाता जोड़ें।", "addTitle": "UPI खाता जोड़ें", "editTitle": "UPI खाता संपादित करें" },
+    "bank": { "title": "बैंक खाते", "description": "बैंक ट्रांसफर के लिए खाते प्रबंधित करें।", "empty": "कोई बैंक खाता कॉन्फ़िगर नहीं है", "emptyHint": "ट्रांसफर स्वीकार करने के लिए बैंक खाता जोड़ें।", "addTitle": "बैंक खाता जोड़ें", "editTitle": "बैंक खाता संपादित करें" },
+    "status": { "active": "सक्रिय", "inactive": "निष्क्रिय" },
+    "orderTypes": { "title": "ऑर्डर प्रकार कॉन्फ़िगरेशन", "description": "हर ऑर्डर प्रकार के लिए उपलब्ध भुगतान विधियां चुनें।", "orderType": "ऑर्डर प्रकार", "enableFirst": "असाइन करने से पहले ऊपर भुगतान विधि सक्षम करें।", "types": { "inStore": "इन-स्टोर", "pickup": "पिकअप", "delivery": "डिलीवरी" }, "methods": { "UPI": "UPI", "CASH": "नकद", "BANK_TRANSFER": "बैंक ट्रांसफर" } },
+    "validation": { "required": "यह फ़ील्ड आवश्यक है।", "invalid": "मान्य मान दर्ज करें।", "accountMismatch": "खाता संख्याएं मेल नहीं खातीं।" },
+    "messages": { "loadError": "भुगतान विकल्प लोड नहीं हो सके।", "saveError": "भुगतान विकल्प सहेजे नहीं जा सके।", "saved": "भुगतान विकल्प सहेजे गए।", "invalidQr": "5 MB से छोटी छवि चुनें।", "uploadError": "QR कोड अपलोड नहीं हो सका।" }
+  },
+  "createOrderSettings": {
+    "title": "ऑर्डर बनाने की सेटिंग्स",
+    "tabs": {
+      "base": "बेस सेटिंग्स"
+    },
+    "base": {
+      "title": "बेस सेटिंग्स",
+      "description": "ये सेटिंग्स पूरे टेनेंट अकाउंट पर लागू होती हैं।",
+      "offlineStorageTitle": "ऑफलाइन स्टोरेज",
+      "enableOfflineStorage": "ऑफलाइन स्टोरेज सक्षम करें",
+      "enableOfflineStorageHint": "ऑफलाइन वर्कफ़्लो के लिए ऑर्डर डेटा को स्थानीय रूप से स्टोर करने दें।",
+      "requireMemberForBilling": "बिलिंग में सदस्य जोड़ना अनिवार्य है",
+      "requireMemberForBillingHint": "ऑर्डर की बिलिंग से पहले ग्राहक सदस्य चुनना आवश्यक करें।"
+    },
+    "paymentStatus": {
+      "title": "भुगतान स्थिति",
+      "description": "हर ऑर्डर प्रकार के लिए भुगतान स्थिति विकल्प कॉन्फ़िगर करें।",
+      "orderType": "ऑर्डर प्रकार",
+      "orderTypes": {
+        "pickup": "पिकअप",
+        "delivery": "डिलीवरी",
+        "counter": "काउंटर"
+      },
+      "statusLabel": "भुगतान स्थिति",
+      "statusPlaceholder": "भुगतान स्थिति दर्ज करें",
+      "statusRequired": "भुगतान स्थिति आवश्यक है।",
+      "add": "भुगतान स्थिति जोड़ें",
+      "remove": "भुगतान स्थिति हटाएं"
+    },
+    "orderIntake": {
+      "title": "ऑर्डर प्राप्ति चैनल",
+      "description": "चुनें कि किन चैनलों से ऑर्डर प्राप्त हो सकते हैं और कस्टम चैनल जोड़ें।",
+      "channels": "चैनल",
+      "channelLabel": "चैनल",
+      "channelPlaceholder": "चैनल का नाम दर्ज करें",
+      "channelRequired": "चैनल का नाम आवश्यक है।",
+      "enabled": "सक्षम",
+      "enabledHint": "इस चैनल से ऑर्डर प्राप्त किए जा सकते हैं।",
+      "disabledHint": "यह चैनल बना रहेगा, लेकिन नए ऑर्डर के लिए उपलब्ध नहीं होगा।",
+      "add": "ऑर्डर प्राप्ति चैनल जोड़ें"
+    },
+    "actions": {
+      "save": "सेटिंग्स सेव करें",
+      "saving": "सेव हो रहा है..."
+    },
+    "messages": {
+      "saved": "ऑर्डर बनाने की सेटिंग्स सेव हो गईं।",
+      "loadError": "ऑर्डर बनाने की सेटिंग्स लोड नहीं हो सकीं।",
+      "saveError": "ऑर्डर बनाने की सेटिंग्स सेव नहीं हो सकीं।",
+      "statusRequired": "सेव करने से पहले हर भुगतान स्थिति और प्राप्ति चैनल के लिए एक मान दर्ज करें।",
+      "duplicateChannel": "ऑर्डर प्राप्ति चैनल के नाम अलग-अलग होने चाहिए।"
+    }
+  },
+  "billingSettings": {
+    "title": "बिलिंग",
+    "description": "ऑर्डर प्रोसेसिंग के लिए बिलिंग सेटिंग्स कॉन्फ़िगर करें।",
+    "comingSoon": "जल्द आ रहा है"
+  },
+  "businessDetails": {
+    "title": "व्यवसाय विवरण",
+    "description": "अपनी व्यावसायिक पहचान, संपर्क जानकारी और ब्रांडिंग प्रबंधित करें।",
+    "loading": "व्यवसाय विवरण लोड हो रहा है...",
+    "actions": { "edit": "विवरण संपादित करें", "reset": "रीसेट करें", "cancel": "रद्द करें", "save": "परिवर्तन सेव करें", "saving": "सेव हो रहा है...", "retry": "फिर प्रयास करें" },
+    "sections": {
+      "identity": "व्यावसायिक पहचान", "identityHint": "इस खाते की सार्वजनिक और कानूनी पहचान।",
+      "contact": "संपर्क विवरण", "contactHint": "ग्राहक और प्लेटफ़ॉर्म आपसे कैसे संपर्क कर सकते हैं।",
+      "address": "पंजीकृत पता", "addressHint": "प्राथमिक कानूनी और परिचालन पता।",
+      "tax": "कर पंजीकरण", "taxHint": "भारत के कर पंजीकरण और पहचान विवरण।",
+      "branding": "ब्रांडिंग", "brandingHint": "आपके अनुभव में दिखाई देने वाली दृश्य पहचान।",
+      "hierarchy": "खाता पदानुक्रम", "hierarchyHint": "सिस्टम द्वारा प्रबंधित टेनेंट खाता पहचानकर्ता।"
+    },
+    "fields": {
+      "accountName": "खाते का नाम", "legalBusinessName": "कानूनी व्यवसाय नाम", "businessType": "व्यवसाय प्रकार", "businessDescription": "व्यवसाय विवरण",
+      "primaryContactPhone": "प्राथमिक संपर्क फोन", "primaryContactEmail": "प्राथमिक संपर्क ईमेल", "website": "वेबसाइट", "supportEmail": "सहायता ईमेल",
+      "addressLine1": "पता पंक्ति 1", "addressLine2": "पता पंक्ति 2 (वैकल्पिक)", "city": "शहर", "state": "राज्य / केंद्र शासित प्रदेश", "country": "देश", "postalCode": "पिन कोड",
+      "taxRegistrationType": "पंजीकरण प्रकार", "gstin": "GSTIN", "pan": "PAN", "brandColor": "मुख्य ब्रांड रंग", "brandAccent": "एक्सेंट रंग", "brandTagline": "ब्रांड टैगलाइन",
+      "tenantCode": "टेनेंट कोड", "accountId": "खाता आईडी", "updatedAt": "अंतिम अपडेट"
+    },
+    "logo": { "title": "व्यवसाय लोगो", "hint": "PNG, JPG, WebP या अन्य चित्र प्रारूप, अधिकतम 2 MB।", "upload": "लोगो अपलोड करें", "uploading": "अपलोड हो रहा है...", "remove": "हटाएं", "previewAlt": "व्यवसाय लोगो पूर्वावलोकन" },
+    "setup": { "title": "अपनी व्यवसाय प्रोफ़ाइल पूरी करें", "description": "पहले से भरी खाता जानकारी की समीक्षा करें और आवश्यक विवरण जोड़ें।" },
+    "unsaved": { "title": "सेव न किए गए परिवर्तन", "description": "इस प्रोफ़ाइल के परिवर्तन सेव या रीसेट करें।" },
+    "readOnlyHierarchy": "ये मान टेनेंट खाते से आते हैं और यहां संपादित नहीं किए जा सकते।",
+    "validation": { "required": "यह फ़ील्ड आवश्यक है।", "email": "मान्य ईमेल पता दर्ज करें।", "phone": "मान्य फोन नंबर दर्ज करें।", "url": "http:// या https:// से शुरू होने वाला पूरा URL दर्ज करें।", "postalCode": "मान्य पिन कोड दर्ज करें।", "gstin": "मान्य 15-अक्षर GSTIN दर्ज करें।", "pan": "मान्य PAN दर्ज करें।", "color": "मान्य 6-अंकीय हेक्स रंग दर्ज करें।", "tooLong": "यह मान बहुत लंबा है।", "invalid": "मान्य मान दर्ज करें।" },
+    "messages": { "saved": "व्यवसाय विवरण सेव हो गया।", "loadError": "व्यवसाय विवरण लोड नहीं हो सका।", "saveError": "व्यवसाय विवरण सेव नहीं हो सका।", "validationError": "सेव करने से पहले चिह्नित फ़ील्ड देखें।", "logoImageOnly": "व्यवसाय लोगो के लिए चित्र फ़ाइल चुनें।", "logoTooLarge": "लोगो 2 MB या उससे छोटा होना चाहिए।", "logoUploaded": "व्यवसाय लोगो अपलोड हो गया।", "logoUploadError": "व्यवसाय लोगो अपलोड नहीं हो सका।" }
   },
   "common": {
     "btn_cancel": "रद्द करें",
@@ -92,6 +225,216 @@
     },
     "messages": {
       "closeErrorBanner": "त्रुटि बैनर बंद करें"
+    }
+  },
+  "productCollections": {
+    "title": "प्रोडक्ट कलेक्शंस",
+    "actions": {
+      "create": "कलेक्शन बनाएं",
+      "edit": "कलेक्शन संपादित करें",
+      "delete": "कलेक्शन हटाएं",
+      "save": "कलेक्शन सेव करें",
+      "apply": "लागू करें",
+      "clear": "साफ करें",
+      "prev": "पिछला",
+      "next": "अगला"
+    },
+    "labels": {
+      "page": "पेज",
+      "total": "कुल"
+    },
+    "filters": {
+      "search": "खोजें",
+      "status": "स्थिति"
+    },
+    "form": {
+      "name": "कलेक्शन नाम",
+      "description": "विवरण",
+      "status": "स्थिति",
+      "assignmentType": "असाइनमेंट प्रकार"
+    },
+    "mapping": {
+      "title": "कैटेगरी-फर्स्ट मैपिंग",
+      "category": "कैटेगरी",
+      "categoryPlaceholder": "कैटेगरी चुनें",
+      "search": "नाम से प्रोडक्ट खोजें",
+      "searchVariants": "वेरिएंट खोजें",
+      "groupSearch": "ग्रुप खोजें",
+      "tabsAria": "कलेक्शन मैपिंग टैब्स",
+      "allTab": "All",
+      "allVariantsTitle": "All Variants",
+      "groupVariantsTitle": "Group Variants",
+      "groups": "ग्रुप्स",
+      "groupsPlaceholder": "एक या अधिक ग्रुप चुनें",
+      "variants": "वेरिएंट्स",
+      "variantsPlaceholder": "एक या अधिक वेरिएंट चुनें",
+      "selectAllGroups": "सभी ग्रुप चुनें",
+      "selectAllVariants": "सभी वेरिएंट चुनें",
+      "remove": "Remove",
+      "addGroup": "Add Group",
+      "removeGroup": "Remove Group",
+      "addAgain": "Add Again",
+      "selectGroupToManage": "इस ग्रुप के एक्सक्लूज़न मैनेज करने के लिए पहले Add Group चुनें।",
+      "recentlyRemovedGroups": "Recently Removed Groups",
+      "removedVariants": "Removed Variants",
+      "noRemovedGroups": "No removed groups.",
+      "noRemovedVariants": "No removed variants.",
+      "noVisibleVariants": "No visible variants in this tab.",
+      "selectedItems": "चयनित असाइनमेंट",
+      "noSelections": "अभी तक कोई ग्रुप या वेरिएंट चयनित नहीं है।"
+    },
+    "summary": {
+      "categories": "चयनित कैटेगरी",
+      "groups": "चयनित ग्रुप",
+      "variants": "चयनित वेरिएंट",
+      "resolvedVariants": "रिजॉल्व्ड वेरिएंट",
+      "totalVariantsAdded": "कुल जोड़े गए वेरिएंट"
+    },
+    "details": {
+      "title": "कलेक्शन विवरण",
+      "categories": "कैटेगरी संदर्भ",
+      "totalResolved": "कुल रिजॉल्व्ड वेरिएंट",
+      "groups": "असाइन किए गए ग्रुप",
+      "groupVariants": "रिजॉल्व्ड वेरिएंट",
+      "directVariants": "डायरेक्ट वेरिएंट",
+      "noGroups": "कोई ग्रुप असाइन नहीं है।",
+      "noVariants": "कोई डायरेक्ट वेरिएंट असाइन नहीं है।"
+    },
+    "delete": {
+      "title": "कलेक्शन हटाएं",
+      "message": "क्या आप कलेक्शन हटाना चाहते हैं: {{name}}?"
+    },
+    "toast": {
+      "created": "कलेक्शन सफलतापूर्वक बनाया गया।",
+      "updated": "कलेक्शन सफलतापूर्वक अपडेट हुआ।",
+      "deleted": "कलेक्शन सफलतापूर्वक हटाया गया।",
+      "errorLoad": "प्रोडक्ट कलेक्शंस लोड नहीं हो सके।",
+      "errorSave": "प्रोडक्ट कलेक्शन सेव नहीं हो सका।",
+      "errorDelete": "प्रोडक्ट कलेक्शन हटाया नहीं जा सका।"
+    }
+  },
+  "attributes": {
+    "title": "Attributes",
+    "add": "Add Attribute",
+    "search": "Search attributes",
+    "empty": "No attributes found.",
+    "labels": {
+      "name": "Attribute Name",
+      "key": "Attribute Key",
+      "label": "Display Label",
+      "inputType": "Input Type",
+      "allowedValues": "Allowed Values",
+      "status": "Status"
+    },
+    "types": {
+      "text": "Text",
+      "singleSelect": "Single Select",
+      "multiSelect": "Multi Select"
+    },
+    "form": {
+      "titleCreate": "Add Attribute",
+      "titleEdit": "Edit Attribute"
+    },
+    "validation": {
+      "nameRequired": "Attribute name is required",
+      "keyRequired": "Attribute key is required",
+      "allowedValuesRequired": "Allowed values are required for select-based attributes"
+    },
+    "toast": {
+      "successCreate": "Attribute created successfully.",
+      "successUpdate": "Attribute updated successfully.",
+      "successDelete": "Attribute deleted successfully.",
+      "errorLoad": "Failed to load attributes. Please try again.",
+      "errorSave": "Failed to save attribute. Please try again.",
+      "errorDelete": "Failed to delete attribute. Please try again."
+    },
+    "deleteConfirm": {
+      "title": "Delete Attribute",
+      "message": "Are you sure you want to delete attribute: {{name}}?"
+    }
+  },
+  "attributeSets": {
+    "title": "Attribute Sets",
+    "add": "Add Attribute Set",
+    "search": "Search attribute sets",
+    "empty": "No attribute sets found.",
+    "labels": {
+      "name": "Attribute Set Name",
+      "description": "Description",
+      "status": "Status",
+      "categories": "Categories",
+      "attributes": "Attributes"
+    },
+    "placeholders": {
+      "attributes": "Comma-separated attribute IDs",
+      "categories": "Comma-separated category IDs"
+    },
+    "required": {
+      "inherit": "Inherit",
+      "required": "Required",
+      "optional": "Optional"
+    },
+    "hint": "Enter attribute IDs and category IDs as comma-separated values for this first implementation.",
+    "form": {
+      "titleCreate": "Add Attribute Set",
+      "titleEdit": "Edit Attribute Set"
+    },
+    "validation": {
+      "nameRequired": "Attribute set name is required",
+      "attributesRequired": "Add at least one attribute to the set"
+    },
+    "toast": {
+      "successCreate": "Attribute set created successfully.",
+      "successUpdate": "Attribute set updated successfully.",
+      "successDelete": "Attribute set deleted successfully.",
+      "errorLoad": "Failed to load attribute sets. Please try again.",
+      "errorSave": "Failed to save attribute set. Please try again.",
+      "errorDelete": "Failed to delete attribute set. Please try again."
+    },
+    "deleteConfirm": {
+      "title": "Delete Attribute Set",
+      "message": "Are you sure you want to delete attribute set: {{name}}?"
+    }
+  },
+  "pricingTemplates": {
+    "title": "Pricing Templates",
+    "add": "Add Pricing Template",
+    "search": "Search pricing templates",
+    "empty": "No pricing templates found.",
+    "labels": {
+      "name": "Template Name",
+      "description": "Description",
+      "status": "Status",
+      "fieldKeys": "Supported Field Keys",
+      "categories": "Categories",
+      "actualPriceFormula": "Actual Price Formula",
+      "sellingPriceFormula": "Selling Price Formula",
+      "anchorPriceFormula": "Anchor Price Formula"
+    },
+    "placeholders": {
+      "fieldKeys": "Comma-separated field keys",
+      "categories": "Comma-separated category IDs"
+    },
+    "hint": "Use comma-separated field keys and keep formulas in the same order as the current pricing logic.",
+    "form": {
+      "titleCreate": "Add Pricing Template",
+      "titleEdit": "Edit Pricing Template"
+    },
+    "validation": {
+      "nameRequired": "Pricing template name is required",
+      "formulasRequired": "All formulas are required"
+    },
+    "toast": {
+      "successCreate": "Pricing template created successfully.",
+      "successUpdate": "Pricing template updated successfully.",
+      "successDelete": "Pricing template deleted successfully.",
+      "errorLoad": "Failed to load pricing templates. Please try again.",
+      "errorSave": "Failed to save pricing template. Please try again.",
+      "errorDelete": "Failed to delete pricing template. Please try again."
+    },
+    "deleteConfirm": {
+      "title": "Delete Pricing Template",
+      "message": "Are you sure you want to delete pricing template: {{name}}?"
     }
   },
   "storefrontConfig": {
@@ -589,14 +932,27 @@
         "err_code_exists": "कर्मचारी कोड पहले से मौजूद है।"
       },
       "users": {
-        "title": "यूज़र्स",
-        "subtitle": "टेनेंट यूज़र्स प्रबंधित करें, एक्सेस लॉक करें और रोल असाइन करें।",
-        "btn_invite": "यूज़र आमंत्रित करें",
+        "title": "एक्सेस यूज़र्स",
+        "subtitle": "टेनेंट लॉगिन यूज़र्स, रोल्स और एक्सेस स्थिति प्रबंधित करें।",
+        "title_create": "एक्सेस यूज़र बनाएं",
+        "title_edit": "एक्सेस यूज़र संपादित करें",
+        "title_delete": "एक्सेस यूज़र हटाएं",
+        "btn_invite": "यूज़र जोड़ें",
+        "btn_create": "यूज़र बनाएं",
+        "btn_update": "यूज़र अपडेट करें",
+        "btn_add_role": "रोल जोड़ें",
         "btn_assign_roles": "रोल असाइन करें",
+        "lbl_full_name": "नाम",
+        "lbl_mobile": "मोबाइल नंबर",
+        "lbl_whatsapp": "व्हाट्सएप नंबर",
+        "lbl_same_whatsapp": "व्हाट्सएप के लिए वही मोबाइल नंबर उपयोग करें",
+        "hint_same_whatsapp": "सिर्फ तब बंद करें जब व्हाट्सएप नंबर अलग हो।",
         "lbl_roles": "रोल्स",
-        "ph_search": "ईमेल या फोन से यूज़र्स खोजें",
+        "ph_search": "ईमेल या फोन से एक्सेस यूज़र्स खोजें",
+        "tbl_name": "नाम",
         "tbl_email": "ईमेल",
-        "tbl_phone": "फोन",
+        "tbl_phone": "मोबाइल",
+        "tbl_whatsapp": "व्हाट्सएप",
         "tbl_status": "स्थिति",
         "tbl_roles": "रोल्स",
         "tbl_last_login": "अंतिम लॉगिन",
@@ -604,15 +960,29 @@
         "opt_invited": "आमंत्रित",
         "opt_active": "सक्रिय",
         "opt_locked": "लॉक्ड",
-        "opt_disabled": "अक्षम",
+        "opt_disabled": "निष्क्रिय",
         "msg_showing": "इस पृष्ठ पर {{count}} यूज़र्स दिख रहे हैं (कुल: {{total}})",
         "msg_loading": "यूज़र्स लोड हो रहे हैं...",
+        "msg_required_fields": "कृपया सभी आवश्यक यूज़र फ़ील्ड भरें।",
+        "msg_load_failed": "यूज़र्स लोड करने में विफल।",
+        "msg_create_success": "यूज़र सफलतापूर्वक बनाया गया।",
+        "msg_create_failed": "यूज़र बनाने में विफल।",
+        "msg_update_success": "यूज़र सफलतापूर्वक अपडेट किया गया।",
+        "msg_update_failed": "यूज़र अपडेट करने में विफल।",
+        "msg_delete_success": "यूज़र सफलतापूर्वक हटाया गया।",
+        "msg_delete_failed": "यूज़र हटाने में विफल।",
+        "msg_delete_confirm": "क्या आप यूज़र हटाना चाहते हैं: {{name}}?",
+        "msg_role_update_success": "यूज़र रोल्स सफलतापूर्वक अपडेट हुए।",
         "btn_prev": "पिछला",
         "btn_next": "अगला",
         "lbl_page": "पृष्ठ {{page}} / {{total}}",
         "title_assign_roles": "रोल असाइन करें",
         "msg_loading_assignments": "असाइनमेंट लोड हो रहे हैं...",
-        "btn_save_roles": "रोल्स सेव करें"
+        "btn_save_roles": "रोल्स सेव करें",
+        "err_email_exists": "ईमेल पहले से उपयोग में है।",
+        "err_phone_invalid": "मान्य 10-अंकीय मोबाइल नंबर दर्ज करें।",
+        "err_whatsapp_invalid": "मान्य 10-अंकीय व्हाट्सएप नंबर दर्ज करें।",
+        "err_role_required": "कम से कम एक रोल चुनें।"
       },
       "dashboard": {
         "title": "टेनेंट डैशबोर्ड",
@@ -622,6 +992,10 @@
         "lbl_entitled_features": "मिलने वाली फीचर्स",
         "msg_no_features": "कोई मिलने वाली फीचर्स उपलब्ध नहीं।",
         "lbl_tier": "टियर",
+        "lbl_package_type": "पैकेज प्रकार",
+        "opt_package_type_online": "ऑनलाइन",
+        "opt_package_type_offline": "ऑफलाइन",
+        "opt_package_type_both": "दोनों",
         "lbl_status": "स्थिति",
         "card_users": "यूज़र्स",
         "card_employees": "कर्मचारी",
@@ -724,8 +1098,15 @@
       "packages": {
         "title": "पैकेजेस",
         "btn_create": "पैकेज बनाएं",
+        "btn_manage_tiers": "टियर्स प्रबंधित करें",
         "title_create": "पैकेज बनाएं",
         "title_edit": "पैकेज संपादित करें",
+        "col_tiers": "टियर्स",
+        "info_manage_tiers": "पैकेज बनाने के बाद, इस पैकेज के लिए फीचर्स और टियर्स कॉन्फिगर करने हेतु Manage Tiers बटन का उपयोग करें।",
+        "tiers_title": "पैकेज टियर्स",
+        "tiers_subtitle": "पैकेज के लिए टियर्स प्रबंधन",
+        "tiers_loading": "टियर्स लोड हो रहे हैं...",
+        "tiers_empty": "इस पैकेज के लिए कोई टियर नहीं मिला।",
         "lbl_plan_id": "प्लान आईडी",
         "lbl_plan_name": "प्लान नाम",
         "lbl_description": "विवरण",
@@ -1126,6 +1507,78 @@
       "cancel": "रद्द करें",
       "previous": "पिछला",
       "next": "अगला"
+    },
+    "variantsWorkspace": {
+      "title": "वन-पेज वैरिएंट वर्कस्पेस",
+      "subtitle": "एक ही जगह कई वैरिएंट बनाएं और हर रो का प्रिव्यू देखें।",
+      "actions": {
+        "autoGenerate": "ऑटो जनरेट",
+        "addRow": "रो जोड़ें",
+        "duplicate": "डुप्लिकेट",
+        "clearRows": "रो साफ करें",
+        "saveSelected": "चयनित सेव करें ({{count}})",
+        "saving": "सेव हो रहा है...",
+        "remove": "हटाएं",
+        "addOverride": "फील्ड जोड़ें",
+        "removeOverride": "ओवरराइड हटाएं"
+      },
+      "bulkApply": {
+        "additionalChargeLabel": "बल्क अतिरिक्त शुल्क",
+        "additionalChargePlaceholder": "राशि दर्ज करें",
+        "applyToSelected": "चयनित पर लागू करें",
+        "fieldOverridesLabel": "बल्क फील्ड ओवरराइड्स (JSON)",
+        "fieldOverridesPlaceholder": "{\"fabricCost\": 250, \"laborCharge\": 70}",
+        "applyOverridesToSelected": "चयनित पर ओवरराइड लागू करें"
+      },
+      "summary": {
+        "totalRows": "कुल रो: {{count}}",
+        "selectedRows": "चयनित: {{count}}",
+        "errorRows": "त्रुटि वाली रो: {{count}}"
+      },
+      "columns": {
+        "select": "चयन",
+        "quantity": "मात्रा",
+        "unit": "यूनिट",
+        "options": "विकल्प",
+        "additionalCharge": "अतिरिक्त शुल्क",
+        "fieldOverrides": "फील्ड ओवरराइड्स",
+        "displayName": "डिस्प्ले नाम",
+        "derivedSelling": "निकली हुई बिक्री कीमत",
+        "status": "स्थिति",
+        "action": "क्रिया"
+      },
+      "placeholders": {
+        "quantity": "मात्रा",
+        "unit": "यूनिट",
+        "displayName": "खाली छोड़ें तो ऑटो नाम",
+        "fieldOverrides": "ओवरराइड इनपुट का JSON ऑब्जेक्ट",
+        "fieldKey": "फील्ड की",
+        "fieldValue": "मान"
+      },
+      "state": {
+        "ready": "तैयार"
+      },
+      "toast": {
+        "selectGroupFirst": "कृपया पहले एक समूह चुनें।",
+        "noCombinations": "कोई नई कॉम्बिनेशन उपलब्ध नहीं है।",
+        "autoGenerateFailed": "वैरिएंट कॉम्बिनेशन जनरेट नहीं हो सके।",
+        "selectOneRow": "सेव करने के लिए कम से कम एक रो चुनें।",
+        "fixRowErrors": "चयनित वैरिएंट सेव करने से पहले रो की त्रुटियां ठीक करें।",
+        "invalidBulkAdditionalCharge": "मान्य गैर-नकारात्मक अतिरिक्त शुल्क दर्ज करें।",
+        "bulkApplySuccess": "चयनित रो पर अतिरिक्त शुल्क लागू कर दिया गया है।",
+        "bulkOverridesApplySuccess": "चयनित रो पर फील्ड ओवरराइड लागू कर दिए गए हैं।",
+        "saveFailed": "रो से वैरिएंट बनाना विफल रहा।",
+        "saveSuccess": "{{count}} वैरिएंट सफलतापूर्वक बनाए गए।"
+      },
+      "errors": {
+        "quantityPositive": "मात्रा शून्य से अधिक होनी चाहिए।",
+        "unitRequired": "यूनिट आवश्यक है।",
+        "additionalChargeNonNegative": "अतिरिक्त शुल्क शून्य या उससे अधिक होना चाहिए।",
+        "previewFailed": "इस रो के लिए प्राइस प्रिव्यू नहीं मिल सका।",
+        "fieldOverridesInvalid": "फील्ड ओवरराइड्स संख्यात्मक मानों के साथ वैध JSON ऑब्जेक्ट होना चाहिए।",
+        "duplicateCombination": "चयनित रो में डुप्लिकेट वैरिएंट कॉम्बिनेशन मिला।"
+      },
+      "empty": "शुरू करने के लिए मैन्युअली रो जोड़ें या ऑटो जनरेट का उपयोग करें।"
     },
     "offers": {
       "title": "Offers",

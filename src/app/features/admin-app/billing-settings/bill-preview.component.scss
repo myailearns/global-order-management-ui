@@ -1,0 +1,110 @@
+@use "theme" as theme;
+
+:host {
+  display: block;
+}
+
+.bill-preview {
+  --bill-accent: #{theme.get-text(primary)};
+  width: min(100%, 25rem);
+  min-height: 32rem;
+  margin: 0 auto;
+  padding: theme.get-spacing(md);
+  border-top: theme.get-border-size(thin) solid var(--bill-accent);
+  border-radius: theme.get-radius(xs);
+  background: theme.get-background(standard);
+  color: theme.get-text(default);
+  box-shadow: theme.get-shadow(overlay);
+  font-size: 0.72rem;
+
+  &--a4 {
+    width: min(100%, 34rem);
+  }
+
+  &--small { font-size: 0.64rem; }
+  &--large { font-size: 0.8rem; }
+  &--relaxed .bill-preview__section { padding-block: theme.get-spacing(sm); }
+
+  &--compact {
+    min-height: 7rem;
+    width: 3.5rem;
+    padding: theme.get-spacing(xxs);
+    font-size: 0.12rem;
+    box-shadow: none;
+    pointer-events: none;
+
+    .bill-preview__section { padding-block: 0.12rem; }
+    .bill-preview__logo { width: 0.7rem; height: 0.7rem; font-size: 0.12rem; }
+    h3 { font-size: 0.16rem; }
+    th, td { padding: 0.06rem; }
+  }
+}
+
+.bill-preview__section {
+  padding-block: theme.get-spacing(xs);
+  border-bottom: theme.get-border-size(hairline) dashed theme.get-border(standard);
+
+  &:last-child { border-bottom: 0; }
+
+  h3 {
+    margin: 0 0 theme.get-spacing(xs);
+    color: theme.get-text(primary);
+    font-size: 0.78em;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  dl { margin: 0; }
+
+  dl > div {
+    display: flex;
+    justify-content: space-between;
+    gap: theme.get-gap(sm);
+    padding-block: 0.14rem;
+  }
+
+  dt { color: theme.get-text(default-light); }
+  dd { margin: 0; text-align: right; font-weight: 600; }
+}
+
+.bill-preview__section--footer { text-align: center; }
+.bill-preview__total { margin-top: theme.get-spacing(xxs); padding-top: theme.get-spacing(xxs) !important; border-top: theme.get-border-size(hairline) solid theme.get-border(standard); font-weight: 700; }
+
+.bill-preview__business {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+
+  &--left { align-items: flex-start; text-align: left; }
+  &--right { align-items: flex-end; text-align: right; }
+
+  strong { font-size: 1.25em; color: theme.get-text(primary); }
+}
+
+.bill-preview__logo {
+  display: inline-grid;
+  width: 2rem;
+  height: 2rem;
+  margin-bottom: theme.get-spacing(xxs);
+  place-items: center;
+  border-radius: theme.get-radius(xs);
+  background: var(--bill-accent);
+  color: theme.get-text(on-primary);
+  font-weight: 700;
+}
+
+.bill-preview__logo-image {
+  width: 2rem;
+  height: 2rem;
+  margin-bottom: theme.get-spacing(xxs);
+  border-radius: theme.get-radius(xs);
+  object-fit: cover;
+  border: theme.get-border-size(hairline) solid theme.get-border(light);
+}
+
+.bill-preview__table-wrap { overflow-x: auto; }
+.bill-preview table { width: 100%; border-collapse: collapse; }
+.bill-preview th, .bill-preview td { padding: theme.get-spacing(xxs); border-bottom: theme.get-border-size(hairline) solid theme.get-border(light); text-align: right; white-space: nowrap; }
+.bill-preview th:first-child, .bill-preview td:first-child { text-align: left; }
+.bill-preview th { background: transparent; color: theme.get-text(default-light); font-size: 0.9em; }

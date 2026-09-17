@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, computed, inject, signal } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
@@ -11,6 +11,12 @@ import { RoleWithPermissions, TenantAdminSummary } from '../../models';
 import { TenantAccessService } from '../../services';
 import { SaasAccountService } from '../../../saas-platform/accounts/saas-account.service';
 
+interface RoleCloneSeed {
+  name: string;
+  description?: string;
+  permissionKeys: string[];
+}
+
 @Component({
   selector: 'gom-role-matrix',
   standalone: true,
@@ -18,7 +24,15 @@ import { SaasAccountService } from '../../../saas-platform/accounts/saas-account
   templateUrl: './role-matrix.component.html',
   styleUrl: './role-matrix.component.scss',
 })
-export class RoleMatrixComponent implements OnInit {
+export class RoleMatrixComponent implements OnInit, OnChanges {
+  @Input() modalMode = false;
+  @Input() roleIdInput: string | null = null;
+  @Input() tenantIdInput: string | null = null;
+  @Input() cloneSeedInput: RoleCloneSeed | null = null;
+
+  @Output() formSaved = new EventEmitter<void>();
+  @Output() formCancelled = new EventEmitter<void>();
+
   private readonly fb = inject(FormBuilder);
   private readonly service = inject(TenantAccessService);
   private readonly saasAccountService = inject(SaasAccountService);
@@ -27,7 +41,6 @@ export class RoleMatrixComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
 
   readonly form = this.fb.group({
-    roleKey: ['', [Validators.required]],
     name: ['', [Validators.required]],
     description: [''],
   });
@@ -69,9 +82,38 @@ export class RoleMatrixComponent implements OnInit {
   readonly selectedCount = computed(() => this.selectedFeatures().size);
 
   ngOnInit(): void {
+    this.initializeFormContext();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (!this.modalMode) {
+      return;
+    }
+
+    if (changes['roleIdInput'] || changes['tenantIdInput'] || changes['modalMode'] || changes['cloneSeedInput']) {
+      this.initializeFormContext();
+    }
+  }
+
+  private initializeFormContext(): void {
     this.platformMode.set(!!this.route.snapshot.data['platformMode']);
-    this.roleId = this.route.snapshot.queryParamMap.get('id');
-    this.selectedTenantId.set(String(this.route.snapshot.queryParamMap.get('tenantId') || '').trim());
+    this.roleId = this.modalMode
+      ? this.roleIdInput
+      : this.route.snapshot.queryParamMap.get('id');
+
+    const nextTenantId = this.modalMode
+      ? String(this.tenantIdInput || '').trim()
+      : String(this.route.snapshot.queryParamMap.get('tenantId') || '').trim();
+
+    this.selectedTenantId.set(nextTenantId);
+
+    this.form.reset({
+      name: '',
+      description: '',
+    });
+    this.selectedFeatures.set(new Set());
+    this.assignedUsersCount.set(0);
+    this.loading.set(false);
 
     if (this.platformMode()) {
       this.loadTenantOptions();
@@ -84,6 +126,13 @@ export class RoleMatrixComponent implements OnInit {
     this.loadTenantSummary();
 
     if (!this.roleId || !this.canLoadTenantContext()) {
+      if (this.cloneSeedInput && !this.roleId) {
+        this.form.patchValue({
+          name: this.cloneSeedInput.name || '',
+          description: this.cloneSeedInput.description || '',
+        });
+        this.selectedFeatures.set(new Set(this.cloneSeedInput.permissionKeys || []));
+      }
       return;
     }
 
@@ -161,15 +210,18 @@ export class RoleMatrixComponent implements OnInit {
 
   onSubmit(): void {
     if (this.form.invalid) {
-      this.toast.error('Role key and role name are required.');
+      this.toast.error('Role name is required.');
       return;
     }
 
+    const roleName = String(this.form.controls.name.value || '').trim();
+
     const payload = {
-      roleKey: this.form.controls.roleKey.value || '',
-      name: this.form.controls.name.value || '',
+      name: roleName,
       description: this.form.controls.description.value || undefined,
       permissionKeys: [...this.selectedFeatures()],
+      // Compatibility fallback for environments still enforcing roleKey on create.
+      roleKey: this.roleId ? undefined : this.deriveRoleKey(roleName),
     };
 
     this.loading.set(true);
@@ -179,7 +231,7 @@ export class RoleMatrixComponent implements OnInit {
         next: () => {
           this.loading.set(false);
           this.toast.success('Role updated successfully.');
-          this.navigateToRoleList();
+          this.afterSaveSuccess();
         },
         error: (err) => {
           this.loading.set(false);
@@ -193,7 +245,7 @@ export class RoleMatrixComponent implements OnInit {
       next: () => {
         this.loading.set(false);
         this.toast.success('Role created successfully.');
-        this.navigateToRoleList();
+        this.afterSaveSuccess();
       },
       error: (err) => {
         this.loading.set(false);
@@ -203,6 +255,11 @@ export class RoleMatrixComponent implements OnInit {
   }
 
   onCancel(): void {
+    if (this.modalMode) {
+      this.formCancelled.emit();
+      return;
+    }
+
     this.navigateToRoleList();
   }
 
@@ -213,11 +270,9 @@ export class RoleMatrixComponent implements OnInit {
 
   private patchRole(role: RoleWithPermissions): void {
     this.form.patchValue({
-      roleKey: role.roleKey,
       name: role.name,
       description: role.description || '',
     });
-    this.form.controls.roleKey.disable();
     this.selectedFeatures.set(new Set(role.permissionKeys || []));
   }
 
@@ -255,6 +310,15 @@ export class RoleMatrixComponent implements OnInit {
     });
   }
 
+  private afterSaveSuccess(): void {
+    if (this.modalMode) {
+      this.formSaved.emit();
+      return;
+    }
+
+    this.navigateToRoleList();
+  }
+
   private navigateToRoleList(): void {
     const path = this.platformMode() ? ['/settings/tenant-roles'] : ['/saas-admin/roles'];
     const queryParams = this.platformMode() && this.selectedTenantId() ? { tenantId: this.selectedTenantId() } : undefined;
@@ -276,5 +340,23 @@ export class RoleMatrixComponent implements OnInit {
         this.toast.error('Failed to load tenants.');
       },
     });
+  }
+
+  private deriveRoleKey(roleName: string): string {
+    let normalized = String(roleName || '')
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/_+/g, '_');
+
+    while (normalized.startsWith('_')) {
+      normalized = normalized.slice(1);
+    }
+    while (normalized.endsWith('_')) {
+      normalized = normalized.slice(0, -1);
+    }
+
+    const base = normalized || 'role';
+    return base.length >= 2 ? base.slice(0, 40) : `${base}_role`;
   }
 }

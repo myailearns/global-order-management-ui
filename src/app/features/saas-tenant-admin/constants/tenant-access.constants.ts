@@ -27,17 +27,17 @@ export const PERMISSION_KEYS = {
   USERS_EXPORT: 'users.export',
 
   // Employees module
-  EMPLOYEES_VIEW: 'employees.view',
-  EMPLOYEES_ADD: 'employees.add',
-  EMPLOYEES_EDIT: 'employees.edit',
-  EMPLOYEES_DELETE: 'employees.delete',
+  EMPLOYEES_VIEW: 'tenantAccount.view',
+  EMPLOYEES_ADD: 'tenantAccount.add',
+  EMPLOYEES_EDIT: 'tenantAccount.edit',
+  EMPLOYEES_DELETE: 'tenantAccount.delete',
   EMPLOYEES_EXPORT: 'employees.export',
 
   // Roles module
-  ROLES_VIEW: 'roles.view',
-  ROLES_ADD: 'roles.add',
-  ROLES_EDIT: 'roles.edit',
-  ROLES_DELETE: 'roles.delete',
+  ROLES_VIEW: 'tenantRole.view',
+  ROLES_ADD: 'tenantRole.add',
+  ROLES_EDIT: 'tenantRole.edit',
+  ROLES_DELETE: 'tenantRole.delete',
 
   // Permissions module (meta)
   PERMISSIONS_VIEW: 'permissions.view',
@@ -204,10 +204,10 @@ export const UI_CONFIG = {
  */
 export const DEFAULT_TRANSLATIONS = {
   'saas.admin.title': 'Tenant Administration',
-  'saas.admin.users.title': 'Users',
+  'saas.admin.users.title': 'Access Users',
   'saas.admin.employees.title': 'Employees',
   'saas.admin.roles.title': 'Roles & Permissions',
-  'saas.admin.users.btn_invite': 'Invite User',
+  'saas.admin.users.btn_invite': 'Add User',
   'saas.admin.employees.btn_create': 'Create Employee',
   'saas.admin.roles.btn_create': 'Create Role',
   'saas.admin.err_permission_denied': 'You do not have permission to perform this action',

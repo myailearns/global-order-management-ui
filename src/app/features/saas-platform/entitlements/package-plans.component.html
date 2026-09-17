@@ -2,7 +2,10 @@
   <header class="epic2-page__header">
     <h1>{{ 'saas.platform.packages.title' | translate }}</h1>
     @if (canWrite()) {
-    <gom-lib-button (buttonClick)="openCreate()">{{ 'saas.platform.packages.btn_create' | translate }}</gom-lib-button>
+    <div class="epic2-page__header-actions">
+      <gom-lib-button (buttonClick)="openCreate()" [disabled]="loading() || deleteAllBusy()">{{ 'saas.platform.packages.btn_create' | translate }}</gom-lib-button>
+      <gom-lib-button variant="danger" (buttonClick)="openDeleteAllConfirm()" [disabled]="loading() || deleteAllBusy()">Delete All Packages</gom-lib-button>
+    </div>
     }
   </header>
 
@@ -15,21 +18,100 @@
   ></gom-lib-table>
 </section>
 
+<gom-lib-confirmation-modal
+  [(show)]="deleteAllConfirmOpen"
+  title="Delete All Packages"
+  [message]="'This will delete all package plans. Tenant accounts and entitlements may still reference old package IDs until they are recreated. This is intended for temporary development use only. Do you want to continue?'"
+  confirmText="Delete All"
+  cancelText="Cancel"
+  confirmVariant="danger"
+  [busy]="deleteAllBusy()"
+  (confirmed)="confirmDeleteAllPackages()"
+  (cancelled)="closeDeleteAllConfirm()"
+></gom-lib-confirmation-modal>
+
+<gom-lib-confirmation-modal
+  [(show)]="deletePackageConfirmOpen"
+  title="Delete Package"
+  [message]="deletePackageConfirmMessage"
+  confirmText="Delete"
+  cancelText="Cancel"
+  confirmVariant="danger"
+  [busy]="deletePackageBusy()"
+  (confirmed)="confirmDeletePackage()"
+  (cancelled)="closeDeletePackageConfirm()"
+></gom-lib-confirmation-modal>
+
 <gom-lib-modal [title]="selectedId() ? ('saas.platform.packages.title_edit' | translate) : ('saas.platform.packages.title_create' | translate)" [(show)]="modalOpen" size="large">
   <form class="epic2-page__form" [formGroup]="form">
+    @if (selectedId()) {
     <gom-lib-input formControlName="planId" [label]="'saas.platform.packages.lbl_plan_id' | translate" [required]="true"></gom-lib-input>
+    }
     <gom-lib-input formControlName="name" [label]="'saas.platform.packages.lbl_plan_name' | translate" [required]="true"></gom-lib-input>
     <gom-lib-textarea formControlName="description" [label]="'saas.platform.packages.lbl_description' | translate" [rows]="3"></gom-lib-textarea>
+    @if (selectedId()) {
     <gom-lib-select formControlName="tier" [label]="'saas.platform.packages.lbl_tier' | translate" [options]="[
       { value: 'STARTER', label: 'STARTER' },
       { value: 'GROWTH', label: 'GROWTH' },
       { value: 'SCALE', label: 'SCALE' },
       { value: 'CUSTOM', label: 'CUSTOM' }
     ]"></gom-lib-select>
+    }
+    <gom-lib-select formControlName="packageType" [label]="'saas.platform.packages.lbl_package_type' | translate" [options]="[
+      { value: 'ONLINE', label: ('saas.platform.packages.opt_package_type_online' | translate) },
+      { value: 'OFFLINE', label: ('saas.platform.packages.opt_package_type_offline' | translate) },
+      { value: 'BOTH', label: ('saas.platform.packages.opt_package_type_both' | translate) }
+    ]"></gom-lib-select>
     <gom-lib-select formControlName="status" [label]="'saas.platform.packages.lbl_status' | translate" [options]="[
       { value: 'ACTIVE', label: 'ACTIVE' },
       { value: 'INACTIVE', label: 'INACTIVE' }
     ]"></gom-lib-select>
+
+    <section class="package-trial-policy">
+      <h3>Package Trial Defaults</h3>
+
+      <div class="package-trial-policy__switch-row" role="group" aria-label="Enable Trial By Default">
+        <span>Enable Trial By Default</span>
+        <gom-lib-switch
+          [checked]="!!form.controls.trialEnabledDefault.value"
+          (checkedChange)="form.controls.trialEnabledDefault.setValue($event)"
+        ></gom-lib-switch>
+      </div>
+
+      <gom-lib-select
+        formControlName="defaultTrialMode"
+        label="Default Trial Mode"
+        [options]="packageTrialModeOptions"
+      ></gom-lib-select>
+
+      @if (form.controls.defaultTrialMode.value !== 'NONE') {
+      <gom-lib-input
+        formControlName="defaultTrialDurationDays"
+        type="number"
+        label="Default Trial Duration (Days)"
+        [required]="true"
+      ></gom-lib-input>
+      }
+
+      <gom-lib-select
+        formControlName="defaultPostTrialAction"
+        label="Default Post-Trial Action"
+        [options]="postTrialActionOptions"
+      ></gom-lib-select>
+
+      <div class="package-trial-policy__switch-row" role="group" aria-label="Allow Account-Level Trial Override">
+        <span>Allow Account-Level Trial Override</span>
+        <gom-lib-switch
+          [checked]="!!form.controls.allowAccountLevelTrialOverride.value"
+          (checkedChange)="form.controls.allowAccountLevelTrialOverride.setValue($event)"
+        ></gom-lib-switch>
+      </div>
+    </section>
+
+    <!-- Sprint 1: Feature builder hidden for create mode (new packages) -->
+    <!-- Tier feature configuration will be done in separate "Manage Tiers" page -->
+    @if (selectedId()) {
+    <!-- Only show for EDIT mode (existing packages) -->
     <section class="package-builder">
       <div class="package-builder__toolbar">
         <p class="package-builder__label">Modules</p>
@@ -105,6 +187,13 @@
       </section>
       }
     </section>
+    }
+    @if (!selectedId()) {
+    <!-- Show helpful message for create mode (Sprint 1: Two-step flow) -->
+    <div class="gom-alert gom-alert--info">
+      <p>{{ 'saas.platform.packages.info_manage_tiers' | translate }}</p>
+    </div>
+    }
   </form>
 
   <footer class="gom-modal__action-layout" gom-modal-actions>

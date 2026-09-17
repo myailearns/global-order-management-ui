@@ -28,16 +28,23 @@
               },
               {
                 "glob": "**/*",
+                "input": "../naqp-dev-web-core-components-library/src/projects/naqp-dev-web-core-components-library/assets/fonts",
+                "output": "/assets/fonts/"
+              },
+              {
+                "glob": "**/*",
                 "input": "src/assets",
                 "output": "/assets/"
               }
             ],
             "styles": [
-              "node_modules/quill/dist/quill.snow.css",
+              "node_modules/remixicon/fonts/remixicon.css",
               "src/styles.scss"
             ],
             "stylePreprocessorOptions": {
               "includePaths": [
+                "../gom-libs/projects/gom-ui/src/lib/theming/styles",
+                "../naqp-dev-web-core-components-library/src/projects/naqp-dev-web-core-components-library/assets/styles/core",
                 "node_modules/@gomlibs/ui/src/lib/theming/styles"
               ]
             }
@@ -53,13 +60,13 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "1.2MB",
-                  "maximumError": "2MB"
+                  "maximumWarning": "2MB",
+                  "maximumError": "4MB"
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "9kB",
-                  "maximumError": "10kB"
+                  "maximumWarning": "30kB",
+                  "maximumError": "50kB"
                 }
               ],
               "outputHashing": "all"
@@ -79,7 +86,12 @@
               "buildTarget": "gom-ui:build:production"
             },
             "development": {
-              "buildTarget": "gom-ui:build:development"
+              "buildTarget": "gom-ui:build:development",
+              "prebundle": {
+                "exclude": [
+                  "@gomlibs/ui"
+                ]
+              }
             }
           },
           "defaultConfiguration": "development"
@@ -96,11 +108,23 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "**/*",
+                "input": "../naqp-dev-web-core-components-library/src/projects/naqp-dev-web-core-components-library/assets/fonts",
+                "output": "/assets/fonts/"
               }
             ],
             "styles": [
               "src/styles.scss"
-            ]
+            ],
+            "stylePreprocessorOptions": {
+              "includePaths": [
+                "../gom-libs/projects/gom-ui/src/lib/theming/styles",
+                "../naqp-dev-web-core-components-library/src/projects/naqp-dev-web-core-components-library/assets/styles/core",
+                "node_modules/@gomlibs/ui/src/lib/theming/styles"
+              ]
+            }
           }
         },
         "storybook": {

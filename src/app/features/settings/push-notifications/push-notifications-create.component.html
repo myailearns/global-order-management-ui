@@ -1,0 +1,320 @@
+<section class="notification-create">
+  <header class="notification-create__header">
+    <button type="button" class="notification-create__backlink" (click)="goBack()">← Back to Notification Center</button>
+    <h2>Create Notification</h2>
+    <p>Set up your notification in a few simple steps.</p>
+  </header>
+
+  <nav class="notification-create__steps" aria-label="Notification creation steps">
+    @for (step of steps; track step.id) {
+      <button
+        type="button"
+        class="notification-create__step"
+        [class.notification-create__step--active]="currentStep() === step.id"
+        [class.notification-create__step--done]="currentStep() > step.id"
+        (click)="selectStep(step.id)"
+      >
+        <span class="notification-create__step-index">{{ step.id }}</span>
+        <span>{{ step.label }}</span>
+      </button>
+    }
+  </nav>
+
+  @if (currentStep() === 6) {
+    <div class="notification-create__sending card-surface">
+      <div class="notification-create__sending-header">
+        <div>
+          <p class="notification-create__eyebrow">Sending</p>
+          <h3>{{ sendingCampaign()?.title ?? 'Notification' }}</h3>
+          <p>Started: {{ sendingCampaign()?.createdOn ?? 'Now' }}</p>
+        </div>
+        <span class="notification-create__pill notification-create__pill--info">{{ statusLabel() }}</span>
+      </div>
+
+      <div class="notification-create__progress-card">
+        <div class="notification-create__progress-row">
+          <span>Overall Progress Status</span>
+          <strong>{{ progress() }}% complete</strong>
+        </div>
+        <div class="notification-create__progress-track">
+          <div class="notification-create__progress-fill" [style.width.%]="progress()"></div>
+        </div>
+        <p class="notification-create__progress-copy">The notification job is running in the background and will update automatically as each subscriber batch is processed.</p>
+        @if (sendingCampaign()?.status === 'Failed' || sendingCampaign()?.status === 'Cancelled') {
+          <p class="notification-create__progress-copy notification-create__progress-copy--error">
+            Reason: {{ deliveryStatusMessage(sendingCampaign()) }}
+          </p>
+        }
+      </div>
+
+      <footer class="notification-create__footer">
+        <gom-lib-button
+          type="button"
+          variant="secondary"
+          (click)="goBack()"
+          (keydown.enter)="goBack()"
+          (keydown.space)="goBack(); $event.preventDefault()"
+        >Back to Notification Center</gom-lib-button>
+      </footer>
+    </div>
+  } @else {
+    <div class="notification-create__grid">
+      <div class="notification-create__panel card-surface">
+        @if (currentStep() === 1) {
+          <h3>How do you want to reach your customers?</h3>
+          <p class="notification-create__muted">Select one or more communication channels for this notification.</p>
+
+          <div class="notification-create__channel-grid">
+            @for (channel of channels; track channel) {
+              <button
+                type="button"
+                class="notification-create__channel-card"
+                [class.notification-create__channel-card--selected]="selectedChannels().includes(channel)"
+                (click)="toggleChannel(channel)"
+              >
+                <div class="notification-create__channel-icon">
+                  <i [class]="channel === 'Push' ? 'ri-notification-3-line' : channel === 'Email' ? 'ri-mail-line' : 'ri-whatsapp-line'"></i>
+                </div>
+                <div>
+                  <strong>{{ channel }} Notification</strong>
+                  <p>
+                    {{ channel === 'Push' ? 'Send a push notification to your customers\' mobile devices.' : channel === 'Email' ? 'Send an email to your customers\' inbox.' : 'Send a WhatsApp message to your customers.' }}
+                  </p>
+                </div>
+                <span class="notification-create__check" [class.notification-create__check--on]="selectedChannels().includes(channel)">
+                  <i class="ri-check-line"></i>
+                </span>
+              </button>
+            }
+          </div>
+        }
+
+        @if (currentStep() === 2) {
+          <h3>How do you want to reach your customers?</h3>
+          <p class="notification-create__muted">Select one channel to edit its content, then repeat for the others you enabled.</p>
+
+          <div class="notification-create__channel-tabs">
+            @for (channel of selectedChannels(); track channel) {
+              <button type="button" class="notification-create__channel-tab" [class.notification-create__channel-tab--active]="activeChannel() === channel" (click)="setActiveChannel(channel)">
+                {{ channel }}
+              </button>
+            }
+          </div>
+
+          @if (activeChannel() === 'Push') {
+            <div class="notification-create__content-block">
+              <gom-lib-input label="Notification Title" placeholder="Diwali Special Offer" [formControl]="form.controls.pushTitle"></gom-lib-input>
+              <gom-lib-textarea label="Message" [rows]="4" placeholder="Celebrate Diwali with us! Get 20% OFF on selected products." [formControl]="form.controls.pushMessage"></gom-lib-textarea>
+            </div>
+          }
+
+          @if (activeChannel() === 'Email') {
+            <div class="notification-create__content-block">
+              <gom-lib-input label="Email Subject Line" placeholder="Diwali Special Offer - Get 20% OFF on Selected Products" [formControl]="form.controls.emailSubject"></gom-lib-input>
+              <app-rich-text-editor
+                label="Email Body"
+                placeholder="Write the promotional email body here..."
+                [value]="form.controls.emailBody.value || ''"
+                (valueChange)="onEmailBodyChanged($event)"
+              ></app-rich-text-editor>
+            </div>
+          }
+
+          @if (activeChannel() === 'WhatsApp') {
+            <div class="notification-create__content-block">
+              <gom-lib-input label="WhatsApp Template" placeholder="Promotional Offer (Approved)" [formControl]="form.controls.whatsAppTemplate"></gom-lib-input>
+              <gom-lib-textarea label="WhatsApp Message" [rows]="4" placeholder="Template body with variables such as {{ '{' }}{{ '{' }}customer_name{{ '}' }}{{ '}' }} and {{ '{' }}{{ '{' }}link{{ '}' }}{{ '}' }}" [formControl]="form.controls.whatsAppBody"></gom-lib-textarea>
+            </div>
+          }
+        }
+
+        @if (currentStep() === 3) {
+          <h3>Who should receive this notification?</h3>
+          <p class="notification-create__muted">Pick one audience group and the campaign will use that segment across the selected channels.</p>
+
+          <div class="notification-create__audience-list">
+            @for (audience of audienceOptions(); track audience.key) {
+              <button type="button" class="notification-create__audience-card" [class.notification-create__audience-card--selected]="form.controls.audienceType.value === audience.key" (click)="onAudienceSelect(audience.key)">
+                <div>
+                  <strong>{{ audience.label }}</strong>
+                  <p>{{ audience.hint }}</p>
+                </div>
+                <span class="notification-create__audience-count">{{ audience.recipients.toLocaleString() }} customers</span>
+              </button>
+            }
+          </div>
+
+          @if (form.controls.audienceType.value === 'Customer Group') {
+            <div class="notification-create__content-block">
+              <gom-lib-input label="Customer Group" placeholder="VIP Customers" [formControl]="form.controls.audienceName"></gom-lib-input>
+            </div>
+          }
+
+          @if (form.controls.audienceType.value === 'Custom Segment') {
+            <div class="notification-create__content-block">
+              <gom-lib-input label="Segment Name" placeholder="High value shoppers" [formControl]="form.controls.audienceName"></gom-lib-input>
+            </div>
+          }
+        }
+
+        @if (currentStep() === 4) {
+          <h3>When should we send this?</h3>
+          <p class="notification-create__muted">Choose whether to send immediately or schedule it for later.</p>
+
+          <div class="notification-create__schedule-grid">
+            @for (mode of scheduleModes; track mode.key) {
+              <button type="button" class="notification-create__schedule-card" [class.notification-create__schedule-card--selected]="form.controls.scheduleMode.value === mode.key" (click)="form.controls.scheduleMode.setValue(mode.key)">
+                <strong>{{ mode.label }}</strong>
+                <p>{{ mode.hint }}</p>
+              </button>
+            }
+          </div>
+
+          @if (form.controls.scheduleMode.value === 'Later') {
+            <div class="notification-create__schedule-fields">
+              <gom-lib-input
+                label="Date"
+                type="date"
+                [min]="minScheduleDate"
+                [required]="true"
+                (valueChange)="onScheduleDateChanged($event)"
+                [formControl]="form.controls.scheduleDate"
+              ></gom-lib-input>
+              <label class="notification-create__time-field">
+                <span>Time</span>
+                <input
+                  type="time"
+                  [attr.min]="scheduleTimeMin || null"
+                  [formControl]="form.controls.scheduleTime"
+                  required
+                />
+              </label>
+            </div>
+          }
+        }
+
+        @if (currentStep() === 5) {
+          <h3>Review your notification before sending</h3>
+          <p class="notification-create__muted">Carefully review the channels, audience parameters, and preview below.</p>
+
+          <div class="notification-create__review-box">
+            <div>
+              <span>Notification Name</span>
+              <strong>{{ form.controls.notificationName.value || 'Notification' }}</strong>
+            </div>
+            <div>
+              <span>Channels</span>
+              <strong>{{ reviewChannels() }}</strong>
+            </div>
+            <div>
+              <span>Audience</span>
+              <strong>{{ form.controls.audienceName.value }}</strong>
+            </div>
+            <div>
+              <span>Recipients</span>
+              <strong>{{ recipients().toLocaleString() }} customers</strong>
+            </div>
+            <div>
+              <span>Schedule</span>
+              <strong>{{ scheduleLabel() }}</strong>
+            </div>
+          </div>
+
+          <div class="notification-create__preview-grid">
+            <div class="notification-create__preview-card">
+              <p class="notification-create__preview-label">Push Preview</p>
+              <strong>{{ form.controls.pushTitle.value || form.controls.notificationName.value || 'FreshKart' }}</strong>
+              <p>{{ form.controls.pushMessage.value || 'Your push message preview appears here.' }}</p>
+            </div>
+            <div class="notification-create__preview-card">
+              <p class="notification-create__preview-label">Email Preview</p>
+              <strong>{{ form.controls.emailSubject.value || 'Email subject preview' }}</strong>
+              <div
+                class="notification-create__rich-preview"
+                [innerHTML]="form.controls.emailBody.value || '<p>Your email body preview appears here.</p>'"
+              ></div>
+            </div>
+            <div class="notification-create__preview-card">
+              <p class="notification-create__preview-label">WhatsApp Preview</p>
+              <strong>{{ form.controls.whatsAppTemplate.value || 'WhatsApp template preview' }}</strong>
+              <p>{{ form.controls.whatsAppBody.value || 'Your WhatsApp message preview appears here.' }}</p>
+            </div>
+          </div>
+        }
+
+        <footer class="notification-create__footer">
+          <gom-lib-button type="button" variant="secondary" (click)="previous()" (keydown.enter)="previous()" (keydown.space)="previous(); $event.preventDefault()" [disabled]="currentStep() === 1 || submitting()">Back</gom-lib-button>
+          <div class="notification-create__footer-actions">
+            <gom-lib-button type="button" variant="secondary" (click)="cancelWizard()" (keydown.enter)="cancelWizard()" (keydown.space)="cancelWizard(); $event.preventDefault()" [disabled]="submitting()">Cancel</gom-lib-button>
+            @if (currentStep() < 5) {
+              <gom-lib-button type="button" variant="primary" (click)="next()" (keydown.enter)="next()" (keydown.space)="next(); $event.preventDefault()" [disabled]="submitting()">Next</gom-lib-button>
+            } @else {
+              <gom-lib-button type="button" variant="secondary" (click)="saveDraft()" (keydown.enter)="saveDraft()" (keydown.space)="saveDraft(); $event.preventDefault()" [disabled]="submitting()">Save as Draft</gom-lib-button>
+              @if (form.controls.scheduleMode.value === 'Later') {
+                <gom-lib-button type="button" variant="primary" (click)="scheduleNotification()" (keydown.enter)="scheduleNotification()" (keydown.space)="scheduleNotification(); $event.preventDefault()" [disabled]="submitting()">Schedule Notification</gom-lib-button>
+              } @else {
+                <gom-lib-button type="button" variant="primary" (click)="requestSendConfirmation()" (keydown.enter)="requestSendConfirmation()" (keydown.space)="requestSendConfirmation(); $event.preventDefault()" [disabled]="submitting()">Send Notification</gom-lib-button>
+              }
+            }
+          </div>
+        </footer>
+      </div>
+
+      <aside class="notification-create__preview-side card-surface">
+        <p class="notification-create__preview-side-label">Live Preview</p>
+        @if (activePreview() === 'Push') {
+          <div class="notification-create__phone-card">
+            <p class="notification-create__phone-app">FreshKart</p>
+            <strong>{{ form.controls.pushTitle.value || 'Diwali Special Offer' }}</strong>
+            <p>{{ form.controls.pushMessage.value || 'Celebrate Diwali with us! Get 20% OFF on selected products.' }}</p>
+          </div>
+        }
+        @if (activePreview() === 'Email') {
+          <div class="notification-create__email-card">
+            <p class="notification-create__phone-app">FreshKart Promotions</p>
+            <strong>{{ form.controls.emailSubject.value || 'Celebrate Diwali with Us!' }}</strong>
+            <div
+              class="notification-create__rich-preview"
+              [innerHTML]="form.controls.emailBody.value || '<p>Get ready for the festive season with a spectacular deal.</p>'"
+            ></div>
+          </div>
+        }
+        @if (activePreview() === 'WhatsApp') {
+          <div class="notification-create__whatsapp-card">
+            <p class="notification-create__phone-app">FreshKart Updates</p>
+            <strong>{{ form.controls.whatsAppTemplate.value || 'Promotional Offer (Approved)' }}</strong>
+            <p>{{ form.controls.whatsAppBody.value || 'Hi Sarah, celebrate Diwali with FreshKart!' }}</p>
+          </div>
+        }
+      </aside>
+    </div>
+  }
+
+  @if (showSendConfirm()) {
+    <div class="notification-create__dialog-backdrop">
+      <div class="notification-create__dialog card-surface">
+        <div class="notification-create__dialog-icon"><i class="ri-notification-3-line"></i></div>
+        <h3>Send notification to {{ recipients().toLocaleString() }} customers?</h3>
+        <p>This notification will be sent immediately through the selected channels and cannot be undone.</p>
+        <div class="notification-create__dialog-actions">
+          <gom-lib-button type="button" variant="secondary" (click)="cancelSendConfirmation()" (keydown.enter)="cancelSendConfirmation()" (keydown.space)="cancelSendConfirmation(); $event.preventDefault()" [disabled]="submitting()">Cancel</gom-lib-button>
+          <gom-lib-button type="button" variant="primary" (click)="confirmSend()" (keydown.enter)="confirmSend()" (keydown.space)="confirmSend(); $event.preventDefault()" [disabled]="submitting()">Send Notification</gom-lib-button>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (showCancelConfirm()) {
+    <div class="notification-create__dialog-backdrop">
+      <div class="notification-create__dialog card-surface">
+        <div class="notification-create__dialog-icon notification-create__dialog-icon--warn"><i class="ri-close-circle-line"></i></div>
+        <h3>Discard this notification?</h3>
+        <p>Your progress will be lost if you leave this wizard now.</p>
+        <div class="notification-create__dialog-actions">
+          <gom-lib-button type="button" variant="secondary" (click)="closeCancelConfirm()" (keydown.enter)="closeCancelConfirm()" (keydown.space)="closeCancelConfirm(); $event.preventDefault()">Keep Editing</gom-lib-button>
+          <gom-lib-button type="button" variant="primary" (click)="confirmCancel()" (keydown.enter)="confirmCancel()" (keydown.space)="confirmCancel(); $event.preventDefault()">Discard</gom-lib-button>
+        </div>
+      </div>
+    </div>
+  }
+</section>

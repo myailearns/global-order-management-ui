@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, OnChanges, Output, SimpleChanges, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
@@ -6,6 +6,8 @@ import { GomButtonComponent, GomTableColumn, GomTableComponent, GomTableQuery, G
 import { UNIT_DEFAULT_STATUS, UNIT_UI_TEXT } from '../units.constants';
 import { Unit } from '../units.service';
 import { DisableIfNoFeatureDirective } from '../../../../shared/directives/disable-if-no-feature.directive';
+import { PageHeadingComponent } from '../../../../shared/components/page-heading/page-heading.component';
+import { getNavIcon } from '../../../../shared/components/layout/nav.config';
 
 interface UnitTableRow extends GomTableRow {
   _id?: string;
@@ -24,7 +26,7 @@ export interface UnitAction {
 @Component({
   selector: 'gom-units-list',
   standalone: true,
-  imports: [CommonModule, TranslateModule, GomTableComponent, GomButtonComponent, DisableIfNoFeatureDirective],
+  imports: [CommonModule, TranslateModule, GomTableComponent, GomButtonComponent, DisableIfNoFeatureDirective, PageHeadingComponent],
   templateUrl: './units-list.component.html',
   styleUrl: './units-list.component.scss',
 })
@@ -43,10 +45,18 @@ export class UnitsListComponent implements OnChanges {
   @Output() action = new EventEmitter<UnitAction>();
   @Output() addNew = new EventEmitter<void>();
   @Output() queryChange = new EventEmitter<GomTableQuery>();
+  readonly headingIcon = getNavIcon('/masters/units');
+  readonly viewportWidth = signal<number>(window.innerWidth);
+  readonly isMobileHeader = computed<boolean>(() => this.viewportWidth() <= 768);
 
   readonly text = UNIT_UI_TEXT;
   readonly mobileCardFields: string[] = ['name', 'symbol', 'baseUnit', 'status'];
   private readonly translate = inject(TranslateService);
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.viewportWidth.set(window.innerWidth);
+  }
 
   readonly columns: GomTableColumn<UnitTableRow>[] = [
     { key: 'name', header: UNIT_UI_TEXT.nameLabel, sortable: true, filterable: true, width: '16rem' },
@@ -59,9 +69,9 @@ export class UnitsListComponent implements OnChanges {
       header: UNIT_UI_TEXT.actionsLabel,
       width: '9rem',
       actionButtons: [
-        { label: UNIT_UI_TEXT.viewAction, actionKey: 'view', variant: 'secondary' },
-        { label: UNIT_UI_TEXT.editAction, actionKey: 'edit', variant: 'secondary' },
-        { label: UNIT_UI_TEXT.deleteAction, actionKey: 'delete', variant: 'secondary' },
+        { label: UNIT_UI_TEXT.viewAction, icon: 'ri-eye-line', actionKey: 'view', variant: 'secondary' },
+        { label: UNIT_UI_TEXT.editAction, icon: 'ri-pencil-line', actionKey: 'edit', variant: 'secondary' },
+        { label: UNIT_UI_TEXT.deleteAction, icon: 'ri-delete-bin-line', actionKey: 'delete', variant: 'secondary' },
       ],
     },
   ];
@@ -143,12 +153,12 @@ export class UnitsListComponent implements OnChanges {
         : this.translate.instant('common.status.active');
     this.columns[5].header = this.translate.instant(this.text.actionsLabel);
     this.columns[5].actionButtons = [
-      { label: this.translate.instant(this.text.viewAction), actionKey: 'view', variant: 'secondary' },
+      { label: this.translate.instant(this.text.viewAction), icon: 'ri-eye-line', actionKey: 'view', variant: 'secondary' },
       ...(this.canEdit ? [
-        { label: this.translate.instant(this.text.editAction), actionKey: 'edit', variant: 'secondary' as const },
+        { label: this.translate.instant(this.text.editAction), icon: 'ri-pencil-line', actionKey: 'edit', variant: 'secondary' as const },
       ] : []),
       ...(this.canDelete ? [
-        { label: this.translate.instant(this.text.deleteAction), actionKey: 'delete', variant: 'secondary' as const },
+        { label: this.translate.instant(this.text.deleteAction), icon: 'ri-delete-bin-line', actionKey: 'delete', variant: 'secondary' as const },
       ] : []),
     ];
   }

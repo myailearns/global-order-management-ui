@@ -1,0 +1,101 @@
+<section class="price-history" aria-labelledby="price-history-title">
+  <header class="price-history__header">
+    <div class="price-history__header-copy">
+      <button type="button" class="price-history__back-link" (click)="goToPricing()">
+        <i class="ri-arrow-left-line" aria-hidden="true"></i>
+        Back to Pricing
+      </button>
+      <h1 id="price-history-title">Price History - {{ displayName() }}</h1>
+      <p>Audit trail and historical pricing trend analytics</p>
+    </div>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="price-history__error" role="alert">{{ errorMessage() }}</div>
+  }
+
+  <section class="price-history__trend" aria-label="Price trend over time">
+    <div class="price-history__trend-head">
+      <h2>Price Trend Over Time</h2>
+      <div class="price-history__range" role="tablist" aria-label="Price trend range">
+        @for (option of rangeOptions; track option.value) {
+          <button
+            type="button"
+            class="price-history__range-btn"
+            [class.is-active]="selectedRange() === option.value"
+            (click)="setRange(option.value)">
+            {{ option.label }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="price-history__trend-grid">
+      <div class="price-history__summary">
+        <small>{{ rangeHint() }}</small>
+        <span>Current selling price</span>
+        <strong>{{ currentPrice() | currency: 'INR' : 'symbol' : '1.2-2' : 'en-IN' }}</strong>
+        <p [class.is-positive]="netChange() >= 0" [class.is-negative]="netChange() < 0">
+          {{ netChange() >= 0 ? '+' : '-' }}{{ (netChange() < 0 ? -netChange() : netChange()) | currency: 'INR' : 'symbol' : '1.2-2' : 'en-IN' }}
+          ({{ netChangePercent() | number: '1.1-1' }}% total)
+        </p>
+        <small class="price-history__summary-note">{{ dateRangeHint() }}</small>
+      </div>
+
+      <div class="price-history__chart">
+        @if (chartPlotPoints().length) {
+          <svg viewBox="0 0 720 220" preserveAspectRatio="none" aria-hidden="true">
+            <rect class="price-history__chart-panel" x="56" y="14" width="644" height="156"></rect>
+
+            @for (tick of chartYAxisTicks(); track $index) {
+              <line class="price-history__chart-grid" [attr.x1]="56" [attr.y1]="tick.y" [attr.x2]="700" [attr.y2]="tick.y"></line>
+              <text class="price-history__chart-y-label" x="8" [attr.y]="tick.y + 4">{{ tick.label }}</text>
+            }
+
+            <polyline class="price-history__chart-line" [attr.points]="chartPolylinePoints()"></polyline>
+
+            @for (point of chartPlotPoints(); track $index) {
+              <circle class="price-history__chart-point" [attr.cx]="point.x" [attr.cy]="point.y" r="2.8"></circle>
+            }
+
+            @if (chartLatestPoint(); as latest) {
+              <g>
+                <circle class="price-history__chart-point-latest" [attr.cx]="latest.x" [attr.cy]="latest.y" r="4"></circle>
+                <rect class="price-history__chart-badge" [attr.x]="latest.x - 12" [attr.y]="latest.y - 28" width="34" height="16" rx="8"></rect>
+                <text class="price-history__chart-badge-text" [attr.x]="latest.x + 5" [attr.y]="latest.y - 16">₹{{ latest.value | number: '1.0-0' }}</text>
+              </g>
+            }
+
+            @for (point of chartXAxisLabels(); track $index) {
+              <text class="price-history__chart-x-label" [attr.x]="point.x" y="198">{{ point.label }}</text>
+            }
+          </svg>
+        } @else {
+          <p class="price-history__chart-empty">No trend data available.</p>
+        }
+      </div>
+    </div>
+  </section>
+
+  <section class="price-history__table-wrap" aria-label="Price history entries">
+    <gom-lib-table
+      [columns]="columns"
+      [rows]="tableRows()"
+      [loading]="loading()"
+      dataMode="client"
+      [totalItems]="tableRows().length"
+      [pageIndex]="0"
+      [pageSize]="10"
+      [pageSizeOptions]="[10, 20, 50]"
+      [showSearch]="true"
+      searchPlaceholder="Search by reason, actor, or source"
+      [showFilterButton]="false"
+      [enableColumnSearch]="false"
+      [enableColumnVisibility]="true"
+      [mobileCardView]="true"
+      [mobileCardFields]="['previousPrice', 'newPrice', 'change', 'actorId', 'source', 'reason']"
+      emptyMessage="No price history found for this scope."
+      selectionItemLabel="entry">
+    </gom-lib-table>
+  </section>
+</section>

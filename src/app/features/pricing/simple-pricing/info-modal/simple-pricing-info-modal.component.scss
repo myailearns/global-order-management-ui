@@ -1,0 +1,27 @@
+@use "theme" as theme;
+
+.simple-pricing-info {
+  display: flex;
+  flex-direction: column;
+  gap: theme.get-gap(xs);
+
+  &__row {
+    display: flex;
+    justify-content: space-between;
+    gap: theme.get-gap(sm);
+    align-items: center;
+  }
+
+  &__row--block {
+    display: block;
+  }
+
+  &__label {
+    color: theme.get-text(default-light);
+  }
+
+  p {
+    margin: theme.get-gap(xs) 0 0;
+    color: theme.get-text(default);
+  }
+}

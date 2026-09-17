@@ -31,6 +31,36 @@
   gap: 0.75rem;
 }
 
+.saas-accounts__step-indicator {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  border: 1px solid var(--gom-color-border);
+  border-radius: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  background: var(--gom-color-background-secondary);
+}
+
+.saas-accounts__step-indicator span {
+  color: var(--gom-color-text-secondary);
+  font-size: 0.9rem;
+}
+
+.saas-accounts__summary-card {
+  border: 1px solid var(--gom-color-border);
+  border-radius: 0.5rem;
+  padding: 0.7rem;
+  display: grid;
+  gap: 0.35rem;
+  background: #f8fbff;
+}
+
+.saas-accounts__summary-card h4,
+.saas-accounts__summary-card p {
+  margin: 0;
+}
+
 .saas-accounts__form h3 {
   margin: 0.5rem 0 0;
   font-size: 1rem;
@@ -60,6 +90,12 @@
   gap: 0.75rem;
 }
 
+.saas-accounts__accordion-content {
+  display: grid;
+  gap: 0.75rem;
+  padding-top: 0.35rem;
+}
+
 .saas-accounts__audit-list {
   display: grid;
   gap: 0.75rem;
@@ -86,6 +122,21 @@
   padding: 0.75rem;
   border-radius: 0.5rem;
   background: var(--gom-color-background-secondary);
+  color: var(--gom-color-text-secondary);
+}
+
+.saas-accounts__pending-panel {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.saas-accounts__pending-header h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.saas-accounts__pending-header p {
+  margin: 0.25rem 0 0;
   color: var(--gom-color-text-secondary);
 }
 
@@ -144,6 +195,84 @@
 
 .saas-accounts__validation-summary ul {
   margin: 0.5rem 0 0;
+}
+
+.saas-accounts__payment-match-panel {
+  border: 1px solid var(--gom-color-border);
+  border-radius: 0.5rem;
+  padding: 0.65rem 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--gom-color-background-secondary);
+}
+
+.saas-accounts__payment-match-panel p {
+  margin: 0;
+}
+
+.saas-accounts__match-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 6rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.saas-accounts__match-badge--ok {
+  background: #e6f7ef;
+  color: #106a43;
+}
+
+.saas-accounts__match-badge--warn {
+  background: #fff3e0;
+  color: #9c4f00;
+}
+
+.saas-accounts__match-badge--neutral {
+  background: #edf2f7;
+  color: #425466;
+}
+
+.saas-accounts__status-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+  margin-right: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.saas-accounts__status-chip--ok {
+  background: #e6f7ef;
+  color: #106a43;
+}
+
+.saas-accounts__status-chip--info {
+  background: #e8f2ff;
+  color: #0f4c81;
+}
+
+.saas-accounts__status-chip--warn {
+  background: #fff3e0;
+  color: #9c4f00;
+}
+
+.saas-accounts__status-chip--danger {
+  background: #fdecea;
+  color: #b42318;
+}
+
+.saas-accounts__status-chip--neutral {
+  background: #edf2f7;
+  color: #425466;
 }
 
 @media (max-width: 900px) {

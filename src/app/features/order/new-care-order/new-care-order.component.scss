@@ -1,0 +1,2964 @@
+@use "theme" as theme;
+
+.pos-page {
+  height: calc(100vh - 170px);
+  min-height: calc(100vh - 170px);
+  display: flex;
+  flex-direction: column;
+  background: theme.get-background(secondary);
+  border-radius: 12px;
+  overflow: hidden;
+  border: theme.get-border-size(thin) solid theme.get-border(standard);
+}
+
+.pos-page-header {
+  flex: 0 0 auto;
+  padding: 12px 14px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: theme.get-border-size(thin) solid theme.get-border(standard);
+  background: theme.get-background(standard);
+}
+
+.pos-page-header__title-group {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.pos-page-header__heading {
+  margin: 0;
+  @include theme.typography-heading(sm);
+  color: theme.get-text(primary);
+}
+
+.pos-page-header__subtitle {
+  @include theme.typography-caption;
+  color: theme.get-text(default-light);
+}
+
+.pos-page-header__menu {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.pos-page-header__menu-trigger {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: theme.get-border-size(thin) solid theme.get-border(standard);
+  border-radius: 8px;
+  background: theme.get-background(standard);
+  color: theme.get-text(default);
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.pos-page-header__menu-trigger--active {
+  background: theme.get-background(primary-light);
+  border-color: theme.get-border(primary);
+  color: theme.get-text(primary);
+}
+
+.pos-page-header__submenu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 180px;
+  padding: 6px;
+  border-radius: 10px;
+  border: theme.get-border-size(thin) solid theme.get-border(standard);
+  background: theme.get-background(standard);
+  box-shadow: theme.get-shadow(overlay);
+  display: grid;
+  gap: 4px;
+  z-index: 30;
+}
+
+.pos-page-header__submenu-item {
+  width: 100%;
+  min-height: 32px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: theme.get-text(default);
+  text-align: left;
+  @include theme.typography-caption;
+  font-weight: theme.get-font-weight(semibold);
+  cursor: pointer;
+}
+
+.pos-page-header__submenu-item:hover,
+.pos-page-header__submenu-item--active {
+  background: theme.get-background(primary-light);
+  color: theme.get-text(primary);
+}
+
+.pos-mobile-account,
+.pos-mobile-nav {
+  display: none;
+}
+
+.pos-shortcuts {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 14px;
+  border-top: theme.get-border-size(thin) solid theme.get-border(standard);
+  background: theme.get-background(standard);
+}
+
+.pos-shortcuts__title {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: theme.get-text(primary);
+  @include theme.typography-caption;
+  font-weight: theme.get-font-weight(semibold);
+  white-space: nowrap;
+}
+
+.pos-shortcuts__title i {
+  font-size: 1rem;
+}
+
+.pos-shortcuts__list {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px 14px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.pos-shortcuts__list > span {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: theme.get-text(default);
+  @include theme.typography-caption;
+  white-space: nowrap;
+}
+
+.pos-shortcuts kbd {
+  padding: 2px 6px;
+  border: theme.get-border-size(thin) solid theme.get-border(standard);
+  border-radius: 5px;
+  background: theme.get-background(secondary);
+  color: theme.get-text(primary);
+  font-family: inherit;
+  font-size: 0.68rem;
+  line-height: 1.25;
+  font-weight: theme.get-font-weight(semibold);
+  box-shadow: 0 1px 0 theme.get-border(standard);
+}
+
+.pos-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(220px, 3fr) 10px minmax(440px, 6fr) minmax(280px, 3fr);
+}
+
+.pos-body--resizing {
+  cursor: col-resize;
+  user-select: none;
+}
+
+.pos-categories {
+  background: theme.get-background(standard);
+  border-right: theme.get-border-size(thin) solid theme.get-border(light);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.pos-categories__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pos-section-title {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pos-categories h2 {
+  margin: 0;
+  @include theme.typography-caption;
+  color: theme.get-text(hint);
+  font-weight: theme.get-font-weight(semibold);
+}
+
+.pos-categories__reset {
+  border: 0;
+  background: transparent;
+  color: theme.get-text(primary);
+  @include theme.typography-caption;
+  font-weight: theme.get-font-weight(semibold);
+  cursor: pointer;
+}
+
+.pos-categories__list {
+  display: grid;
+  gap: 8px;
+  overflow: auto;
+}
+
+.pos-categories__resizer {
+  position: relative;
+  width: 10px;
+  min-width: 10px;
+  margin: 0;
+  cursor: col-resize;
+  background: theme.get-background(secondary);
+  border-right: theme.get-border-size(thin) solid theme.get-border(light);
+  border-left: theme.get-border-size(thin) solid theme.get-border(light);
+  border-top: 0;
+  border-bottom: 0;
+}
+
+.pos-categories__resizer::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4px;
+  height: 56px;
+  transform: translate(-50%, -50%);
+  border-radius: 999px;
+  background: theme.get-border(standard);
+}
+
+.pos-body--resizing .pos-categories__resizer::after,
+.pos-categories__resizer:hover::after {
+  background: theme.get-border(primary);
+}
+
+.pos-categories__item {
+  min-height: 44px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: theme.get-background(standard);
+  text-align: left;
+  padding: 8px 12px;
+  @include theme.typography-body;
+  font-weight: theme.get-font-weight(semibold);
+  color: theme.get-text(default);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pos-categories__item-thumb {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: theme.get-background(secondary);
+  color: theme.get-text(hint);
+  flex: 0 0 auto;
+}
+
+.pos-categories__item-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pos-categories__item-fallback {
+  @include theme.typography-caption;
+  font-weight: theme.get-font-weight(semibold);
+}
+
+.pos-categories__item-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pos-categories__item--active {
+  background: theme.get-background(primary);
+  border-color: theme.get-border(primary);
+  color: theme.get-text(on-primary);
+}
+
+.pos-categories__loading {
+  display: grid;
+  gap: 8px;
+}
+
+.pos-categories__skeleton {
+  height: 42px;
+  border-radius: 10px;
+  background: linear-gradient(
+    90deg,
+    theme.get-background(tertiary) 0%,
+    theme.get-background(secondary) 50%,
+    theme.get-background(tertiary) 100%
+  );
+  background-size: 180% 100%;
+  animation: pos-shimmer 1.2s linear infinite;
+}
+
+.pos-categories__error {
+  display: grid;
+  gap: 10px;
+  @include theme.typography-body;
+  color: theme.get-text(default);
+}
+
+.pos-products {
+  background: theme.get-background(secondary);
+  padding: 14px 16px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.pos-products__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.pos-products__heading {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+
+.pos-products__heading h2 {
+  margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  @include theme.typography-heading(md);
+  color: theme.get-text(primary);
+}
+
+.pos-products__heading > span {
+  flex-shrink: 0;
+  @include theme.typography-caption;
+  color: theme.get-text(hint);
+  font-weight: theme.get-font-weight(semibold);
+}
+
+
+.pos-products__group-chips {
+  display: flex;
+  align-items: center;
+  min-height: 42px;
+  flex: 0 0 42px;
+  gap: 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 2px 1px 10px;
+  box-sizing: border-box;
+  scrollbar-width: none;
+}
+
+.pos-products__group-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.pos-products__chip {
+  flex: 0 0 auto;
+  min-width: max-content;
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  appearance: none;
+  border: theme.get-border-size(thin) solid theme.get-border(standard);
+  border-radius: 999px;
+  background: theme.get-background(standard);
+  color: theme.get-text(default);
+  @include theme.typography-caption;
+  font-weight: theme.get-font-weight(semibold);
+  padding: 7px 12px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.pos-products__chip--active {
+  background: theme.get-background(primary-light);
+  border-color: theme.get-border(primary);
+  color: theme.get-text(primary);
+}
+
+.pos-products__scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.pos-products__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.pos-products__grid--loading {
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+}
+
+.pos-product {
+  padding: 0;
+  border-radius: 16px;
+  border: theme.get-border-size(thin) solid theme.get-border(standard);
+  background: theme.get-background(standard);
+  overflow: hidden;
+  text-align: left;
+  cursor: default;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.07);
+  display: flex;
+  flex-direction: column;
+  min-height: 210px;
+}
+
+.pos-product__detail-trigger {
+  min-width: 0;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.pos-product__detail-trigger:focus-visible {
+  outline: 2px solid theme.get-border(primary);
+  outline-offset: -2px;
+}
+
+.pos-product--active {
+  border-color: theme.get-border(primary);
+  box-shadow: 0 0 0 1px rgba(11, 98, 143, 0.15), 0 6px 16px rgba(15, 23, 42, 0.1);
+}
+
+.pos-product--keyboard-selected {
+  outline: 3px solid theme.get-border(primary);
+  outline-offset: -3px;
+}
+
+.pos-product__image {
+  position: relative;
+  height: 96px;
+  min-height: 96px;
+  flex: 0 0 96px;
+  background: theme.get-background(secondary);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.pos-product__qty-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: theme.get-background(primary);
+  border: theme.get-border-size(thin) solid theme.get-border(primary);
+  color: theme.get-text(on-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  @include theme.typography-caption;
+  font-weight: theme.get-font-weight(semibold);
+  z-index: 1;
+}
+
+.pos-product__image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pos-product__fallback {
+  font-size: 42px;
+  line-height: 1;
+  color: theme.get-text(hint);
+  font-weight: 700;
+}
+
+.pos-product__body {
+  display: flex;
+  flex-direction: column;
+  padding: 0 10px 12px;
+  background: theme.get-background(standard);
+  box-sizing: border-box;
+}
+
+.pos-product__summary {
+  flex: 1 1 auto;
+  min-height: 80px;
+  padding: 10px 10px 4px;
+  background: theme.get-background(standard);
+  box-sizing: border-box;
+}
+
+.pos-product__name {
+  min-height: 18px;
+  display: block;
+  line-height: 1.25;
+  @include theme.typography-label;
+  font-weight: theme.get-font-weight(semibold);
+  color: theme.get-text(primary);
+}
+
+.pos-product__price-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 6px;
+}
+
+.pos-product__price {
+  @include theme.typography-body;
+  font-weight: theme.get-font-weight(semibold);
+  color: theme.get-text(primary);
+}
+
+.pos-product__mrp {
+  @include theme.typography-caption;
+  color: theme.get-text(hint);
+  text-decoration: line-through;
+  font-weight: theme.get-font-weight(medium);
+}
+
+.pos-product__subtext {
+  min-height: 14px;
+  display: block;
+  margin-top: 4px;
+  @include theme.typography-caption;
+  color: theme.get-text(hint);
+}
+
+.pos-product__footer {
+  display: flex;
+  justify-content: center;
+  margin-top: auto;
+  padding-top: 0.35rem;
+}
+
+.pos-product__add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 90px;
+  padding: 0.35rem 1.25rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: theme.get-background(primary-light);
+  color: theme.get-text(primary);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+
+.pos-product__stepper {
+  display: inline-flex;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background: theme.get-background(primary);
+}
+
+.pos-product__stepper button,
+.pos-product__stepper span {
+  width: 1.75rem;
+  height: 1.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: theme.get-text(on-primary);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.pos-product__stepper button {
+  cursor: pointer;
+}
+
+.pos-detail {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.85fr) minmax(320px, 1.15fr);
+  gap: 24px;
+  min-height: 420px;
+}
+
+.pos-detail__media {
+  min-height: 360px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 14px;
+  background: theme.get-background(secondary);
+}
+
+.pos-detail__media img {
+  width: 100%;
+  height: 100%;
+  max-height: 460px;
+  object-fit: contain;
+}
+
+.pos-detail__content {
+  min-width: 0;
+  padding: 8px 4px;
+}
+
+.pos-detail__content h3 {
+  margin: 0;
+  @include theme.typography-heading(lg);
+  color: theme.get-text(primary);
+}
+
+.pos-detail__price-row {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.pos-detail__price-row > strong {
+  font-size: 1.5rem;
+  line-height: 1;
+  color: theme.get-text(primary);
+}
+
+.pos-detail__mrp {
+  color: theme.get-text(hint);
+  text-decoration: line-through;
+}
+
+.pos-detail__discount {
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: theme.get-background(success-light);
+  color: theme.get-text(success);
+  @include theme.typography-caption;
+  font-weight: theme.get-font-weight(semibold);
+}
+
+.pos-detail__unit {
+  color: theme.get-text(default);
+  @include theme.typography-body;
+}
+
+.pos-detail__section {
+  margin-top: 24px;
+}
+
+.pos-detail__section h4 {
+  margin: 0 0 10px;
+  @include theme.typography-caption;
+  color: theme.get-text(hint);
+  font-weight: theme.get-font-weight(semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.pos-detail__section p {
+  margin: 0;
+  @include theme.typography-body;
+  color: theme.get-text(default);
+  line-height: 1.6;
+}
+
+.pos-detail__variants {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.pos-detail__custom {
+  padding: 14px;
+  border: theme.get-border-size(thin) solid theme.get-border(standard);
+  border-radius: 12px;
+  background: theme.get-background(secondary);
+}
+
+.pos-detail__custom-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(140px, 0.7fr);
+  gap: 10px;
+  align-items: end;
+}
+
+.pos-detail__custom-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 10px 0;
+  color: theme.get-text(hint);
+  @include theme.typography-caption;
+}
+
+.pos-detail__custom-summary strong {
+  color: theme.get-text(primary);
+  @include theme.typography-heading(sm);
+}
+
+.pos-detail__variant {
+  min-width: 88px;
+  min-height: 82px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 10px 14px;
+  border: 2px solid theme.get-border(standard);
+  border-radius: 12px;
+  background: theme.get-background(standard);
+  color: theme.get-text(default);
+  cursor: pointer;
+}
+
+.pos-detail__variant--selected {
+  border-color: theme.get-border(primary);
+  background: theme.get-background(primary-light);
+  color: theme.get-text(primary);
+}
+
+.pos-detail__variant span {
+  @include theme.typography-caption;
+  font-weight: theme.get-font-weight(semibold);
+}
+
+.pos-detail__variant small {
+  color: theme.get-text(hint);
+  text-decoration: line-through;
+}
+
+.pos-detail__divider {
+  height: 1px;
+  margin: 20px 0;
+  background: theme.get-border(light);
+}
+
+.pos-detail__quantity-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  color: theme.get-text(primary);
+  font-weight: theme.get-font-weight(semibold);
+}
+
+.pos-detail__stepper {
+  display: inline-flex;
+  align-items: center;
+  overflow: hidden;
+  border: theme.get-border-size(thin) solid theme.get-border(standard);
+  border-radius: 999px;
+}
+
+.pos-detail__stepper button,
+.pos-detail__stepper strong {
+  width: 42px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: theme.get-background(standard);
+  color: theme.get-text(primary);
+}
+
+.pos-detail__stepper button {
+  cursor: pointer;
+}
+
+.pos-detail__stepper button:disabled {
+  color: theme.get-text(disabled);
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.pos-detail__add {
+  min-height: 40px;
+  padding: 0 18px;
+  border: theme.get-border-size(thin) solid theme.get-border(primary);
+  border-radius: 10px;
+  background: theme.get-background(primary);
+  color: theme.get-text(on-primary);
+  font-weight: theme.get-font-weight(semibold);
+  cursor: pointer;
+}
+
+.pos-product-skeleton {
+  height: 165px;
+  border-radius: 14px;
+  background: linear-gradient(
+    90deg,
+    theme.get-background(tertiary) 0%,
+    theme.get-background(secondary) 50%,
+    theme.get-background(tertiary) 100%
+  );
+  background-size: 180% 100%;
+  animation: pos-shimmer 1.2s linear infinite;
+}
+
+.pos-products__empty {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  color: theme.get-text(hint);
+  text-align: center;
+  @include theme.typography-body;
+}
+
+.pos-products__empty-state {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  justify-items: center;
+  gap: 10px;
+  text-align: center;
+  padding: 24px;
+}
+
+.pos-products__empty-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: theme.get-background(secondary);
+  color: theme.get-text(default);
+}
+
+.pos-products__empty-icon svg {
+  width: 36px;
+  height: 36px;
+}
+
+.pos-products__empty-title {
+  margin: 4px 0 0;
+  @include theme.typography-heading(sm);
+  color: theme.get-text(primary);
+}
+
+.pos-products__empty-subtitle {
+  margin: 0;
+  max-width: 480px;
+  @include theme.typography-body;
+  color: theme.get-text(hint);
+}
+
+.pos-products__loading {
+  text-align: center;
+  margin: 10px 0;
+  @include theme.typography-caption;
+  color: theme.get-text(default);
+  font-weight: theme.get-font-weight(semibold);
+}
+
+.pos-cart {
+  background: theme.get-background(standard);
+  border-left: theme.get-border-size(thin) solid theme.get-border(standard);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+
+.pos-cart__header {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  border-bottom: theme.get-border-size(thin) solid theme.get-border(light);
+}
+
+.pos-cart__header h2 {
+  margin: 0;
+  @include theme.typography-heading(sm);
+  color: theme.get-text(primary);
+}
+
+.pos-cart__header .pos-section-title {
+  overflow: hidden;
+}
+
+.pos-cart__header .pos-section-title h2 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pos-cart__clear {
+  border: 0;
+  background: transparent;
+  color: theme.get-text(danger);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pos-cart__clear:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.pos-cart__clear-confirm {
+  border-top: theme.get-border-size(thin) solid theme.get-border(danger);
+  border-bottom: theme.get-border-size(thin) solid theme.get-border(danger);
+  background: theme.get-background(danger-light);
+  padding: 10px 12px 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.pos-cart__clear-confirm p {
+  margin: 0;
+  @include theme.typography-body;
+  color: theme.get-text(danger);
+  font-weight: theme.get-font-weight(semibold);
+}
+
+.pos-cart__clear-confirm-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pos-cart__clear-cancel {
+  border: 0;
+  background: transparent;
+  color: theme.get-text(default);
+  @include theme.typography-body;
+  font-weight: theme.get-font-weight(semibold);
+  cursor: pointer;
+}
+
+.pos-cart__clear-confirm-btn {
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 8px;
+  background: theme.get-background(danger);
+  border: theme.get-border-size(thin) solid theme.get-border(danger);
+  color: theme.get-text(on-primary);
+  @include theme.typography-caption;
+  font-weight: theme.get-font-weight(semibold);
+  cursor: pointer;
+}
+
+.pos-cart__customer {
+  margin: 10px 10px 8px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 8px;
+  align-items: center;
+  padding: 8px;
+  border: theme.get-border-size(thin) solid theme.get-border(standard);
+  border-radius: 12px;
+}
+
+.pos-cart__customer--selected {
+
+  .pos-cart__member-required {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: -2px 10px 8px;
+    color: theme.get-text(danger);
+    @include theme.typography-caption;
+  }
+  border-color: theme.get-border(primary);
+  background: theme.get-background(primary-light);
+}
+
+.pos-cart__avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: theme.get-background(secondary);
+}
+
+.pos-cart__customer-info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.pos-cart__customer-info strong {
+  @include theme.typography-label;
+  color: theme.get-text(primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pos-cart__customer-info span {
+  @include theme.typography-caption;
+  color: theme.get-text(hint);
+}
+
+.pos-cart__add-customer {
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: theme.get-border-size(thin) solid theme.get-border(primary);
+  background: theme.get-background(standard);
+  color: theme.get-text(primary);
+  @include theme.typography-caption;
+  font-weight: theme.get-font-weight(semibold);
+  cursor: pointer;
+}
+
+.pos-cart__add-customer--disconnect {
+  border-color: transparent;
+  color: theme.get-text(danger);
+  background: transparent;
+}
+
+.pos-cart__type-row {
+  margin: 0 10px 8px;
+  border: theme.get-border-size(thin) solid theme.get-border(standard);
+  border-radius: 10px;
+  padding: 6px 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+}
+
+.pos-cart__type-label {
+  flex: 0 0 auto;
+  @include theme.typography-caption;
+  color: theme.get-text(hint);
+}
+
+.pos-cart__type-row gom-lib-chip {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.pos-cart__type-change {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  border: 0;
+  background: transparent;
+  color: theme.get-text(primary);
+  @include theme.typography-caption;
+  font-weight: theme.get-font-weight(semibold);
+  cursor: pointer;
+}
+
+.pos-order-type {
+  margin: 0 10px 10px;
+  padding: 12px;
+  max-height: min(560px, 68vh);
+  overflow-y: auto;
+  display: grid;
+  gap: 10px;
+  border: theme.get-border-size(thin) solid theme.get-border(primary);
+  border-radius: 12px;
+  background: theme.get-background(standard);
+}
+
+.pos-order-type__eyebrow {
+  color: theme.get-text(hint);
+  @include theme.typography-caption;
+  font-weight: theme.get-font-weight(semibold);
+}
+
+.pos-order-type__choices {
+  display: grid;
+  gap: 8px;
+}
+
+.pos-order-type__choice {
+  width: 100%;
+  min-height: 38px;
+  padding: 8px 10px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  border: theme.get-border-size(thin) solid theme.get-border(standard);
+  border-radius: 8px;
+  background: theme.get-background(standard);
+  color: theme.get-text(default);
+  text-align: left;
+  @include theme.typography-label;
+  font-weight: theme.get-font-weight(semibold);
+  cursor: pointer;
+}
+
+.pos-order-type__choice--active {
+  border-color: theme.get-border(primary);
+  background: theme.get-background(primary-light);
+  color: theme.get-text(primary);
+  box-shadow: 0 0 0 1px theme.get-border(primary);
+}
+
+.pos-order-type__pincode-status {
+  margin: -4px 0 0;
+  @include theme.typography-caption;
+}
+
+.pos-order-type__pincode-status--success {
+  color: theme.get-text(success);
+}
+
+.pos-order-type__pincode-status--error {
+  color: theme.get-text(danger);
+}
+
+.pos-order-type__actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+}
+
+.pos-pickup-details {
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+  border: theme.get-border-size(thin) solid theme.get-border(success);
+  border-radius: 12px;
+  background: color-mix(in srgb, theme.get-background(success-light) 40%, white);
+}
+
+.pos-pickup-details__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: theme.get-text(primary);
+  @include theme.typography-label;
+  font-weight: theme.get-font-weight(semibold);
+}
+
+.pos-pickup-details__locations {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pos-pickup-details__location {
+  min-height: 30px;
+  padding: 7px 12px;
+  border: theme.get-border-size(thin) solid theme.get-border(primary);
+  border-radius: 999px;
+  background: theme.get-background(standard);
+  color: theme.get-text(primary);
+  @include theme.typography-caption;
+  font-weight: theme.get-font-weight(semibold);
+  cursor: pointer;
+}
+
+.pos-pickup-details__location--selected {
+  background: theme.get-background(primary-light);
+}
+
+.pos-pickup-details__address,
+.pos-pickup-details__meta {
+  margin: 0;
+  @include theme.typography-caption;
+}
+
+.pos-pickup-details__address {
+  color: theme.get-text(default);
+}
+
+.pos-pickup-details__meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: theme.get-text(success);
+}
+
+.pos-pickup-details__window {
+  margin: 0;
+  padding: 10px 12px;
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 8px;
+  border-radius: 8px;
+  background: theme.get-background(success-light);
+  color: theme.get-text(success);
+  @include theme.typography-caption;
+}
+
+.pos-order-type-summary {
+  margin: 0 10px 8px;
+  padding: 9px 10px;
+  display: grid;
+  gap: 7px;
+  border-bottom: theme.get-border-size(thin) solid theme.get-border(primary);
+  background: theme.get-background(danger-light);
+}
+
+.pos-order-type-summary > div {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  @include theme.typography-caption;
+}
+
+.pos-order-type-summary span {
+  flex: 0 0 auto;
+  color: theme.get-text(default);
+  font-weight: theme.get-font-weight(semibold);
+}
+
+.pos-order-type-summary strong {
+  min-width: 0;
+  color: theme.get-text(primary);
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.pos-customer-flow {
+  margin: 0 10px 10px;
+  padding: 12px;
+  max-height: min(430px, 58vh);
+  overflow-y: auto;
+  display: grid;
+  gap: 10px;
+  border: theme.get-border-size(thin) solid theme.get-border(primary);
+  border-radius: 12px;
+  background: theme.get-background(standard);
+  box-shadow: 0 4px 14px rgb(0 0 0 / 8%);
+}
+
+.pos-customer-flow__heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: theme.get-text(primary);
+}
+
+.pos-customer-flow__heading strong {
+  @include theme.typography-body;
+  font-weight: theme.get-font-weight(semibold);
+}
+
+.pos-customer-flow__heading button {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: theme.get-text(hint);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.pos-customer-flow__hint,
+.pos-customer-flow__status,
+.pos-customer-flow__error,
+.pos-customer-flow__matches {
+  margin: 0;
+  @include theme.typography-caption;
+}
+
+.pos-customer-flow__hint,
+.pos-customer-flow__status {
+  color: theme.get-text(hint);
+}
+
+.pos-customer-flow__error,
+.pos-customer-flow__not-found strong {
+  color: theme.get-text(danger);
+}
+
+.pos-customer-flow__matches {
+  color: theme.get-text(success);
+  font-weight: theme.get-font-weight(semibold);
+}
+
+.pos-customer-flow__results,
+.pos-customer-flow__form {
+  display: grid;
+  gap: 10px;
+}
+
+.pos-customer-flow__results {
+  max-height: 210px;
+  overflow: auto;
+}
+
+.pos-customer-result {
+  padding: 10px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  border: theme.get-border-size(thin) solid theme.get-border(standard);
+  border-radius: 10px;
+  background: theme.get-background(primary-light);
+}
+
+.pos-customer-result__details {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.pos-customer-result__details strong,
+.pos-customer-result__details span,
+.pos-customer-result__details small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pos-customer-result__details strong {
+  @include theme.typography-label;
+  color: theme.get-text(primary);
+}
+
+.pos-customer-result__details span,
+.pos-customer-result__details small {
+  @include theme.typography-caption;
+  color: theme.get-text(hint);
+}
+
+.pos-customer-flow__not-found {
+  min-height: 74px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  text-align: center;
+}
+
+.pos-customer-flow__not-found strong {
+  @include theme.typography-body;
+  font-weight: theme.get-font-weight(semibold);
+}
+
+.pos-customer-flow__not-found span {
+  @include theme.typography-caption;
+  color: theme.get-text(hint);
+}
+
+.pos-customer-flow__divider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: theme.get-text(hint);
+  @include theme.typography-caption;
+}
+
+.pos-customer-flow__divider::before,
+.pos-customer-flow__divider::after {
+  content: '';
+  height: theme.get-border-size(thin);
+  flex: 1;
+  background: theme.get-border(light);
+}
+
+.pos-customer-flow__walk-in {
+  padding: 4px;
+  border: 0;
+  background: transparent;
+  color: theme.get-text(primary);
+  @include theme.typography-label;
+  font-weight: theme.get-font-weight(semibold);
+  text-align: center;
+  cursor: pointer;
+}
+
+.pos-customer-flow gom-lib-button {
+  width: 100%;
+}
+
+.pos-customer-flow__form-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.pos-customer-flow__form-actions gom-lib-button {
+  width: auto;
+  flex: 0 0 auto;
+}
+
+.pos-cart__items {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  border-top: theme.get-border-size(thin) solid theme.get-border(light);
+  border-bottom: theme.get-border-size(thin) solid theme.get-border(light);
+}
+
+.pos-cart__empty {
+  min-height: 120px;
+  display: grid;
+  place-items: center;
+  color: theme.get-text(hint);
+  @include theme.typography-body;
+}
+
+.pos-line-item {
+  padding: 10px;
+  border-bottom: theme.get-border-size(thin) solid theme.get-border(light);
+}
+
+.pos-line-item--selected,
+.pos-line-item:focus-within {
+  background: theme.get-background(primary-light);
+  box-shadow: inset 3px 0 0 theme.get-border(primary);
+}
+
+.pos-line-item__select {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.pos-line-item__select:focus-visible {
+  outline: 2px solid theme.get-border(primary);
+  outline-offset: 3px;
+}
+
+.pos-line-item__name {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.pos-line-item__name small {
+  color: theme.get-text(hint);
+  @include theme.typography-caption;
+}
+
+.pos-line-item__offer-hint {
+  color: theme.get-text(primary) !important;
+  font-weight: theme.get-font-weight(semibold);
+}
+
+.pos-line-item__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pos-line-item__top strong {
+  @include theme.typography-body;
+  color: theme.get-text(primary);
+  font-weight: theme.get-font-weight(semibold);
+}
+
+.pos-line-item__top span {
+  @include theme.typography-body;
+  font-weight: theme.get-font-weight(semibold);
+  color: theme.get-text(primary);
+}
+
+.pos-line-item__bottom {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pos-line-item__qty {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pos-line-item__qty button {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 6px;
+  background: theme.get-background(secondary);
+  color: theme.get-text(default);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pos-line-item__qty span {
+  min-width: 72px;
+  text-align: center;
+  @include theme.typography-caption;
+  font-weight: theme.get-font-weight(semibold);
+  color: theme.get-text(primary);
+}
+
+.pos-line-item__remove {
+  border: 0;
+  background: transparent;
+  color: theme.get-text(danger);
+  @include theme.typography-caption;
+  font-weight: theme.get-font-weight(semibold);
+  cursor: pointer;
+}
+
+.pos-cart__summary {
+  padding: 10px;
+  display: grid;
+  gap: 4px;
+}
+
+.pos-cart__offer-hints {
+  margin: 0 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: theme.get-border-size(thin) solid theme.get-border(primary);
+  background: theme.get-background(secondary);
+  display: grid;
+  gap: 4px;
+}
+
+.pos-cart__offer-hints p {
+  margin: 0;
+  @include theme.typography-caption;
+  color: theme.get-text(primary);
+  font-weight: theme.get-font-weight(semibold);
+}
+
+.pos-cart__applied-offers {
+  margin: 8px 10px 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pos-cart__applied-offers span {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 3px 8px;
+  border: theme.get-border-size(thin) solid theme.get-border(primary);
+  background: theme.get-background(secondary);
+  @include theme.typography-caption;
+  color: theme.get-text(primary);
+  font-weight: theme.get-font-weight(semibold);
+}
+
+.pos-cart__summary > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  @include theme.typography-body;
+  color: theme.get-text(default);
+}
+
+.pos-cart__summary strong {
+  @include theme.typography-label;
+  color: theme.get-text(primary);
+}
+
+.pos-cart__total {
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: theme.get-border-size(thin) solid theme.get-border(standard);
+}
+
+.pos-cart__total span {
+  font-weight: theme.get-font-weight(semibold);
+  color: theme.get-text(primary);
+}
+
+.pos-cart__meta-actions {
+  padding: 0 10px 8px;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pos-cart__meta-actions button {
+  border: 0;
+  background: transparent;
+  color: theme.get-text(primary);
+  @include theme.typography-caption;
+  font-weight: theme.get-font-weight(semibold);
+  cursor: pointer;
+}
+
+.pos-cart__staff-note {
+  margin: 0 10px 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: theme.get-border-size(thin) solid theme.get-border(primary);
+  background: theme.get-background(primary-light);
+  color: theme.get-text(primary);
+  @include theme.typography-caption;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.pos-cart__staff-note i {
+  line-height: 1.2;
+}
+
+.pos-cart__payments {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  padding: 0 10px 10px;
+}
+
+.pos-cart__payment-empty {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 8px;
+  color: theme.get-text(hint);
+  @include theme.typography-caption;
+  text-align: center;
+}
+
+.pos-cart__pay-mode {
+  height: 34px;
+  border-radius: 8px;
+  border: theme.get-border-size(thin) solid theme.get-border(standard);
+  background: theme.get-background(standard);
+  color: theme.get-text(default);
+  @include theme.typography-caption;
+  font-weight: theme.get-font-weight(semibold);
+  cursor: pointer;
+}
+
+.pos-cart__pay-mode--active {
+  border-color: theme.get-border(primary);
+  color: theme.get-text(on-primary);
+  background: theme.get-background(primary);
+}
+
+.pos-cart__pay-btn {
+  margin: 0 10px 10px;
+  height: 46px;
+  border-radius: 10px;
+  background: theme.get-background(primary);
+  border: theme.get-border-size(thin) solid theme.get-border(primary);
+  color: theme.get-text(on-primary);
+  @include theme.typography-label;
+  font-weight: theme.get-font-weight(semibold);
+  cursor: pointer;
+}
+
+.pos-cart__pay-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.pos-payment-upi {
+  width: min(100%, 430px);
+  margin: 0 auto;
+  display: grid;
+  gap: 12px;
+}
+
+.pos-payment-upi__amount {
+  border-radius: 12px;
+  padding: 10px 14px;
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  background: #f2f4f7;
+  border: theme.get-border-size(thin) solid #e5e9ef;
+}
+
+.pos-payment-upi__amount small {
+  @include theme.typography-caption;
+  color: theme.get-text(hint);
+}
+
+.pos-payment-upi__amount strong {
+  @include theme.typography-heading(md);
+  color: theme.get-text(primary);
+}
+
+.pos-payment-upi__header p,
+.pos-payment-upi__header h3,
+.pos-payment-upi__hint,
+.pos-payment-upi__account {
+  margin: 0;
+}
+
+.pos-payment-upi__header p {
+  @include theme.typography-caption;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: theme.get-text(hint);
+  font-weight: theme.get-font-weight(semibold);
+}
+
+.pos-payment-upi__headline-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.pos-payment-upi__headline-row h3 {
+  @include theme.typography-heading(sm);
+  color: theme.get-text(primary);
+}
+
+.pos-payment-upi__mode-chip {
+  flex: 0 0 auto;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: theme.get-background(primary-light);
+  border: theme.get-border-size(thin) solid theme.get-border(primary);
+  @include theme.typography-caption;
+  color: theme.get-text(primary);
+  font-weight: theme.get-font-weight(semibold);
+}
+
+.pos-payment-upi__providers {
+  padding: 4px;
+  border-radius: 10px;
+  background: #eef1f5;
+  display: flex;
+  gap: 4px;
+}
+
+.pos-payment-upi__provider-btn {
+  flex: 1 1 0;
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: theme.get-border-size(thin) solid transparent;
+  background: transparent;
+  @include theme.typography-caption;
+  color: theme.get-text(default-light);
+  font-weight: theme.get-font-weight(semibold);
+  cursor: pointer;
+}
+
+.pos-payment-upi__provider-btn.active {
+  border-color: theme.get-border(primary);
+  background: theme.get-background(standard);
+  color: theme.get-text(primary);
+  box-shadow: 0 1px 2px rgb(13 36 64 / 16%);
+}
+
+.pos-payment-upi__qr-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 2px;
+}
+
+.pos-payment-upi__qr-card {
+  width: min(100%, 280px);
+  padding: 6px;
+  border-radius: 10px;
+  border: theme.get-border-size(thin) solid #dbe3ef;
+  background: #fff;
+  box-shadow: 0 2px 8px rgb(13 36 64 / 9%);
+}
+
+.pos-payment-upi__qr-wrap img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+  display: block;
+}
+
+.pos-payment-upi__hint {
+  @include theme.typography-caption;
+  color: theme.get-text(hint);
+  text-align: center;
+}
+
+.pos-payment-upi__account {
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+  gap: 2px;
+}
+
+.pos-payment-upi__account strong {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  @include theme.typography-label;
+  color: theme.get-text(default);
+}
+
+.pos-payment-upi__account span {
+  @include theme.typography-caption;
+  color: theme.get-text(default-light);
+}
+
+.pos-payment-upi__confirm {
+  width: 100%;
+}
+
+.pos-payment-upi__confirm ::ng-deep .gom-button {
+  width: 100%;
+  min-height: 44px;
+  border-radius: 10px;
+  border-color: #1f9a39;
+  background: #28a745;
+}
+
+.pos-payment-upi__confirm ::ng-deep .gom-button:hover:not(:disabled) {
+  background: #1f9a39;
+}
+
+.pos-payment-upi__footnote {
+  margin: -2px 0 0;
+  @include theme.typography-caption;
+  color: theme.get-text(hint);
+  text-align: center;
+}
+
+.pos-payment-upi__cancel {
+  width: fit-content;
+  margin: -2px auto 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-decoration: underline;
+  color: theme.get-text(hint);
+  @include theme.typography-caption;
+  cursor: pointer;
+}
+
+.pos-payment-done {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.82fr) minmax(300px, 1.18fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.pos-payment-done__preview {
+  padding: 0;
+  max-height: 72vh;
+  overflow: auto;
+}
+
+.pos-payment-done__receipt-shell {
+  width: min(100%, 240px);
+  margin: 0 auto;
+}
+
+.pos-payment-done__actions {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+}
+
+.pos-payment-done__status {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  @include theme.typography-caption;
+  color: theme.get-text(success);
+  font-weight: theme.get-font-weight(semibold);
+  text-transform: uppercase;
+}
+
+.pos-payment-done__actions h3 {
+  margin: 0;
+  @include theme.typography-heading;
+  color: theme.get-text(primary);
+}
+
+.pos-payment-done__subtitle {
+  margin: 0;
+  @include theme.typography-caption;
+  color: theme.get-text(default-light);
+}
+
+.pos-payment-done__template-name {
+  margin: -2px 0 0;
+  @include theme.typography-caption;
+  color: theme.get-text(primary);
+  font-weight: theme.get-font-weight(semibold);
+}
+
+.pos-payment-done__quick-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.pos-payment-done__pdf-export {
+  position: fixed;
+  left: -10000px;
+  top: 0;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.pos-payment-done__pdf-sheet {
+  width: 760px;
+  padding: 16px;
+  background: #fff;
+}
+
+.pos-hold-order-modal {
+  display: grid;
+  gap: 14px;
+}
+
+.pos-order-note-modal {
+  display: grid;
+  gap: 10px;
+}
+
+.pos-order-note-modal p {
+  margin: 0;
+  @include theme.typography-body;
+  color: theme.get-text(default);
+}
+
+.pos-hold-order-modal__hero {
+  display: grid;
+  gap: 4px;
+  padding: 14px;
+  border-radius: 12px;
+  border: theme.get-border-size(thin) solid theme.get-border(primary);
+  background: linear-gradient(180deg, theme.get-background(primary-light) 0%, theme.get-background(standard) 100%);
+}
+
+.pos-hold-order-modal__eyebrow {
+  @include theme.typography-caption;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: theme.get-text(primary);
+  font-weight: theme.get-font-weight(semibold);
+}
+
+.pos-hold-order-modal__hero h3,
+.pos-hold-order-modal__hero p {
+  margin: 0;
+}
+
+.pos-hold-order-modal__hero h3 {
+  @include theme.typography-heading(sm);
+  color: theme.get-text(primary);
+}
+
+.pos-hold-order-modal__hero p {
+  @include theme.typography-body;
+  color: theme.get-text(default);
+}
+
+.pos-hold-list-modal {
+  display: grid;
+  gap: 14px;
+}
+
+.pos-hold-list-modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 10px;
+  border-bottom: theme.get-border-size(thin) solid theme.get-border(light);
+}
+
+.pos-hold-list-modal__header h3,
+.pos-hold-list-modal__header p {
+  margin: 0;
+}
+
+.pos-hold-list-modal__header h3 {
+  @include theme.typography-heading(sm);
+  color: theme.get-text(primary);
+}
+
+.pos-hold-list-modal__header p {
+  margin-top: 2px;
+  @include theme.typography-caption;
+  color: theme.get-text(hint);
+}
+
+.pos-hold-list-modal__refresh {
+  border: theme.get-border-size(thin) solid theme.get-border(primary);
+  border-radius: 999px;
+  padding: 7px 12px;
+  background: theme.get-background(primary-light);
+  color: theme.get-text(primary);
+  @include theme.typography-caption;
+  font-weight: theme.get-font-weight(semibold);
+  cursor: pointer;
+}
+
+.pos-hold-list-modal__refresh:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.pos-hold-list-modal__list {
+  display: grid;
+  gap: 10px;
+  max-height: min(58vh, 560px);
+  overflow: auto;
+}
+
+.pos-hold-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 14px;
+  border: theme.get-border-size(thin) solid theme.get-border(standard);
+  background: theme.get-background(standard);
+  box-shadow: 0 2px 10px rgb(13 36 64 / 6%);
+}
+
+.pos-hold-card__main {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.pos-hold-card__title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pos-hold-card__title-row strong {
+  @include theme.typography-label;
+  color: theme.get-text(primary);
+  font-weight: theme.get-font-weight(semibold);
+}
+
+.pos-hold-card__note {
+  margin: 0;
+  @include theme.typography-body;
+  color: theme.get-text(default);
+}
+
+.pos-hold-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+}
+
+.pos-hold-card__meta span {
+  @include theme.typography-caption;
+  color: theme.get-text(hint);
+}
+
+.pos-hold-card__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.pos-hold-card__delete {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  border: theme.get-border-size(thin) solid theme.get-border(danger);
+  background: theme.get-background(danger-light);
+  color: theme.get-text(danger);
+  cursor: pointer;
+}
+
+.pos-hold-card__delete:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.pos-hold-list-modal__empty {
+  min-height: 240px;
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  text-align: center;
+  border-radius: 14px;
+  border: theme.get-border-size(thin) dashed theme.get-border(standard);
+  background: theme.get-background(secondary);
+  padding: 24px;
+}
+
+.pos-hold-list-modal__empty i {
+  font-size: 2rem;
+  color: theme.get-text(hint);
+}
+
+.pos-hold-list-modal__empty h4,
+.pos-hold-list-modal__empty p {
+  margin: 0;
+}
+
+.pos-hold-list-modal__empty h4 {
+  @include theme.typography-heading(sm);
+  color: theme.get-text(primary);
+}
+
+.pos-hold-list-modal__empty p {
+  @include theme.typography-body;
+  color: theme.get-text(default-light);
+}
+
+.pos-hold-list-modal__empty--loading {
+  background: theme.get-background(standard);
+}
+
+.pos-hold-list-modal__spinner {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 3px solid theme.get-border(standard);
+  border-top-color: theme.get-border(primary);
+  animation: pos-spin 0.85s linear infinite;
+}
+
+.pos-switch-hold-modal {
+  display: grid;
+  gap: 14px;
+}
+
+.pos-switch-hold-modal__lead {
+  margin: 0;
+  @include theme.typography-body;
+  color: theme.get-text(default);
+}
+
+.pos-switch-hold-modal__card {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 14px;
+  border: theme.get-border-size(thin) solid theme.get-border(standard);
+  background: linear-gradient(180deg, theme.get-background(secondary) 0%, theme.get-background(standard) 100%);
+  box-shadow: 0 2px 10px rgb(13 36 64 / 6%);
+}
+
+.pos-switch-hold-modal__card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.pos-switch-hold-modal__card-top strong {
+  @include theme.typography-label;
+  color: theme.get-text(primary);
+  font-weight: theme.get-font-weight(semibold);
+}
+
+.pos-switch-hold-modal__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+}
+
+.pos-switch-hold-modal__meta span {
+  @include theme.typography-caption;
+  color: theme.get-text(hint);
+}
+
+.pos-switch-hold-modal__note {
+  margin: 0;
+  @include theme.typography-caption;
+  color: theme.get-text(default-light);
+}
+
+.pos-switch-hold-modal__actions {
+  display: grid;
+  gap: 10px;
+}
+
+.pos-switch-hold-modal__cancel {
+  width: fit-content;
+  margin: 0 auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: theme.get-text(default-light);
+  @include theme.typography-caption;
+  cursor: pointer;
+}
+
+.pos-offers-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.pos-offers-panel__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 10px;
+  border-bottom: theme.get-border-size(thin) solid theme.get-border(light);
+}
+
+.pos-offers-panel__header h4 {
+  margin: 4px 0 0;
+  @include theme.typography-label;
+  color: theme.get-text(primary);
+  font-weight: theme.get-font-weight(semibold);
+}
+
+.pos-offers-panel__eyebrow {
+  margin: 0;
+  @include theme.typography-caption;
+  color: theme.get-text(hint);
+  font-weight: theme.get-font-weight(semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.pos-offers-panel__count {
+  min-width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: theme.get-background(primary);
+  color: theme.get-text(on-primary);
+  @include theme.typography-label;
+  font-weight: theme.get-font-weight(semibold);
+}
+
+.pos-offers-panel__state {
+  margin: 0;
+  padding: 12px;
+  border-radius: 10px;
+  background: theme.get-background(secondary);
+  @include theme.typography-body;
+  color: theme.get-text(default);
+}
+
+.pos-offers-panel__applied-coupons {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: theme.get-border-size(thin) solid theme.get-border(light);
+  background: theme.get-background(secondary);
+}
+
+.pos-offers-panel__applied-coupons p {
+  margin: 0;
+  @include theme.typography-caption;
+  color: theme.get-text(hint);
+  font-weight: theme.get-font-weight(semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.pos-offers-panel__applied-coupons > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pos-offers-panel__coupon-chip {
+  border: theme.get-border-size(thin) dashed theme.get-border(primary);
+  background: theme.get-background(standard);
+  color: theme.get-text(primary);
+  border-radius: 8px;
+  padding: 4px 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  @include theme.typography-caption;
+  font-weight: theme.get-font-weight(semibold);
+  cursor: pointer;
+}
+
+.pos-offers-panel__rows {
+  display: grid;
+  gap: 12px;
+}
+
+.pos-offers-panel__card {
+  border: theme.get-border-size(thin) solid theme.get-border(standard);
+  border-left: 4px solid theme.get-border(primary);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: grid;
+  gap: 8px;
+  background: linear-gradient(
+    180deg,
+    theme.get-background(standard) 0%,
+    theme.get-background(secondary) 100%
+  );
+}
+
+.pos-offers-panel__card.is-locked {
+  border-left-color: theme.get-border(standard);
+}
+
+.pos-offers-panel__card.is-eligible {
+  border-left-color: theme.get-border(primary);
+  box-shadow: 0 0 0 1px color-mix(in srgb, theme.get-border(primary) 35%, transparent);
+}
+
+.pos-offers-panel__card.is-applied {
+  border-left-color: theme.get-border(success);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, theme.get-background(success-light) 45%, white) 0%,
+    theme.get-background(standard) 100%
+  );
+}
+
+.pos-offers-panel__card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.pos-offers-panel__card strong {
+  @include theme.typography-body;
+  font-weight: theme.get-font-weight(semibold);
+  color: theme.get-text(primary);
+}
+
+.pos-offers-panel__status {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 2px 10px;
+  border: theme.get-border-size(thin) solid theme.get-border(success);
+  background: theme.get-background(standard);
+  @include theme.typography-caption;
+  color: theme.get-text(success);
+  font-weight: theme.get-font-weight(semibold);
+  white-space: nowrap;
+}
+
+.pos-offers-panel__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pos-offers-panel__meta span {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 2px 8px;
+  border: theme.get-border-size(thin) solid theme.get-border(standard);
+  background: theme.get-background(standard);
+  @include theme.typography-caption;
+  color: theme.get-text(primary);
+}
+
+.pos-offers-panel__summary {
+  margin: 0;
+  @include theme.typography-caption;
+  color: theme.get-text(default);
+  line-height: 1.5;
+}
+
+.pos-offers-panel__progress-wrap {
+  display: grid;
+  gap: 5px;
+}
+
+.pos-offers-panel__progress-track {
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, theme.get-background(secondary) 60%, #cdd5df);
+  overflow: hidden;
+}
+
+.pos-offers-panel__progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #0b628f 0%, #2f93bf 100%);
+}
+
+.pos-offers-panel__progress-wrap small {
+  @include theme.typography-caption;
+  color: theme.get-text(hint);
+}
+
+.pos-offers-panel__coupon-code {
+  border-style: dashed;
+}
+
+.pos-offers-panel__eligibility-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.pos-offers-panel__eligibility {
+  @include theme.typography-caption;
+  color: theme.get-text(default);
+}
+
+.pos-offers-panel__eligibility.is-applied {
+  color: theme.get-text(success);
+  font-weight: theme.get-font-weight(semibold);
+}
+
+.pos-offers-panel__eligibility.is-eligible {
+  color: theme.get-text(primary);
+  font-weight: theme.get-font-weight(semibold);
+}
+
+.pos-offers-panel__eligibility.is-locked {
+  color: theme.get-text(hint);
+}
+
+.pos-offers-panel__state-badge {
+  margin-left: auto;
+  border-radius: 999px;
+  padding: 2px 10px;
+  border: theme.get-border-size(thin) solid theme.get-border(standard);
+  background: theme.get-background(standard);
+  @include theme.typography-caption;
+  font-weight: theme.get-font-weight(semibold);
+  color: theme.get-text(hint);
+}
+
+.pos-offers-panel__state-badge.is-locked {
+  background: color-mix(in srgb, theme.get-background(secondary) 70%, white);
+  color: theme.get-text(hint);
+}
+
+.pos-offers-panel__state-badge.is-eligible {
+  border-color: theme.get-border(primary);
+  color: theme.get-text(primary);
+}
+
+.pos-offers-panel__state-badge.is-applied {
+  border-color: theme.get-border(success);
+  color: theme.get-text(success);
+}
+
+.pos-offers-panel__apply,
+.pos-offers-panel__remove {
+  border-radius: 8px;
+  padding: 5px 12px;
+  @include theme.typography-caption;
+  font-weight: theme.get-font-weight(semibold);
+  cursor: pointer;
+}
+
+.pos-offers-panel__apply {
+  border: theme.get-border-size(thin) solid theme.get-border(primary);
+  background: theme.get-background(primary);
+  color: theme.get-text(on-primary);
+}
+
+.pos-offers-panel__remove {
+  border: theme.get-border-size(thin) solid theme.get-border(standard);
+  background: theme.get-background(secondary);
+  color: theme.get-text(default);
+}
+
+@keyframes pos-shimmer {
+  0% {
+    background-position: 0% 0;
+  }
+
+  100% {
+    background-position: -180% 0;
+  }
+}
+
+@keyframes pos-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@include theme.breakpoint-down(desktop) {
+  .pos-body {
+    grid-template-columns: minmax(200px, 3fr) 10px minmax(400px, 6fr) minmax(260px, 3fr);
+  }
+
+  .pos-products__grid {
+    grid-template-columns: repeat(auto-fill, minmax(136px, 1fr));
+  }
+}
+
+@include theme.breakpoint-down(tablet) {
+  .pos-page-header {
+    padding: 10px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .pos-page-header__menu {
+    justify-content: flex-start;
+  }
+
+  .pos-payment-done {
+    grid-template-columns: 1fr;
+  }
+
+  .pos-payment-upi__providers {
+    grid-template-columns: 1fr;
+  }
+
+  .pos-order-type {
+    max-height: none;
+    overflow: visible;
+    flex: 0 0 auto;
+  }
+
+  .pos-customer-flow {
+    max-height: none;
+    overflow: visible;
+    flex: 0 0 auto;
+  }
+
+  .pos-customer-flow__results {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .pos-shortcuts {
+    display: none;
+  }
+
+  .pos-detail {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    min-height: 0;
+  }
+
+  .pos-detail__media {
+    min-height: 220px;
+    max-height: 36dvh;
+    border-radius: 10px;
+  }
+
+  .pos-detail__content {
+    padding: 4px;
+  }
+
+  .pos-detail__section {
+    margin-top: 18px;
+  }
+
+  .pos-page {
+    height: calc(100dvh - 96px);
+    min-height: calc(100dvh - 96px);
+    border-radius: 0;
+    border: 0;
+    background: theme.get-background(standard);
+  }
+
+  .pos-body {
+    min-height: 0;
+    column-gap: 0;
+    padding: 0;
+  }
+
+  .pos-categories__resizer {
+    display: none;
+  }
+
+  .pos-categories {
+    padding: 0;
+    gap: 0;
+    border-right: theme.get-border-size(thin) solid theme.get-border(light);
+    border-bottom: 0;
+    background: theme.get-background(standard);
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .pos-categories__header {
+    display: none;
+  }
+
+  .pos-categories__list {
+    height: 100%;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    gap: 0;
+    align-content: start;
+    padding: 0 0 calc(88px + env(safe-area-inset-bottom));
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .pos-categories__item {
+    min-height: 86px;
+    border-radius: 0;
+    padding: 9px 5px;
+    border: theme.get-border-size(thin) solid transparent;
+    border-bottom-color: theme.get-border(light);
+    font-size: theme.get-font-size(xs);
+    line-height: 1.1;
+    font-weight: theme.get-font-weight(medium);
+    text-align: center;
+    white-space: normal;
+    word-break: normal;
+    overflow-wrap: normal;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 7px;
+  }
+
+  .pos-categories__item--active {
+    border-color: theme.get-border(primary);
+    background: theme.get-background(primary-light);
+    color: theme.get-text(primary);
+    box-shadow: inset 3px 0 0 theme.get-border(primary);
+  }
+
+  .pos-categories__item-thumb {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+  }
+
+  .pos-categories__item-label {
+    max-width: 88px;
+    white-space: normal;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    line-clamp: 2;
+    -webkit-line-clamp: 2;
+    text-overflow: clip;
+  }
+
+  .pos-categories__list::-webkit-scrollbar {
+    display: none;
+  }
+
+  .pos-categories__list::-webkit-scrollbar-thumb {
+    background: theme.get-border(standard);
+    border-radius: 999px;
+  }
+
+  .pos-products {
+    padding: 8px 10px 0;
+    padding-bottom: calc(88px + env(safe-area-inset-bottom));
+    background: theme.get-background(secondary);
+    gap: 0;
+  }
+
+  .pos-products__header {
+    display: none;
+  }
+
+  .pos-products__group-chips {
+    min-height: 42px;
+    flex: 0 0 42px;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 2px 1px 10px;
+  }
+
+  .pos-products__chip {
+    height: 30px;
+    min-height: 30px;
+    border-radius: 999px;
+    padding: 7px 12px;
+    font-size: 12px;
+    line-height: 1;
+  }
+
+  .pos-products__scroll {
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .pos-products__grid,
+  .pos-products__grid--loading {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .pos-product {
+    border-radius: 12px;
+    border-color: theme.get-border(light);
+    box-shadow: none;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .pos-product__image {
+    height: auto;
+    min-height: 0;
+    flex: 0 0 auto;
+    aspect-ratio: 1 / 0.82;
+    overflow: hidden;
+  }
+
+  .pos-product__body {
+    padding: 0 0.55rem 0.55rem;
+  }
+
+  .pos-product__summary {
+    min-height: 76px;
+    padding: 0.5rem 0.55rem 0.2rem;
+  }
+
+  .pos-product__name {
+    font-size: 0.76rem;
+    line-height: 1.2;
+    font-weight: 600;
+    display: -webkit-box;
+    line-clamp: 2;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .pos-product__subtext {
+    margin-top: 0.06rem;
+    font-size: 0.62rem;
+    font-weight: 500;
+  }
+
+  .pos-product__price-row {
+    margin-top: 0.25rem;
+    gap: 0.5rem;
+  }
+
+  .pos-product__price {
+    font-size: 0.84rem;
+    font-weight: 800;
+  }
+
+  .pos-product__mrp {
+    font-size: 0.75rem;
+  }
+
+  .pos-product__footer {
+    margin-top: auto;
+    padding-top: 0.35rem;
+  }
+
+  .pos-product__add {
+    padding: 0.24rem 0.58rem;
+    border-radius: 0.45rem;
+    font-size: 0.67rem;
+  }
+
+  .pos-product__stepper {
+    border-radius: 0.45rem;
+  }
+
+  .pos-product__no-image {
+    object-fit: contain;
+    padding: 0;
+  }
+
+  .pos-products__empty-state {
+    padding: 12px 20px 88px;
+    gap: 8px;
+  }
+
+  .pos-products__empty-icon {
+    width: 64px;
+    height: 64px;
+  }
+
+  .pos-products__empty-title {
+    @include theme.typography-heading(sm);
+  }
+
+  .pos-cart {
+    display: none;
+    border-left: 0;
+    border-top: 0;
+  }
+
+  .pos-mobile-account {
+    display: none;
+  }
+
+  .pos-page--mobile-cart .pos-body,
+  .pos-page--mobile-account .pos-body {
+    grid-template-columns: 1fr !important;
+  }
+
+  .pos-page--mobile-cart .pos-categories,
+  .pos-page--mobile-cart .pos-products,
+  .pos-page--mobile-account .pos-categories,
+  .pos-page--mobile-account .pos-products {
+    display: none;
+  }
+
+  .pos-page--mobile-cart .pos-cart {
+    display: flex;
+    min-height: 0;
+    overflow-y: auto;
+    padding-bottom: calc(72px + env(safe-area-inset-bottom));
+  }
+
+  .pos-page--mobile-cart .pos-cart__items {
+    flex: 0 0 auto;
+    min-height: 120px;
+    overflow: visible;
+  }
+
+  .pos-page--mobile-account .pos-mobile-account {
+    display: grid;
+    place-items: center;
+    background: theme.get-background(standard);
+    padding: 18px 16px 88px;
+  }
+
+  .pos-mobile-account__inner {
+    width: 100%;
+    max-width: 360px;
+    border: theme.get-border-size(thin) solid theme.get-border(standard);
+    border-radius: 12px;
+    background: theme.get-background(secondary);
+    padding: 16px;
+    text-align: center;
+  }
+
+  .pos-mobile-account__inner h3 {
+    margin: 0;
+    @include theme.typography-heading(sm);
+    color: theme.get-text(primary);
+  }
+
+  .pos-mobile-account__inner p {
+    margin: 8px 0 0;
+    @include theme.typography-body;
+    color: theme.get-text(hint);
+  }
+
+  .pos-mobile-nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border-top: 0;
+    background: theme.get-background(standard);
+    padding: 6px 8px calc(8px + env(safe-area-inset-bottom));
+    z-index: 40;
+  }
+
+  .pos-mobile-nav__item {
+    border: 0;
+    background: transparent;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    min-height: 44px;
+    color: theme.get-text(default-light);
+    @include theme.typography-caption;
+    font-weight: theme.get-font-weight(semibold);
+    cursor: pointer;
+  }
+
+  .pos-mobile-nav__item--active {
+    color: theme.get-text(primary);
+  }
+
+  .pos-mobile-nav__icon {
+    width: 18px;
+    height: 18px;
+    display: inline-flex;
+    position: relative;
+  }
+
+  .pos-mobile-nav__icon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .pos-mobile-nav__badge {
+    position: absolute;
+    top: -7px;
+    right: -10px;
+    min-width: 14px;
+    height: 14px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: theme.get-background(danger);
+    color: theme.get-text(on-primary);
+    @include theme.typography-caption;
+    font-size: 0.6rem;
+    line-height: 1;
+    font-weight: theme.get-font-weight(semibold);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}

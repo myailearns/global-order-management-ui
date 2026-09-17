@@ -1,25 +1,32 @@
 <div class="gom-employees-list">
   <div class="gom-employees-list__header">
     <h1>{{ translationKeys.TITLE_EMPLOYEES | translate }}</h1>
-    <gom-lib-button 
-      variant="primary" 
-      (buttonClick)="onCreateEmployee()"
-      [gomDisableIfNoCapability]="'tenant-admin'"
-      [disabled]="loading() || !canWrite()"
-      aria-label="Create new employee">
-      {{ translationKeys.BTN_CREATE_EMPLOYEE | translate }}
-    </gom-lib-button>
+    <div class="gom-employees-list__header-actions">
+      @if (quotaLabel(); as label) {
+        <gom-lib-chip
+          [tone]="atQuota() ? 'danger' : 'neutral'"
+          [attr.aria-label]="('saas.admin.employees.lbl_quota_used' | translate) + ' ' + label">
+          {{ label }}
+        </gom-lib-chip>
+      }
+      <gom-lib-button
+        variant="primary"
+        (buttonClick)="onCreateEmployee()"
+        [gomDisableIfNoCapability]="'tenant-admin'"
+        [disabled]="loading() || !canWrite() || atQuota()"
+        [title]="atQuota() ? ('saas.admin.employees.msg_quota_exceeded' | translate) : ''"
+        aria-label="Create new account">
+        {{ translationKeys.BTN_CREATE_EMPLOYEE | translate }}
+      </gom-lib-button>
+    </div>
   </div>
 
-  <!-- Search -->
-  <div class="gom-employees-list__filters">
-    <gom-lib-input
-      [formControl]="searchControl"
-      [placeholder]="translationKeys.PH_SEARCH_EMPLOYEES | translate"
-      type="search"
-      aria-label="Search employees">
-    </gom-lib-input>
-  </div>
+  <!-- Quota warning banner when at limit -->
+  @if (atQuota()) {
+    <output class="gom-employees-list__quota-banner" aria-live="polite">
+      {{ 'saas.admin.employees.msg_quota_reached' | translate }}
+    </output>
+  }
 
   <!-- Error -->
   @if (errorMessage(); as error) {
@@ -30,7 +37,7 @@
 
   <!-- Loading -->
   @if (loading()) {
-    <div class="gom-employees-list__loading" aria-live="polite">Loading employees...</div>
+    <div class="gom-employees-list__loading" aria-live="polite">{{ 'saas.admin.employees.msg_loading' | translate }}</div>
   }
 
   <!-- Table -->
@@ -41,7 +48,7 @@
     [loading]="loading()"
     [emptyMessage]="'common.msg_no_results' | translate"
     (rowAction)="onTableAction($event)"
-    aria-label="Employees list">
+    aria-label="Accounts list">
   </gom-lib-table>
 </div>
 
@@ -59,4 +66,27 @@
       (formCancelled)="onEmployeeFormCancelled()"
     ></gom-employee-form>
   }
+</gom-lib-modal>
+
+<gom-lib-modal
+  [title]="'saas.admin.employees.title_delete' | translate"
+  [(show)]="deleteConfirmModalOpen"
+  (closed)="onDeleteConfirmClosed()"
+  size="small"
+>
+  <div class="gom-delete-confirm__content">
+    <p>{{ 'saas.admin.employees.msg_delete_confirm' | translate:{ name: employeeToDelete() } }}</p>
+  </div>
+
+  <footer gom-modal-actions class="gom-modal__action-layout">
+    <div class="gom-modal__action-layout-start"></div>
+    <div class="gom-modal__action-layout-end">
+      <gom-lib-button variant="secondary" (buttonClick)="onDeleteConfirmClosed()">
+        {{ 'common.btn_cancel' | translate }}
+      </gom-lib-button>
+      <gom-lib-button variant="danger" icon="ri-delete-bin-line" (buttonClick)="onConfirmDeleteEmployee()">
+        {{ 'common.actions.delete' | translate }}
+      </gom-lib-button>
+    </div>
+  </footer>
 </gom-lib-modal>
