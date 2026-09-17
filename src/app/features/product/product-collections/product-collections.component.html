@@ -1,8 +1,20 @@
 <section class="product-collections-page">
   <header class="product-collections-page__header">
-    <h1>{{ text.title | translate }}</h1>
+    <gom-page-heading navRoute="/product/product-collections"></gom-page-heading>
     @if (canCreate()) {
-      <gom-lib-button (buttonClick)="openCreate()">{{ text.create | translate }}</gom-lib-button>
+      <gom-lib-button
+        type="button"
+        variant="primary"
+        [size]="isMobileHeader() ? 'compact-icon' : 'default'"
+        (buttonClick)="openCreate()"
+        [attr.aria-label]="text.create | translate"
+        [buttonTitle]="text.create | translate"
+      >
+        <i class="ri-add-line" aria-hidden="true"></i>
+        @if (!isMobileHeader()) {
+          {{ text.create | translate }}
+        }
+      </gom-lib-button>
     }
   </header>
 
@@ -203,6 +215,8 @@
     [rows]="rows()"
     [loading]="loading()"
     [totalItems]="rows().length"
+    [mobileCardView]="true"
+    [mobileCardConfig]="collectionMobileCardConfig"
     (rowAction)="onRowAction($event)"
   ></gom-lib-table>
 

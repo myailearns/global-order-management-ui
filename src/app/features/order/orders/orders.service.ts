@@ -132,6 +132,7 @@ export interface TenantConfigPayload {
   };
   storefrontConfig?: {
     storeSlug?: string;
+    storeDisplayName?: string;
     deliveryCharge?: number;
     pincodeServiceabilityMode?: 'SERVE_ALL' | 'RESTRICTED';
     serviceablePincodes?: ServiceablePincodeEntry[];

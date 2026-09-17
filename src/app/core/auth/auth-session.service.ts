@@ -128,15 +128,11 @@ export class AuthSessionService {
 
     // Check settings pages
     if (this.hasFeature('storefront.config')) {
-      return '/settings/storefront';
+      return '/settings/web-app/storefront';
     }
 
     if (this.hasFeature('delivery.management')) {
       return '/settings/delivery-management';
-    }
-
-    if (this.hasFeature('pincode.config')) {
-      return '/settings/serviceable-pincodes';
     }
 
     if (this.hasFeature('notification.manage')) {

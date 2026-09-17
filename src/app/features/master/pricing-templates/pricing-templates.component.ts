@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, OnDestroy, computed, inject, signal } from '@angular/core';
+import { Component, HostListener, OnInit, OnDestroy, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
@@ -10,20 +10,24 @@ import { DisableIfNoFeatureDirective } from '../../../shared/directives/disable-
 import { PRICING_TEMPLATE_DEFAULT_STATUS, PRICING_TEMPLATE_STATUS_OPTIONS, PRICING_TEMPLATE_UI_TEXT } from './pricing-templates.constants';
 import { PricingTemplate, PricingTemplatePayload, PricingTemplatesService } from './pricing-templates.service';
 import { FieldGroupsService, FieldGroup, PricingField } from '../field-groups/field-groups.service';
+import { getNavIcon } from '../../../shared/components/layout/nav.config';
+import { PageHeadingComponent } from '../../../shared/components/page-heading/page-heading.component';
 
 interface PricingTemplateRow extends GomTableRow {
   _id: string;
   name: string;
-  description: string;
   fieldGroup: string;
-  fieldKeys: string;
-  status: string;
+  profitMarginPercent: string;
+  mrpMarkupPercent: string;
+  actualPriceFormula: string;
+  sellingPriceFormula: string;
+  anchorPriceFormula: string;
 }
 
 @Component({
   selector: 'gom-pricing-templates',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, TranslateModule, GomButtonComponent, GomTableComponent, GomModalComponent, GomInputComponent, GomSelectComponent, GomTextareaComponent, GomConfirmationModalComponent, DisableIfNoFeatureDirective],
+  imports: [CommonModule, ReactiveFormsModule, TranslateModule, GomButtonComponent, GomTableComponent, GomModalComponent, GomInputComponent, GomSelectComponent, GomTextareaComponent, GomConfirmationModalComponent, DisableIfNoFeatureDirective, PageHeadingComponent],
   templateUrl: './pricing-templates.component.html',
   styleUrl: './pricing-templates.component.scss',
 })
@@ -38,6 +42,9 @@ export class PricingTemplatesComponent implements OnInit, OnDestroy {
   private isRestoringBuilderState = false;
 
   readonly text = PRICING_TEMPLATE_UI_TEXT;
+  readonly headingIcon = getNavIcon('/masters/pricing-templates');
+  readonly viewportWidth = signal<number>(window.innerWidth);
+  readonly isMobileHeader = computed<boolean>(() => this.viewportWidth() <= 768);
   readonly statusOptions = computed(() => 
     PRICING_TEMPLATE_STATUS_OPTIONS.map(opt => ({
       ...opt,
@@ -60,6 +67,11 @@ export class PricingTemplatesComponent implements OnInit, OnDestroy {
   readonly canCreate = computed(() => this.authSession.hasFeature('pricingTemplate.create'));
   readonly canEdit = computed(() => this.authSession.hasFeature('pricingTemplate.edit'));
   readonly canDelete = computed(() => this.authSession.hasFeature('pricingTemplate.delete'));
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.viewportWidth.set(window.innerWidth);
+  }
   
   // Field groups and fields - Field Group is now REQUIRED
   readonly fieldGroups = signal<FieldGroup[]>([]);
@@ -169,10 +181,12 @@ export class PricingTemplatesComponent implements OnInit, OnDestroy {
 
   readonly columns: GomTableColumn<PricingTemplateRow>[] = [
     { key: 'name', header: '', sortable: true, filterable: true, width: '14rem' },
-    { key: 'description', header: '', sortable: true, width: '14rem', textMode: 'wrap' },
-    { key: 'fieldGroup', header: '', sortable: true, width: '14rem' },
-    { key: 'fieldKeys', header: '', width: '16rem', textMode: 'wrap' },
-    { key: 'status', header: '', sortable: true, width: '10rem' },
+    { key: 'fieldGroup', header: '', width: '14rem', textMode: 'wrap' },
+    { key: 'profitMarginPercent', header: '', width: '10rem' },
+    { key: 'mrpMarkupPercent', header: '', width: '10rem' },
+    { key: 'actualPriceFormula', header: '', width: '18rem', textMode: 'wrap' },
+    { key: 'sellingPriceFormula', header: '', width: '18rem', textMode: 'wrap' },
+    { key: 'anchorPriceFormula', header: '', width: '18rem', textMode: 'wrap' },
     { key: 'id', header: '', width: '10rem', actionButtons: [] },
   ];
 
@@ -180,10 +194,12 @@ export class PricingTemplatesComponent implements OnInit, OnDestroy {
     this.items().map((item) => ({
       _id: item._id || '',
       name: item.name,
-      description: item.description || '-',
       fieldGroup: item.fieldGroupName ? `${item.fieldGroupName} (v${item.fieldGroupVersion})` : '-',
-      fieldKeys: item.supportedFieldKeys?.length ? item.supportedFieldKeys.join(', ') : '-',
-      status: item.status,
+      profitMarginPercent: this.formatPercentageValue(this.getProfitMarginPercent(item)),
+      mrpMarkupPercent: this.formatPercentageValue(this.getMrpMarkupPercent(item)),
+      actualPriceFormula: item.actualPriceFormula || '-',
+      sellingPriceFormula: item.sellingPriceFormula || '-',
+      anchorPriceFormula: item.anchorPriceFormula || '-',
     }))
   );
 
@@ -269,22 +285,10 @@ export class PricingTemplatesComponent implements OnInit, OnDestroy {
       const extraFields = actualFields.slice(1);
       
       // Selling price pattern: "actualPrice + (buyPrice * 20%)"
-      const sellingFormula = String(item.sellingPriceFormula || '').trim();
-      const profitRegex = /\(([^)]*?)\s*\*\s*(\d+(?:\.\d+)?)%\)/;
-      const profitMatch = profitRegex.exec(sellingFormula);
-      const profitMarginPercent = profitMatch ? Number.parseFloat(profitMatch[2]) : 0;
+      const profitMarginPercent = this.getProfitMarginPercent(item);
       
       // Anchor price pattern: "sellingPrice * 1.2" or "sellingPrice"
-      const anchorFormula = String(item.anchorPriceFormula || '').trim();
-      let mrpMarkupPercent = 0;
-      if (anchorFormula.includes('*')) {
-        const anchorRegex = /sellingPrice\s*\*\s*(\d+(?:\.\d+)?)/;
-        const anchorMatch = anchorRegex.exec(anchorFormula);
-        if (anchorMatch) {
-          const multiplier = Number.parseFloat(anchorMatch[1]);
-          mrpMarkupPercent = Math.round((multiplier - 1) * 10000) / 100;
-        }
-      }
+      const mrpMarkupPercent = this.getMrpMarkupPercent(item);
       
       // Set extra cost fields signal FIRST
       this.extraCostFieldKeys.set(extraFields);
@@ -550,16 +554,54 @@ export class PricingTemplatesComponent implements OnInit, OnDestroy {
     this.loading.set(false);
   }
 
+  private getProfitMarginPercent(item: PricingTemplate): number {
+    const sellingFormula = String(item.sellingPriceFormula || '').trim();
+    const profitRegex = /\(([^)]*?)\s*\*\s*(\d+(?:\.\d+)?)%\)/;
+    const profitMatch = profitRegex.exec(sellingFormula);
+    return profitMatch ? Number.parseFloat(profitMatch[2]) : 0;
+  }
+
+  private getMrpMarkupPercent(item: PricingTemplate): number {
+    const anchorFormula = String(item.anchorPriceFormula || '').trim();
+    if (!anchorFormula.includes('*')) {
+      return 0;
+    }
+
+    const anchorRegex = /sellingPrice\s*\*\s*(\d+(?:\.\d+)?)/;
+    const anchorMatch = anchorRegex.exec(anchorFormula);
+    if (!anchorMatch) {
+      return 0;
+    }
+
+    const multiplier = Number.parseFloat(anchorMatch[1]);
+    return Math.round((multiplier - 1) * 10000) / 100;
+  }
+
+  private formatPercentageValue(value: number): string {
+    if (!Number.isFinite(value)) {
+      return '0';
+    }
+
+    if (Number.isInteger(value)) {
+      return String(value);
+    }
+
+    const fixedValue = value.toFixed(2);
+    return fixedValue.endsWith('.00') ? fixedValue.slice(0, -3) : fixedValue.replace(/0+$/, '');
+  }
+
   private rebuildText(): void {
     this.columns[0].header = this.translate.instant(this.text.nameLabel);
-    this.columns[1].header = this.translate.instant(this.text.descriptionLabel);
-    this.columns[2].header = 'Field Group'; // New column for field group
-    this.columns[3].header = this.translate.instant(this.text.fieldKeysLabel);
-    this.columns[4].header = this.translate.instant(this.text.statusLabel);
-    this.columns[5].header = this.translate.instant(this.text.actionsLabel);
-    this.columns[5].actionButtons = [
-      { label: this.translate.instant(this.text.editAction), actionKey: 'edit', variant: 'secondary' },
-      { label: this.translate.instant(this.text.deleteAction), actionKey: 'delete', variant: 'secondary' },
+    this.columns[1].header = 'Field Group';
+    this.columns[2].header = 'Profit Margin (%)';
+    this.columns[3].header = 'MRP Markup (%)';
+    this.columns[4].header = this.translate.instant(this.text.actualPriceFormulaLabel);
+    this.columns[5].header = this.translate.instant(this.text.sellingPriceFormulaLabel);
+    this.columns[6].header = 'Anchor/MRP Price';
+    this.columns[7].header = this.translate.instant(this.text.actionsLabel);
+    this.columns[7].actionButtons = [
+      { label: this.translate.instant(this.text.editAction), icon: 'ri-pencil-line', actionKey: 'edit', variant: 'secondary' },
+      { label: this.translate.instant(this.text.deleteAction), icon: 'ri-delete-bin-line', actionKey: 'delete', variant: 'secondary' },
     ];
   }
 }

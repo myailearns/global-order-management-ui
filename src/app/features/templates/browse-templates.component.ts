@@ -20,6 +20,7 @@ import {
 } from './template-subscription.service';
 import { TemplatePreviewModalComponent } from './preview/template-preview-modal.component';
 import { AuthSessionService } from '../../core/auth/auth-session.service';
+import { PageHeadingComponent } from '../../shared/components/page-heading/page-heading.component';
 
 @Component({
   selector: 'gom-browse-templates',
@@ -27,6 +28,7 @@ import { AuthSessionService } from '../../core/auth/auth-session.service';
   imports: [
     CommonModule,
     TranslateModule,
+    PageHeadingComponent,
     GomTabsComponent,
     GomTabContentComponent,
     GomButtonComponent,

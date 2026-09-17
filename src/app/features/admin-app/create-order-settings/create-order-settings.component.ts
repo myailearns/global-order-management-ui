@@ -14,6 +14,7 @@ import {
   TabItem,
 } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
+import { PageHeadingComponent } from '../../../shared/components/page-heading/page-heading.component';
 import { CreateOrderConfig, DeliveryService } from '../../delivery/delivery.service';
 
 @Component({
@@ -23,6 +24,7 @@ import { CreateOrderConfig, DeliveryService } from '../../delivery/delivery.serv
     ReactiveFormsModule,
     TranslateModule,
     FormControlsModule,
+    PageHeadingComponent,
     GomAccordionComponent,
     GomButtonComponent,
     GomInputComponent,

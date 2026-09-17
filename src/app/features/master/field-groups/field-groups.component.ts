@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, HostListener, OnInit, computed, inject, signal } from '@angular/core';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { forkJoin } from 'rxjs';
 
@@ -16,6 +16,8 @@ import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { /* CategoryOption, */ FieldGroup, FieldGroupPayload, FieldGroupsService, PricingField, ProductGroupUsage } from './field-groups.service';
 import { FieldGroupsFormComponent } from './form/field-groups-form.component';
 import { DisableIfNoFeatureDirective } from '../../../shared/directives/disable-if-no-feature.directive';
+import { getNavIcon } from '../../../shared/components/layout/nav.config';
+import { PageHeadingComponent } from '../../../shared/components/page-heading/page-heading.component';
 
 interface FieldGroupRow extends GomTableRow {
   _id: string;
@@ -37,6 +39,7 @@ interface FieldGroupRow extends GomTableRow {
     GomTableComponent,
     GomConfirmationModalComponent,
     FieldGroupsFormComponent,
+    PageHeadingComponent,
   ],
   templateUrl: './field-groups.component.html',
   styleUrl: './field-groups.component.scss',
@@ -62,6 +65,9 @@ export class FieldGroupsComponent implements OnInit {
 
   readonly loading = signal(false);
   readonly errorMessage = signal<string | null>(null);
+  readonly headingIcon = getNavIcon('/masters/field-groups');
+  readonly viewportWidth = signal<number>(window.innerWidth);
+  readonly isMobileHeader = computed<boolean>(() => this.viewportWidth() <= 768);
   readonly canCreateFieldGroup = computed(() => this.authSession.hasFeature('fieldGroup.create'));
   readonly canEditFieldGroup = computed(() => this.authSession.hasFeature('fieldGroup.edit'));
   readonly canDeleteFieldGroup = computed(() => this.authSession.hasFeature('fieldGroup.delete'));
@@ -107,6 +113,11 @@ export class FieldGroupsComponent implements OnInit {
   constructor() {
     this.translate.onLangChange.subscribe(() => this.rebuildStaticText());
     this.rebuildStaticText();
+  }
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.viewportWidth.set(window.innerWidth);
   }
 
   ngOnInit(): void {
@@ -367,12 +378,12 @@ export class FieldGroupsComponent implements OnInit {
         ? this.translate.instant('common.status.inactive')
         : this.translate.instant('common.status.active');
     this.columns[4].header = this.translate.instant('common.labels.actions');
-    const actionButtons: Array<{ label: string; actionKey: string; variant: 'secondary' }> = [];
+    const actionButtons: Array<{ label: string; actionKey: string; variant: 'secondary'; icon?: string }> = [];
     if (this.canEditFieldGroup()) {
-      actionButtons.push({ label: this.translate.instant('common.actions.edit'), actionKey: 'edit', variant: 'secondary' });
+      actionButtons.push({ label: this.translate.instant('common.actions.edit'), icon: 'ri-pencil-line', actionKey: 'edit', variant: 'secondary' });
     }
     if (this.canDeleteFieldGroup()) {
-      actionButtons.push({ label: this.translate.instant('common.actions.delete'), actionKey: 'delete', variant: 'secondary' });
+      actionButtons.push({ label: this.translate.instant('common.actions.delete'), icon: 'ri-delete-bin-line', actionKey: 'delete', variant: 'secondary' });
     }
     this.columns[4].actionButtons = actionButtons;
   }

@@ -13,29 +13,15 @@ import {
   GomConfirmationModalComponent,
   GomInputComponent,
   GomModalComponent,
-  GomSelectComponent,
-  GomSelectOption,
 } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { AppLanguage, I18nService } from '../../../core/i18n/i18n.service';
-import { AppCapability, UserActor } from '../../../core/auth/auth-session.model';
 import { environment } from '../../../../environments/environment';
 import { AdminNotification, AdminNotificationService } from './admin-notification.service';
 import { HeaderSearchService } from './header-search.service';
+import { NAV_ITEMS, NavItem } from './nav.config';
 import { OrdersService } from '../../../features/order/orders/orders.service';
 import { CreateOrderCatalogCacheService } from '../../../features/order/new-care-order/create-order-catalog-cache.service';
-
-interface NavItem {
-  label: string;
-  route: string;
-  icon: string;
-  translationKey: string;
-  section: 'Master Setup' | 'Marketplace' | 'Product Setup' | 'Order Management' | 'Staff Management' | 'Admin App' | 'Settings';
-  actor: UserActor;
-  capability?: AppCapability;
-  /** If provided, the nav item is shown only when session has at least one of these feature keys. */
-  featureKeys?: string[];
-}
 
 @Component({
   selector: 'gom-lib-shell',
@@ -52,7 +38,6 @@ interface NavItem {
     GomConfirmationModalComponent,
     GomInputComponent,
     GomModalComponent,
-    GomSelectComponent,
   ],
   templateUrl: './gom-shell.component.html',
   styleUrl: './gom-shell.component.scss',
@@ -72,6 +57,7 @@ export class GomShellComponent implements OnInit, OnDestroy {
   readonly desktopNavCollapsed = signal(false);
   readonly currentLanguage = signal<AppLanguage>(this.i18n.currentLanguage());
   readonly currentSession = this.authSession.session;
+  readonly tenantApplicationName = signal('');
   readonly pendingPricingCount = signal(0);
   readonly clearLocalCatalogConfirmOpen = signal(false);
   readonly clearingLocalCatalog = signal(false);
@@ -85,6 +71,7 @@ export class GomShellComponent implements OnInit, OnDestroy {
   readonly unreadNotifCount = signal(0);
   readonly notifications = signal<AdminNotification[]>([]);
   readonly notifLoading = signal(false);
+  readonly profileMenuOpen = signal(false);
   private pollSub?: Subscription;
   /** -1 = baseline not yet set; avoids beeping on first load */
   private _lastKnownUnreadCount = -1;
@@ -109,82 +96,45 @@ export class GomShellComponent implements OnInit, OnDestroy {
   });
   readonly languageOptions: Array<{ value: AppLanguage; labelKey: string }> = [
     { value: 'en', labelKey: 'app.language.english' },
-    { value: 'te', labelKey: 'app.language.telugu' },
     { value: 'hi', labelKey: 'app.language.hindi' },
+    { value: 'te', labelKey: 'app.language.telugu' },
   ];
   readonly expandedSections = signal<Record<NavItem['section'], boolean>>({
     'Master Setup': true,
     'Marketplace': true,
     'Product Setup': true,
     'Order Management': true,
-    'Staff Management': true,
+    'Account Management': true,
     'Admin App': true,
+    'Web App': true,
     'Settings': true,
+    'Notifications': true,
   });
 
-  readonly navItems: NavItem[] = [
-    { label: 'Categories', route: '/masters/categories', icon: 'ri-price-tag-3-line', translationKey: 'app.navigation.categories', section: 'Master Setup', actor: 'tenant', capability: 'masters', featureKeys: ['category.list', 'category.create', 'category.edit', 'category.delete'] },
-    { label: 'Fields', route: '/masters/fields', icon: 'ri-layout-grid-line', translationKey: 'app.navigation.fields', section: 'Master Setup', actor: 'tenant', capability: 'masters', featureKeys: ['field.list', 'field.create', 'field.edit', 'field.delete'] },
-    { label: 'Field Groups', route: '/masters/field-groups', icon: 'ri-folders-line', translationKey: 'app.navigation.fieldGroups', section: 'Master Setup', actor: 'tenant', capability: 'masters', featureKeys: ['fieldGroup.list', 'fieldGroup.create', 'fieldGroup.edit', 'fieldGroup.delete'] },
-    { label: 'Attributes', route: '/masters/attributes', icon: 'ri-price-tag-3-line', translationKey: 'app.navigation.attributes', section: 'Master Setup', actor: 'tenant', capability: 'masters', featureKeys: ['attribute.list', 'attribute.create', 'attribute.edit', 'attribute.delete'] },
-    { label: 'Attribute Sets', route: '/masters/attribute-sets', icon: 'ri-shape-line', translationKey: 'app.navigation.attributeSets', section: 'Master Setup', actor: 'tenant', capability: 'masters', featureKeys: ['attributeSet.list', 'attributeSet.create', 'attributeSet.edit', 'attributeSet.delete'] },
-    { label: 'Pricing Templates', route: '/masters/pricing-templates', icon: 'ri-money-dollar-circle-line', translationKey: 'app.navigation.pricingTemplates', section: 'Master Setup', actor: 'tenant', capability: 'masters', featureKeys: ['pricingTemplate.list', 'pricingTemplate.create', 'pricingTemplate.edit', 'pricingTemplate.delete'] },
-    { label: 'Units', route: '/masters/units', icon: 'ri-scales-3-line', translationKey: 'app.navigation.units', section: 'Master Setup', actor: 'tenant', capability: 'masters', featureKeys: ['unit.list', 'unit.create', 'unit.edit', 'unit.delete'] },
-    { label: 'Tax Profiles', route: '/masters/tax-profiles', icon: 'ri-percent-line', translationKey: 'app.navigation.taxProfiles', section: 'Master Setup', actor: 'tenant', capability: 'masters', featureKeys: ['taxProfile.list', 'taxProfile.create', 'taxProfile.edit'] },
-    { label: 'Category Templates', route: '/templates/browse', icon: 'ri-store-2-line', translationKey: 'app.navigation.categoryTemplates', section: 'Marketplace', actor: 'tenant', capability: 'masters', featureKeys: ['template.browse'] },
-    { label: 'Group Creation', route: '/product/groups', icon: 'ri-folder-add-line', translationKey: 'app.navigation.groupCreation', section: 'Product Setup', actor: 'tenant', capability: 'product', featureKeys: ['group.list'] },
-    {
-      label: 'Product Collections',
-      route: '/product/product-collections',
-      icon: 'ri-folder-3-line',
-      translationKey: 'app.navigation.productCollections',
-      section: 'Product Setup',
-      actor: 'tenant',
-      capability: 'product',
-      featureKeys: ['productCollection.list'],
-    },
-    { label: 'Stock', route: '/product/stock', icon: 'ri-stock-line', translationKey: 'app.navigation.stock', section: 'Product Setup', actor: 'tenant', capability: 'product', featureKeys: ['stock.list'] },
-    { label: 'Variants', route: '/product/variants', icon: 'ri-price-tag-3-line', translationKey: 'app.navigation.variants', section: 'Product Setup', actor: 'tenant', capability: 'product', featureKeys: ['variant.list'] },
-    { label: 'Packs', route: '/product/packs', icon: 'ri-box-3-line', translationKey: 'app.navigation.packs', section: 'Product Setup', actor: 'tenant', capability: 'product', featureKeys: ['pack.list'] },
-    { label: 'Simple Pricing', route: '/pricing/simple', icon: 'ri-money-rupee-circle-line', translationKey: 'app.navigation.simplePricing', section: 'Product Setup', actor: 'tenant', capability: 'product', featureKeys: ['variant.list'] },
-    { label: 'Media Library', route: '/product/media', icon: 'ri-image-line', translationKey: 'app.navigation.mediaLibrary', section: 'Product Setup', actor: 'tenant', capability: 'product', featureKeys: ['media.list'] },
-    { label: 'Orders', route: '/orders/list', icon: 'ri-file-list-3-line', translationKey: 'app.navigation.orders', section: 'Order Management', actor: 'tenant', capability: 'orders', featureKeys: ['order.list'] },
-    { label: 'Customers', route: '/customers/list', icon: 'ri-user-3-line', translationKey: 'app.navigation.customers', section: 'Order Management', actor: 'tenant', capability: 'customers', featureKeys: ['customer.list'] },
-    { label: 'Customer Groups', route: '/customers/groups', icon: 'ri-team-line', translationKey: 'app.navigation.customerGroups', section: 'Order Management', actor: 'tenant', capability: 'customer-groups', featureKeys: ['customerGroup.list'] },
-    { label: 'Riders', route: '/delivery/riders', icon: 'ri-bike-line', translationKey: 'app.navigation.riders', section: 'Order Management', actor: 'tenant', capability: 'delivery', featureKeys: ['rider.list'] },
-    { label: 'Courier Partners', route: '/delivery/courier-partners', icon: 'ri-truck-line', translationKey: 'app.navigation.courierPartners', section: 'Order Management', actor: 'tenant', capability: 'delivery', featureKeys: ['courierPartner.list'] },
-    { label: 'Employee Code', route: '/settings/employee-code', icon: 'ri-settings-3-line', translationKey: 'app.navigation.employeeCode', section: 'Settings', actor: 'tenant', capability: 'tenant-admin', featureKeys: ['employeeCode.view', 'employeeCode.config'] },
-    { label: 'Serviceable Pincodes', route: '/settings/serviceable-pincodes', icon: 'ri-map-pin-range-line', translationKey: 'app.navigation.serviceablePincodes', section: 'Settings', actor: 'tenant', capability: 'tenant-admin', featureKeys: ['pincode.config'] },
-    { label: 'Customer Storefront', route: '/settings/storefront', icon: 'ri-store-line', translationKey: 'app.navigation.storefrontConfig', section: 'Settings', actor: 'tenant', capability: 'tenant-admin', featureKeys: ['storefront.config'] },
-    { label: 'Delivery Management', route: '/settings/delivery-management', icon: 'ri-truck-line', translationKey: 'app.navigation.deliveryManagement', section: 'Settings', actor: 'tenant', capability: 'tenant-admin', featureKeys: ['delivery.management'] },
-    { label: 'Return & Exchange Policy', route: '/settings/return-policy', icon: 'ri-arrow-go-back-line', translationKey: 'app.navigation.returnPolicy', section: 'Settings', actor: 'tenant', capability: 'tenant-admin', featureKeys: ['returnPolicy.config'] },
-    { label: 'PIN Security Policy', route: '/settings/pin-security', icon: 'ri-lock-line', translationKey: 'app.navigation.pinSecurityPolicy', section: 'Settings', actor: 'tenant', capability: 'tenant-admin', featureKeys: ['security.config'] },
-    { label: 'Push Notifications', route: '/settings/push-notifications', icon: 'ri-notification-3-line', translationKey: 'app.navigation.pushNotifications', section: 'Settings', actor: 'tenant', capability: 'tenant-admin', featureKeys: ['notification.broadcast'] },
-    { label: 'Notification Settings', route: '/settings/notification-settings', icon: 'ri-mail-settings-line', translationKey: 'app.navigation.notificationSettings', section: 'Settings', actor: 'tenant', capability: 'tenant-admin', featureKeys: ['notification.manage'] },
-    { label: 'Notification Operations', route: '/settings/notification-ops', icon: 'ri-dashboard-3-line', translationKey: 'app.navigation.notificationOps', section: 'Settings', actor: 'tenant', capability: 'tenant-admin', featureKeys: ['notification.manage'] },
-    { label: 'SaaS Accounts', route: '/settings/saas-accounts', icon: 'ri-building-2-line', translationKey: 'app.navigation.saasAccounts', section: 'Settings', actor: 'platform', capability: 'platform-admin' },
-    { label: 'SaaS Packages', route: '/settings/saas-packages', icon: 'ri-stack-line', translationKey: 'app.navigation.saasPackages', section: 'Settings', actor: 'platform', capability: 'platform-admin' },
-    { label: 'Platform Users', route: '/settings/platform-users', icon: 'ri-user-settings-line', translationKey: 'app.navigation.platformUsers', section: 'Settings', actor: 'platform', capability: 'platform-admin' },
-    { label: 'SaaS Features', route: '/settings/saas-features', icon: 'ri-function-line', translationKey: 'app.navigation.saasFeatures', section: 'Settings', actor: 'platform', capability: 'platform-admin' },
-    { label: 'Tenant Entitlements', route: '/settings/tenant-entitlements', icon: 'ri-shield-keyhole-line', translationKey: 'app.navigation.tenantEntitlements', section: 'Settings', actor: 'platform', capability: 'platform-admin' },
-    { label: 'Platform Tenant Roles', route: '/settings/tenant-roles', icon: 'ri-shield-user-line', translationKey: 'app.navigation.platformTenantRoles', section: 'Settings', actor: 'platform', capability: 'platform-admin' },
-    { label: 'Platform Templates', route: '/settings/platform-templates', icon: 'ri-file-copy-2-line', translationKey: 'app.navigation.platformTemplates', section: 'Settings', actor: 'platform', capability: 'platform-admin' },
-    { label: 'Business Templates', route: '/settings/business-templates', icon: 'ri-store-2-line', translationKey: 'app.navigation.businessTemplates', section: 'Settings', actor: 'platform', capability: 'platform-admin' },
-    { label: 'Platform Media', route: '/settings/platform-media', icon: 'ri-image-line', translationKey: 'app.navigation.platformMedia', section: 'Settings', actor: 'platform', capability: 'platform-admin' },
-    { label: 'Tenant Dashboard', route: '/saas-admin/dashboard', icon: 'ri-dashboard-line', translationKey: 'app.navigation.tenantDashboard', section: 'Settings', actor: 'tenant', capability: 'tenant-admin', featureKeys: ['dashboard.view'] },
-    { label: 'Tenant Users', route: '/saas-admin/users', icon: 'ri-user-settings-line', translationKey: 'app.navigation.tenantUsers', section: 'Settings', actor: 'tenant', capability: 'tenant-admin', featureKeys: ['user.list'] },
-    { label: 'Offers', route: '/saas-admin/offers', icon: 'ri-coupon-2-line', translationKey: 'gom.offers.title', section: 'Settings', actor: 'tenant', capability: 'tenant-admin', featureKeys: ['offer.list'] },
-    { label: 'Accounts', route: '/saas-admin/employees', icon: 'ri-id-card-line', translationKey: 'app.navigation.tenantEmployees', section: 'Staff Management', actor: 'tenant', capability: 'tenant-admin', featureKeys: ['tenantAccount.view', 'tenantAccount.add', 'tenantAccount.edit', 'tenantAccount.delete'] },
-    { label: 'Roles', route: '/saas-admin/roles', icon: 'ri-shield-check-line', translationKey: 'app.navigation.tenantRoles', section: 'Staff Management', actor: 'tenant', capability: 'tenant-admin', featureKeys: ['tenantRole.view', 'tenantRole.add', 'tenantRole.edit', 'tenantRole.delete'] },
-    { label: 'Create Order Settings', route: '/admin-app/create-order-settings', icon: 'ri-settings-3-line', translationKey: 'app.navigation.createOrderSettings', section: 'Admin App', actor: 'tenant', capability: 'orders' },
-    { label: 'Billing', route: '/admin-app/billing', icon: 'ri-bill-line', translationKey: 'app.navigation.billing', section: 'Admin App', actor: 'tenant', capability: 'orders' },
-    { label: 'Business Details', route: '/admin-app/business-details', icon: 'ri-store-2-line', translationKey: 'app.navigation.businessDetails', section: 'Admin App', actor: 'tenant', capability: 'tenant-admin', featureKeys: ['roles.view', 'roles.edit'] },
-    { label: 'Payment Options', route: '/admin-app/payment-options', icon: 'ri-bank-card-line', translationKey: 'app.navigation.paymentOptions', section: 'Admin App', actor: 'tenant', capability: 'orders' },
-  ];
+  readonly navItems: NavItem[] = NAV_ITEMS;
+
+  private readonly standaloneNavOrder: string[] = ['/saas-admin/dashboard', '/saas-admin/offers'];
+  private readonly standaloneNavRoutes = new Set<string>(this.standaloneNavOrder);
+
+  readonly standaloneNavItems = computed(() => {
+    const routeToItem = new Map(
+      this.visibleNavItems()
+        .filter((item) => this.standaloneNavRoutes.has(item.route))
+        .map((item) => [item.route, item] as const),
+    );
+
+    return this.standaloneNavOrder
+      .map((route) => routeToItem.get(route))
+      .filter((item): item is NavItem => Boolean(item));
+  });
+
+  readonly groupedNavItems = computed(() =>
+    this.visibleNavItems().filter((item) => !this.standaloneNavRoutes.has(item.route)),
+  );
 
   readonly sections = computed<Array<NavItem['section']>>(() => {
-    const visibleItems = this.visibleNavItems();
-    const orderedSections: Array<NavItem['section']> = ['Master Setup', 'Marketplace', 'Product Setup', 'Order Management', 'Staff Management', 'Admin App', 'Settings'];
+    const visibleItems = this.groupedNavItems();
+    const orderedSections: Array<NavItem['section']> = ['Master Setup', 'Marketplace', 'Product Setup', 'Order Management', 'Account Management', 'Admin App', 'Web App', 'Settings', 'Notifications'];
     return orderedSections.filter((section) => visibleItems.some((item) => item.section === section));
   });
 
@@ -215,15 +165,21 @@ export class GomShellComponent implements OnInit, OnDestroy {
     });
   });
 
-  get languageSelectOptions(): GomSelectOption[] {
-    return this.languageOptions.map((option) => ({
-      value: option.value,
-      label: this.i18n.instant(option.labelKey),
-    }));
+  isNavExpanded(): boolean {
+    return this.isDesktopViewport() ? !this.desktopNavCollapsed() : this.menuOpen();
   }
 
   toggleMenu(): void {
     this.menuOpen.update((open) => !open);
+  }
+
+  toggleNav(): void {
+    if (this.isDesktopViewport()) {
+      this.toggleDesktopNav();
+      return;
+    }
+
+    this.toggleMenu();
   }
 
   @HostListener('window:keydown', ['$event'])
@@ -255,10 +211,14 @@ export class GomShellComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadPendingPricingCount();
+    this.loadTenantApplicationName();
 
     this.router.events
       .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
-      .subscribe(() => this.loadPendingPricingCount());
+      .subscribe(() => {
+        this.loadPendingPricingCount();
+        this.loadTenantApplicationName();
+      });
 
     // Poll unread notification count every 30 seconds (tenant only)
     this.pollSub = interval(30_000)
@@ -347,6 +307,7 @@ export class GomShellComponent implements OnInit, OnDestroy {
 
   toggleNotifPanel(): void {
     void this.primeAudioContext();
+    this.profileMenuOpen.set(false);
     if (!this.notifPanelOpen()) {
       this.openNotifPanel();
     } else {
@@ -365,6 +326,15 @@ export class GomShellComponent implements OnInit, OnDestroy {
 
   closeNotifPanel(): void {
     this.notifPanelOpen.set(false);
+  }
+
+  toggleProfileMenu(): void {
+    this.closeNotifPanel();
+    this.profileMenuOpen.update((open) => !open);
+  }
+
+  closeProfileMenu(): void {
+    this.profileMenuOpen.set(false);
   }
 
   markNotifRead(notif: AdminNotification): void {
@@ -405,12 +375,36 @@ export class GomShellComponent implements OnInit, OnDestroy {
       });
   }
 
+  loadTenantApplicationName(): void {
+    const session = this.authSession.session();
+    if (session?.actorType !== 'tenant') {
+      this.tenantApplicationName.set('');
+      return;
+    }
+
+    this.ordersService.getTenantConfig().subscribe({
+      next: (response) => {
+        const displayName = String(response.data?.storefrontConfig?.storeDisplayName || '').trim();
+        this.tenantApplicationName.set(displayName);
+      },
+      error: () => this.tenantApplicationName.set(''),
+    });
+  }
+
   closeMenu(): void {
     this.menuOpen.set(false);
   }
 
   toggleDesktopNav(): void {
     this.desktopNavCollapsed.update((collapsed) => !collapsed);
+  }
+
+  private isDesktopViewport(): boolean {
+    if (typeof window === 'undefined') {
+      return false;
+    }
+
+    return window.matchMedia('(min-width: 768px)').matches;
   }
 
   toggleSection(section: NavItem['section']): void {
@@ -425,7 +419,7 @@ export class GomShellComponent implements OnInit, OnDestroy {
   }
 
   navItemsBySection(section: NavItem['section']): NavItem[] {
-    return this.visibleNavItems().filter((item) => item.section === section);
+    return this.groupedNavItems().filter((item) => item.section === section);
   }
 
   getSectionTranslationKey(section: NavItem['section']): string {
@@ -441,16 +435,24 @@ export class GomShellComponent implements OnInit, OnDestroy {
       return 'app.navigation.productSetup';
     }
 
-    if (section === 'Staff Management') {
-      return 'app.navigation.staffManagement';
+    if (section === 'Account Management') {
+      return 'app.navigation.accountManagement';
     }
 
     if (section === 'Admin App') {
       return 'app.navigation.adminApp';
     }
 
+    if (section === 'Web App') {
+      return 'app.navigation.webApp';
+    }
+
     if (section === 'Settings') {
       return 'app.navigation.settings';
+    }
+
+    if (section === 'Notifications') {
+      return 'app.navigation.notifications';
     }
 
     return 'app.navigation.orderManagement';
@@ -463,6 +465,12 @@ export class GomShellComponent implements OnInit, OnDestroy {
 
     this.i18n.useLanguage(lang);
     this.currentLanguage.set(lang);
+  }
+
+  openProfileSettings(): void {
+    this.closeProfileMenu();
+    const route = this.currentSession()?.actorType === 'platform' ? '/settings/platform-users' : '/saas-admin/users';
+    void this.router.navigateByUrl(route);
   }
 
   openClearLocalCatalogConfirmation(): void {
@@ -533,6 +541,7 @@ export class GomShellComponent implements OnInit, OnDestroy {
   logout(): void {
     this.authSession.logout();
     this.closeMenu();
+    this.closeProfileMenu();
     void this.router.navigateByUrl('/auth', { replaceUrl: true });
   }
 }

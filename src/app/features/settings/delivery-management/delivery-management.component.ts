@@ -18,6 +18,7 @@ import {
   GomTextareaComponent,
 } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
+import { PageHeadingComponent } from '../../../shared/components/page-heading/page-heading.component';
 import { DisableIfNoFeatureDirective } from '../../../shared/directives/disable-if-no-feature.directive';
 import {
   DeliveryModeType,
@@ -38,6 +39,7 @@ import {
     CommonModule,
     ReactiveFormsModule,
     FormControlsModule,
+    PageHeadingComponent,
     DisableIfNoFeatureDirective,
     GomButtonComponent,
     GomCardComponent,

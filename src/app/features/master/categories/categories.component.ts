@@ -68,6 +68,7 @@ export class CategoriesComponent implements OnInit, OnDestroy {
   errorMessage = signal<string | null>(null);
   associationsOpen = signal(false);
   associationsCategory = signal<Category | null>(null);
+  associationsInitialTab = signal<'fieldGroups' | 'units' | 'groups'>('fieldGroups');
 
   readonly totalCategories = signal(0);
   readonly categoryTablePageIndex = signal(0);
@@ -202,6 +203,27 @@ export class CategoriesComponent implements OnInit, OnDestroy {
       this.formOpen.set(true);
     }
 
+    if (action.action === 'clone') {
+      if (!this.canCreateCategory()) {
+        return;
+      }
+
+      const limit = this.categoryCreateLimit();
+      const remaining = this.categoryCreateRemaining();
+      if (limit !== null && remaining !== null && remaining <= 0) {
+        this.toast.error(`Category creation limit reached. You can create up to ${limit} categories.`);
+        return;
+      }
+
+      this.onViewClose();
+      this.selectedCategory.set({
+        ...action.category,
+        _id: undefined,
+        name: this.buildClonedCategoryName(action.category.name),
+      });
+      this.formOpen.set(true);
+    }
+
     if (action.action === 'delete') {
       if (!this.canDeleteCategory()) {
         return;
@@ -210,9 +232,21 @@ export class CategoriesComponent implements OnInit, OnDestroy {
     }
 
     if (action.action === 'manage') {
+      this.associationsInitialTab.set('fieldGroups');
       this.associationsCategory.set(action.category);
       this.associationsOpen.set(true);
     }
+
+    if (action.action === 'groups-info') {
+      this.associationsInitialTab.set('groups');
+      this.associationsCategory.set(action.category);
+      this.associationsOpen.set(true);
+    }
+  }
+
+  private buildClonedCategoryName(sourceName: string | undefined): string {
+    const baseName = String(sourceName || '').trim();
+    return baseName ? `${baseName} (Copy)` : 'Category Copy';
   }
 
   private requestDeleteCategory(category: Category): void {

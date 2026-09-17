@@ -43,6 +43,9 @@ function isTenantApiRequest(url: string): boolean {
   return (
     TENANT_ROUTE_PREFIXES.some((prefix) => path.startsWith(prefix)) ||
     path.startsWith('/notifications') ||
+    path.startsWith('/notification-templates') ||
+    path.startsWith('/notification-campaigns') ||
+    path.startsWith('/notification-dispatches') ||
     path.startsWith('/admin-notifications')
   );
 }

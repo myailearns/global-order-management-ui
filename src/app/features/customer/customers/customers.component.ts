@@ -21,6 +21,7 @@ import {
   CustomerDetail,
   CustomerSummary,
 } from '../customer-engagement.service';
+import { PageHeadingComponent } from '../../../shared/components/page-heading/page-heading.component';
 
 interface CustomerRow extends GomTableRow {
   customerId: string;
@@ -55,6 +56,7 @@ interface CustomerOrderHistoryRow extends GomTableRow {
     GomInputComponent,
     GomTableComponent,
     GomModalComponent,
+    PageHeadingComponent,
   ],
   templateUrl: './customers.component.html',
   styleUrl: './customers.component.scss',
@@ -125,6 +127,7 @@ export class CustomersComponent implements OnInit {
       actionButtons: [
         {
           label: 'View Details',
+          icon: 'ri-eye-line',
           actionKey: 'view',
           variant: 'secondary',
           disabled: () => !this.canViewCustomer(),

@@ -2,18 +2,23 @@
   <header class="orders-header">
     <div class="orders-header__title-row">
       <div class="orders-header__title-group">
-        <h2 class="orders-header__heading">Orders</h2>
-        <span class="orders-header__subtitle">Manage and track all customer orders</span>
+        <gom-page-heading class="orders-header__heading" navRoute="/orders/list"></gom-page-heading>
       </div>
       <div class="orders-header__actions">
         <gom-lib-button
           type="button"
           variant="primary"
+          [size]="isMobileHeader() ? 'compact-icon' : 'default'"
           (buttonClick)="openCreate()"
           gomDisableIfNoFeature="order.create"
           [disabled]="loading() || !canCreateOrder()"
+          [attr.aria-label]="'Create Order'"
+          [buttonTitle]="'Create Order'"
         >
-          <i class="ri-add-line" aria-hidden="true"></i> Create Order
+          <i class="ri-add-line" aria-hidden="true"></i>
+          @if (!isMobileHeader()) {
+            Create Order
+          }
         </gom-lib-button>
       </div>
     </div>
@@ -205,6 +210,9 @@
       [searchDebounceMs]="450"
       emptyMessage="No orders found."
       [mobileCardView]="true"
+      mobilePaginationMode="load-more"
+      [mobileAutoLoadMore]="true"
+      mobileLoadMoreStrategy="page-query"
       [mobileCardConfig]="orderMobileCardConfig"
       [mobileSortKeys]="orderMobileSortKeys"
       [showExport]="true"

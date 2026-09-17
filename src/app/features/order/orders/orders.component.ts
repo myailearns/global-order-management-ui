@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, OnInit, signal, ViewChild } from '@angular/core';
+import { Component, HostListener, computed, inject, OnInit, signal, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
@@ -26,6 +26,7 @@ import {
 } from '@gomlibs/ui';
 import { forkJoin } from 'rxjs';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
+import { PageHeadingComponent } from '../../../shared/components/page-heading/page-heading.component';
 import { DisableIfNoFeatureDirective } from '../../../shared/directives/disable-if-no-feature.directive';
 import { CourierPartner, Order, OrderAttentionCounts, OrderItem, OrderRating, OrdersService, ReturnRequest, Rider, UpdateOrderEditableFieldsPayload, Variant } from './orders.service';
 
@@ -68,6 +69,7 @@ interface OrderRow extends GomTableRow {
     GomSelectComponent,
     GomChipComponent,
     GomModalComponent,
+    PageHeadingComponent,
     GomTableComponent,
     GomConfirmationModalComponent,
   ],
@@ -79,8 +81,10 @@ export class OrdersComponent implements OnInit {
   private readonly toast = inject(GomAlertToastService);
   private readonly router = inject(Router);
   private readonly authSession = inject(AuthSessionService);
+  readonly viewportWidth = signal<number>(window.innerWidth);
+  readonly isMobileHeader = computed<boolean>(() => this.viewportWidth() <= 768);
 
-  @ViewChild(GomTableComponent) private orderTable!: GomTableComponent<OrderRow>;
+  @ViewChild(GomTableComponent) private readonly orderTable!: GomTableComponent<OrderRow>;
 
   readonly loading = signal(false);
   readonly canListOrders = computed(() => this.authSession.hasFeature('order.list'));
@@ -136,6 +140,11 @@ export class OrdersComponent implements OnInit {
   readonly viewOrderRatingLoading = signal(false);
   readonly viewOrderReturnRequest = signal<ReturnRequest | null>(null);
   readonly viewOrderReturnLoading = signal(false);
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.viewportWidth.set(window.innerWidth);
+  }
   
   // Computed properties for return request details
   readonly returnRequestItems = computed(() => {
@@ -212,7 +221,7 @@ export class OrdersComponent implements OnInit {
   readonly courierPartners = signal<CourierPartner[]>([]);
   readonly variants = signal<Variant[]>([]);
 
-  private readonly serverChunkSize = 50;
+  private readonly serverChunkSize = 10;
   private ordersChunkCache = new Map<number, Order[]>();
   private activeOrdersQueryKey = '';
   private latestOrdersRequestId = 0;
@@ -346,17 +355,47 @@ export class OrdersComponent implements OnInit {
   ];
 
   readonly orderMobileCardConfig: GomTableMobileCardConfig<OrderRow> = {
-    primaryKey: 'orderNo',
-    titleKey: 'customerName',
-    subtitleKey: 'customer',
-    avatarKey: 'customerName',
-    dateKey: 'mobileCreatedAt',
-    summaryStartKey: 'itemCount',
-    summaryCenterKey: 'total',
-    summaryEndKey: 'mobileSource',
-    statusKey: 'status',
-    detailKey: 'deliveryType',
-    paymentKey: 'mobilePayment',
+    header: {
+      titleKey: 'orderNo',
+      subtitleKeys: ['customer', 'customerName'],
+      statusKey: 'status',
+      overflowActionKeys: [
+        'view',
+        'print-bill',
+        'edit-order-items',
+        'mark-payment-received',
+        'attempt-failed',
+        'request-return',
+        'mark-return-in-transit',
+        'mark-return-received',
+        'mark-money-refunded',
+        'courier-return-to-warehouse',
+        'cancel',
+        'delete',
+      ],
+    },
+    body: {
+      visibleFields: [
+        { key: 'source', label: 'Source' },
+        { key: 'orderType', label: 'Order Type' },
+        { key: 'paymentStatus', label: 'Payment Status' },
+        { key: 'total', label: 'Total Value' },
+      ],
+      expandableFields: [
+        { key: 'profit', label: 'Profit' },
+        { key: 'discount', label: 'Discount' },
+        { key: 'couponsUsed', label: 'Coupons Used', width: 'full' },
+        { key: 'createdAt', label: 'Created' },
+      ],
+      defaultExpanded: false,
+    },
+    footer: {
+      primaryActionKeys: ['next', 'view'],
+      ...({ showPrimaryActionLabels: false } as Record<string, boolean>),
+      showDetailsToggle: true,
+      expandLabel: 'View More Details ↓',
+      collapseLabel: 'View Less Details ↑',
+    },
   };
 
   orderTableNavigationRows: GomTableFilterNavigationRow<OrderRow>[] = [
@@ -445,6 +484,7 @@ export class OrdersComponent implements OnInit {
       actionButtons: [
         {
           label: (row) => this.getNextStatusLabel(String(row['rawStatus'] || ''), String(row['deliveryType'] || ''), String(row['orderType'] || '')),
+          icon: 'ri-arrow-right-line',
           actionKey: 'next',
           variant: 'secondary',
           disabled: (row) => !this.canUpdateOrder() || !this.getNextStatus(
@@ -472,6 +512,7 @@ export class OrdersComponent implements OnInit {
           subActions: [
             {
               label: 'View Full Order',
+              icon: 'ri-eye-line',
               actionKey: 'view',
               variant: 'secondary',
             },
@@ -1193,8 +1234,8 @@ export class OrdersComponent implements OnInit {
     return {
       ...query,
       sort: { ...query.sort },
-      filters: { ...(query.filters || {}) },
-      visibleColumnKeys: [...(query.visibleColumnKeys || [])],
+      filters: { ...query.filters },
+      visibleColumnKeys: [...(query.visibleColumnKeys ?? [])],
       advancedFilters: this.cloneAdvancedFilters(query.advancedFilters),
       globalSearchScope: query.globalSearchScope,
     };

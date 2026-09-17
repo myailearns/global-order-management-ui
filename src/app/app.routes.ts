@@ -26,13 +26,13 @@ import { PaymentOptionsComponent } from './features/admin-app/payment-options/pa
 import { RidersComponent } from './features/delivery/riders';
 import { CourierPartnersComponent } from './features/delivery/courier-partners';
 import { EmployeeCodeConfigComponent } from './features/settings/employee-code-config';
-import { ServiceablePincodesConfigComponent } from './features/settings/serviceable-pincodes-config';
 import { StorefrontConfigComponent } from './features/settings/storefront-config';
 import { DeliveryManagementComponent } from './features/settings/delivery-management/delivery-management.component';
 import { ReturnPolicyConfigComponent } from './features/settings/return-policy-config';
 import { PushNotificationsComponent } from './features/settings/push-notifications/push-notifications.component';
+import { PushNotificationsCreateComponent } from './features/settings/push-notifications/push-notifications-create.component';
 import { NotificationOpsComponent } from './features/settings/notification-ops/notification-ops.component';
-import { NotificationSettingsComponent } from './features/settings/notification-settings';
+import { NotificationsSettingComponent } from './features/settings/notifications-setting';
 import { PinSecurityConfigComponent } from './features/settings/pin-security-config';
 import { CustomersComponent } from './features/customer/customers';
 import { CustomerGroupsComponent } from './features/customer/customer-groups';
@@ -384,25 +384,73 @@ export const routes: Routes = [
 				},
 			},
 			{
-				path: 'settings/serviceable-pincodes',
-				component: ServiceablePincodesConfigComponent,
-				data: {
-					actor: 'tenant',
-					capability: 'tenant-admin',
-					featureKeys: ['pincode.config'],
-					title: 'Serviceable Pincodes',
-					description: 'Configure home-delivery serviceable pincodes and fallback suggestions.',
-				},
+				path: 'settings/storefront',
+				redirectTo: 'settings/web-app/storefront',
+				pathMatch: 'full',
 			},
 			{
-				path: 'settings/storefront',
+				path: 'settings/web-app',
+				redirectTo: 'settings/web-app/storefront',
+				pathMatch: 'full',
+			},
+			{
+				path: 'settings/web-app/storefront',
 				component: StorefrontConfigComponent,
 				data: {
 					actor: 'tenant',
 					capability: 'tenant-admin',
 					featureKeys: ['storefront.config'],
-					title: 'Customer Storefront',
-					description: 'Configure your public-facing online store — branding, layout, banners, and payment methods.',
+					tab: 'basic',
+					title: 'Storefront',
+					description: 'Configure storefront access, slug, display name, logo, and sharing.',
+				},
+			},
+			{
+				path: 'settings/web-app/branding',
+				component: StorefrontConfigComponent,
+				data: {
+					actor: 'tenant',
+					capability: 'tenant-admin',
+					featureKeys: ['storefront.config'],
+					tab: 'branding',
+					title: 'Branding',
+					description: 'Configure branding colors, welcome copy, footer text, and social links.',
+				},
+			},
+			{
+				path: 'settings/web-app/home-page',
+				component: StorefrontConfigComponent,
+				data: {
+					actor: 'tenant',
+					capability: 'tenant-admin',
+					featureKeys: ['storefront.config'],
+					tab: 'catalog',
+					title: 'Home Page',
+					description: 'Configure the customer home page layout, banners, and product visibility.',
+				},
+			},
+			{
+				path: 'settings/web-app/catalog',
+				component: StorefrontConfigComponent,
+				data: {
+					actor: 'tenant',
+					capability: 'tenant-admin',
+					featureKeys: ['storefront.config'],
+					tab: 'productSet',
+					title: 'Catalog',
+					description: 'Configure product set visibility and customer catalog layout.',
+				},
+			},
+			{
+				path: 'settings/web-app/checkout-payments',
+				component: StorefrontConfigComponent,
+				data: {
+					actor: 'tenant',
+					capability: 'tenant-admin',
+					featureKeys: ['storefront.config'],
+					tab: 'payments',
+					title: 'Checkout & Payments',
+					description: 'Configure payment methods available at checkout.',
 				},
 			},
 			{
@@ -445,13 +493,24 @@ export const routes: Routes = [
 					actor: 'tenant',
 					capability: 'tenant-admin',
 					featureKeys: ['notification.broadcast'],
-					title: 'Push Notifications',
-					description: 'Broadcast offers and announcements to all subscribed customers.',
+					title: 'Notification Center',
+					description: 'Create and manage marketing notifications across push, email, and WhatsApp.',
+				},
+			},
+			{
+				path: 'settings/push-notifications/create',
+				component: PushNotificationsCreateComponent,
+				data: {
+					actor: 'tenant',
+					capability: 'tenant-admin',
+					featureKeys: ['notification.broadcast'],
+					title: 'Create Notification',
+					description: 'Set up channels, content, audience, and schedule before sending.',
 				},
 			},
 			{
 				path: 'settings/notification-settings',
-				component: NotificationSettingsComponent,
+				component: NotificationsSettingComponent,
 				data: {
 					actor: 'tenant',
 					capability: 'tenant-admin',

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, HostListener, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
@@ -8,6 +8,8 @@ import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { DisableIfNoFeatureDirective } from '../../../shared/directives/disable-if-no-feature.directive';
 import { ATTRIBUTE_DEFAULT_STATUS, ATTRIBUTE_STATUS_OPTIONS, ATTRIBUTE_UI_TEXT } from './attributes.constants';
 import { AttributeDefinition, AttributeDefinitionPayload, AttributesService } from './attributes.service';
+import { getNavIcon } from '../../../shared/components/layout/nav.config';
+import { PageHeadingComponent } from '../../../shared/components/page-heading/page-heading.component';
 
 interface AttributeRow extends GomTableRow {
   _id: string;
@@ -20,7 +22,7 @@ interface AttributeRow extends GomTableRow {
 @Component({
   selector: 'gom-attributes',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, TranslateModule, GomButtonComponent, GomTableComponent, GomModalComponent, GomInputComponent, GomSelectComponent, GomTextareaComponent, GomConfirmationModalComponent, DisableIfNoFeatureDirective],
+  imports: [CommonModule, ReactiveFormsModule, TranslateModule, GomButtonComponent, GomTableComponent, GomModalComponent, GomInputComponent, GomSelectComponent, GomTextareaComponent, GomConfirmationModalComponent, DisableIfNoFeatureDirective, PageHeadingComponent],
   templateUrl: './attributes.component.html',
   styleUrl: './attributes.component.scss',
 })
@@ -32,7 +34,10 @@ export class AttributesComponent implements OnInit {
   private readonly authSession = inject(AuthSessionService);
 
   readonly text = ATTRIBUTE_UI_TEXT;
+  readonly headingIcon = getNavIcon('/masters/attributes');
   readonly statusOptions = ATTRIBUTE_STATUS_OPTIONS;
+  readonly viewportWidth = signal<number>(window.innerWidth);
+  readonly isMobileHeader = computed<boolean>(() => this.viewportWidth() <= 768);
   readonly loading = signal(false);
   readonly errorMessage = signal<string | null>(null);
   readonly items = signal<AttributeDefinition[]>([]);
@@ -60,7 +65,6 @@ export class AttributesComponent implements OnInit {
 
   readonly columns: GomTableColumn<AttributeRow>[] = [
     { key: 'name', header: '', sortable: true, filterable: true, width: '18rem' },
-    { key: 'key', header: '', sortable: true, filterable: true, width: '16rem' },
     { key: 'allowedValues', header: '', width: '22rem', textMode: 'wrap' },
     { key: 'status', header: '', sortable: true, width: '12rem' },
     { key: 'id', header: '', width: '10rem', actionButtons: [] },
@@ -79,6 +83,11 @@ export class AttributesComponent implements OnInit {
   constructor() {
     this.rebuildText();
     this.translate.onLangChange.subscribe(() => this.rebuildText());
+  }
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.viewportWidth.set(window.innerWidth);
   }
 
   ngOnInit(): void {
@@ -231,13 +240,16 @@ export class AttributesComponent implements OnInit {
 
   private rebuildText(): void {
     this.columns[0].header = this.translate.instant(this.text.nameLabel);
-    this.columns[1].header = this.translate.instant(this.text.keyLabel);
-    this.columns[2].header = this.translate.instant(this.text.allowedValuesLabel);
-    this.columns[3].header = this.translate.instant(this.text.statusLabel);
-    this.columns[4].header = this.translate.instant(this.text.actionsLabel);
-    this.columns[4].actionButtons = [
-      { label: this.translate.instant(this.text.editAction), actionKey: 'edit', variant: 'secondary' },
-      { label: this.translate.instant(this.text.deleteAction), actionKey: 'delete', variant: 'secondary' },
+    this.columns[1].header = this.translate.instant(this.text.allowedValuesLabel);
+    this.columns[2].header = this.translate.instant(this.text.statusLabel);
+    this.columns[2].format = (value) =>
+      value === 'INACTIVE'
+        ? this.translate.instant('common.status.inactive')
+        : this.translate.instant('common.status.active');
+    this.columns[3].header = this.translate.instant(this.text.actionsLabel);
+    this.columns[3].actionButtons = [
+      { label: this.translate.instant(this.text.editAction), icon: 'ri-pencil-line', actionKey: 'edit', variant: 'secondary' },
+      { label: this.translate.instant(this.text.deleteAction), icon: 'ri-delete-bin-line', actionKey: 'delete', variant: 'secondary' },
     ];
   }
 }

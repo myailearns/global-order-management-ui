@@ -6,13 +6,14 @@ import { startWith } from 'rxjs';
 
 import { FormControlsModule, GomAlertToastService, GomButtonComponent, GomTabsComponent, GomTabContentComponent } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
+import { PageHeadingComponent } from '../../../shared/components/page-heading/page-heading.component';
 import { DisableIfNoFeatureDirective } from '../../../shared/directives/disable-if-no-feature.directive';
 import { DeliveryService, ReturnPolicy, ReturnWindowUnit, RefundProcessingUnit } from '../../delivery/delivery.service';
 
 @Component({
   selector: 'gom-return-policy-config',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormControlsModule, GomButtonComponent, GomTabsComponent, GomTabContentComponent, DisableIfNoFeatureDirective],
+  imports: [CommonModule, ReactiveFormsModule, FormControlsModule, PageHeadingComponent, GomButtonComponent, GomTabsComponent, GomTabContentComponent, DisableIfNoFeatureDirective],
   templateUrl: './return-policy-config.component.html',
   styleUrl: './return-policy-config.component.scss',
 })

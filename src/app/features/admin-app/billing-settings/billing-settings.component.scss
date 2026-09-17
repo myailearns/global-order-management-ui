@@ -2,7 +2,6 @@
 
 :host { display: block; }
 
-.billing-settings { padding: theme.get-spacing(lg); }
 
 .billing-settings--editor {
   height: calc(100dvh - 5rem);
@@ -121,8 +120,22 @@
 }
 
 @include theme.breakpoint-down(sm) {
-  .billing-settings { padding: theme.get-spacing(sm); }
-  .billing-settings__header--actions { align-items: flex-start; flex-direction: column; }
+  .billing-settings__header--actions {
+    align-items: center;
+    flex-direction: row;
+    flex-wrap: nowrap;
+  }
+  .billing-settings__header--actions > div:first-child,
+  .billing-settings__header--actions > .billing-settings__heading-with-back {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+  .billing-settings__header--actions > gom-lib-button,
+  .billing-settings__heading-actions > gom-lib-button {
+    flex: 0 0 auto;
+    padding-inline: 0.5rem;
+  }
+  .billing-settings__heading-actions { flex-wrap: nowrap; }
   .billing-template-card { grid-template-columns: 6rem minmax(0, 1fr); }
   .billing-editor__field-grid--two, .billing-editor__field-row { grid-template-columns: 1fr; }
 }

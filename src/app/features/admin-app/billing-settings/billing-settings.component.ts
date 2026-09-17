@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, HostListener, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslateModule } from '@ngx-translate/core';
@@ -24,6 +24,7 @@ import {
   BillTemplateAssignment,
 } from './billing-template.models';
 import { BillingTemplateService } from './billing-template.service';
+import { PageHeadingComponent } from '../../../shared/components/page-heading/page-heading.component';
 
 @Component({
   selector: 'gom-billing-settings',
@@ -39,6 +40,7 @@ import { BillingTemplateService } from './billing-template.service';
     GomSelectComponent,
     GomTextareaComponent,
     BillPreviewComponent,
+    PageHeadingComponent,
   ],
   templateUrl: './billing-settings.component.html',
   styleUrl: './billing-settings.component.scss',
@@ -55,6 +57,8 @@ export class BillingSettingsComponent implements OnInit {
   readonly assignmentDraft = signal<Record<BillOrderType, string>>({ IN_STORE: '', PICKUP: '', DELIVERY: '' });
   readonly assignmentBaseline = signal('');
   readonly loading = signal(true);
+  readonly viewportWidth = signal<number>(window.innerWidth);
+  readonly isMobileHeader = computed<boolean>(() => this.viewportWidth() <= 768);
   readonly initializing = signal(false);
   readonly saving = signal(false);
   readonly busyTemplateId = signal<string | null>(null);
@@ -84,6 +88,11 @@ export class BillingSettingsComponent implements OnInit {
     .filter((template) => template.isActive)
     .map((template) => ({ value: template.id, label: template.name })));
   readonly assignmentsDirty = computed(() => JSON.stringify(this.assignmentDraft()) !== this.assignmentBaseline());
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.viewportWidth.set(window.innerWidth);
+  }
 
   ngOnInit(): void {
     this.loadTemplates();

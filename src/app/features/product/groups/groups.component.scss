@@ -24,6 +24,12 @@
   flex-wrap: wrap;
 }
 
+.master-page__more-menu {
+  display: inline-flex;
+  position: relative;
+  align-items: center;
+}
+
 .master-page__error {
   padding: theme.get-spacing(xs) theme.get-spacing(sm);
   border-radius: theme.get-radius(sm);
@@ -32,13 +38,27 @@
   color: theme.get-text(danger);
 }
 
-.master-page__table-shell {
+// .master-page__table-shell {
+//   display: grid;
+//   gap: theme.get-gap(sm);
+//   padding: theme.get-spacing(md);
+//   border: theme.get-border-size(hairline) solid theme.get-border(standard);
+//   border-radius: theme.get-radius(md);
+//   background: theme.get-background(standard);
+// }
+
+.group-variant-details {
   display: grid;
   gap: theme.get-gap(sm);
-  padding: theme.get-spacing(md);
-  border: theme.get-border-size(hairline) solid theme.get-border(standard);
-  border-radius: theme.get-radius(md);
-  background: theme.get-background(standard);
+}
+
+.group-variant-details__message {
+  margin: 0;
+  color: theme.get-text(default);
+}
+
+.group-variant-details__message--error {
+  color: theme.get-text(danger);
 }
 
 .group-collections-modal {
@@ -562,13 +582,63 @@
 
 @include theme.breakpoint-down(sm) {
   .master-page__header {
-    align-items: stretch;
+    align-items: center;
+    flex-wrap: nowrap;
+  }
+
+  .master-page__header > gom-page-heading {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .master-page__header-actions {
+    flex: 0 0 auto;
+    align-items: center;
+    flex-wrap: nowrap;
+  }
+
+  .master-page__header-actions > gom-lib-button {
+    padding-inline: 0.5rem;
   }
 
   .wizard {
     padding: theme.get-spacing(sm);
   }
 
+}
+
+@media (max-width: 1200px) {
+  .master-page__header {
+    align-items: center;
+    flex-wrap: nowrap;
+  }
+
+  .master-page__header > gom-page-heading {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .master-page__header-actions {
+    flex: 0 0 auto;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: theme.get-gap(xxs);
+  }
+
+  .master-page__header-actions > gom-lib-button {
+    flex: 0 0 auto;
+    padding-inline: 0.5rem;
+  }
+
+  .master-page__create-label {
+    display: none;
+  }
+
+  .master-page__more-menu > button[coreLibButton] {
+    min-width: 2.25rem;
+    min-height: 2.25rem;
+    padding-inline: 0.45rem;
+  }
 }
 
 // --- Images Section ---

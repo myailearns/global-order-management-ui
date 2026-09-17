@@ -28,18 +28,23 @@
               },
               {
                 "glob": "**/*",
+                "input": "../naqp-dev-web-core-components-library/src/projects/naqp-dev-web-core-components-library/assets/fonts",
+                "output": "/assets/fonts/"
+              },
+              {
+                "glob": "**/*",
                 "input": "src/assets",
                 "output": "/assets/"
               }
             ],
             "styles": [
               "node_modules/remixicon/fonts/remixicon.css",
-              "node_modules/quill/dist/quill.snow.css",
               "src/styles.scss"
             ],
             "stylePreprocessorOptions": {
               "includePaths": [
                 "../gom-libs/projects/gom-ui/src/lib/theming/styles",
+                "../naqp-dev-web-core-components-library/src/projects/naqp-dev-web-core-components-library/assets/styles/core",
                 "node_modules/@gomlibs/ui/src/lib/theming/styles"
               ]
             }
@@ -103,6 +108,11 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "**/*",
+                "input": "../naqp-dev-web-core-components-library/src/projects/naqp-dev-web-core-components-library/assets/fonts",
+                "output": "/assets/fonts/"
               }
             ],
             "styles": [
@@ -111,6 +121,7 @@
             "stylePreprocessorOptions": {
               "includePaths": [
                 "../gom-libs/projects/gom-ui/src/lib/theming/styles",
+                "../naqp-dev-web-core-components-library/src/projects/naqp-dev-web-core-components-library/assets/styles/core",
                 "node_modules/@gomlibs/ui/src/lib/theming/styles"
               ]
             }

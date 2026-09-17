@@ -2,13 +2,22 @@
   @if (view() === 'templates') {
     <header class="billing-settings__header billing-settings__header--actions">
       <div>
-        <h2>Bill Templates</h2>
+        <gom-page-heading navRoute="/admin-app/billing"></gom-page-heading>
         <p>Choose, customize, and assign tenant-specific bill layouts.</p>
       </div>
       @if (templates().length) {
-        <gom-lib-button type="button" variant="secondary" (buttonClick)="openAssignments()">
+        <gom-lib-button
+          type="button"
+          variant="secondary"
+          [size]="isMobileHeader() ? 'compact-icon' : 'default'"
+          [attr.aria-label]="'Template Assignment'"
+          [buttonTitle]="'Template Assignment'"
+          (buttonClick)="openAssignments()"
+        >
           <i class="ri-links-line" aria-hidden="true"></i>
-          Template Assignment
+          @if (!isMobileHeader()) {
+            Template Assignment
+          }
         </gom-lib-button>
       }
     </header>
@@ -79,8 +88,7 @@
             <i class="ri-arrow-left-line" aria-hidden="true"></i>
           </button>
           <div>
-            <h2>Customize {{ draft.name }}</h2>
-            <p>Configure the content and appearance while reviewing the live preview.</p>
+            <gom-page-heading navRoute="/admin-app/billing"></gom-page-heading>
           </div>
         </div>
         <div class="billing-settings__heading-actions">
@@ -185,12 +193,27 @@
       <div class="billing-settings__heading-with-back">
         <button type="button" class="billing-settings__back" aria-label="Back to bill templates" (click)="backToTemplates()"><i class="ri-arrow-left-line" aria-hidden="true"></i></button>
         <div>
-          <h2>Template Assignment</h2>
+          <gom-page-heading navRoute="/admin-app/billing"></gom-page-heading>
           <p>Choose the bill template automatically used for each order type.</p>
         </div>
       </div>
-      <gom-lib-button type="button" variant="primary" [disabled]="loading() || saving() || !assignmentsDirty()" (buttonClick)="saveAssignments()">
-        {{ saving() ? 'Saving...' : 'Save Configuration' }}
+      <gom-lib-button
+        type="button"
+        variant="primary"
+        [size]="isMobileHeader() ? 'compact-icon' : 'default'"
+        [disabled]="loading() || saving() || !assignmentsDirty()"
+        [attr.aria-label]="'Save Configuration'"
+        [buttonTitle]="'Save Configuration'"
+        (buttonClick)="saveAssignments()"
+      >
+        @if (saving()) {
+          <i class="ri-loader-4-line billing-settings__spin" aria-hidden="true"></i>
+        } @else {
+          <i class="ri-save-line" aria-hidden="true"></i>
+        }
+        @if (!isMobileHeader()) {
+          {{ saving() ? 'Saving...' : 'Save Configuration' }}
+        }
       </gom-lib-button>
     </header>
 

@@ -1,7 +1,7 @@
 @use "theme" as theme;
 
 .categories-container {
-  padding: 16px;
+  padding: 0;
 }
 
 .error-banner {
@@ -140,20 +140,6 @@
   }
   to {
     transform: rotate(360deg);
-  }
-}
-
-// Quota banner
-.quota-banner {
-  margin-bottom: 16px;
-  padding: 8px 12px;
-  background-color: theme.get-background(secondary);
-  border-radius: 4px;
-
-  p {
-    margin: 0;
-    font-size: 13px;
-    color: theme.get-text(default-light);
   }
 }
 

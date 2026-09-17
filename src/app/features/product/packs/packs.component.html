@@ -1,14 +1,20 @@
 <section class="master-page">
   <header class="master-page__header">
-    <h2><i class="ri-box-3-line" aria-hidden="true"></i> Product Packs</h2>
+    <gom-page-heading navRoute="/product/packs"></gom-page-heading>
     <gom-lib-button
       type="button"
       variant="primary"
+      [size]="isMobileHeader() ? 'compact-icon' : 'default'"
       (buttonClick)="openCreatePack()"
       [gomDisableIfNoFeature]="'pack.create'"
       [disabled]="saving() || !canCreatePack()"
+      [attr.aria-label]="'Add Pack'"
+      [buttonTitle]="'Add Pack'"
     >
-      <i class="ri-add-line" aria-hidden="true"></i> Add Pack
+      <i class="ri-add-line" aria-hidden="true"></i>
+      @if (!isMobileHeader()) {
+        Add Pack
+      }
     </gom-lib-button>
   </header>
 
@@ -21,15 +27,6 @@
     </div>
   }
 
-  @if (canCreatePack()) {
-    <div class="quota-banner">
-      @if (packCreateLimit() !== null) {
-        <p>Pack quota: {{ packCreateUsed() }} / {{ packCreateLimit() }} used ({{ packCreateRemaining() }} remaining)</p>
-      } @else {
-        <p>Pack quota: {{ packCreateUsed() }} used (unlimited)</p>
-      }
-    </div>
-  }
 
   <article class="master-page__table-shell">
     <gom-lib-table

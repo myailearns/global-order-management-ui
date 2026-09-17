@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -11,12 +12,9 @@ import {
   GomButtonComponent,
   GomCardComponent,
   GomModalComponent,
-  GomTabContentComponent,
-  GomTabsComponent,
-  TabItem,
 } from '@gomlibs/ui';
+import { PageHeadingComponent } from '../../../shared/components/page-heading/page-heading.component';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
-import { DisableIfNoFeatureDirective } from '../../../shared/directives/disable-if-no-feature.directive';
 import {
   BannerImage,
   DeliveryService,
@@ -38,12 +36,10 @@ import { MediaAssetService } from '../../saas-platform/media/media-asset.service
     ReactiveFormsModule,
     TranslateModule,
     FormControlsModule,
-    DisableIfNoFeatureDirective,
+    PageHeadingComponent,
     GomButtonComponent,
     GomCardComponent,
     GomModalComponent,
-    GomTabsComponent,
-    GomTabContentComponent,
   ],
   templateUrl: './storefront-config.component.html',
   styleUrl: './storefront-config.component.scss',
@@ -56,6 +52,7 @@ export class StorefrontConfigComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly authSession = inject(AuthSessionService);
   private readonly translate = inject(TranslateService);
+  private readonly route = inject(ActivatedRoute);
 
   readonly loading = signal(false);
   readonly saving = signal(false);
@@ -71,21 +68,56 @@ export class StorefrontConfigComponent implements OnInit {
   readonly hasStorefrontShareAccess = computed(() => this.authSession.hasFeature('storefront.share'));
   readonly hasProductSetSettingsAccess = computed(() => this.authSession.hasFeature('productCollection.create'));
 
-  readonly tabs = computed<TabItem[]>(() => {
-    const items: TabItem[]= [
-      { id: 'basic', label: 'Basic Settings' },
-      { id: 'branding', label: 'Branding & Content' },
-      { id: 'catalog', label: 'Catalog & Banners' },
-      { id: 'payments', label: 'Payments' },
-    ];
-
-    items.push({ id: 'productSet', label: 'Product Set Settings' });
-
-    return items;
-  });
-
   readonly activeTab = signal<'basic' | 'branding' | 'catalog' | 'payments' | 'productSet'>('basic');
-  readonly showProductsLayoutConfirm = signal(false);
+  readonly pageTitle = computed(() => {
+    const tab = this.activeTab();
+    if (tab === 'branding') {
+      return 'Branding';
+    }
+    if (tab === 'catalog') {
+      return 'Home Page';
+    }
+    if (tab === 'productSet') {
+      return 'Catalog';
+    }
+    if (tab === 'payments') {
+      return 'Checkout & Payments';
+    }
+    return 'Storefront';
+  });
+  readonly pageNavRoute = computed(() => {
+    const tab = this.activeTab();
+    if (tab === 'branding') {
+      return '/settings/web-app/branding';
+    }
+    if (tab === 'catalog') {
+      return '/settings/web-app/home-page';
+    }
+    if (tab === 'productSet') {
+      return '/settings/web-app/catalog';
+    }
+    if (tab === 'payments') {
+      return '/settings/web-app/checkout-payments';
+    }
+    return '/settings/web-app/storefront';
+  });
+  readonly pageDescription = computed(() => {
+    const tab = this.activeTab();
+    if (tab === 'branding') {
+      return 'Manage theme colors, messages, and social links shown in your customer storefront.';
+    }
+    if (tab === 'catalog') {
+      return 'Manage home page banners and merchandising sections shown to customers.';
+    }
+    if (tab === 'productSet') {
+      return 'Control catalog visibility and Products tab behavior in the customer app.';
+    }
+    if (tab === 'payments') {
+      return 'Choose payment methods and checkout behavior for customer orders.';
+    }
+    return 'Configure storefront access, identity, and sharing for your public customer web app.';
+  });
+  showProductsLayoutConfirm = false;
   readonly initialProductsTabLayout = signal<ProductsTabLayout>('LAYOUT_1_CATEGORY_FIRST');
 
   private shareCenterViewTracked = false;
@@ -117,6 +149,12 @@ export class StorefrontConfigComponent implements OnInit {
     { value: 'UPI', label: 'UPI' },
     { value: 'CARD', label: 'Credit / Debit Card' },
     { value: 'NET_BANKING', label: 'Net Banking' },
+  ];
+
+  readonly fulfillmentModeOptions = [
+    { value: 'DELIVERY', label: 'Delivery' },
+    { value: 'PICKUP', label: 'Pickup' },
+    { value: 'BOTH', label: 'Delivery + Pickup' },
   ];
 
   readonly productsTabLayoutOptions = [
@@ -174,13 +212,17 @@ export class StorefrontConfigComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.activeTab.set(this.resolveInitialTab());
     this.loadConfig();
   }
 
-  switchTab(tab: string | number): void {
+  private resolveInitialTab(): 'basic' | 'branding' | 'catalog' | 'payments' | 'productSet' {
+    const tab = this.route.snapshot.data['tab'];
     if (tab === 'basic' || tab === 'branding' || tab === 'catalog' || tab === 'payments' || tab === 'productSet') {
-      this.activeTab.set(tab);
+      return tab;
     }
+
+    return 'basic';
   }
 
   resetThemeDefaults(): void {
@@ -194,6 +236,14 @@ export class StorefrontConfigComponent implements OnInit {
       accentColor: this.defaultTheme.accentColor,
     });
     this.useCustomColors.set(false);
+  }
+
+  discardChanges(): void {
+    if (!this.canEdit()) {
+      return;
+    }
+
+    this.loadConfig();
   }
 
   enableCustomColors(): void {
@@ -230,7 +280,10 @@ export class StorefrontConfigComponent implements OnInit {
               productsTabLayout: 'LAYOUT_1_CATEGORY_FIRST',
             });
             this.initialProductsTabLayout.set('LAYOUT_1_CATEGORY_FIRST');
+            this.banners.clear();
           }
+          this.configForm.markAsPristine();
+          this.configForm.markAsUntouched();
           this.loading.set(false);
         },
         error: () => {
@@ -293,6 +346,8 @@ export class StorefrontConfigComponent implements OnInit {
     }
 
     this.bannerWarnings.set({});
+    this.configForm.markAsPristine();
+    this.configForm.markAsUntouched();
   }
 
   getPaymentOptionLabel(method: PaymentMethod): string {
@@ -615,7 +670,7 @@ export class StorefrontConfigComponent implements OnInit {
       this.hasProductsTabLayoutChanged() &&
       !this.bypassProductsLayoutConfirm
     ) {
-      this.showProductsLayoutConfirm.set(true);
+      this.showProductsLayoutConfirm = true;
       return;
     }
 
@@ -680,6 +735,8 @@ export class StorefrontConfigComponent implements OnInit {
           if (cfg) {
             this.patchForm(cfg, tenantId);
           }
+          this.configForm.markAsPristine();
+          this.configForm.markAsUntouched();
           this.toast.success(this.t('storefrontConfig.shareCenter.messages.saveSuccess'));
           this.saving.set(false);
         },
@@ -701,13 +758,13 @@ export class StorefrontConfigComponent implements OnInit {
   }
 
   confirmProductsTabLayoutChange(): void {
-    this.showProductsLayoutConfirm.set(false);
+    this.showProductsLayoutConfirm = false;
     this.bypassProductsLayoutConfirm = true;
     this.save();
   }
 
   cancelProductsTabLayoutChange(): void {
-    this.showProductsLayoutConfirm.set(false);
+    this.showProductsLayoutConfirm = false;
   }
 
 

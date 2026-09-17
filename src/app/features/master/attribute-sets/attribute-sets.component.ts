@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, HostListener, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
@@ -8,6 +8,8 @@ import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { DisableIfNoFeatureDirective } from '../../../shared/directives/disable-if-no-feature.directive';
 import { ATTRIBUTE_SET_DEFAULT_STATUS, ATTRIBUTE_SET_REQUIRED_OPTIONS, ATTRIBUTE_SET_STATUS_OPTIONS, ATTRIBUTE_SET_UI_TEXT } from './attribute-sets.constants';
 import { AttributeDefinitionOption, AttributeSet, AttributeSetPayload, AttributeSetsService } from './attribute-sets.service';
+import { getNavIcon } from '../../../shared/components/layout/nav.config';
+import { PageHeadingComponent } from '../../../shared/components/page-heading/page-heading.component';
 
 interface AttributeSetRow extends GomTableRow {
   _id: string;
@@ -21,7 +23,7 @@ interface AttributeSetRow extends GomTableRow {
 @Component({
   selector: 'gom-attribute-sets',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, TranslateModule, GomButtonComponent, GomTableComponent, GomModalComponent, GomInputComponent, GomSelectComponent, GomTextareaComponent, GomConfirmationModalComponent, DisableIfNoFeatureDirective],
+  imports: [CommonModule, ReactiveFormsModule, TranslateModule, GomButtonComponent, GomTableComponent, GomModalComponent, GomInputComponent, GomSelectComponent, GomTextareaComponent, GomConfirmationModalComponent, DisableIfNoFeatureDirective, PageHeadingComponent],
   templateUrl: './attribute-sets.component.html',
   styleUrl: './attribute-sets.component.scss',
 })
@@ -33,8 +35,11 @@ export class AttributeSetsComponent implements OnInit {
   private readonly authSession = inject(AuthSessionService);
 
   readonly text = ATTRIBUTE_SET_UI_TEXT;
+  readonly headingIcon = getNavIcon('/masters/attribute-sets');
   readonly statusOptions = ATTRIBUTE_SET_STATUS_OPTIONS;
   readonly requiredOptions = ATTRIBUTE_SET_REQUIRED_OPTIONS;
+  readonly viewportWidth = signal<number>(window.innerWidth);
+  readonly isMobileHeader = computed<boolean>(() => this.viewportWidth() <= 768);
   readonly loading = signal(false);
   readonly errorMessage = signal<string | null>(null);
   readonly items = signal<AttributeSet[]>([]);
@@ -87,6 +92,11 @@ export class AttributeSetsComponent implements OnInit {
   constructor() {
     this.rebuildText();
     this.translate.onLangChange.subscribe(() => this.rebuildText());
+  }
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.viewportWidth.set(window.innerWidth);
   }
 
   ngOnInit(): void {

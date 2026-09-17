@@ -11,17 +11,57 @@
   justify-content: space-between;
   gap: theme.get-gap(sm);
   flex-wrap: wrap;
-
-  h2 {
-    margin: 0;
-    @include theme.typography-heading(xl);
-  }
 }
 
 .categories-list__actions {
   display: flex;
   align-items: center;
   gap: theme.get-gap(xs);
+}
+
+.categories-list__more-menu {
+  display: inline-flex;
+  position: relative;
+  align-items: center;
+}
+
+.categories-list__menu-panel {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  min-width: 14rem;
+  padding: 0.5rem;
+  border: 1px solid theme.get-border(light);
+  border-radius: theme.get-radius(md);
+  background: theme.get-background(standard);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+  display: grid;
+  gap: 0.25rem;
+  z-index: 20;
+}
+
+.categories-list__menu-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  border: none;
+  border-radius: theme.get-radius(sm);
+  background: transparent;
+  color: theme.get-text(default);
+  text-align: left;
+  cursor: pointer;
+
+  i {
+    font-size: 1rem;
+    flex-shrink: 0;
+    color: theme.get-text(primary);
+  }
+
+  &:hover {
+    background: theme.get-background(secondary);
+  }
 }
 
 .categories-list__table-shell {
@@ -35,16 +75,36 @@
   display: inline-flex;
 }
 
-@include theme.breakpoint-down(sm) {
+@include theme.breakpoint-down(md) {
   .categories-list__header {
-    align-items: stretch;
+    flex-wrap: nowrap;
+    align-items: center;
   }
 
-  .btn-add {
-    width: 100%;
+  .categories-list__header > gom-page-heading {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
 
-    ::ng-deep .gom-button {
-      width: 100%;
-    }
+  .categories-list__actions {
+    width: auto;
+    flex: 0 0 auto;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+    gap: theme.get-spacing(xxs);
+  }
+
+  .categories-list__actions gom-lib-button,
+  .categories-list__actions .categories-list__more-menu {
+    flex: 0 0 auto;
+  }
+
+  .categories-list__actions .gom-button {
+    padding-inline: theme.get-spacing(xs);
+  }
+
+  .categories-list__menu-panel {
+    min-width: 12rem;
   }
 }
+

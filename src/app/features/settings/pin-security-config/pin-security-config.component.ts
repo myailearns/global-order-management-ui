@@ -6,6 +6,7 @@ import { map, startWith } from 'rxjs';
 
 import { FormControlsModule, GomAlertToastService, GomButtonComponent } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
+import { PageHeadingComponent } from '../../../shared/components/page-heading/page-heading.component';
 import { DisableIfNoFeatureDirective } from '../../../shared/directives/disable-if-no-feature.directive';
 import {
   AuthSecurityConfig,
@@ -15,7 +16,7 @@ import {
 @Component({
   selector: 'gom-pin-security-config',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormControlsModule, GomButtonComponent, DisableIfNoFeatureDirective],
+  imports: [CommonModule, ReactiveFormsModule, FormControlsModule, PageHeadingComponent, GomButtonComponent, DisableIfNoFeatureDirective],
   templateUrl: './pin-security-config.component.html',
   styleUrl: './pin-security-config.component.scss',
 })

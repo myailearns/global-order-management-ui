@@ -5,6 +5,7 @@
 
 // Import theme system (palette, colors, breakpoints, typography, sizing)
 @use "theme" as *;
+@use "../../naqp-dev-web-core-components-library/src/projects/naqp-dev-web-core-components-library/assets/styles/core/fonts-typography" as typography;
 
 // Import Remix Icon font
 @import "remixicon/fonts/remixicon.css";
@@ -31,19 +32,49 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+
 /* Headings */
-h1, h2, h3, h4, h5, h6 {
+
+h1 {
   color: get-text(primary);
-  margin-top: get-spacing(md);
-  margin-bottom: get-spacing(sm);
+  @include typography.get-fonts("tmna-heading-h1");
 }
 
-h1 { @include typography-heading(3xl); }
-h2 { @include typography-heading(xxl); }
-h3 { @include typography-heading(xl); }
-h4 { @include typography-heading(lg); }
-h5 { @include typography-heading(md); }
-h6 { @include typography-heading(sm); }
+  h2 {
+  color: get-text(primary);
+
+    @include typography.get-fonts("tmna-heading-h2");
+  }
+
+  h3 {
+  color: get-text(primary);
+
+    @include typography.get-fonts("tmna-heading-h3");
+  }
+
+  h4 {
+  color: get-text(primary);
+
+    @include typography.get-fonts("tmna-heading-h4");
+  }
+
+  h5 {
+  color: get-text(primary);
+
+    @include typography.get-fonts("tmna-heading-h5");
+  }
+
+  h6 {
+  color: get-text(primary);
+
+    @include typography.get-fonts("tmna-heading-h6");
+  }
+
+  p {
+  color: get-text(primary);
+
+    @include typography.get-fonts("tmna-body");
+  }
 
 /* Links */
 a {

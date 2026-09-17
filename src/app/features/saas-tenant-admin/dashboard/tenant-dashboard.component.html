@@ -1,7 +1,7 @@
 <section class="tenant-dashboard">
   <header class="tenant-dashboard__header">
     <div class="tenant-dashboard__header-title">
-      <h1>Dashboard</h1>
+      <gom-page-heading navRoute="/saas-admin/dashboard"></gom-page-heading>
       @if (summaryLastUpdated()) {
         <p class="tenant-dashboard__last-updated">Last updated: {{ summaryLastUpdated() | date:'HH:mm:ss' }}</p>
       }

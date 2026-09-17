@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, OnInit, signal, ViewChild } from '@angular/core';
+import { Component, HostListener, computed, inject, OnInit, signal, ViewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -30,6 +30,7 @@ import { ImagePickerComponent, PickedImage } from '../../../shared/components/im
 import { RichTextEditorComponent } from '../../../shared/components/rich-text-editor/rich-text-editor.component';
 import { DisableIfNoFeatureDirective } from '../../../shared/directives/disable-if-no-feature.directive';
 import { PriceApprovalModalComponent } from '../pricing-approval/price-approval-modal.component';
+import { PageHeadingComponent } from '../../../shared/components/page-heading/page-heading.component';
 import { ProductCollection, ProductCollectionsService } from '../product-collections/product-collections.service';
 import {
   Group,
@@ -111,6 +112,7 @@ interface VariantCollectionMembership {
     PriceApprovalModalComponent,
     ImagePickerComponent,
     RichTextEditorComponent,
+    PageHeadingComponent,
   ],
   templateUrl: './variants.component.html',
   styleUrl: './variants.component.scss',
@@ -128,6 +130,8 @@ export class VariantsComponent implements OnInit {
   private readonly translate = inject(TranslateService);
 
   readonly loading = signal(false);
+  readonly viewportWidth = signal<number>(window.innerWidth);
+  readonly isMobileHeader = computed<boolean>(() => this.viewportWidth() <= 768);
   readonly canCreateVariant = computed(() => this.authSession.hasFeature('variant.create'));
   readonly canUpdateVariant = computed(
     () => this.authSession.hasFeature('variant.edit')
@@ -704,6 +708,11 @@ export class VariantsComponent implements OnInit {
     return resolvedKeys
       .filter(key => !usedKeys.has(key))
       .map(key => ({ label: key, value: key }));
+  }
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.viewportWidth.set(window.innerWidth);
   }
 
   ngOnInit(): void {

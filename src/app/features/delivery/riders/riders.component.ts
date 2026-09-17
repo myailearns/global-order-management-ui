@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, DestroyRef, HostListener, computed, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { startWith } from 'rxjs';
@@ -18,6 +18,7 @@ import {
 import { DeliveryService, EmployeeCodePreview, Rider, RiderPayload, RiderStatus } from '../delivery.service';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { DisableIfNoFeatureDirective } from '../../../shared/directives/disable-if-no-feature.directive';
+import { PageHeadingComponent } from '../../../shared/components/page-heading/page-heading.component';
 
 interface RiderRow extends GomTableRow {
   _id: string;
@@ -43,6 +44,7 @@ interface RiderRow extends GomTableRow {
     GomTableComponent,
     GomModalComponent,
     GomConfirmationModalComponent,
+    PageHeadingComponent,
   ],
   templateUrl: './riders.component.html',
   styleUrl: './riders.component.scss',
@@ -55,6 +57,8 @@ export class RidersComponent implements OnInit {
   private readonly authSession = inject(AuthSessionService);
 
   readonly loading = signal(false);
+  readonly viewportWidth = signal<number>(window.innerWidth);
+  readonly isMobileHeader = computed<boolean>(() => this.viewportWidth() <= 768);
   readonly canListRiders = computed(() => this.authSession.hasFeature('rider.list'));
   readonly canViewRider = computed(() => this.authSession.hasFeature('rider.view'));
   readonly canCreateRider = computed(() => this.authSession.hasFeature('rider.create'));
@@ -95,6 +99,11 @@ export class RidersComponent implements OnInit {
   readonly allowManualOverride = signal(false);
   readonly selectedStatus = signal<'ALL' | RiderStatus>('ALL');
   readonly leaveModalOpen = signal(false);
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.viewportWidth.set(window.innerWidth);
+  }
 
   readonly riderForm = this.fb.group({
     name: ['', [Validators.required, Validators.minLength(2)]],

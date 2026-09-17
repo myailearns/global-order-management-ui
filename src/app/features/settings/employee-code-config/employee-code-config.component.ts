@@ -6,13 +6,14 @@ import { debounceTime, startWith } from 'rxjs';
 
 import { FormControlsModule, GomAlertToastService, GomButtonComponent } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
+import { PageHeadingComponent } from '../../../shared/components/page-heading/page-heading.component';
 import { DisableIfNoFeatureDirective } from '../../../shared/directives/disable-if-no-feature.directive';
 import { DeliveryService, StaffCodeConfig } from '../../delivery/delivery.service';
 
 @Component({
   selector: 'gom-employee-code-config',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormControlsModule, GomButtonComponent, DisableIfNoFeatureDirective],
+  imports: [CommonModule, ReactiveFormsModule, FormControlsModule, PageHeadingComponent, GomButtonComponent, DisableIfNoFeatureDirective],
   templateUrl: './employee-code-config.component.html',
   styleUrl: './employee-code-config.component.scss',
 })

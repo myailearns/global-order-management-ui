@@ -1,111 +1,64 @@
 <section class="pricing" aria-labelledby="pricing-title">
   <header class="pricing__header">
-    <div>
-      <h1 id="pricing-title">Pricing Management</h1>
-      <p>Manage selling prices across all products</p>
-    </div>
-
+    <gom-page-heading navRoute="/pricing/simple" headingId="pricing-title"></gom-page-heading>
     <div class="pricing__header-actions">
-      <gom-lib-button
-        type="button"
-        variant="secondary"
-        [disabled]="!canEdit() || loading() || bulkTargetEntities().length === 0 || dirtyRowCount() > 0"
-        buttonTitle="Apply bulk update to products under current filters"
-        (buttonClick)="openBulkUpdate()">
-        <i class="ri-edit-box-line" aria-hidden="true"></i>
-        Bulk Update
-      </gom-lib-button>
+      
 
-      <div class="pricing__header-menu" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
-        <input
-          #refreshTemplateInput
-          id="pricingRefreshExcelInput"
-          class="pricing__file-input"
-          type="file"
-          accept=".xlsx"
-          aria-label="Refresh pricing Excel template"
-          (change)="onRefreshTemplateSelected($event)">
-        <label class="pricing__file-input-label" for="pricingRefreshExcelInput">Refresh pricing Excel template</label>
-
-        <input
-          #uploadTemplateInput
-          id="pricingImportExcelInput"
-          class="pricing__file-input"
-          type="file"
-          accept=".xlsx"
-          aria-label="Import pricing Excel file"
-          (change)="onUploadTemplateSelected($event)">
-        <label class="pricing__file-input-label" for="pricingImportExcelInput">Import pricing Excel file</label>
+      <div class="pricing__header-menu" #headerMenuBoundary>
+        <core-lib-menu
+          #headerActionsMenu
+          class="master-page__more-menu"
+          [menuType]="'submenu'"
+          [outsideClickBoundary]="headerMenuBoundary"
+          [menuList]="headerMenuList"
+          [showMenuListArrow]="false"
+          [showMobileBackArrow]="false"
+          [backButtonText]="'Actions'">
+        </core-lib-menu>
 
         <div class="pricing__header-menu-actions">
           <gom-lib-button
-            type="button"
-            variant="secondary"
-            [disabled]="uploadingTemplate()"
-            (buttonClick)="uploadTemplateInput.click()">
-            <i class="ri-upload-2-line" aria-hidden="true"></i>
-            {{ uploadingTemplate() ? 'Importing...' : 'Import Excel' }}
-          </gom-lib-button>
-
-          <gom-lib-button
-            type="button"
-            variant="secondary"
-            size="icon"
-            title="More pricing actions"
-            class="pricing__header-menu-trigger"
-            (buttonClick)="toggleHeaderActionsMenu()">
-            <i class="ri-more-2-fill" aria-hidden="true"></i>
-          </gom-lib-button>
-        </div>
-
-        @if (headerActionsMenuOpen()) {
-          <div class="pricing__header-menu-dropdown" role="menu" aria-label="Pricing import actions">
-            <gom-lib-button
-              type="button"
-              variant="secondary"
-              class="pricing__header-menu-item"
-              [disabled]="refreshingTemplate()"
-              (buttonClick)="refreshTemplateInput.click(); closeHeaderActionsMenu()">
-              <i class="ri-refresh-line" aria-hidden="true"></i>
-              @if (refreshingTemplate()) {
-                Updating...
-              } @else {
-                Update Template
-              }
-            </gom-lib-button>
-
-            <gom-lib-button
-              type="button"
-              variant="secondary"
-              class="pricing__header-menu-item"
-              [disabled]="loadingUploadHistory()"
-              (buttonClick)="openUploadHistory(); closeHeaderActionsMenu()">
-              <i class="ri-history-line" aria-hidden="true"></i>
-              @if (loadingUploadHistory()) {
-                Loading...
-              } @else {
-                Temporary History
-              }
-            </gom-lib-button>
-
-            <gom-lib-button
-              type="button"
-              variant="secondary"
-              class="pricing__header-menu-item"
-              [disabled]="downloadingTemplate()"
-              (buttonClick)="openDownloadTemplateModal(); closeHeaderActionsMenu()">
-              <i class="ri-download-2-line" aria-hidden="true"></i>
-              @if (downloadingTemplate()) {
-                Downloading...
-              } @else {
-                Download Template
-              }
-            </gom-lib-button>
-          </div>
+        type="button"
+        variant="secondary"
+        [size]="isMobileHeader() ? 'compact-icon' : 'default'"
+        [disabled]="!canEdit() || loading() || bulkTargetEntities().length === 0 || dirtyRowCount() > 0"
+        [attr.aria-label]="'Bulk Update'"
+        buttonTitle="Apply bulk update to products under current filters"
+        (buttonClick)="openBulkUpdate()">
+        <i class="ri-edit-box-line" aria-hidden="true"></i>
+        @if (!isMobileHeader()) {
+          Bulk Update
         }
+      </gom-lib-button>
+          <button type="button" coreLibButton variant="outline" aria-label="Open pricing actions" (click)="headerActionsMenu.toggle()">
+            <i class="ri-more-2-fill" coreLibButtonIcon iconPosition="left"></i>
+          </button>
+        </div>
       </div>
     </div>
   </header>
+
+  <section aria-hidden="true">
+    <input
+      #refreshTemplateInput
+      id="pricingRefreshExcelInput"
+      class="pricing__file-input"
+      type="file"
+      accept=".xlsx"
+      aria-label="Refresh pricing Excel template"
+      (change)="onRefreshTemplateSelected($event)">
+    <label class="pricing__file-input-label" for="pricingRefreshExcelInput">Refresh pricing Excel template</label>
+
+    <input
+      #uploadTemplateInput
+      id="pricingImportExcelInput"
+      class="pricing__file-input"
+      type="file"
+      accept=".xlsx"
+      aria-label="Import pricing Excel file"
+      (change)="onUploadTemplateSelected($event)">
+    <label class="pricing__file-input-label" for="pricingImportExcelInput">Import pricing Excel file</label>
+  </section>
 
   <div class="pricing__filters" aria-label="Pricing filters">
     <div class="pricing__filter">

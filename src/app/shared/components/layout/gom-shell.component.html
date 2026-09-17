@@ -11,22 +11,24 @@
       <button
         type="button"
         class="gom-shell__menu-button"
-        (click)="toggleMenu()"
-        [attr.aria-expanded]="menuOpen()"
+        (click)="toggleNav()"
+        [attr.aria-expanded]="isNavExpanded()"
         aria-controls="gom-side-nav"
         [attr.aria-label]="'app.navigation.toggle' | translate"
       >
         <i class="ri-menu-2-line" aria-hidden="true"></i>
       </button>
 
-      <div class="gom-shell__brand-mark" aria-hidden="true">
-        <i class="ri-global-line"></i>
-      </div>
-
-      <div class="gom-shell__brand">
-        <p class="gom-shell__eyebrow">{{ 'app.name' | translate }}</p>
-        <h1>{{ 'app.module' | translate }}</h1>
-      </div>
+      <img
+        class="gom-shell__brand-logo"
+        src="assets/logo/logo.svg"
+        alt="{{ 'app.name' | translate }}"
+      />
+      @if (tenantApplicationName()) {
+        <div class="gom-shell__brand">
+          <p class="gom-shell__eyebrow">{{ tenantApplicationName() }}</p>
+        </div>
+      }
     </div>
 
     <div class="gom-shell__topbar-center">
@@ -57,16 +59,6 @@
           ></i>
         </button>
       }
-
-      <label class="gom-shell__lang-picker">
-        <span>{{ 'app.language.label' | translate }}</span>
-        <gom-lib-select
-          [options]="languageSelectOptions"
-          [placeholder]="('app.language.label' | translate)"
-          [ngModel]="currentLanguage()"
-          (ngModelChange)="changeLanguage($event)"
-        ></gom-lib-select>
-      </label>
 
       <!-- Notification Bell -->
       @if (currentSession()?.actorType === 'tenant') {
@@ -128,17 +120,53 @@
           <i class="ri-database-2-line" aria-hidden="true"></i>
         </button>
       }
-      <button type="button" class="gom-shell__action-button" [attr.aria-label]="'app.actions.logout' | translate" (click)="logout()">
-        <i class="ri-logout-box-r-line" aria-hidden="true"></i>
-      </button>
-      <button
-        type="button"
-        class="gom-shell__profile-chip"
-        [attr.aria-label]="'app.actions.profile' | translate"
-        [attr.title]="currentSession()?.displayName || ''"
-      >
-        <span>{{ currentSession()?.initials || 'GU' }}</span>
-      </button>
+      <div class="gom-shell__profile-wrap">
+        <button
+          type="button"
+          class="gom-shell__profile-chip"
+          [attr.aria-label]="'app.actions.profile' | translate"
+          [attr.aria-expanded]="profileMenuOpen()"
+          [attr.title]="currentSession()?.displayName || ''"
+          (click)="toggleProfileMenu()"
+        >
+          <i class="ri-user-line" aria-hidden="true"></i>
+        </button>
+
+        @if (profileMenuOpen()) {
+          <div class="gom-shell__profile-panel">
+            <div class="gom-shell__profile-panel-head">
+              <h2>{{ currentSession()?.displayName || 'Guest User' }}</h2>
+            </div>
+
+            <button type="button" class="gom-shell__profile-link" (click)="openProfileSettings()">
+              <i class="ri-user-settings-line" aria-hidden="true"></i>
+              <span>Change Password</span>
+            </button>
+
+            <div class="gom-shell__profile-section">
+              <h3>Language</h3>
+              <div class="gom-shell__profile-language-list">
+                @for (option of languageOptions; track option.value) {
+                  <button
+                    type="button"
+                    class="gom-shell__profile-language-option"
+                    [class.gom-shell__profile-language-option--active]="currentLanguage() === option.value"
+                    (click)="changeLanguage(option.value)"
+                  >
+                    {{ option.labelKey | translate }}
+                  </button>
+                }
+              </div>
+            </div>
+
+            <button type="button" class="gom-shell__profile-logout" (click)="logout()">
+              <i class="ri-logout-box-r-line" aria-hidden="true"></i>
+              <span>Logout</span>
+            </button>
+          </div>
+          <button type="button" class="gom-shell__profile-backdrop" (click)="closeProfileMenu()"></button>
+        }
+      </div>
     </div>
   </header>
 
@@ -157,21 +185,28 @@
       [class.gom-shell__sidenav--open]="menuOpen()"
       aria-label="Main navigation"
     >
-      <div class="gom-shell__sidenav-head">
-        <div class="gom-shell__sidenav-headcopy">
-          <p>{{ 'app.navigation.workspace' | translate }}</p>
-          <h3>{{ 'app.navigation.menu' | translate }}</h3>
-        </div>
-        <button
-          type="button"
-          class="gom-shell__sidenav-toggle"
-          (click)="toggleDesktopNav()"
-          [attr.aria-label]="desktopNavCollapsed() ? ('app.navigation.expandSidebar' | translate) : ('app.navigation.collapseSidebar' | translate)"
-          [attr.aria-expanded]="!desktopNavCollapsed()"
-        >
-          <i [class]="desktopNavCollapsed() ? 'ri-arrow-right-s-line' : 'ri-arrow-left-s-line'" aria-hidden="true"></i>
-        </button>
-      </div>
+      @if (standaloneNavItems().length) {
+        <section class="gom-shell__section gom-shell__section--standalone">
+          <nav aria-label="Quick navigation">
+            <ul>
+              @for (item of standaloneNavItems(); track item.route) {
+                <li>
+                  <a
+                    [routerLink]="item.route"
+                    routerLinkActive="is-active"
+                    [attr.title]="desktopNavCollapsed() ? (item.translationKey | translate) : null"
+                    (click)="closeMenu()"
+                  >
+                    <span class="gom-shell__nav-icon"><i [class]="item.icon" aria-hidden="true"></i></span>
+                    <span class="gom-shell__nav-label">{{ item.translationKey | translate }}</span>
+                    <span class="gom-shell__nav-trail" aria-hidden="true"><i class="ri-arrow-right-s-line"></i></span>
+                  </a>
+                </li>
+              }
+            </ul>
+          </nav>
+        </section>
+      }
 
       @for (section of sections(); track section) {
         <section class="gom-shell__section">
@@ -188,7 +223,7 @@
           </button>
 
           @if (isSectionExpanded(section)) {
-            <nav>
+            <nav [attr.aria-label]="getSectionTranslationKey(section) | translate">
               <ul>
                 @for (item of navItemsBySection(section); track item.route) {
                   <li>

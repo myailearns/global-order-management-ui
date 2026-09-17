@@ -4,8 +4,10 @@
  */
 
 export enum UserStatus {
+  INVITED = 'INVITED',
   ACTIVE = 'ACTIVE',
-  INACTIVE = 'INACTIVE',
+  LOCKED = 'LOCKED',
+  DISABLED = 'DISABLED',
 }
 
 export enum ScopeType {
@@ -38,6 +40,8 @@ export interface UserAccount {
   tenantId: string;
   email: string;
   fullName: string;
+  phone: string;
+  whatsappNumber: string;
   status: UserStatus;
   mfaEnabled: boolean;
   lastLoginAt?: string;
@@ -166,9 +170,15 @@ export interface ApiListResponse<T> {
 export interface CreateUserRequest {
   fullName: string;
   email: string;
+  phone: string;
+  whatsappNumber: string;
 }
 
 export interface UpdateUserRequest {
+  fullName?: string;
+  email?: string;
+  phone?: string;
+  whatsappNumber?: string;
   status?: UserStatus;
   mfaEnabled?: boolean;
 }

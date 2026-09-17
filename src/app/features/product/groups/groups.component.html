@@ -1,51 +1,51 @@
 <section class="master-page">
   <header class="master-page__header">
-    <h2><i class="ri-folder-line" aria-hidden="true"></i> Group Creation</h2>
+    <gom-page-heading navRoute="/product/groups"></gom-page-heading>
     <div class="master-page__header-actions">
-      <gom-lib-button
-        type="button"
-        variant="secondary"
-        (buttonClick)="downloadTemplate()"
-        gomDisableIfNoFeature="group.create"
-        [disabled]="templateDownloading() || !canCreateGroup()"
-      ><i class="ri-download-2-line" aria-hidden="true"></i> Download Template</gom-lib-button>
-
-      <gom-lib-button
-        type="button"
-        variant="secondary"
-        (buttonClick)="refreshTemplate()"
-        gomDisableIfNoFeature="group.create"
-        [disabled]="templateRefreshing() || !canCreateGroup()"
-      ><i class="ri-refresh-line" aria-hidden="true"></i> Refresh Template</gom-lib-button>
-
-      <gom-lib-button
-        type="button"
-        variant="secondary"
-        (buttonClick)="uploadTemplate()"
-        gomDisableIfNoFeature="group.create"
-        [disabled]="templateUploading() || bulkJobIsActive() || !canCreateGroup()"
-      ><i class="ri-upload-cloud-2-line" aria-hidden="true"></i>
-        {{ templateUploading() ? 'Uploading...' : 'Upload Template' }}
-      </gom-lib-button>
-
-      <gom-lib-button
-        type="button"
-        variant="secondary"
-        (buttonClick)="openBulkUpload()"
-        gomDisableIfNoFeature="group.bulk_create"
-        [disabled]="saving() || !canBulkCreateGroup()"
-      ><i class="ri-upload-2-line" aria-hidden="true"></i> Bulk Upload</gom-lib-button>
-
+      
       <gom-quick-create-group #quickCreateModal (saved)="onQuickCreateSaved()" (closed)="onQuickCreateClosed()"></gom-quick-create-group>
 
-      <gom-lib-button
-        type="button"
-        variant="primary"
-        (buttonClick)="openCreateWizard()"
-        gomDisableIfNoFeature="tap.create_group"
-        [disabled]="saving() || !canCreateTabbedGroup()"
-        *ngIf="canCreateTabbedGroup()"
-      ><i class="ri-add-line" aria-hidden="true"></i> Create Group</gom-lib-button>
+      @if (canCreateTabbedGroup()) {
+        <gom-lib-button
+          type="button"
+          variant="primary"
+          [size]="isMobileHeader() ? 'compact-icon' : 'default'"
+          (buttonClick)="openCreateWizard()"
+          gomDisableIfNoFeature="tap.create_group"
+          [disabled]="saving() || !canCreateTabbedGroup()"
+          [attr.aria-label]="'Create Group'"
+          [buttonTitle]="'Create Group'"
+        >
+          <i class="ri-add-line" aria-hidden="true"></i>
+          <span class="master-page__create-label">Create Group</span>
+        </gom-lib-button>
+      }
+
+
+      <div class="master-page__more-menu" #moreMenuBoundary>
+        <core-lib-menu
+          #headerActionsMenu
+          [menuType]="'submenu'"
+          [outsideClickBoundary]="moreMenuBoundary"
+          [menuList]="headerMenuList"
+          [showMenuListArrow]="false"
+          [showMobileBackArrow]="false"
+          [backButtonText]="'Actions'"
+        ></core-lib-menu>
+
+        <button
+          type="button"
+          coreLibButton
+          variant="outline"
+          aria-label="More actions"
+          gomDisableIfNoFeature="group.create"
+          [disabled]="saving() || (!canCreateGroup() && !canBulkCreateGroup())"
+          (click)="headerActionsMenu.toggle()"
+        >
+          <i class="ri-more-2-line" coreLibButtonIcon aria-hidden="true"></i>
+        </button>
+      </div>
+
     </div>
   </header>
 
@@ -78,16 +78,7 @@
     </div>
   }
 
-  @if (canCreateGroup()) {
-    <div class="quota-banner">
-      @if (groupCreateLimit() !== null) {
-        <p>Group quota: {{ groupCreateUsed() }} / {{ groupCreateLimit() }} used ({{ groupCreateRemaining() }} remaining)</p>
-      } @else {
-        <p>Group quota: {{ groupCreateUsed() }} used (unlimited)</p>
-      }
-    </div>
-  }
-
+  
   <article class="master-page__table-shell">
     <gom-lib-table
       [columns]="columns"
@@ -101,6 +92,10 @@
       searchPlaceholder="Search groups"
       emptyMessage="No groups found."
       [mobileCardView]="true"
+      mobilePaginationMode="load-more"
+      [mobileAutoLoadMore]="true"
+      mobileLoadMoreStrategy="page-query"
+      [mobileCardConfig]="groupMobileCardConfig"
       (rowAction)="onRowAction($event)"
       (queryChange)="onGroupTableQueryChange($event)"
     ></gom-lib-table>
@@ -122,6 +117,38 @@
     }
   </article>
 </section>
+
+<gom-lib-modal
+  [title]="variantDetailsModalTitle()"
+  [show]="variantDetailsOpen()"
+  (showChange)="variantDetailsOpen.set($event)"
+  (closed)="closeVariantDetails()"
+  size="large"
+>
+  <section class="group-variant-details">
+    @if (variantDetailsLoading()) {
+      <p class="group-variant-details__message">Loading variants...</p>
+    } @else if (variantDetailsError()) {
+      <p class="group-variant-details__message group-variant-details__message--error">{{ variantDetailsError() }}</p>
+    } @else {
+      <gom-lib-table
+        [columns]="variantDetailColumns()"
+        [rows]="variantDetailRows()"
+        [loading]="variantDetailsLoading()"
+        dataMode="client"
+        searchPlaceholder="Search variants"
+        emptyMessage="No variants found for this group."
+      ></gom-lib-table>
+    }
+  </section>
+
+  <footer class="gom-modal__action-layout" gom-modal-actions>
+    <div class="gom-modal__action-layout-start"></div>
+    <div class="gom-modal__action-layout-end">
+      <gom-lib-button type="button" variant="secondary" (buttonClick)="closeVariantDetails()">Close</gom-lib-button>
+    </div>
+  </footer>
+</gom-lib-modal>
 
 <gom-lib-modal
   [title]="editingGroupId() ? 'Edit Group' : 'Create Group'"

@@ -1,12 +1,17 @@
 <gom-lib-button
   type="button"
   variant="primary"
+  [size]="isMobileHeader() ? 'compact-icon' : 'default'"
   (buttonClick)="openModal()"
   [gomDisableIfNoFeature]="'group.create'"
   [disabled]="!canCreateGroup()"
+  [attr.aria-label]="'Create Group'"
+  [buttonTitle]="'Create Group'"
 >
   <i class="ri-add-line" aria-hidden="true"></i>
-  Create Group
+  @if (!isMobileHeader()) {
+    <span class="quick-create-trigger__label">Create Group</span>
+  }
 </gom-lib-button>
 
 <gom-lib-modal
@@ -245,12 +250,12 @@
     <section class="quick-create-form__section">
       <div class="quick-create-form__section-header">
         <h3>Description (Optional)</h3>
-        <span class="quick-create-form__hint">Provide rich product details for storefront and operations.</span>
+        <span class="quick-create-form__hint">Add product details for storefront and operations.</span>
       </div>
 
       <app-rich-text-editor
         label="Group Description"
-        placeholder="Add detailed description, highlights, and care instructions"
+        placeholder="Add description, highlights, and care instructions"
         [value]="quickCreateForm.controls.description.value || ''"
         (valueChange)="onDescriptionChanged($event)"
       ></app-rich-text-editor>

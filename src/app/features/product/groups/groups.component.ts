@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, computed, inject, OnInit, OnDestroy, signal, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, computed, inject, OnInit, OnDestroy, signal, ViewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import {
   FormBuilder,
@@ -23,14 +23,19 @@ import {
   GomTabContentComponent,
   GomTableColumn,
   GomTableComponent,
+  GomTableMobileCardConfig,
   GomTableQuery,
   GomTableRow,
   GomTabsComponent,
+  MenuList,
+  MenuModule,
   TabItem,
   getButtonContentMode,
   showButtonIcon,
   showButtonText,
 } from '@gomlibs/ui';
+import { ButtonModule } from '../../../../../../naqp-dev-web-core-components-library/src/projects/naqp-dev-web-core-components-library/components/src/core/buttons';
+import { PageHeadingComponent } from '../../../shared/components/page-heading/page-heading.component';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { MediaAssetService } from '../../saas-platform/media/media-asset.service';
 import { GroupImage, GroupImageEntry } from '../../saas-platform/media/media-asset.model';
@@ -60,15 +65,32 @@ import {
   BulkUploadVariantFailure,
 } from './bulk-upload/services/bulk-import-template.service';
 import { VariantsService, ApiPaginated, Variant } from '../variants/variants.service';
+import { PricingTemplate, PricingTemplatesService } from '../../master/pricing-templates/pricing-templates.service';
 
 interface GroupRow extends GomTableRow {
   _id: string;
   name: string;
   categoryName: string;
   stock: string;
+  stockValue: number;
   stockSeverity: 'normal' | 'low' | 'critical';
+  groupType: string;
+  pricingTemplate: string;
+  baseUnit: string;
+  allowedUnits: string;
+  variantCount: number;
+  variantCountDisplay: string;
   status: string;
   actions: string;
+}
+
+interface VariantDetailRow extends GomTableRow {
+  _id: string;
+  name: string;
+  specification: string;
+  actualPrice: string;
+  sellingPrice: string;
+  mrpPrice: string;
 }
 
 interface GroupWizardField {
@@ -160,6 +182,9 @@ interface BulkVariantFailureRow extends GomTableRow {
     ImagePickerComponent,
     RichTextEditorComponent,
     QuickCreateGroupComponent,
+    MenuModule,
+    ButtonModule,
+    PageHeadingComponent,
   ],
   templateUrl: './groups.component.html',
   styleUrl: './groups.component.scss',
@@ -168,6 +193,7 @@ export class GroupsComponent implements OnInit, OnDestroy {
   @ViewChild('descEditor') descEditor?: RichTextEditorComponent;
   @ViewChild('quickCreateModal') quickCreateModal?: QuickCreateGroupComponent;
   private readonly groupsService = inject(GroupsService);
+  private readonly pricingTemplatesService = inject(PricingTemplatesService);
   private readonly mediaService = inject(MediaAssetService);
   private readonly bulkImportTemplateService = inject(BulkImportTemplateService);
   private readonly toast = inject(GomAlertToastService);
@@ -242,6 +268,8 @@ export class GroupsComponent implements OnInit, OnDestroy {
   };
 
   readonly loading = signal(false);
+  readonly viewportWidth = signal<number>(window.innerWidth);
+  readonly isMobileHeader = computed<boolean>(() => this.viewportWidth() <= 1200);
   readonly templateDownloading = signal(false);
   readonly templateRefreshing = signal(false);
   readonly showTemplateRefreshWarningsModal = signal(false);
@@ -300,6 +328,11 @@ export class GroupsComponent implements OnInit, OnDestroy {
   readonly variantReviewLoading = signal(false);
   readonly variantGenerating = signal(false);
   readonly variantPreview = signal<GroupVariantGenerationPreview | null>(null);
+  readonly variantDetailsOpen = signal(false);
+  readonly variantDetailsLoading = signal(false);
+  readonly variantDetailsError = signal<string | null>(null);
+  readonly currentVariantDetailsGroup = signal<Group | null>(null);
+  readonly variantDetailRows = signal<VariantDetailRow[]>([]);
   readonly variantDisabledKeys = signal<string[]>([]);
   readonly errorMessage = signal<string | null>(null);
 
@@ -318,6 +351,7 @@ export class GroupsComponent implements OnInit, OnDestroy {
   readonly fields = signal<Field[]>([]);
   readonly fieldGroups = signal<FieldGroup[]>([]);
   readonly units = signal<Unit[]>([]);
+  readonly pricingTemplates = signal<PricingTemplate[]>([]);
   readonly taxProfiles = signal<TaxProfile[]>([]);
 
   readonly wizardOpen = signal(false);
@@ -326,6 +360,11 @@ export class GroupsComponent implements OnInit, OnDestroy {
   readonly editingQuantity = signal(1);
   readonly selectedFieldGroupIds = signal<string[]>([]);
   readonly hiddenGroupFieldKeys = signal<Set<string>>(new Set());
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.viewportWidth.set(window.innerWidth);
+  }
   readonly selectedExtraFieldIds = signal<string[]>([]);
   readonly formulaTarget = signal<FormulaTarget>('sellingPrice');
   readonly showAdvancedFormulaTools = signal(false);
@@ -337,6 +376,32 @@ export class GroupsComponent implements OnInit, OnDestroy {
   readonly submitMode: GomButtonContentMode = getButtonContentMode('primary-action');
   readonly cancelMode: GomButtonContentMode = getButtonContentMode('dismiss');
   readonly secondaryMode: GomButtonContentMode = getButtonContentMode('secondary-action');
+
+  readonly headerMenuList: MenuList = {
+    mainMenu: [
+      {
+        title: 'Download Template',
+        icon: 'ri-download-2-line',
+        clickEvent: () => this.downloadTemplate(),
+      },
+      {
+        title: 'Refresh Template',
+        icon: 'ri-refresh-line',
+        clickEvent: () => this.refreshTemplate(),
+      },
+      {
+        title: 'Upload Template',
+        icon: 'ri-upload-cloud-2-line',
+        clickEvent: () => this.uploadTemplate(),
+      },
+      {
+        title: 'Bulk Upload',
+        icon: 'ri-upload-2-line',
+        clickEvent: () => this.openBulkUpload(),
+      },
+    ],
+    portalMenu: [],
+  };
 
   readonly basicForm = this.fb.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
@@ -423,6 +488,7 @@ export class GroupsComponent implements OnInit, OnDestroy {
       key: 'stock',
       header: 'Stock',
       sortable: true,
+      sortValue: (row) => row.stockValue,
       width: '10rem',
       cellClass: (_value, row) => {
         if (row.stockSeverity === 'critical') {
@@ -434,11 +500,45 @@ export class GroupsComponent implements OnInit, OnDestroy {
         return 'group-stock--normal';
       },
     },
-    { key: 'status', header: 'Status', sortable: true, filterable: true, width: '10rem' },
+    { key: 'groupType', header: 'Group Type', sortable: true, filterable: true, width: '10rem' },
+    { key: 'pricingTemplate', header: 'Pricing Template', sortable: true, filterable: true, width: '14rem' },
+    { key: 'baseUnit', header: 'Base Unit', sortable: true, filterable: true, width: '10rem' },
+    {
+      key: 'allowedUnits',
+      header: 'Allowed Units',
+      sortable: true,
+      filterable: true,
+      width: '14rem',
+      textMode: 'wrap',
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      sortable: true,
+      filterable: true,
+      width: '10rem',
+      chipTone: (_value, row) => row.status === 'ACTIVE' ? 'success' : 'neutral',
+    },
+    {
+      key: 'variantCountDisplay',
+      header: 'Variant Count',
+      sortable: true,
+      sortValue: (row) => row.variantCount,
+      width: '11rem',
+      clickActionKey: (row) => row.variantCount > 0 ? 'variant-details' : null,
+      clickActionIcon: (row: GroupRow) => row.variantCount > 0 ? 'ri-information-line' : null,
+    },
     {
       key: 'actions',
       header: 'Actions',
-      width: '20rem',
+      width: '12rem',
+      actionOverflowMenu: {
+        actionKeys: ['add-stock', 'add-variant', 'collections', 'delete'],
+        triggerIcon: 'ri-more-2-fill',
+        triggerAriaLabel: 'More group actions',
+        triggerButtonTitle: 'More group actions',
+        backButtonText: 'Group actions',
+      },
       actionButtons: [
         {
           label: () => this.canUpdateGroup() ? 'Edit' : 'No permission to edit groups',
@@ -485,6 +585,45 @@ export class GroupsComponent implements OnInit, OnDestroy {
       ],
     },
   ];
+
+  readonly variantDetailColumns = computed<GomTableColumn<VariantDetailRow>[]>(() => [
+    { key: 'name', header: 'Variant Name', sortable: true, filterable: true, width: '16rem' },
+    {
+      key: 'specification',
+      header: this.getVariantDetailsSpecificationHeader(),
+      sortable: true,
+      filterable: true,
+      width: '18rem',
+      textMode: 'wrap',
+    },
+    { key: 'actualPrice', header: 'Actual Price', sortable: true, width: '10rem' },
+    { key: 'sellingPrice', header: 'Selling Price', sortable: true, width: '10rem' },
+    { key: 'mrpPrice', header: 'MRP Price', sortable: true, width: '10rem' },
+  ]);
+
+  readonly variantDetailsModalTitle = computed(() => {
+    const group = this.currentVariantDetailsGroup();
+    return group ? `Variant Details - ${group.name}` : 'Variant Details';
+  });
+
+  readonly groupMobileCardConfig: GomTableMobileCardConfig<GroupRow> = {
+    header: {
+      titleKey: 'name',
+      subtitleKeys: ['categoryName'],
+      statusKey: 'stock',
+      overflowActionKeys: ['add-stock', 'add-variant', 'collections', 'delete'],
+    },
+    body: {
+      visibleFields: [],
+      expandableFields: [],
+      defaultExpanded: false,
+    },
+    footer: {
+      primaryActionKeys: ['edit', 'clone'],
+      ...({ showPrimaryActionLabels: false } as Record<string, boolean>),
+      showDetailsToggle: false,
+    },
+  };
 
   readonly bulkFailedColumns: GomTableColumn<BulkFailedResultRow>[] = [
     { key: 'rowNumber', header: 'Row', sortable: true, width: '6rem' },
@@ -928,10 +1067,21 @@ export class GroupsComponent implements OnInit, OnDestroy {
 
   readonly rows = computed<GroupRow[]>(() => {
     const categoriesById = new Map(this.categories().map((item) => [item._id, item.name]));
+    const unitsById = new Map(this.units().map((item) => [item._id, item]));
+    const pricingTemplatesById = new Map(
+      this.pricingTemplates()
+        .filter((item) => !!item._id)
+        .map((item) => [String(item._id), item.name])
+    );
 
     return this.groups().map((item) => {
       const availableStock = Number(item.stock?.available ?? 0);
       const reorderLevel = Number(item.stock?.reorderLevel ?? 0);
+      const baseUnit = item.baseUnitId ? unitsById.get(item.baseUnitId) : null;
+      const allowedUnits = (item.allowedUnitIds || [])
+        .map((unitId) => unitsById.get(unitId)?.name || unitsById.get(unitId)?.symbol || '')
+        .filter((unitName, index, list) => !!unitName && list.indexOf(unitName) === index);
+      const variantCount = Number(item.completionSummary?.variantCount ?? 0);
       let stockSeverity: GroupRow['stockSeverity'] = 'normal';
 
       if (availableStock === 0) {
@@ -945,7 +1095,14 @@ export class GroupsComponent implements OnInit, OnDestroy {
         name: item.name,
         categoryName: categoriesById.get(item.categoryId) || '-',
         stock: availableStock.toLocaleString(),
+        stockValue: availableStock,
         stockSeverity,
+        groupType: this.getGroupTypeLabel(item.groupType),
+        pricingTemplate: item.pricingTemplateId ? pricingTemplatesById.get(item.pricingTemplateId) || '-' : '-',
+        baseUnit: baseUnit?.name || baseUnit?.symbol || '-',
+        allowedUnits: allowedUnits.join(', ') || '-',
+        variantCount,
+        variantCountDisplay: variantCount.toLocaleString(),
         status: item.status,
         actions: 'Edit',
       };
@@ -1024,6 +1181,7 @@ export class GroupsComponent implements OnInit, OnDestroy {
       fields: this.groupsService.listFields(),
       fieldGroups: this.groupsService.listFieldGroups(),
       units: this.groupsService.listUnits(),
+      pricingTemplates: this.pricingTemplatesService.getPricingTemplates({ page: 1, limit: 5000 }),
       taxProfiles: this.groupsService.listTaxProfiles(),
     }).subscribe({
       next: (result) => {
@@ -1045,6 +1203,7 @@ export class GroupsComponent implements OnInit, OnDestroy {
         this.fields.set(result.fields.data ?? []);
         this.fieldGroups.set(result.fieldGroups.data ?? []);
         this.units.set(result.units.data ?? []);
+        this.pricingTemplates.set(result.pricingTemplates.data ?? []);
         this.taxProfiles.set(result.taxProfiles.data ?? []);
         this.restoreBulkUploadAttention();
         this.loading.set(false);
@@ -1105,8 +1264,18 @@ export class GroupsComponent implements OnInit, OnDestroy {
     }
 
     if (query.sort?.key && query.sort?.direction && (query.sort.direction === 'asc' || query.sort.direction === 'desc')) {
-      params.sortBy = query.sort.key;
-      params.order = query.sort.direction;
+      const serverSortKeyMap: Record<string, string> = {
+        name: 'name',
+        categoryName: 'categoryId',
+        stock: 'stock.available',
+        groupType: 'groupType',
+        status: 'status',
+      };
+      const serverSortKey = serverSortKeyMap[query.sort.key];
+      if (serverSortKey) {
+        params.sortBy = serverSortKey;
+        params.order = query.sort.direction;
+      }
     }
 
     this.groupsService.listGroups(params).subscribe({
@@ -1237,11 +1406,15 @@ export class GroupsComponent implements OnInit, OnDestroy {
   }
 
   openBulkUpload(): void {
+    if (this.saving() || !this.canBulkCreateGroup()) {
+      return;
+    }
+
     void this.router.navigate(['/product/groups/bulk-upload']);
   }
 
   downloadTemplate(): void {
-    if (!this.canCreateGroup()) {
+    if (this.templateDownloading() || !this.canCreateGroup()) {
       this.toast.warning('You do not have permission to download the template.');
       return;
     }
@@ -1263,7 +1436,7 @@ export class GroupsComponent implements OnInit, OnDestroy {
   }
 
   refreshTemplate(): void {
-    if (!this.canCreateGroup()) {
+    if (this.templateRefreshing() || !this.canCreateGroup()) {
       this.toast.warning('You do not have permission to refresh the template.');
       return;
     }
@@ -1437,7 +1610,7 @@ export class GroupsComponent implements OnInit, OnDestroy {
   }
 
   uploadTemplate(): void {
-    if (!this.canCreateGroup()) {
+    if (this.templateUploading() || this.bulkJobIsActive() || !this.canCreateGroup()) {
       this.toast.warning('You do not have permission to upload a template.');
       return;
     }
@@ -1902,10 +2075,23 @@ export class GroupsComponent implements OnInit, OnDestroy {
     this.closeVariantReview();
   }
 
+  closeVariantDetails(): void {
+    this.variantDetailsOpen.set(false);
+    this.variantDetailsLoading.set(false);
+    this.variantDetailsError.set(null);
+    this.currentVariantDetailsGroup.set(null);
+    this.variantDetailRows.set([]);
+  }
+
   onRowAction(event: { actionKey: string; row: GomTableRow }): void {
     const groupId = typeof event.row['_id'] === 'string' ? event.row['_id'] : '';
     const existing = this.groups().find((item) => item._id === groupId);
     if (!existing) {
+      return;
+    }
+
+    if (event.actionKey === 'variant-details') {
+      this.openVariantDetails(existing);
       return;
     }
 
@@ -1997,6 +2183,376 @@ export class GroupsComponent implements OnInit, OnDestroy {
     });
 
     this.quickCreateModal?.openForEdit(existing);
+  }
+
+  private openVariantDetails(group: Group): void {
+    this.currentVariantDetailsGroup.set(group);
+    this.variantDetailsOpen.set(true);
+    this.variantDetailsLoading.set(true);
+    this.variantDetailsError.set(null);
+    this.variantDetailRows.set([]);
+
+    this.variantsService.listVariants(group._id, 1, 500).subscribe({
+      next: (response) => {
+        const initialRows = response.data ?? [];
+        const total = Number(response.pagination?.total ?? initialRows.length);
+
+        if (total > initialRows.length) {
+          this.variantsService.listVariants(group._id, 1, total).subscribe({
+            next: (fullResponse) => {
+              this.variantDetailRows.set(this.mapVariantDetailRows(group, fullResponse.data ?? []));
+              this.variantDetailsLoading.set(false);
+            },
+            error: () => {
+              this.variantDetailsError.set('Failed to load variants for this group.');
+              this.variantDetailsLoading.set(false);
+            },
+          });
+          return;
+        }
+
+        this.variantDetailRows.set(this.mapVariantDetailRows(group, initialRows));
+        this.variantDetailsLoading.set(false);
+      },
+      error: () => {
+        this.variantDetailsError.set('Failed to load variants for this group.');
+        this.variantDetailsLoading.set(false);
+      },
+    });
+  }
+
+  private mapVariantDetailRows(group: Group, variants: Variant[]): VariantDetailRow[] {
+    const unitsById = new Map(this.units().map((item) => [item._id, item]));
+
+    return variants.map((variant) => ({
+      _id: variant._id,
+      name: String(variant.name || this.buildVariantFallbackName(variant) || '-'),
+      specification: this.getVariantSpecification(group, variant, unitsById),
+      actualPrice: this.formatCurrencyValue(this.resolveVariantActualPrice(group, variant)),
+      sellingPrice: this.formatCurrencyValue(this.resolveVariantSellingPrice(group, variant)),
+      mrpPrice: this.formatCurrencyValue(this.resolveVariantMrpPrice(group, variant)),
+    }));
+  }
+
+  private getGroupTypeLabel(groupType?: Group['groupType']): string {
+    switch (groupType) {
+      case 'ATTRIBUTE':
+        return 'Attribute';
+      case 'HYBRID':
+        return 'Hybrid';
+      case 'MEASURED':
+      default:
+        return 'Measured';
+    }
+  }
+
+  private getVariantDetailsSpecificationHeader(): string {
+    const groupType = this.currentVariantDetailsGroup()?.groupType || 'MEASURED';
+    if (groupType === 'ATTRIBUTE') {
+      return 'Attributes';
+    }
+    if (groupType === 'HYBRID') {
+      return 'Weight / Attributes';
+    }
+    return 'Weight';
+  }
+
+  private getVariantSpecification(group: Group, variant: Variant, unitsById: Map<string, Unit>): string {
+    const quantity = Number(variant.quantity ?? 0);
+    const unit = unitsById.get(variant.unitId);
+    const quantityLabel = Number.isFinite(quantity)
+      ? `${quantity} ${unit?.symbol || unit?.name || ''}`.trim()
+      : '';
+    const optionLabel = (variant.optionSelections || [])
+      .map((item) => `${item.label || item.key}: ${item.value}`)
+      .join(', ');
+
+    switch (group.groupType) {
+      case 'ATTRIBUTE':
+        return optionLabel || '-';
+      case 'HYBRID':
+        return [quantityLabel, optionLabel].filter(Boolean).join(' • ') || '-';
+      case 'MEASURED':
+      default:
+        return quantityLabel || '-';
+    }
+  }
+
+  private buildVariantFallbackName(variant: Variant): string {
+    const optionValues = (variant.optionSelections || []).map((item) => item.value).filter(Boolean);
+    if (optionValues.length) {
+      return optionValues.join(', ');
+    }
+
+    const quantity = Number(variant.quantity ?? 0);
+    const unit = this.units().find((item) => item._id === variant.unitId);
+    if (Number.isFinite(quantity)) {
+      return `${quantity} ${unit?.symbol || unit?.name || ''}`.trim();
+    }
+
+    return '';
+  }
+
+  private resolveVariantActualPrice(group: Group, variant: Variant): number | null {
+    const effectivePrice = (variant.effectivePrice as { actualPrice?: number | null } | null) || null;
+    if (Number.isFinite(effectivePrice?.actualPrice)) {
+      return Number(effectivePrice?.actualPrice);
+    }
+
+    const rawPrice = (variant.price as { actualPrice?: number | null } | null) || null;
+    if (Number.isFinite(rawPrice?.actualPrice)) {
+      return Number(rawPrice?.actualPrice);
+    }
+
+    const derived = this.deriveVariantPrice(group, variant, 'actual');
+    return Number.isFinite(derived) ? derived : null;
+  }
+
+  private resolveVariantSellingPrice(group: Group, variant: Variant): number | null {
+    if (Number.isFinite(variant.effectivePrice?.sellingPrice)) {
+      return Number(variant.effectivePrice?.sellingPrice);
+    }
+    if (Number.isFinite(variant.price?.sellingPrice)) {
+      return Number(variant.price?.sellingPrice);
+    }
+
+    const derived = this.deriveVariantPrice(group, variant, 'selling');
+    return Number.isFinite(derived) ? derived : null;
+  }
+
+  private resolveVariantMrpPrice(group: Group, variant: Variant): number | null {
+    if (Number.isFinite(variant.override?.finalAnchorPrice)) {
+      return Number(variant.override?.finalAnchorPrice);
+    }
+    if (Number.isFinite(variant.effectivePrice?.anchorPrice)) {
+      return Number(variant.effectivePrice?.anchorPrice);
+    }
+    if (Number.isFinite(variant.price?.anchorPrice)) {
+      return Number(variant.price?.anchorPrice);
+    }
+
+    const derived = this.deriveVariantPrice(group, variant, 'anchor');
+    return Number.isFinite(derived) ? derived : null;
+  }
+
+  private deriveVariantPrice(group: Group, variant: Variant, target: 'actual' | 'selling' | 'anchor'): number {
+    const fieldValues = (group.resolvedFields || []).reduce((acc, field) => {
+      if (Number.isFinite(field.value)) {
+        acc[field.key] = Number(field.value);
+      }
+      return acc;
+    }, {} as Record<string, number>);
+
+    Object.entries(variant.fieldOverrides || {}).forEach(([key, value]) => {
+      if (Number.isFinite(value)) {
+        fieldValues[key] = Number(value);
+      }
+    });
+
+    const quantity = Number(variant.quantity ?? 0);
+    const convertedQuantity = Number(variant.convertedQuantity ?? quantity);
+    const actual = this.evaluateFormula(group.formula?.actualPrice || '', {
+      ...fieldValues,
+      quantity,
+      weight: convertedQuantity,
+    });
+
+    if (target === 'actual') {
+      return actual;
+    }
+
+    const selling = this.evaluateFormula(group.formula?.sellingPrice || '', {
+      ...fieldValues,
+      quantity,
+      weight: convertedQuantity,
+      actualPrice: actual,
+      actual_price: actual,
+    });
+
+    if (target === 'selling') {
+      return selling;
+    }
+
+    return this.evaluateFormula(group.formula?.anchorPrice || '', {
+      ...fieldValues,
+      quantity,
+      weight: convertedQuantity,
+      actualPrice: actual,
+      actual_price: actual,
+      sellingPrice: selling,
+      selling_price: selling,
+    });
+  }
+
+  private evaluateFormula(expression: string, context: Record<string, number>): number {
+    const formula = String(expression || '').trim();
+    if (!formula) {
+      return 0;
+    }
+    if (!/^[a-zA-Z0-9_+\-*/().%\s]+$/.test(formula)) {
+      return 0;
+    }
+
+    try {
+      const normalized = this.normalizePercentSyntax(formula);
+      const value = this.evaluatePricingExpression(normalized, context);
+      return Number.isFinite(value) ? Math.round(value * 100) / 100 : 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  private normalizePercentSyntax(expression: string): string {
+    let result = '';
+    let index = 0;
+
+    while (index < expression.length) {
+      const char = expression[index];
+
+      if (/\d/.test(char)) {
+        let end = index + 1;
+        while (end < expression.length && /[\d.]/.test(expression[end])) {
+          end += 1;
+        }
+
+        let next = end;
+        while (next < expression.length && /\s/.test(expression[next])) {
+          next += 1;
+        }
+
+        const numberText = expression.slice(index, end);
+        if (expression[next] === '%') {
+          result += `(${numberText}/100)`;
+          index = next + 1;
+          continue;
+        }
+
+        result += numberText;
+        index = end;
+        continue;
+      }
+
+      result += char;
+      index += 1;
+    }
+
+    return result;
+  }
+
+  private evaluatePricingExpression(expression: string, context: Record<string, number>): number {
+    let index = 0;
+
+    const parseExpression = (): number => {
+      let value = parseTerm();
+      while (true) {
+        skipWhitespace();
+        const operator = expression[index];
+        if (operator !== '+' && operator !== '-') {
+          break;
+        }
+        index += 1;
+        const nextValue = parseTerm();
+        value = operator === '+' ? value + nextValue : value - nextValue;
+      }
+      return value;
+    };
+
+    const parseTerm = (): number => {
+      let value = parseFactor();
+      while (true) {
+        skipWhitespace();
+        const operator = expression[index];
+        if (operator !== '*' && operator !== '/') {
+          break;
+        }
+        index += 1;
+        const nextValue = parseFactor();
+        if (operator === '*') {
+          value *= nextValue;
+        } else {
+          if (nextValue === 0) {
+            value = 0;
+          } else {
+            value /= nextValue;
+          }
+        }
+      }
+      return value;
+    };
+
+    const parseFactor = (): number => {
+      skipWhitespace();
+      const operator = expression[index];
+      if (operator === '+' || operator === '-') {
+        index += 1;
+        const value = parseFactor();
+        return operator === '-' ? -value : value;
+      }
+      return parsePrimary();
+    };
+
+    const parsePrimary = (): number => {
+      skipWhitespace();
+      const char = expression[index];
+
+      if (char === '(') {
+        index += 1;
+        const value = parseExpression();
+        skipWhitespace();
+        if (expression[index] === ')') {
+          index += 1;
+        }
+        return value;
+      }
+
+      if (/\d|\./.test(char)) {
+        return parseNumber();
+      }
+
+      if (/[A-Za-z_]/.test(char)) {
+        return parseIdentifier();
+      }
+
+      return 0;
+    };
+
+    const parseNumber = (): number => {
+      const start = index;
+      while (index < expression.length && /[\d.]/.test(expression[index])) {
+        index += 1;
+      }
+      const value = Number.parseFloat(expression.slice(start, index));
+      return Number.isFinite(value) ? value : 0;
+    };
+
+    const parseIdentifier = (): number => {
+      const start = index;
+      while (index < expression.length && /\w/.test(expression[index])) {
+        index += 1;
+      }
+      const key = expression.slice(start, index);
+      const value = context[key];
+      return Number.isFinite(value) ? value : 0;
+    };
+
+    const skipWhitespace = (): void => {
+      while (index < expression.length && /\s/.test(expression[index])) {
+        index += 1;
+      }
+    };
+
+    return parseExpression();
+  }
+
+  private formatCurrencyValue(value: number | null): string {
+    if (!Number.isFinite(value)) {
+      return '-';
+    }
+
+    return `₹${Number(value).toLocaleString('en-IN', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
   }
 
   onQuickCreateSaved(): void {

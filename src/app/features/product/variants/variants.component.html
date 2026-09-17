@@ -1,14 +1,20 @@
 <section class="master-page">
   <header class="master-page__header">
-    <h2><i class="ri-price-tag-3-line" aria-hidden="true"></i> Variants</h2>
+    <gom-page-heading navRoute="/product/variants"></gom-page-heading>
     <gom-lib-button
       type="button"
       variant="primary"
+      [size]="isMobileHeader() ? 'compact-icon' : 'default'"
       (buttonClick)="openCreateVariant()"
       gomDisableIfNoFeature="variant.create"
       [disabled]="saving() || !canCreateVariant()"
+      [attr.aria-label]="'Add Variant'"
+      [buttonTitle]="'Add Variant'"
     >
-      <i class="ri-add-line" aria-hidden="true"></i> Add Variant
+      <i class="ri-add-line" aria-hidden="true"></i>
+      @if (!isMobileHeader()) {
+        Add Variant
+      }
     </gom-lib-button>
   </header>
 
@@ -21,16 +27,7 @@
     </div>
   }
 
-  @if (canCreateVariant()) {
-    <div class="quota-banner">
-      @if (variantCreateLimit() !== null) {
-        <p>Variant quota: {{ variantCreateUsed() }} / {{ variantCreateLimit() }} used ({{ variantCreateRemaining() }} remaining)</p>
-      } @else {
-        <p>Variant quota: {{ variantCreateUsed() }} used (unlimited)</p>
-      }
-    </div>
-  }
-
+ 
   <section class="master-page__filters">
     <gom-lib-select
       label="Group"

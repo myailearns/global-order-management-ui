@@ -360,11 +360,15 @@ export class TenantAccessService {
       .pipe(map((res) => res.data));
   }
 
+  deleteUser(userId: string, tenantId?: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiBaseUrl}/users/${userId}`, { headers: this.buildTenantHeaders(tenantId) });
+  }
+
   /**
    * Mark a user account inactive
    */
   deactivateUser(userId: string): Observable<UserWithRoles> {
-    return this.updateUser(userId, { status: UserStatus.INACTIVE });
+    return this.updateUser(userId, { status: UserStatus.DISABLED });
   }
 
   /**

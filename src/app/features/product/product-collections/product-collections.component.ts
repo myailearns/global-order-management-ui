@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, HostListener, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { forkJoin } from 'rxjs';
@@ -14,8 +14,10 @@ import {
   GomSelectOption,
   GomTableColumn,
   GomTableComponent,
+  GomTableMobileCardConfig,
   GomTableRow,
 } from '@gomlibs/ui';
+import { PageHeadingComponent } from '../../../shared/components/page-heading/page-heading.component';
 
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { PRODUCT_COLLECTIONS_TEXT } from './product-collections.constants';
@@ -59,6 +61,7 @@ interface AssignmentSelection {
     GomModalComponent,
     GomConfirmationModalComponent,
     GomSelectComponent,
+    PageHeadingComponent,
   ],
   templateUrl: './product-collections.component.html',
   styleUrl: './product-collections.component.scss',
@@ -71,7 +74,10 @@ export class ProductCollectionsComponent implements OnInit {
   private readonly translate = inject(TranslateService);
 
   readonly text = PRODUCT_COLLECTIONS_TEXT;
+  readonly viewportWidth = signal<number>(window.innerWidth);
+  readonly isMobileHeader = computed<boolean>(() => this.viewportWidth() <= 768);
   readonly loading = signal(false);
+  readonly formLoading = signal(false);
   readonly mappingLoading = signal(false);
   readonly detailLoading = signal(false);
   readonly rows = signal<ProductCollectionRow[]>([]);
@@ -106,6 +112,11 @@ export class ProductCollectionsComponent implements OnInit {
   readonly detailActiveTab = signal<string>('all');
   readonly detailGroupSearch = signal('');
   readonly detailVariantSearch = signal('');
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.viewportWidth.set(window.innerWidth);
+  }
 
   readonly detailGroupRail = computed(() => {
     const searchTerm = this.detailGroupSearch().trim().toLowerCase();
@@ -331,7 +342,6 @@ export class ProductCollectionsComponent implements OnInit {
   readonly columns = computed<GomTableColumn<ProductCollectionRow>[]>(() => {
     return [
       { key: 'name', header: 'Name', sortable: true, width: '16rem' },
-      { key: 'description', header: 'Description', width: '20rem' },
       { key: 'itemCount', header: 'Items', width: '8rem' },
       { key: 'status', header: 'Status', sortable: true, width: '8rem' },
       { key: 'createdAt', header: 'Created', sortable: true, width: '12rem' },
@@ -339,6 +349,13 @@ export class ProductCollectionsComponent implements OnInit {
         key: 'id',
         header: 'Actions',
         width: '10rem',
+        actionOverflowMenu: {
+          actionKeys: ['view', 'delete'],
+          triggerIcon: 'ri-more-2-fill',
+          triggerAriaLabel: 'More collection actions',
+          triggerButtonTitle: 'More collection actions',
+          backButtonText: 'Collection actions',
+        },
         actionButtons: [
           {
             label: () => this.canViewDetail() ? 'View' : 'No permission to view collections',
@@ -355,6 +372,16 @@ export class ProductCollectionsComponent implements OnInit {
             disabled: () => !this.canEdit(),
           },
           {
+            label: () => this.canCreate() ? 'Clone' : 'No permission to clone collections',
+            icon: 'ri-file-copy-line',
+            actionKey: 'clone',
+            variant: 'secondary',
+            disabled: () => {
+              const remaining = this.collectionCreateRemaining();
+              return !this.canCreate() || (remaining !== null && remaining <= 0);
+            },
+          },
+          {
             label: () => this.canDelete() ? 'Delete' : 'No permission to delete collections',
             icon: 'ri-delete-bin-line',
             actionKey: 'delete',
@@ -365,6 +392,25 @@ export class ProductCollectionsComponent implements OnInit {
       },
     ];
   });
+
+  readonly collectionMobileCardConfig: GomTableMobileCardConfig<ProductCollectionRow> = {
+    header: {
+      titleKey: 'name',
+      subtitleKeys: ['itemCount', 'createdAt'],
+      statusKey: 'status',
+      overflowActionKeys: ['clone', 'delete'],
+    },
+    body: {
+      visibleFields: [],
+      expandableFields: [],
+      defaultExpanded: false,
+    },
+    footer: {
+      primaryActionKeys: ['view', 'edit'],
+      ...({ showPrimaryActionLabels: false } as Record<string, boolean>),
+      showDetailsToggle: false,
+    },
+  };
 
   ngOnInit(): void {
     this.form.controls.categoryIds.valueChanges.subscribe((categoryIds) => {
@@ -484,6 +530,14 @@ export class ProductCollectionsComponent implements OnInit {
 
     if (event.actionKey === 'view') {
       this.openDetails(current);
+      return;
+    }
+
+    if (event.actionKey === 'clone') {
+      if (!this.canCreate()) {
+        return;
+      }
+      this.openClone(current);
       return;
     }
 
@@ -784,15 +838,32 @@ export class ProductCollectionsComponent implements OnInit {
   }
 
   private openEdit(current: ProductCollection): void {
-    this.loading.set(true);
+    this.openFormFromCollection(current, 'edit');
+  }
+
+  private openClone(current: ProductCollection): void {
+    const limit = this.collectionCreateLimit();
+    const remaining = this.collectionCreateRemaining();
+    if (limit !== null && remaining !== null && remaining <= 0) {
+      this.toast.error(`Collection creation limit reached. You can create up to ${limit} collections.`);
+      return;
+    }
+
+    this.openFormFromCollection(current, 'clone');
+  }
+
+  private openFormFromCollection(current: ProductCollection, mode: 'edit' | 'clone'): void {
+    this.formLoading.set(true);
     this.ensureCategoriesLoaded();
 
     this.service.getById(current._id, true).subscribe({
       next: (response) => {
         const detail = response.data;
-        this.selected = detail;
+        const isClone = mode === 'clone';
+        const clonedName = this.buildClonedCollectionName(detail.name);
+        this.selected = isClone ? null : detail;
         this.form.reset({
-          name: detail.name,
+          name: isClone ? clonedName : detail.name,
           description: detail.description || '',
           status: detail.status,
           autoSyncNewVariants: detail.autoSyncNewVariants !== false,
@@ -849,13 +920,18 @@ export class ProductCollectionsComponent implements OnInit {
         }
         this.assignmentError.set('');
         this.modalOpen = true;
-        this.loading.set(false);
+        this.formLoading.set(false);
       },
       error: (error) => {
-        this.loading.set(false);
+        this.formLoading.set(false);
         this.toast.error(String(error?.error?.message || this.translate.instant(this.text.errorLoad)));
       },
     });
+  }
+
+  private buildClonedCollectionName(sourceName: string | undefined): string {
+    const baseName = String(sourceName || '').trim();
+    return baseName ? `${baseName} (Copy)` : 'Collection Copy';
   }
 
   private openDetails(current: ProductCollection): void {

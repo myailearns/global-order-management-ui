@@ -6,8 +6,6 @@
 
 .business-details {
   min-height: 100%;
-  padding: theme.get-spacing(lg);
-  background: var(--gom-grey-25, #fbfcfe);
 
   &__header {
     display: flex;
@@ -266,8 +264,26 @@
 @media (max-width: 640px) {
   .business-details {
     padding: theme.get-spacing(md);
-    &__header, &__hero, &__dirty-bar { align-items: stretch; flex-direction: column; }
-    &__header-actions, &__dirty-actions { justify-content: flex-start; }
+    &__header {
+      align-items: center;
+      flex-direction: row;
+      flex-wrap: nowrap;
+    }
+    &__header > div:first-child {
+      min-width: 0;
+      flex: 1 1 auto;
+    }
+    &__header > gom-lib-button,
+    &__header-actions > gom-lib-button {
+      flex: 0 0 auto;
+      padding-inline: 0.5rem;
+    }
+    &__header-actions {
+      justify-content: flex-end;
+      flex-wrap: nowrap;
+    }
+    &__hero, &__dirty-bar { align-items: stretch; flex-direction: column; }
+    &__dirty-actions { justify-content: flex-start; }
     &__hero { padding: theme.get-spacing(lg); }
     &__status { position: absolute; top: theme.get-spacing(sm); right: theme.get-spacing(sm); }
     &__details-grid { grid-template-columns: 1fr; }

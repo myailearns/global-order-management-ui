@@ -1,14 +1,22 @@
 <section class="business-details" aria-labelledby="business-details-title">
   <header class="business-details__header">
     <div>
-      <h2 id="business-details-title">{{ 'businessDetails.title' | translate }}</h2>
-      <p>{{ 'businessDetails.description' | translate }}</p>
+      <gom-page-heading headingId="business-details-title" navRoute="/admin-app/business-details"></gom-page-heading>
     </div>
 
     @if (!loading() && savedProfile() && !editing() && canEdit()) {
-      <gom-lib-button type="button" variant="primary" (buttonClick)="edit()">
+      <gom-lib-button
+        type="button"
+        variant="primary"
+        [size]="isMobileHeader() ? 'compact-icon' : 'default'"
+        [attr.aria-label]="('businessDetails.actions.edit' | translate)"
+        [buttonTitle]="('businessDetails.actions.edit' | translate)"
+        (buttonClick)="edit()"
+      >
         <i class="ri-edit-line" aria-hidden="true"></i>
-        {{ 'businessDetails.actions.edit' | translate }}
+        @if (!isMobileHeader()) {
+          {{ 'businessDetails.actions.edit' | translate }}
+        }
       </gom-lib-button>
     }
 
@@ -22,9 +30,23 @@
             {{ 'businessDetails.actions.cancel' | translate }}
           </gom-lib-button>
         }
-        <gom-lib-button type="button" variant="primary" [disabled]="!canEdit() || saving() || uploadingLogo()" (buttonClick)="save()">
-          @if (saving()) { <i class="ri-loader-4-line business-details__spin" aria-hidden="true"></i> }
-          {{ (saving() ? 'businessDetails.actions.saving' : 'businessDetails.actions.save') | translate }}
+        <gom-lib-button
+          type="button"
+          variant="primary"
+          [size]="isMobileHeader() ? 'compact-icon' : 'default'"
+          [disabled]="!canEdit() || saving() || uploadingLogo()"
+          [attr.aria-label]="('businessDetails.actions.save' | translate)"
+          [buttonTitle]="('businessDetails.actions.save' | translate)"
+          (buttonClick)="save()"
+        >
+          @if (saving()) {
+            <i class="ri-loader-4-line business-details__spin" aria-hidden="true"></i>
+          } @else {
+            <i class="ri-save-line" aria-hidden="true"></i>
+          }
+          @if (!isMobileHeader()) {
+            {{ (saving() ? 'businessDetails.actions.saving' : 'businessDetails.actions.save') | translate }}
+          }
         </gom-lib-button>
       </div>
     }

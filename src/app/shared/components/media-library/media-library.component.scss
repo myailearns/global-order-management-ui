@@ -99,6 +99,23 @@
   }
 }
 
+@media (max-width: 768px) {
+  .media-page__header {
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+
+  .media-page__title-group {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .media-page__header > gom-lib-button {
+    flex: 0 0 auto;
+    padding-inline: 0.5rem;
+  }
+}
+
 // ─── Storage Monitor Bar (platform only) ────────────────
 
 .storage-bar {

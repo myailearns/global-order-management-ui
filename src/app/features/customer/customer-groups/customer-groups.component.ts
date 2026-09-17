@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, HostListener, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { GomAlertToastService } from '@gomlibs/ui';
@@ -12,6 +12,7 @@ import {
   CustomerGroup,
   CustomerGroupMember,
 } from '../customer-engagement.service';
+import { PageHeadingComponent } from '../../../shared/components/page-heading/page-heading.component';
 
 interface CustomerMatch {
   _id: string;
@@ -40,6 +41,7 @@ interface GroupRow extends GomTableRow {
     GomTableComponent,
     GomModalComponent,
     GomConfirmationModalComponent,
+    PageHeadingComponent,
   ],
   templateUrl: './customer-groups.component.html',
   styleUrl: './customer-groups.component.scss',
@@ -51,6 +53,8 @@ export class CustomerGroupsComponent implements OnInit {
   private readonly authSession = inject(AuthSessionService);
 
   readonly loading = signal(false);
+  readonly viewportWidth = signal<number>(window.innerWidth);
+  readonly isMobileHeader = computed<boolean>(() => this.viewportWidth() <= 768);
   readonly canListGroups = computed(() => this.authSession.hasFeature('customerGroup.list'));
   readonly canViewGroup = computed(() => this.authSession.hasFeature('customerGroup.view'));
   readonly canCreateGroup = computed(() => this.authSession.hasFeature('customerGroup.create'));
@@ -81,6 +85,11 @@ export class CustomerGroupsComponent implements OnInit {
 
   readonly deactivateConfirmOpen = signal(false);
   readonly deactivateTarget = signal<CustomerGroup | null>(null);
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.viewportWidth.set(window.innerWidth);
+  }
 
   readonly groupForm = this.fb.group({
     name: ['', [Validators.required, Validators.minLength(2)]],

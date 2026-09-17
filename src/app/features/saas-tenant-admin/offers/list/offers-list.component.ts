@@ -15,6 +15,7 @@ import {
   GomTableRow,
 } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../../core/auth/auth-session.service';
+import { PageHeadingComponent } from '../../../../shared/components/page-heading/page-heading.component';
 
 import { OfferService } from '../../services';
 import {
@@ -52,6 +53,7 @@ interface OfferRow extends GomTableRow {
     TranslateModule,
     GomButtonComponent,
     GomConfirmationModalComponent,
+    PageHeadingComponent,
     GomTableComponent,
   ],
   templateUrl: './offers-list.component.html',

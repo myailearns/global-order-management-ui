@@ -204,11 +204,11 @@ export const UI_CONFIG = {
  */
 export const DEFAULT_TRANSLATIONS = {
   'saas.admin.title': 'Tenant Administration',
-  'saas.admin.users.title': 'Users',
-  'saas.admin.employees.title': 'Accounts',
+  'saas.admin.users.title': 'Access Users',
+  'saas.admin.employees.title': 'Employees',
   'saas.admin.roles.title': 'Roles & Permissions',
-  'saas.admin.users.btn_invite': 'Invite User',
-  'saas.admin.employees.btn_create': 'Create Account',
+  'saas.admin.users.btn_invite': 'Add User',
+  'saas.admin.employees.btn_create': 'Create Employee',
   'saas.admin.roles.btn_create': 'Create Role',
   'saas.admin.err_permission_denied': 'You do not have permission to perform this action',
   'saas.admin.err_last_saas_admin': 'Cannot remove the last SaaS admin from the tenant',

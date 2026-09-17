@@ -1,7 +1,6 @@
 <div class="browse-templates">
   <div class="page-header">
-    <h2>{{ 'categoryTemplates.pageTitle' | translate }}</h2>
-    <p class="page-description">{{ 'categoryTemplates.pageDescription' | translate }}</p>
+    <gom-page-heading navRoute="/templates/browse"></gom-page-heading>
   </div>
 
   <gom-lib-tabs [tabs]="tabs" [activeTab]="activeTab()" (tabChange)="switchTab($event)">

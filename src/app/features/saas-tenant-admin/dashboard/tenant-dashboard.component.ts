@@ -10,6 +10,7 @@ import { FormControlsModule, GomAlertToastService, GomButtonComponent, GomCardCo
 import { NgApexchartsModule } from 'ng-apexcharts';
 import { environment } from '../../../../environments/environment';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
+import { PageHeadingComponent } from '../../../shared/components/page-heading/page-heading.component';
 import { TenantAccessService } from '../services';
 import { 
   TenantAdminSummary,
@@ -36,7 +37,7 @@ type DashboardDateRange = 'TODAY' | 'LAST_7_DAYS' | 'LAST_30_DAYS' | 'THIS_MONTH
 @Component({
   selector: 'gom-tenant-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule, FormControlsModule, GomButtonComponent, GomCardComponent, GomModalComponent, GomTableComponent, NgApexchartsModule],
+  imports: [CommonModule, FormsModule, TranslateModule, FormControlsModule, GomButtonComponent, GomCardComponent, GomModalComponent, GomTableComponent, NgApexchartsModule, PageHeadingComponent],
   templateUrl: './tenant-dashboard.component.html',
   styleUrl: './tenant-dashboard.component.scss',
 })

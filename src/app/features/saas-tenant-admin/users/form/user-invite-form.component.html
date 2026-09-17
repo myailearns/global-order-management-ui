@@ -1,89 +1,105 @@
-<gom-lib-modal
-  [title]="translationKeys.BTN_INVITE_USER | translate"
-  [(show)]="inviteModalOpen"
-  (closed)="onCancel()"
-  [closeOnBackdropClick]="true"
-  size="medium"
->
+<section class="gom-user-invite-form">
+  @if (!modalMode) {
+    <h1>{{ modalTitle }}</h1>
+  }
+
   <form [formGroup]="inviteForm" class="gom-user-invite-form__form">
-      <!-- Full Name Field -->
-      <div class="gom-user-invite-form__field">
-        <label for="fullName" class="gom-user-invite-form__label">
-          Full Name <span class="gom-required">*</span>
-        </label>
+    <div class="gom-user-invite-form__grid">
+      <gom-lib-input
+        formControlName="fullName"
+        [label]="'saas.admin.users.lbl_full_name' | translate"
+        [required]="true"
+        type="text"
+      ></gom-lib-input>
+
+      <gom-lib-input
+        formControlName="email"
+        [label]="translationKeys.LBL_EMAIL | translate"
+        [required]="true"
+        type="email"
+      ></gom-lib-input>
+
+      <gom-lib-input
+        formControlName="phone"
+        [label]="'saas.admin.users.lbl_mobile' | translate"
+        [required]="true"
+        type="text"
+      ></gom-lib-input>
+
+      <div class="gom-user-invite-form__whatsapp-block">
+        <gom-lib-checkbox
+          formControlName="sameAsMobile"
+          [label]="'saas.admin.users.lbl_same_whatsapp' | translate"
+          [hint]="'saas.admin.users.hint_same_whatsapp' | translate"
+        ></gom-lib-checkbox>
+
         <gom-lib-input
-          id="fullName"
-          formControlName="fullName"
+          formControlName="whatsappNumber"
+          [label]="'saas.admin.users.lbl_whatsapp' | translate"
+          [required]="true"
           type="text"
-          [required]="true"
-          [placeholder]="'Jane Doe'">
-        </gom-lib-input>
-        @if (hasControlError('fullName', 'required')) {
-          <span class="gom-user-invite-form__error">Full name is required</span>
-        }
+        ></gom-lib-input>
       </div>
 
-      <!-- Email Field -->
-      <div class="gom-user-invite-form__field">
-        <label for="email" class="gom-user-invite-form__label">
-          {{ translationKeys.LBL_EMAIL | translate }} <span class="gom-required">*</span>
-        </label>
-        <gom-lib-input
-          id="email"
-          formControlName="email"
-          type="email"
-          [required]="true"
-          [placeholder]="'example@domain.com'">
-        </gom-lib-input>
-        @if (hasControlError('email', 'required')) {
-          <span class="gom-user-invite-form__error">Email is required</span>
-        }
-        @if (hasControlError('email', 'email')) {
-          <span class="gom-user-invite-form__error">Please enter a valid email</span>
-        }
-      </div>
+      @if (showStatusField) {
+        <gom-lib-select
+          formControlName="status"
+          [label]="'saas.admin.users.tbl_status' | translate"
+          [options]="statusOptions"
+        ></gom-lib-select>
+      }
+    </div>
 
-      <!-- Roles Field -->
-      <div class="gom-user-invite-form__field">
-        <fieldset class="gom-user-invite-form__roles">
-          <legend class="gom-user-invite-form__label">
-            {{ translationKeys.LBL_ROLES | translate }} <span class="gom-required">*</span>
-          </legend>
-          @for (role of availableRoles; track role._id) {
-            <label class="gom-user-invite-form__checkbox">
-              <input
-                type="checkbox"
-                [checked]="isRoleSelected(role._id)"
-                (change)="toggleRole(role._id)"
-                [attr.aria-label]="'Select ' + role.name">
-              <span>{{ role.name }}</span>
-            </label>
-          }
-        </fieldset>
-        @if (hasControlError('roleIds', 'required')) {
-          <span class="gom-user-invite-form__error">At least one role is required</span>
+    <fieldset class="gom-user-invite-form__roles">
+      <legend class="gom-user-invite-form__label">
+        {{ translationKeys.LBL_ROLES | translate }} <span class="gom-required">*</span>
+      </legend>
+      <div class="gom-user-invite-form__role-grid">
+        @for (role of availableRoles(); track role._id) {
+          <gom-lib-checkbox
+            [label]="role.name + ' (' + role.roleKey + ')'"
+            [ngModel]="isRoleSelected(role._id)"
+            [ngModelOptions]="{ standalone: true }"
+            (checkedChange)="toggleRole(role._id)"
+          ></gom-lib-checkbox>
         }
       </div>
+    </fieldset>
+
+    @if (hasControlError('roleIds', 'required')) {
+      <span class="gom-user-invite-form__error">{{ 'saas.admin.users.err_role_required' | translate }}</span>
+    }
   </form>
 
-  <footer class="gom-modal__action-layout" gom-modal-actions>
-    <div class="gom-modal__action-layout-start"></div>
-    <div class="gom-modal__action-layout-end">
-      <gom-lib-button
-        type="button"
-        variant="secondary"
-        (buttonClick)="onCancel()"
-        aria-label="Cancel invite user">
+  @if (modalMode) {
+    <footer class="gom-modal__action-layout" gom-modal-actions>
+      <div class="gom-modal__action-layout-start"></div>
+      <div class="gom-modal__action-layout-end">
+        <gom-lib-button
+          type="button"
+          variant="secondary"
+          (buttonClick)="onCancel()"
+          aria-label="Cancel user form">
+          {{ translationKeys.BTN_CANCEL | translate }}
+        </gom-lib-button>
+        <gom-lib-button
+          type="button"
+          variant="primary"
+          [disabled]="isSubmitDisabled"
+          (buttonClick)="onSubmit()"
+          aria-label="Save user">
+          {{ submitLabelKey | translate }}
+        </gom-lib-button>
+      </div>
+    </footer>
+  } @else {
+    <div class="gom-user-invite-form__actions">
+      <gom-lib-button type="button" variant="secondary" (buttonClick)="onCancel()">
         {{ translationKeys.BTN_CANCEL | translate }}
       </gom-lib-button>
-      <gom-lib-button
-        type="button"
-        variant="primary"
-        [disabled]="isSubmitDisabled"
-        (buttonClick)="onSubmit()"
-        aria-label="Send user invite">
-        {{ translationKeys.BTN_CONFIRM | translate }}
+      <gom-lib-button type="button" variant="primary" [disabled]="isSubmitDisabled" (buttonClick)="onSubmit()">
+        {{ submitLabelKey | translate }}
       </gom-lib-button>
     </div>
-  </footer>
-</gom-lib-modal>
+  }
+</section>

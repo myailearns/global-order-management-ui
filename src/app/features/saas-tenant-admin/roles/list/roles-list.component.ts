@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, ViewChild, computed, inject, signal } from '@angular/core';
+import { Component, HostListener, OnInit, ViewChild, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -20,6 +20,7 @@ import { TenantAccessService } from '../../services';
 import { RoleStatus, RoleWithPermissions } from '../../models';
 import { SaasAccountService } from '../../../saas-platform/accounts/saas-account.service';
 import { DisableIfNoFeatureDirective } from '../../../../shared/directives/disable-if-no-feature.directive';
+import { PageHeadingComponent } from '../../../../shared/components/page-heading/page-heading.component';
 import { RoleMatrixComponent } from '../matrix/role-matrix.component';
 
 interface RoleRow extends GomTableRow {
@@ -58,6 +59,7 @@ interface RoleCloneSeed {
     GomSelectComponent,
     GomTableComponent,
     GomModalComponent,
+    PageHeadingComponent,
     RoleMatrixComponent,
   ],
   templateUrl: './roles-list.component.html',
@@ -85,6 +87,8 @@ export class RolesListComponent implements OnInit {
   private readonly translate = inject(TranslateService);
 
   readonly loading = signal(false);
+  readonly viewportWidth = signal<number>(window.innerWidth);
+  readonly isMobileHeader = computed<boolean>(() => this.viewportWidth() <= 768);
   readonly canWrite = computed(() => this.authSession.canWrite('tenant-admin'));
   readonly roles = signal<RoleWithPermissions[]>([]);
   readonly roleFormModalOpen = signal(false);
@@ -101,6 +105,11 @@ export class RolesListComponent implements OnInit {
   readonly mappedAccounts = signal<AccountRow[]>([]);
   readonly roleUsersLoading = signal(false);
   readonly roleUsersSaving = signal(false);
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.viewportWidth.set(window.innerWidth);
+  }
 
   readonly maxRoles = signal<number | null>(null);
   readonly atQuota = computed(() => {

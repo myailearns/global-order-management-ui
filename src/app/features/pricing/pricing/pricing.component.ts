@@ -1,14 +1,18 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, HostListener, ViewChild, computed, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import {
   FormControlsModule,
+  MenuComponent,
+  MenuList,
   GomModalComponent,
   GomTableCellEditEvent,
   GomTableColumn,
   GomTableComponent,
   GomTableRow,
 } from '@gomlibs/ui';
+import { ButtonModule } from '../../../../../../naqp-dev-web-core-components-library/src/projects/naqp-dev-web-core-components-library/components/src/core/buttons';
+import { PageHeadingComponent } from '../../../shared/components/page-heading/page-heading.component';
 
 import {
   PricingEntity,
@@ -62,6 +66,9 @@ type BulkPreviewRow = GomTableRow & {
   imports: [
     ReactiveFormsModule,
     FormControlsModule,
+    MenuComponent,
+    ButtonModule,
+    PageHeadingComponent,
     GomModalComponent,
     GomTableComponent,
     SimplePricingEditModalComponent,
@@ -75,6 +82,10 @@ type BulkPreviewRow = GomTableRow & {
 })
 export class PricingComponent extends SimplePricingComponent {
   private readonly router = inject(Router);
+  @ViewChild('refreshTemplateInput') refreshTemplateInputRef?: ElementRef<HTMLInputElement>;
+  @ViewChild('uploadTemplateInput') uploadTemplateInputRef?: ElementRef<HTMLInputElement>;
+  readonly viewportWidth = signal<number>(window.innerWidth);
+  readonly isMobileHeader = computed<boolean>(() => this.viewportWidth() <= 768);
 
   readonly bulkUpdateModalOpen = signal(false);
   readonly bulkPreviewOpen = signal(false);
@@ -82,6 +93,31 @@ export class PricingComponent extends SimplePricingComponent {
   readonly bulkAction = signal<BulkUpdateAction>('increase-percent');
   readonly bulkUpdateError = signal('');
   readonly bulkValueControl = new FormControl<string>('5', { nonNullable: true });
+  readonly headerMenuList: MenuList = {
+    mainMenu: [
+      {
+        title: 'Update Template',
+        icon: 'ri-refresh-line',
+        clickEvent: () => this.triggerRefreshTemplateInput(),
+      },
+      {
+        title: 'Import Excel',
+        icon: 'ri-upload-2-line',
+        clickEvent: () => this.triggerUploadTemplateInput(),
+      },
+      {
+        title: 'Temporary History',
+        icon: 'ri-history-line',
+        clickEvent: () => this.openUploadHistory(),
+      },
+      {
+        title: 'Download Template',
+        icon: 'ri-download-2-line',
+        clickEvent: () => this.openDownloadTemplateModal(),
+      },
+    ],
+    portalMenu: [],
+  };
 
   readonly pricingCategoryOptions = computed(() =>
     this.categoryOptions().map((option, index) =>
@@ -195,6 +231,11 @@ export class PricingComponent extends SimplePricingComponent {
   readonly previewTotalChangeAmount = computed(() => (
     this.bulkPreviewRows().reduce((sum, row) => sum + row.changeAmount, 0)
   ));
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.viewportWidth.set(window.innerWidth);
+  }
 
   readonly pricingColumns: GomTableColumn<PricingManagementRow>[] = [
     {
@@ -362,6 +403,22 @@ export class PricingComponent extends SimplePricingComponent {
       ],
     },
   ];
+
+  triggerRefreshTemplateInput(): void {
+    if (this.refreshingTemplate()) {
+      return;
+    }
+
+    this.refreshTemplateInputRef?.nativeElement.click();
+  }
+
+  triggerUploadTemplateInput(): void {
+    if (this.uploadingTemplate()) {
+      return;
+    }
+
+    this.uploadTemplateInputRef?.nativeElement.click();
+  }
 
   onPricingCellEdit(event: GomTableCellEditEvent<PricingManagementRow>): void {
     if (event.columnKey !== 'sellingPrice') {

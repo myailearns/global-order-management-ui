@@ -1,0 +1,487 @@
+.notification-create {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.notification-create__header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+
+  h2 {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--gom-text, #111827);
+  }
+
+  p {
+    margin: 0;
+    color: var(--gom-text-secondary, #4b5563);
+  }
+}
+
+.notification-create__backlink {
+  color: var(--gom-primary, #4f46e5);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-bottom: 0.25rem;
+  width: fit-content;
+}
+
+.notification-create__steps {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.notification-create__step {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  border: 0;
+  background: transparent;
+  padding: 0.35rem 0.15rem;
+  color: var(--gom-text-muted, #6b7280);
+  font-weight: 600;
+  cursor: pointer;
+
+  &--active {
+    color: var(--gom-primary, #4f46e5);
+  }
+
+  &--done {
+    color: #15803d;
+  }
+}
+
+.notification-create__step-index {
+  display: inline-grid;
+  place-items: center;
+  width: 1.65rem;
+  height: 1.65rem;
+  border-radius: 50%;
+  background: #eef2ff;
+  color: var(--gom-primary, #4f46e5);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.notification-create__step--active .notification-create__step-index {
+  background: var(--gom-primary, #4f46e5);
+  color: #fff;
+}
+
+.notification-create__step--done .notification-create__step-index {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.card-surface {
+  background: var(--gom-surface, #fff);
+  border: 1px solid var(--gom-border, #e5e7eb);
+  border-radius: 1rem;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.notification-create__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.8fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.notification-create__panel,
+.notification-create__preview-side,
+.notification-create__sending {
+  padding: 1.25rem;
+}
+
+.notification-create__panel h3,
+.notification-create__sending h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: var(--gom-text, #111827);
+}
+
+.notification-create__muted,
+.notification-create__progress-copy,
+.notification-create__preview-side p {
+  color: var(--gom-text-secondary, #4b5563);
+}
+
+.notification-create__channel-grid,
+
+.notification-create__progress-copy--error {
+  color: #b42318;
+  font-weight: 600;
+}
+.notification-create__audience-list,
+.notification-create__schedule-grid,
+.notification-create__preview-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.notification-create__channel-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 1rem;
+}
+
+.notification-create__channel-card,
+.notification-create__audience-card,
+.notification-create__schedule-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--gom-border, #e5e7eb);
+  background: #fff;
+  border-radius: 0.95rem;
+  padding: 0.95rem;
+  cursor: pointer;
+}
+
+.notification-create__channel-card--selected,
+.notification-create__audience-card--selected,
+.notification-create__schedule-card--selected {
+  border-color: var(--gom-primary, #4f46e5);
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.12);
+}
+
+.notification-create__channel-card strong,
+.notification-create__audience-card strong,
+.notification-create__schedule-card strong {
+  display: block;
+  color: var(--gom-text, #111827);
+}
+
+.notification-create__channel-card p,
+.notification-create__audience-card p,
+.notification-create__schedule-card p,
+.notification-create__preview-card p,
+.notification-create__phone-card p,
+.notification-create__email-card p,
+.notification-create__whatsapp-card p {
+  margin: 0.25rem 0 0;
+  color: var(--gom-text-secondary, #4b5563);
+  line-height: 1.45;
+}
+
+.notification-create__rich-preview {
+  margin-top: 0.25rem;
+  color: var(--gom-text-secondary, #4b5563);
+  line-height: 1.45;
+  max-height: 14rem;
+  overflow: auto;
+  overflow-wrap: anywhere;
+}
+
+.notification-create__rich-preview :first-child {
+  margin-top: 0;
+}
+
+.notification-create__rich-preview :last-child {
+  margin-bottom: 0;
+}
+
+.notification-create__channel-icon {
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 0.6rem;
+  display: grid;
+  place-items: center;
+  color: var(--gom-primary, #4f46e5);
+  background: rgba(79, 70, 229, 0.08);
+  flex: 0 0 auto;
+}
+
+.notification-create__check {
+  margin-left: auto;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 50%;
+  border: 1px solid #cbd5e1;
+  color: transparent;
+  display: grid;
+  place-items: center;
+  font-size: 0.8rem;
+  flex: 0 0 auto;
+
+  &--on {
+    border-color: var(--gom-primary, #4f46e5);
+    background: var(--gom-primary, #4f46e5);
+    color: #fff;
+  }
+}
+
+.notification-create__channel-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin: 1rem 0;
+  flex-wrap: wrap;
+}
+
+.notification-create__channel-tab {
+  border: 0;
+  background: #eef2ff;
+  color: var(--gom-primary, #4f46e5);
+  padding: 0.55rem 0.9rem;
+  border-radius: 999px;
+  font-weight: 700;
+  cursor: pointer;
+
+  &--active {
+    background: var(--gom-primary, #4f46e5);
+    color: #fff;
+  }
+}
+
+.notification-create__content-block {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.notification-create__audience-card,
+.notification-create__schedule-card {
+  justify-content: space-between;
+  align-items: center;
+}
+
+.notification-create__audience-list,
+.notification-create__schedule-grid {
+  margin-top: 1rem;
+}
+
+.notification-create__audience-count {
+  color: var(--gom-text-muted, #6b7280);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.notification-create__schedule-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+  margin-top: 1rem;
+}
+
+.notification-create__time-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  color: #0a3b5a;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.notification-create__time-field input {
+  width: 100%;
+  height: 2.65rem;
+  border: 1px solid #cad7e2;
+  border-radius: 0.5rem;
+  padding: 0 0.75rem;
+  color: #0f172a;
+  background: #fff;
+}
+
+.notification-create__time-field input:focus {
+  outline: none;
+  border-color: #0a5d8b;
+  box-shadow: 0 0 0 3px rgba(10, 93, 139, 0.12);
+}
+
+.notification-create__review-box {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 0.9rem;
+  background: #fafafa;
+  border: 1px solid var(--gom-border, #e5e7eb);
+
+  span {
+    display: block;
+    color: var(--gom-text-muted, #6b7280);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: 0.2rem;
+  }
+
+  strong {
+    color: var(--gom-text, #111827);
+  }
+}
+
+.notification-create__preview-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 1rem;
+}
+
+.notification-create__preview-card,
+.notification-create__phone-card,
+.notification-create__email-card,
+.notification-create__whatsapp-card {
+  min-height: 11rem;
+  border: 1px solid var(--gom-border, #e5e7eb);
+  border-radius: 0.95rem;
+  padding: 1rem;
+  background: #fff;
+}
+
+.notification-create__preview-label,
+.notification-create__eyebrow,
+.notification-create__preview-side-label,
+.notification-create__phone-app {
+  margin: 0;
+  color: var(--gom-primary, #4f46e5);
+  font-weight: 700;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.notification-create__preview-side {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  position: sticky;
+  top: 1rem;
+}
+
+.notification-create__phone-card {
+  background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+}
+
+.notification-create__email-card {
+  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+}
+
+.notification-create__whatsapp-card {
+  background: linear-gradient(180deg, #f8fafc 0%, #f8f5ea 100%);
+}
+
+.notification-create__sending-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.notification-create__pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.8rem;
+
+  &--info {
+    background: #eff6ff;
+    color: #1d4ed8;
+  }
+}
+
+.notification-create__progress-card {
+  margin-top: 1rem;
+  border-radius: 0.95rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border: 1px solid var(--gom-border, #e5e7eb);
+}
+
+.notification-create__progress-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.notification-create__progress-track {
+  height: 0.7rem;
+  border-radius: 999px;
+  background: #e5e7eb;
+  overflow: hidden;
+}
+
+.notification-create__progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #7c3aed, #4f46e5);
+  transition: width 180ms ease;
+}
+
+.notification-create__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+
+.notification-create__footer-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.notification-create__dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.48);
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  z-index: 20;
+}
+
+.notification-create__dialog {
+  max-width: 28rem;
+  width: 100%;
+  padding: 1.4rem;
+}
+
+.notification-create__dialog-icon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.9rem;
+  display: grid;
+  place-items: center;
+  font-size: 1.2rem;
+  color: var(--gom-primary, #4f46e5);
+  background: rgba(79, 70, 229, 0.08);
+  margin-bottom: 0.8rem;
+
+  &--warn {
+    color: #991b1b;
+    background: #fee2e2;
+  }
+}
+
+.notification-create__dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.1rem;
+}
+
+@media (max-width: 1100px) {
+  .notification-create__grid,
+  .notification-create__preview-grid,
+  .notification-create__schedule-fields,
+  .notification-create__review-box,
+  .notification-create__channel-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .notification-create__preview-side {
+    position: static;
+  }
+}

@@ -1,8 +1,20 @@
 <section class="master-page">
   <header class="master-page__header">
-    <h2>{{ text.pageTitle | translate }}</h2>
-    <gom-lib-button type="button" variant="primary" (buttonClick)="onAddNew()" [gomDisableIfNoFeature]="'attribute.create'" [disabled]="loading() || !canCreate()">
-      <i class="ri-add-line" aria-hidden="true"></i> {{ text.addLabel | translate }}
+    <gom-page-heading [title]="text.pageTitle | translate" [iconClass]="headingIcon"></gom-page-heading>
+    <gom-lib-button
+      type="button"
+      variant="primary"
+      [size]="isMobileHeader() ? 'compact-icon' : 'default'"
+      (buttonClick)="onAddNew()"
+      [gomDisableIfNoFeature]="'attribute.create'"
+      [disabled]="loading() || !canCreate()"
+      [attr.aria-label]="text.addLabel | translate"
+      [buttonTitle]="text.addLabel | translate"
+    >
+      <i class="ri-add-line" aria-hidden="true"></i>
+      @if (!isMobileHeader()) {
+        {{ text.addLabel | translate }}
+      }
     </gom-lib-button>
   </header>
 

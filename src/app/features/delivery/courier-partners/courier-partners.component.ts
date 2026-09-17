@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, HostListener, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import {
@@ -15,6 +15,7 @@ import {
 } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { DisableIfNoFeatureDirective } from '../../../shared/directives/disable-if-no-feature.directive';
+import { PageHeadingComponent } from '../../../shared/components/page-heading/page-heading.component';
 import { CourierPartner, CourierPartnerPayload, CourierPartnerStatus, DeliveryService } from '../delivery.service';
 
 interface CourierPartnerRow extends GomTableRow {
@@ -41,6 +42,7 @@ interface CourierPartnerRow extends GomTableRow {
     GomTableComponent,
     GomModalComponent,
     GomConfirmationModalComponent,
+    PageHeadingComponent,
   ],
   templateUrl: './courier-partners.component.html',
   styleUrl: './courier-partners.component.scss',
@@ -53,6 +55,8 @@ export class CourierPartnersComponent implements OnInit {
   readonly loading = signal(false);
   private readonly authSession = inject(AuthSessionService);
   readonly canListPartners = computed(() => this.authSession.hasFeature('courierPartner.list'));
+  readonly viewportWidth = signal<number>(window.innerWidth);
+  readonly isMobileHeader = computed<boolean>(() => this.viewportWidth() <= 768);
   readonly canViewPartner = computed(() => this.authSession.hasFeature('courierPartner.view'));
   readonly canCreatePartner = computed(() => this.authSession.hasFeature('courierPartner.create'));
   readonly canUpdatePartner = computed(() => this.authSession.hasFeature('courierPartner.update'));
@@ -99,6 +103,11 @@ export class CourierPartnersComponent implements OnInit {
     serviceAreas: [''],
     notes: [''],
   });
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.viewportWidth.set(window.innerWidth);
+  }
 
   readonly columns: GomTableColumn<CourierPartnerRow>[] = [
     { key: 'name', header: 'Courier Partner', sortable: true, filterable: true, width: '13rem' },

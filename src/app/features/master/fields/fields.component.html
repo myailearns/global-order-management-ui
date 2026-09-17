@@ -11,16 +11,6 @@
     </div>
   }
 
-  @if (canCreateField()) {
-    <div class="quota-banner">
-      @if (fieldCreateLimit() !== null) {
-        <p>Field quota: {{ fieldCreateUsed() }} / {{ fieldCreateLimit() }} used ({{ fieldCreateRemaining() }} remaining)</p>
-      } @else {
-        <p>Field quota: {{ fieldCreateUsed() }} used (unlimited)</p>
-      }
-    </div>
-  }
-
   <gom-fields-list
     [fields]="fields()"
     [fieldGroupUsageByFieldId]="fieldGroupUsageByFieldId()"

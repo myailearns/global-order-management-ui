@@ -1,54 +1,54 @@
-<section class="settings-page">
-  <header class="settings-page__header">
-    <h2>Customer Storefront</h2>
-    <p>Configure your public-facing online store with clear sections for access, branding, catalog, and commerce.</p>
+<section class="settings-page storefront-page">
+  <header class="settings-page__header storefront-page__header">
+    <gom-page-heading [title]="pageTitle()" [navRoute]="pageNavRoute()"></gom-page-heading>
+    <p>{{ pageDescription() }}</p>
   </header>
 
   @if (errorMessage()) {
     <div class="settings-page__error">{{ errorMessage() }}</div>
   }
 
-  <form class="settings-card" [formGroup]="configForm" (ngSubmit)="save()">
+  <form class="settings-card storefront-page__form" [formGroup]="configForm" (ngSubmit)="save()">
+    @if (activeTab() === 'basic') {
+      <div class="storefront-stack">
+        <gom-lib-card class="storefront-card storefront-card--status">
+          <div class="storefront-card__header">
+            <div>
+              <h3 class="storefront-card__title">Storefront Status</h3>
+              <p class="storefront-card__description">Make your storefront live and visible to registered customers.</p>
+            </div>
+            <div class="storefront-status">
+              <span class="storefront-status__label">{{ configForm.controls.enabled.value ? 'Active' : 'Inactive' }}</span>
+              <gom-lib-switch
+                label="Enable customer storefront"
+                [checked]="configForm.controls.enabled.value !== false"
+                (checkedChange)="configForm.controls.enabled.setValue($event)"
+              ></gom-lib-switch>
+            </div>
+          </div>
+          <div class="storefront-alert" [class.storefront-alert--success]="configForm.controls.enabled.value" [class.storefront-alert--muted]="!configForm.controls.enabled.value">
+            <i class="ri-checkbox-circle-line" aria-hidden="true"></i>
+            <span>
+              @if (configForm.controls.enabled.value) {
+                Your storefront is live and accessible to customers.
+              } @else {
+                Your storefront is currently hidden from customers.
+              }
+            </span>
+          </div>
+        </gom-lib-card>
 
-    <div class="settings-card__intro">
-      <span class="chip">Tenant: {{ tenantCode() || 'loading...' }}</span>
-      <span class="chip chip--soft">Slug and colors are prefilled with defaults</span>
-    </div>
-
-    <gom-lib-tabs [tabs]="tabs()" [activeTab]="activeTab()" (tabChange)="switchTab($event)">
-      <gom-lib-tab-content tabId="basic" [activeTab]="activeTab()">
-        <fieldset class="settings-section">
-          <legend>Store Access</legend>
-          <div class="settings-grid">
-            <gom-lib-checkbox
-              label="Enable customer storefront"
-              [formControl]="configForm.controls.enabled"
-            ></gom-lib-checkbox>
-
+        <gom-lib-card class="storefront-card">
+          <h3 class="storefront-card__title">Store Identity</h3>
+          <div class="storefront-grid storefront-grid--identity">
             <gom-lib-input
-              label="Store Slug (URL identifier)"
-              placeholder="e.g. fresh-mart"
-              [formControl]="configForm.controls.storeSlug"
-              hint="Defaults to tenant code. Lowercase letters, numbers, and hyphens only."
-            ></gom-lib-input>
-
-            <gom-lib-input
-              label="Store Display Name (optional override)"
+              label="Store Display Name"
               placeholder="Defaults to tenant account name"
               [formControl]="configForm.controls.storeDisplayName"
-              hint="If empty, customer app will use your SaaS account/business name automatically."
             ></gom-lib-input>
 
-            <div class="logo-upload-section">
-              <div class="logo-upload-header">
-                <span class="field-label">Store Logo</span>
-                <span class="logo-dim-badge">
-                  <i class="ri-image-line" aria-hidden="true"></i>
-                  Ideal: 280 &times; 68 px &nbsp;&bull;&nbsp; 4:1 ratio &nbsp;&bull;&nbsp; PNG / SVG
-                </span>
-              </div>
-              <p class="logo-upload-hint">Your logo appears in the store header at 140&times;34 px. Upload a horizontal (wide) logo for best results. The image is automatically centre-cropped and resized.</p>
-
+            <div class="storefront-logo-field">
+              <span class="storefront-field-label">Store Logo</span>
               <input
                 #logoFileInput
                 type="file"
@@ -58,36 +58,28 @@
               />
 
               @if (!configForm.get('logoUrl')?.value) {
-                <div class="logo-empty-card">
-                  <i class="ri-image-add-line" aria-hidden="true"></i>
-                  <div>
-                    <p class="logo-empty-card__title">No logo uploaded yet</p>
-                    <p class="logo-empty-card__caption">Upload a logo to use across storefront pages.</p>
+                <div class="storefront-upload-card">
+                  <div class="storefront-upload-card__preview storefront-upload-card__preview--empty">
+                    <i class="ri-image-add-line" aria-hidden="true"></i>
                   </div>
-                  <gom-lib-button
-                    type="button"
-                    variant="secondary"
-                    gomDisableIfNoCapability="tenant-admin"
-                    [disabled]="uploadingLogo() || !canEdit()"
-                    (buttonClick)="logoFileInput.click()">
+                  <div class="storefront-upload-card__body">
+                    <p class="storefront-upload-card__title">No logo uploaded yet</p>
+                    <p class="storefront-upload-card__description">PNG, JPG, or SVG. Recommended: 280 × 68 px.</p>
+                  </div>
+                  <gom-lib-button type="button" variant="secondary" [disabled]="uploadingLogo() || !canEdit()" (buttonClick)="logoFileInput.click()">
                     Upload logo
                   </gom-lib-button>
                 </div>
               } @else {
-                <div class="logo-current-card">
-                  <div class="logo-current-card__thumb-wrap">
-                    <img [src]="configForm.get('logoUrl')?.value" alt="Current logo" class="logo-current-card__thumb" />
+                <div class="storefront-upload-card storefront-upload-card--has-preview">
+                  <div class="storefront-upload-card__preview">
+                    <img [src]="configForm.get('logoUrl')?.value" alt="Current logo" />
                   </div>
-                  <div class="logo-current-card__meta">
-                    <p class="logo-current-card__title">Current logo</p>
-                    <p class="logo-current-card__caption">Replace anytime. Recommended ratio: 4:1.</p>
+                  <div class="storefront-upload-card__body">
+                    <p class="storefront-upload-card__title">Current logo</p>
+                    <p class="storefront-upload-card__description">Replace anytime. Recommended ratio: 4:1.</p>
                   </div>
-                  <gom-lib-button
-                    type="button"
-                    variant="secondary"
-                    [gomDisableIfNoCapability]="'tenant-admin'"
-                    [disabled]="uploadingLogo() || !canEdit()"
-                    (buttonClick)="logoFileInput.click()">
+                  <gom-lib-button type="button" variant="secondary" [disabled]="uploadingLogo() || !canEdit()" (buttonClick)="logoFileInput.click()">
                     Replace logo
                   </gom-lib-button>
                 </div>
@@ -97,137 +89,162 @@
                 <span class="upload-status">Uploading &amp; optimising logo...</span>
               }
             </div>
+
+            <gom-lib-input
+              label="Store Slug"
+              placeholder="e.g. fresh-mart"
+              [formControl]="configForm.controls.storeSlug"
+              hint="Defaults to tenant code. Lowercase letters, numbers, and hyphens only."
+            ></gom-lib-input>
           </div>
-        </fieldset>
+        </gom-lib-card>
 
         @if (hasStorefrontShareAccess()) {
-          {{hasStorefrontShareAccess()}}
-          <fieldset class="settings-section">
-            <legend>{{ 'storefrontConfig.shareCenter.title' | translate }}</legend>
-            <p class="section-hint">{{ 'storefrontConfig.shareCenter.hint' | translate }}</p>
+          <gom-lib-card class="storefront-card">
+            <h3 class="storefront-card__title">Share Your Storefront</h3>
+            <p class="storefront-card__description">Use the public link and QR code to share the storefront with customers.</p>
 
-            <div class="share-center-card">
-              <div class="share-center-card__summary">
-                <div class="share-center-card__text">
-                  <span class="share-center-card__eyebrow">{{ 'storefrontConfig.shareCenter.eyebrow' | translate }}</span>
-                  <h3>{{ configForm.controls.storeDisplayName.value || tenantCode() || ('storefrontConfig.shareCenter.fallbackStoreName' | translate) }}</h3>
-                  <p>{{ storefrontShare()?.storefrontUrl }}</p>
-                </div>
-
-                <div class="share-center-card__actions">
-                  <gom-lib-button
-                    type="button"
-                    variant="secondary"
-                    [gomDisableIfNoFeature]="'storefront.share'"
-                    [disabled]="shareBusy() === 'copy'"
-                    (buttonClick)="copyStorefrontLink()">
-                    {{ (shareBusy() === 'copy' ? 'storefrontConfig.shareCenter.actions.copying' : 'storefrontConfig.shareCenter.actions.copy') | translate }}
-                  </gom-lib-button>
-
-                  <gom-lib-button
-                    type="button"
-                    variant="secondary"
-                    [gomDisableIfNoFeature]="'storefront.share'"
-                    [disabled]="shareBusy() === 'whatsapp'"
-                    (buttonClick)="shareOnWhatsApp()">
-                    {{ (shareBusy() === 'whatsapp' ? 'storefrontConfig.shareCenter.actions.opening' : 'storefrontConfig.shareCenter.actions.shareOnWhatsApp') | translate }}
-                  </gom-lib-button>
-
-                  <gom-lib-button
-                    type="button"
-                    variant="secondary"
-                    [gomDisableIfNoFeature]="'storefront.share'"
-                    [disabled]="shareBusy() === 'download'"
-                    (buttonClick)="downloadStorefrontQr()">
-                    {{ (shareBusy() === 'download' ? 'storefrontConfig.shareCenter.actions.preparing' : 'storefrontConfig.shareCenter.actions.downloadQr') | translate }}
-                  </gom-lib-button>
-                </div>
+            <div class="storefront-share-banner">
+              <div>
+                <span class="storefront-share-banner__eyebrow">Customer Storefront</span>
+                <h4>{{ configForm.controls.storeDisplayName.value || tenantCode() || ('storefrontConfig.shareCenter.fallbackStoreName' | translate) }}</h4>
+                <p>{{ storefrontShare()?.storefrontUrl }}</p>
               </div>
-
-              <div class="share-center-grid">
-                <div class="share-center-qr">
-                  <div class="share-center-qr__frame">
-                    <img [src]="storefrontShare()?.qrPngDataUrl" [alt]="'storefrontConfig.shareCenter.qrAlt' | translate" />
-                  </div>
-                  <p class="share-center-qr__caption">{{ 'storefrontConfig.shareCenter.qrCaption' | translate }}</p>
-                </div>
-
-                <div class="share-center-plan">
-                  <h4>{{ 'storefrontConfig.shareCenter.planSnapshot' | translate }}</h4>
-                  <dl class="share-center-plan__list">
-                    <div>
-                      <dt>{{ 'storefrontConfig.shareCenter.planLabels.plan' | translate }}</dt>
-                      <dd>{{ storefrontShare()?.planSummary?.planName }} ({{ storefrontShare()?.planSummary?.planId }})</dd>
-                    </div>
-                    <div>
-                      <dt>{{ 'storefrontConfig.shareCenter.planLabels.status' | translate }}</dt>
-                      <dd>{{ storefrontShare()?.planSummary?.subscriptionStatus }}</dd>
-                    </div>
-                    <div>
-                      <dt>{{ 'storefrontConfig.shareCenter.planLabels.planStart' | translate }}</dt>
-                      <dd>{{ formatPlanDate(storefrontShare()?.planSummary?.planStartAt) }}</dd>
-                    </div>
-                    <div>
-                      <dt>{{ 'storefrontConfig.shareCenter.planLabels.planExpiry' | translate }}</dt>
-                      <dd>{{ formatPlanDate(storefrontShare()?.planSummary?.planExpiresAt) }}</dd>
-                    </div>
-                    <div>
-                      <dt>{{ 'storefrontConfig.shareCenter.planLabels.trialEnd' | translate }}</dt>
-                      <dd>{{ formatPlanDate(storefrontShare()?.planSummary?.trialEndsAt) }}</dd>
-                    </div>
-                  </dl>
-                </div>
+              <div class="storefront-share-banner__actions">
+                <gom-lib-button type="button" variant="secondary" [disabled]="shareBusy() === 'copy'" (buttonClick)="copyStorefrontLink()">
+                  {{ shareBusy() === 'copy' ? 'Copying...' : 'Copy Link' }}
+                </gom-lib-button>
+                <gom-lib-button type="button" variant="secondary" [disabled]="shareBusy() === 'whatsapp'" (buttonClick)="shareOnWhatsApp()">
+                  {{ shareBusy() === 'whatsapp' ? 'Opening...' : 'Share on WhatsApp' }}
+                </gom-lib-button>
+                <gom-lib-button type="button" variant="secondary" [disabled]="shareBusy() === 'download'" (buttonClick)="downloadStorefrontQr()">
+                  {{ shareBusy() === 'download' ? 'Preparing...' : 'Download QR' }}
+                </gom-lib-button>
               </div>
             </div>
-          </fieldset>
-        }
 
-        <fieldset class="settings-section">
-          <legend>Branding Colors</legend>
-          <p class="section-hint">Defaults come from GOM theme tokens. Switch to custom only if this tenant needs a branded override.</p>
-          <div class="section-actions">
-            @if (!useCustomColors()) {
-              <gom-lib-button
-                type="button"
-                variant="secondary"
-                [gomDisableIfNoCapability]="'tenant-admin'"
-                [disabled]="!canEdit()"
-                (buttonClick)="enableCustomColors()">
-                Switch to custom colors
-              </gom-lib-button>
-            } @else {
-              <gom-lib-button
-                type="button"
-                variant="secondary"
-                [gomDisableIfNoCapability]="'tenant-admin'"
-                [disabled]="!canEdit()"
-                (buttonClick)="resetThemeDefaults()">
-                Use defaults
-              </gom-lib-button>
-            }
+            <div class="storefront-share-grid">
+              <div class="storefront-qr-card">
+                <div class="storefront-qr-card__frame">
+                  <img [src]="storefrontShare()?.qrPngDataUrl" [alt]="'storefrontConfig.shareCenter.qrAlt' | translate" />
+                </div>
+                <p>{{ 'storefrontConfig.shareCenter.qrCaption' | translate }}</p>
+              </div>
+
+              <div class="storefront-plan-card">
+                <h4>{{ 'storefrontConfig.shareCenter.planSnapshot' | translate }}</h4>
+                <dl>
+                  <div>
+                    <dt>{{ 'storefrontConfig.shareCenter.planLabels.plan' | translate }}</dt>
+                    <dd>{{ storefrontShare()?.planSummary?.planName }} ({{ storefrontShare()?.planSummary?.planId }})</dd>
+                  </div>
+                  <div>
+                    <dt>{{ 'storefrontConfig.shareCenter.planLabels.status' | translate }}</dt>
+                    <dd>{{ storefrontShare()?.planSummary?.subscriptionStatus }}</dd>
+                  </div>
+                  <div>
+                    <dt>{{ 'storefrontConfig.shareCenter.planLabels.planStart' | translate }}</dt>
+                    <dd>{{ formatPlanDate(storefrontShare()?.planSummary?.planStartAt) }}</dd>
+                  </div>
+                  <div>
+                    <dt>{{ 'storefrontConfig.shareCenter.planLabels.planExpiry' | translate }}</dt>
+                    <dd>{{ formatPlanDate(storefrontShare()?.planSummary?.planExpiresAt) }}</dd>
+                  </div>
+                  <div>
+                    <dt>{{ 'storefrontConfig.shareCenter.planLabels.trialEnd' | translate }}</dt>
+                    <dd>{{ formatPlanDate(storefrontShare()?.planSummary?.trialEndsAt) }}</dd>
+                  </div>
+                </dl>
+              </div>
+            </div>
+          </gom-lib-card>
+        }
+      </div>
+    }
+
+    @if (activeTab() === 'branding') {
+      <div class="storefront-stack">
+        <gom-lib-card class="storefront-card">
+          <h3 class="storefront-card__title">Brand Identity</h3>
+          <div class="storefront-grid storefront-grid--branding">
+            <div class="storefront-logo-field">
+              <span class="storefront-field-label">Store Logo</span>
+              <input
+                #logoFileInputBranding
+                type="file"
+                class="logo-file-input"
+                accept="image/jpeg,image/png,image/webp,image/svg+xml"
+                (change)="onLogoInputChange($event)"
+              />
+              @if (!configForm.get('logoUrl')?.value) {
+                <div class="storefront-upload-card storefront-upload-card--compact">
+                  <div class="storefront-upload-card__preview storefront-upload-card__preview--empty">
+                    <i class="ri-image-add-line" aria-hidden="true"></i>
+                  </div>
+                  <div class="storefront-upload-card__body">
+                    <p class="storefront-upload-card__title">No logo uploaded yet</p>
+                    <p class="storefront-upload-card__description">Upload a logo for the storefront header and login screens.</p>
+                  </div>
+                  <gom-lib-button type="button" variant="secondary" [disabled]="uploadingLogo() || !canEdit()" (buttonClick)="logoFileInputBranding.click()">
+                    Upload logo
+                  </gom-lib-button>
+                </div>
+              } @else {
+                <div class="storefront-upload-card storefront-upload-card--compact storefront-upload-card--has-preview">
+                  <div class="storefront-upload-card__preview">
+                    <img [src]="configForm.get('logoUrl')?.value" alt="Current logo" />
+                  </div>
+                  <div class="storefront-upload-card__body">
+                    <p class="storefront-upload-card__title">Current logo</p>
+                    <p class="storefront-upload-card__description">Replace anytime. Recommended ratio: 4:1.</p>
+                  </div>
+                  <gom-lib-button type="button" variant="secondary" [disabled]="uploadingLogo() || !canEdit()" (buttonClick)="logoFileInputBranding.click()">
+                    Replace logo
+                  </gom-lib-button>
+                </div>
+              }
+            </div>
+
+            <gom-lib-input
+              label="Brand Display Name"
+              placeholder="Defaults to tenant account name"
+              [formControl]="configForm.controls.storeDisplayName"
+            ></gom-lib-input>
           </div>
+        </gom-lib-card>
+
+        <gom-lib-card class="storefront-card">
+          <div class="storefront-card__header storefront-card__header--split">
+            <div>
+              <h3 class="storefront-card__title">Theme Colors</h3>
+              <p class="storefront-card__description">Defaults come from the GOM theme. Enable custom colors only when branding requires it.</p>
+            </div>
+            <div class="section-actions section-actions--start">
+              @if (!useCustomColors()) {
+                <gom-lib-button type="button" variant="secondary" [disabled]="!canEdit()" (buttonClick)="enableCustomColors()">
+                  Switch to custom colors
+                </gom-lib-button>
+              } @else {
+                <gom-lib-button type="button" variant="secondary" [disabled]="!canEdit()" (buttonClick)="resetThemeDefaults()">
+                  Use defaults
+                </gom-lib-button>
+              }
+            </div>
+          </div>
+
           @if (!useCustomColors()) {
             <div class="default-theme-card">
               <div class="default-theme-row">
                 <span class="default-theme-label">Primary</span>
-                <span class="default-theme-value">
-                  <span class="default-dot" [style.background]="'#0a5d8b'"></span>
-                  #0a5d8b
-                </span>
+                <span class="default-theme-value"><span class="default-dot" [style.background]="'#0a5d8b'"></span>#0a5d8b</span>
               </div>
               <div class="default-theme-row">
                 <span class="default-theme-label">Secondary</span>
-                <span class="default-theme-value">
-                  <span class="default-dot" [style.background]="'#fa5c00'"></span>
-                  #fa5c00
-                </span>
+                <span class="default-theme-value"><span class="default-dot" [style.background]="'#fa5c00'"></span>#fa5c00</span>
               </div>
               <div class="default-theme-row">
-                <span class="default-theme-label">Accent (Tertiary)</span>
-                <span class="default-theme-value">
-                  <span class="default-dot" [style.background]="'#fbd03b'"></span>
-                  #fbd03b
-                </span>
+                <span class="default-theme-label">Accent</span>
+                <span class="default-theme-value"><span class="default-dot" [style.background]="'#fbd03b'"></span>#fbd03b</span>
               </div>
             </div>
           } @else {
@@ -249,7 +266,7 @@
               </div>
 
               <div class="color-field">
-                <label for="accentColor">Accent (Tertiary) Color</label>
+                <label for="accentColor">Accent Color</label>
                 <div class="color-input-row">
                   <input id="accentColor" type="color" formControlName="accentColor" class="color-picker" />
                   <gom-lib-input [formControl]="configForm.controls.accentColor" placeholder="#fbd03b"></gom-lib-input>
@@ -257,12 +274,10 @@
               </div>
             </div>
           }
-        </fieldset>
-      </gom-lib-tab-content>
+        </gom-lib-card>
 
-      <gom-lib-tab-content tabId="branding" [activeTab]="activeTab()">
-        <fieldset class="settings-section">
-          <legend>Store Content</legend>
+        <gom-lib-card class="storefront-card">
+          <h3 class="storefront-card__title">Welcome & Footer Messages</h3>
           <div class="settings-grid">
             <gom-lib-input
               label="Welcome Message"
@@ -276,71 +291,24 @@
               [formControl]="configForm.controls.footerText"
             ></gom-lib-input>
           </div>
-        </fieldset>
+        </gom-lib-card>
 
-        <fieldset class="settings-section">
-          <legend>Social Links</legend>
+        <gom-lib-card class="storefront-card">
+          <h3 class="storefront-card__title">Social Links</h3>
           <div class="settings-grid settings-grid--3col">
-            <gom-lib-input
-              label="WhatsApp"
-              placeholder="+919876543210"
-              [formControl]="configForm.controls.whatsappSocial"
-            ></gom-lib-input>
-            <gom-lib-input
-              label="Instagram"
-              placeholder="https://instagram.com/store"
-              [formControl]="configForm.controls.instagramSocial"
-            ></gom-lib-input>
-            <gom-lib-input
-              label="Facebook"
-              placeholder="https://facebook.com/store"
-              [formControl]="configForm.controls.facebookSocial"
-            ></gom-lib-input>
+            <gom-lib-input label="WhatsApp" placeholder="+919876543210" [formControl]="configForm.controls.whatsappSocial"></gom-lib-input>
+            <gom-lib-input label="Instagram" placeholder="https://instagram.com/store" [formControl]="configForm.controls.instagramSocial"></gom-lib-input>
+            <gom-lib-input label="Facebook" placeholder="https://facebook.com/store" [formControl]="configForm.controls.facebookSocial"></gom-lib-input>
           </div>
-        </fieldset>
-      </gom-lib-tab-content>
+        </gom-lib-card>
+      </div>
+    }
 
-      <gom-lib-tab-content tabId="catalog" [activeTab]="activeTab()">
-        <fieldset class="settings-section">
-          <legend>Product Layout</legend>
-          <div class="settings-grid">
-            <gom-lib-select
-              label="Product listing layout"
-              [options]="layoutOptions"
-              [formControl]="configForm.controls.layoutMode"
-            ></gom-lib-select>
-
-            <gom-lib-checkbox
-              label="Show Packs & Combos section"
-              [formControl]="configForm.controls.showPacks"
-            ></gom-lib-checkbox>
-
-            <gom-lib-input
-              label="Buy X Get Y cards per row"
-              type="number"
-              [formControl]="configForm.controls.b1g1HomeCardsPerRow"
-              hint="Controls how many BXGY cards are visible in one row (1 to 8). Default is 3."
-            ></gom-lib-input>
-
-            <gom-lib-input
-              label="Initial categories to load"
-              type="number"
-              [formControl]="configForm.controls.catalogInitialCategoryCount"
-              hint="Number of category sections loaded on first open of All view (1 to 10). Default is 3."
-            ></gom-lib-input>
-
-            <gom-lib-input
-              label="Groups per category page"
-              type="number"
-              [formControl]="configForm.controls.catalogGroupsPerCategoryPage"
-              hint="How many product groups load per category per page, including each Load More tap (2 to 50). Default is 10."
-            ></gom-lib-input>
-          </div>
-        </fieldset>
-
-        <fieldset class="settings-section">
-          <legend>Banner Images</legend>
-          <p class="section-hint">Add banner images for the home page carousel. Upload images or paste a URL.</p>
+    @if (activeTab() === 'catalog') {
+      <div class="storefront-stack">
+        <gom-lib-card class="storefront-card">
+          <h3 class="storefront-card__title">Promotional Banners</h3>
+          <p class="storefront-card__description">Add banner images for the home page carousel. Upload images or paste a URL.</p>
           <div class="banner-specs-card">
             <p class="banner-specs-card__title">Recommended mobile banner spec</p>
             <ul class="banner-specs-list">
@@ -355,8 +323,10 @@
           @for (banner of banners.controls; track $index; let i = $index) {
             <div class="banner-row" [formGroup]="$any(banner)">
               <div class="banner-image-col">
+                <label class="banner-upload-label" [attr.for]="'banner-file-' + i">Banner image</label>
                 <input
                   #bannerFileInput
+                  [attr.id]="'banner-file-' + i"
                   type="file"
                   class="logo-file-input"
                   accept="image/jpeg,image/png,image/webp"
@@ -378,13 +348,7 @@
                       <p class="banner-current-card__title">Current banner</p>
                       <p class="banner-current-card__caption">Recommended 5:2 ratio for the cleanest mobile look.</p>
                     </div>
-                    <gom-lib-button
-                      type="button"
-                      variant="secondary"
-                      [gomDisableIfNoCapability]="'tenant-admin'"
-                      [disabled]="uploadingBanner() === i || !canEdit()"
-                      (buttonClick)="bannerFileInput.click()"
-                    >
+                    <gom-lib-button type="button" variant="secondary" [disabled]="uploadingBanner() === i || !canEdit()" (buttonClick)="bannerFileInput.click()">
                       Replace image
                     </gom-lib-button>
                   </div>
@@ -395,13 +359,7 @@
                       <p class="banner-empty-card__title">No banner image uploaded</p>
                       <p class="banner-empty-card__caption">Upload a banner and we will apply size recommendations automatically.</p>
                     </div>
-                    <gom-lib-button
-                      type="button"
-                      variant="secondary"
-                      [gomDisableIfNoCapability]="'tenant-admin'"
-                      [disabled]="uploadingBanner() === i || !canEdit()"
-                      (buttonClick)="bannerFileInput.click()"
-                    >
+                    <gom-lib-button type="button" variant="secondary" [disabled]="uploadingBanner() === i || !canEdit()" (buttonClick)="bannerFileInput.click()">
                       Upload image
                     </gom-lib-button>
                   </div>
@@ -415,16 +373,11 @@
                 }
               </div>
               <div class="banner-text-col">
-                <gom-lib-input
-                  label="Overlay Text"
-                  placeholder="Optional text on banner"
-                  formControlName="text"
-                ></gom-lib-input>
+                <gom-lib-input label="Overlay Text" placeholder="Optional text on banner" formControlName="text"></gom-lib-input>
               </div>
               <button
                 type="button"
                 class="btn-icon-danger"
-                [gomDisableIfNoCapability]="'tenant-admin'"
                 [disabled]="!canEdit()"
                 (click)="removeBanner(i)"
                 title="Remove banner">
@@ -433,85 +386,126 @@
             </div>
           }
 
-          <gom-lib-button
-            type="button"
-            variant="secondary"
-            [gomDisableIfNoCapability]="'tenant-admin'"
-            [disabled]="!canEdit()"
-            (buttonClick)="addBanner()">
+          <gom-lib-button type="button" variant="secondary" [disabled]="!canEdit()" (buttonClick)="addBanner()">
             + Add Banner
           </gom-lib-button>
-        </fieldset>
-      </gom-lib-tab-content>
+        </gom-lib-card>
 
-      <gom-lib-tab-content tabId="payments" [activeTab]="activeTab()">
-        <div class="commerce-section">
-          <div class="commerce-section__header">
-            <h3 class="commerce-section__title">Payment Methods</h3>
-            <p class="commerce-section__desc">Select which payment options are available to your customers at checkout.</p>
-          </div>
-          <gom-lib-card class="commerce-section__card">
-            @if (selectedFulfillmentMode() === 'PICKUP') {
-              <p class="section-hint">For pickup-only mode, COD is shown to customers as Pay at Pickup.</p>
-            }
-            <div class="payment-options-grid">
-              @for (pm of paymentOptions; track pm.value) {
-                <gom-lib-checkbox
-                  [label]="getPaymentOptionLabel(pm.value)"
-                  [formControl]="$any(configForm.get('payment' + pm.value))"
-                ></gom-lib-checkbox>
-              }
-            </div>
-          </gom-lib-card>
-        </div>
-
-      </gom-lib-tab-content>
-
-      <gom-lib-tab-content tabId="productSet" [activeTab]="activeTab()">
-        <fieldset class="settings-section">
-          <legend>Product Set Settings</legend>
-          <p class="section-hint">Enable or disable Products tab in customer mobile navigation.</p>
-          <p class="section-hint">Changes are saved now and apply on next customer refresh/load.</p>
-
-          <div class="settings-grid settings-grid--2col">
+        <gom-lib-card class="storefront-card">
+          <h3 class="storefront-card__title">Homepage Sections Grid</h3>
+          <div class="settings-grid settings-grid--3col">
             <gom-lib-switch
-              label="Enable Products tab"
-              [checked]="configForm.controls.productsTabEnabled.value !== false"
-              (checkedChange)="configForm.controls.productsTabEnabled.setValue($event)">
-            </gom-lib-switch>
+              label="Show Packs & Combos section"
+              [checked]="configForm.controls.showPacks.value !== false"
+              (checkedChange)="configForm.controls.showPacks.setValue($event)"
+            ></gom-lib-switch>
+
+            <gom-lib-input
+              label="Buy X Get Y cards per row"
+              type="number"
+              [formControl]="configForm.controls.b1g1HomeCardsPerRow"
+              hint="Controls how many BXGY cards are visible in one row (1 to 8). Default is 3."
+            ></gom-lib-input>
           </div>
-        </fieldset>
+        </gom-lib-card>
+      </div>
+    }
 
-        @if (configForm.controls.productsTabEnabled.value) {
-          <fieldset class="settings-section">
-            <legend>Products Layout</legend>
+    @if (activeTab() === 'productSet') {
+      <div class="storefront-stack">
+        <gom-lib-card class="storefront-card">
+          <h3 class="storefront-card__title">Product Display</h3>
+          <div class="settings-grid storefront-grid--catalog-head">
+            <gom-lib-switch
+              label="Enable Products"
+              [checked]="configForm.controls.productsTabEnabled.value !== false"
+              (checkedChange)="configForm.controls.productsTabEnabled.setValue($event)"
+            ></gom-lib-switch>
 
-            @if (hasProductSetSettingsAccess()) {
-              <p class="section-hint">Collection-enabled plan: both Layout 1 and Layout 2 are available.</p>
-            } @else {
-              <p class="section-hint">Current plan supports only default category-based layout.</p>
+            <gom-lib-select
+              label="Product Listing Layout"
+              [options]="layoutOptions"
+              [formControl]="configForm.controls.layoutMode"
+            ></gom-lib-select>
+          </div>
+        </gom-lib-card>
+
+        <gom-lib-card class="storefront-card">
+          <h3 class="storefront-card__title">Category Browsing</h3>
+          <div class="settings-grid settings-grid--2col">
+            <gom-lib-input
+              label="Initial categories to load"
+              type="number"
+              [formControl]="configForm.controls.catalogInitialCategoryCount"
+              hint="Number of category sections loaded on first open of All view (1 to 10). Default is 3."
+            ></gom-lib-input>
+
+            <gom-lib-input
+              label="Groups per category page"
+              type="number"
+              [formControl]="configForm.controls.catalogGroupsPerCategoryPage"
+              hint="How many product groups load per category per page, including each Load More tap (2 to 50). Default is 10."
+            ></gom-lib-input>
+          </div>
+        </gom-lib-card>
+
+        <gom-lib-card class="storefront-card">
+          <h3 class="storefront-card__title">Browsing Behavior</h3>
+          <div class="settings-grid settings-grid--2col">
+            <gom-lib-select
+              label="Products tab layout"
+              [options]="productsTabLayoutOptionsForTenant()"
+              [formControl]="$any(configForm.controls.productsTabLayout)"
+            ></gom-lib-select>
+          </div>
+          <p class="section-hint">Collection-enabled plan: both Layout 1 and Layout 2 are available when the feature is enabled.</p>
+        </gom-lib-card>
+      </div>
+    }
+
+    @if (activeTab() === 'payments') {
+      <div class="storefront-stack">
+        <gom-lib-card class="storefront-card">
+          <h3 class="storefront-card__title">Payment Methods</h3>
+          <p class="storefront-card__description">Select which payment options are available to your customers at checkout.</p>
+          <div class="payment-options-grid">
+            @for (pm of paymentOptions; track pm.value) {
+              <gom-lib-checkbox
+                [label]="getPaymentOptionLabel(pm.value)"
+                [formControl]="$any(configForm.get('payment' + pm.value))"
+              ></gom-lib-checkbox>
             }
+          </div>
+        </gom-lib-card>
 
-            <div class="settings-grid settings-grid--2col">
-              <gom-lib-select
-                label="Products tab layout"
-                [options]="productsTabLayoutOptionsForTenant()"
-                [formControl]="$any(configForm.controls.productsTabLayout)"
-              ></gom-lib-select>
-            </div>
-          </fieldset>
-        }
-      </gom-lib-tab-content>
-    </gom-lib-tabs>
+        <gom-lib-card class="storefront-card">
+          <h3 class="storefront-card__title">Checkout Settings</h3>
+          <div class="settings-grid settings-grid--2col">
+            <gom-lib-select
+              label="Fulfillment Mode"
+              [options]="fulfillmentModeOptions"
+              [formControl]="configForm.controls.fulfillmentMode"
+            ></gom-lib-select>
+          </div>
+          <p class="section-hint">For pickup-only mode, COD is shown to customers as Pay at Pickup.</p>
+        </gom-lib-card>
+      </div>
+    }
 
-    <!-- ─── Actions ──────────────────────────────── -->
     <div class="settings-page__actions">
+      <gom-lib-button
+        type="button"
+        variant="secondary"
+        [disabled]="loading() || saving() || !canEdit()"
+        (buttonClick)="discardChanges()">
+        Discard Changes
+      </gom-lib-button>
+
       <gom-lib-button
         type="submit"
         variant="primary"
-        [gomDisableIfNoCapability]="'tenant-admin'"
         [disabled]="loading() || saving() || !canEdit()">
-        {{ saving() ? 'Saving...' : 'Save Storefront Settings' }}
+        {{ saving() ? 'Saving...' : 'Save Changes' }}
       </gom-lib-button>
     </div>
 
@@ -529,6 +523,5 @@
         </div>
       </footer>
     </gom-lib-modal>
-
   </form>
 </section>

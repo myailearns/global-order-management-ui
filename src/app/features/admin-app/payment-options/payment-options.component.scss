@@ -11,7 +11,6 @@
   min-width: 0;
   min-height: 100%;
   box-sizing: border-box;
-  padding: theme.get-spacing(lg);
 
   &__header {
     display: flex; justify-content: space-between; align-items: flex-start; gap: theme.get-gap(md); margin-bottom: theme.get-spacing(lg);
@@ -53,8 +52,24 @@
 @include theme.breakpoint-down(sm) {
   .payment-options {
     padding: theme.get-spacing(md);
-    &__header, &__section-heading { align-items: stretch; flex-direction: column; }
-    &__actions { justify-content: flex-end; }
+    &__header {
+      align-items: center;
+      flex-direction: row;
+      flex-wrap: nowrap;
+    }
+    &__header > div:first-child {
+      min-width: 0;
+      flex: 1 1 auto;
+    }
+    &__section-heading { align-items: stretch; flex-direction: column; }
+    &__actions {
+      justify-content: flex-end;
+      flex-wrap: nowrap;
+    }
+    &__actions > gom-lib-button {
+      flex: 0 0 auto;
+      padding-inline: 0.5rem;
+    }
     &__panel { padding: theme.get-spacing(md); }
     &__account { align-items: flex-start; flex-wrap: wrap; }
     &__row-actions { margin-left: auto; }

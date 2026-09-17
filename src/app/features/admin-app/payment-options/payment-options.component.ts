@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, HostListener, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -12,6 +12,7 @@ import {
   GomSwitchComponent,
 } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
+import { PageHeadingComponent } from '../../../shared/components/page-heading/page-heading.component';
 import { MediaAssetService } from '../../saas-platform/media/media-asset.service';
 import {
   BankAccount,
@@ -42,6 +43,7 @@ const EMPTY_CONFIG: PaymentOptionsUpdate = {
     GomButtonComponent,
     GomInputComponent,
     GomModalComponent,
+    PageHeadingComponent,
     GomSwitchComponent,
   ],
   templateUrl: './payment-options.component.html',
@@ -59,6 +61,8 @@ export class PaymentOptionsComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
 
   readonly loading = signal(true);
+  readonly viewportWidth = signal<number>(window.innerWidth);
+  readonly isMobileHeader = computed<boolean>(() => this.viewportWidth() <= 768);
   readonly saving = signal(false);
   readonly uploadingQr = signal(false);
   readonly errorMessage = signal<string | null>(null);
@@ -93,6 +97,11 @@ export class PaymentOptionsComponent implements OnInit {
 
   ngOnInit(): void {
     this.load();
+  }
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.viewportWidth.set(window.innerWidth);
   }
 
   load(): void {

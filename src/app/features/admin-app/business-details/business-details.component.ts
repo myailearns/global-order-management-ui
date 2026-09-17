@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, HostListener, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -13,6 +13,7 @@ import {
   GomTextareaComponent,
 } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
+import { PageHeadingComponent } from '../../../shared/components/page-heading/page-heading.component';
 import { MediaAssetService } from '../../saas-platform/media/media-asset.service';
 import { BusinessProfile, BusinessProfileUpdate } from './business-details.models';
 import { BusinessDetailsService } from './business-details.service';
@@ -28,6 +29,7 @@ import { BusinessDetailsService } from './business-details.service';
     GomInputComponent,
     GomSelectComponent,
     GomTextareaComponent,
+    PageHeadingComponent,
   ],
   templateUrl: './business-details.component.html',
   styleUrl: './business-details.component.scss',
@@ -45,6 +47,8 @@ export class BusinessDetailsComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
 
   readonly loading = signal(true);
+  readonly viewportWidth = signal<number>(window.innerWidth);
+  readonly isMobileHeader = computed<boolean>(() => this.viewportWidth() <= 768);
   readonly saving = signal(false);
   readonly uploadingLogo = signal(false);
   readonly editing = signal(false);
@@ -108,6 +112,11 @@ export class BusinessDetailsComponent implements OnInit {
   ngOnInit(): void {
     this.setupTaxValidation();
     this.load();
+  }
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.viewportWidth.set(window.innerWidth);
   }
 
   load(): void {

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, EventEmitter, Output, computed, effect, inject, OnInit, signal } from '@angular/core';
+import { Component, DestroyRef, EventEmitter, HostListener, Injector, Output, computed, effect, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -96,6 +96,10 @@ export class QuickCreateGroupComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
   private readonly authSession = inject(AuthSessionService);
+  private readonly injector = inject(Injector);
+
+  readonly viewportWidth = signal<number>(window.innerWidth);
+  readonly isMobileHeader = computed<boolean>(() => this.viewportWidth() <= 1200);
 
   readonly canCreateGroup = computed(() => this.authSession.hasFeature('group.create'));
   readonly submitting = signal(false);
@@ -289,6 +293,11 @@ export class QuickCreateGroupComponent implements OnInit {
     this.setupCloneVariantOptions();
   }
 
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.viewportWidth.set(window.innerWidth);
+  }
+
   private setupCloneVariantOptions(): void {
     this.copySourceVariantsControl.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -383,7 +392,7 @@ export class QuickCreateGroupComponent implements OnInit {
       }
 
       this.syncAttributeValueControls(next);
-    }, { allowSignalWrites: true });
+    }, { allowSignalWrites: true, injector: this.injector });
   }
 
   private syncAttributeValueControls(nextValues: Record<string, string[]>): void {

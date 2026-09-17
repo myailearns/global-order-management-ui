@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, ElementRef, inject, OnInit, signal, viewChild } from '@angular/core';
+import { Component, HostListener, computed, ElementRef, inject, OnInit, signal, viewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
@@ -10,6 +10,7 @@ import {
   GomInputComponent,
   GomModalComponent,
 } from '@gomlibs/ui';
+import { PageHeadingComponent } from '../page-heading/page-heading.component';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { MediaAssetService } from '../../../features/saas-platform/media/media-asset.service';
 import { MediaAsset, MediaType, MediaUsageDetail, StorageSummary } from '../../../features/saas-platform/media/media-asset.model';
@@ -35,6 +36,7 @@ export interface QueueItem {
     GomInputComponent,
     GomModalComponent,
     GomConfirmationModalComponent,
+    PageHeadingComponent,
   ],
   templateUrl: './media-library.component.html',
   styleUrl: './media-library.component.scss',
@@ -68,6 +70,8 @@ export class MediaLibraryComponent implements OnInit {
   readonly uploadQueue = signal<QueueItem[]>([]);
   readonly uploadProgress = signal<{ current: number; total: number } | null>(null);
   readonly dragging = signal(false);
+  readonly viewportWidth = signal<number>(window.innerWidth);
+  readonly isMobileHeader = computed<boolean>(() => this.viewportWidth() <= 768);
   private nextQueueId = 1;
 
   readonly pendingCount = computed(() => this.uploadQueue().filter((q) => q.status === 'pending').length);
@@ -100,6 +104,11 @@ export class MediaLibraryComponent implements OnInit {
     if (pct >= 75) return 'warning';
     return 'normal';
   });
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.viewportWidth.set(window.innerWidth);
+  }
 
   private readonly IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
   private readonly VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime'];

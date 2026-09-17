@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, HostListener, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, FormControl, FormRecord, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { concatMap, forkJoin, from, Observable, switchMap, toArray } from 'rxjs';
@@ -20,6 +20,8 @@ import {
   getButtonContentMode,
   showButtonIcon,
   showButtonText,
+  MenuComponent,
+  MenuList,
 } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { PriceApprovalModalComponent } from '../pricing-approval/price-approval-modal.component';
@@ -35,6 +37,7 @@ import {
 } from './stock.service';
 import { LocalDateTimePipe } from '../../../shared/pipes/local-date-time.pipe';
 import { DisableIfNoFeatureDirective } from '../../../shared/directives/disable-if-no-feature.directive';
+import { PageHeadingComponent } from '../../../shared/components/page-heading/page-heading.component';
 
 interface StockHistoryRow extends GomTableRow {
   _id: string;
@@ -47,6 +50,14 @@ interface StockHistoryRow extends GomTableRow {
   createdAt: string;
   rawEntry: StockHistoryEntry;
   actions: string;
+}
+
+interface VariantBreakdownRow extends GomTableRow {
+  variantName: string;
+  unit: string;
+  onHand: number;
+  reserved: number;
+  available: number;
 }
 
 type PricingRecordForm = FormRecord<FormControl<number | null>>;
@@ -65,6 +76,8 @@ type PricingRecordForm = FormRecord<FormControl<number | null>>;
     GomModalComponent,
     GomConfirmationModalComponent,
     PriceApprovalModalComponent,
+    MenuComponent,
+    PageHeadingComponent,
   ],
   templateUrl: './stock.component.html',
   styleUrl: './stock.component.scss',
@@ -93,6 +106,7 @@ export class StockComponent implements OnInit {
   });
   readonly saving = signal(false);
   readonly errorMessage = signal<string | null>(null);
+  readonly viewportWidth = signal<number>(window.innerWidth);
 
   readonly groups = signal<Group[]>([]);
   readonly units = signal<Unit[]>([]);
@@ -135,6 +149,7 @@ export class StockComponent implements OnInit {
   readonly isHybridGroup = computed<boolean>(() => this.selectedGroupType() === 'HYBRID');
   readonly showsVariantBreakdown = computed<boolean>(() => this.selectedGroupType() !== 'MEASURED');
   readonly selectedGroupName = computed<string>(() => this.groups().find((g) => g._id === this.selectedGroupId())?.name || '');
+  readonly isMobileHeader = computed<boolean>(() => this.viewportWidth() <= 768);
 
   readonly selectedGroupPricingMode = computed<'FIXED' | 'MANUAL_REFRESH' | 'AUTO_REFRESH' | undefined>(() => {
     const selectedGroup = this.groups().find((g) => g._id === this.selectedGroupId());
@@ -190,6 +205,21 @@ export class StockComponent implements OnInit {
   readonly selectedStockDetailsEntry = signal<StockHistoryEntry | null>(null);
   readonly submitMode: GomButtonContentMode = getButtonContentMode('primary-action');
   readonly cancelMode: GomButtonContentMode = getButtonContentMode('dismiss');
+  readonly headerMenuList: MenuList = {
+    mainMenu: [
+      {
+        title: 'Save Alert Threshold',
+        icon: 'ri-alarm-warning-line',
+        clickEvent: () => this.saveReorderLevel(),
+      },
+      {
+        title: 'Stock Correction',
+        icon: 'ri-tools-line',
+        clickEvent: () => this.openCorrection(),
+      },
+    ],
+    portalMenu: [],
+  };
   private requestedGroupId = '';
   private shouldAutoOpenAddStock = false;
 
@@ -284,6 +314,48 @@ export class StockComponent implements OnInit {
     },
   ];
 
+  readonly variantBreakdownRows = computed<GomTableRow[]>(() =>
+    this.variantStockInfo().map((item) => ({
+      variantName: item.variantName,
+      unit: item.unit?.symbol || '–',
+      onHand: Number(item.onHand || 0),
+      reserved: Number(item.reserved || 0),
+      available: Number(item.available || 0),
+    }))
+  );
+
+  readonly variantBreakdownColumns: GomTableColumn<GomTableRow>[] = [
+    { key: 'variantName', header: 'Variant', width: '18rem', sortable: true },
+    {
+      key: 'unit',
+      header: 'Unit',
+      width: '8rem',
+      cellAlign: 'center',
+    },
+    {
+      key: 'onHand',
+      header: 'On Hand',
+      width: '10rem',
+      cellAlign: 'right',
+      format: (value) => String(Number(value || 0)),
+    },
+    {
+      key: 'reserved',
+      header: 'Reserved',
+      width: '10rem',
+      cellAlign: 'right',
+      format: (value) => String(Number(value || 0)),
+    },
+    {
+      key: 'available',
+      header: 'Available',
+      width: '10rem',
+      cellAlign: 'right',
+      format: (value) => String(Number(value || 0)),
+      cellClass: (_, row) => Number((row as Record<string, unknown>)['available'] || 0) > 0 ? 'stock-breakdown__available--positive' : 'stock-breakdown__available--negative',
+    },
+  ];
+
   readonly groupOptions = computed<GomSelectOption[]>(() =>
     this.groups().map((item) => ({
       value: item._id,
@@ -334,7 +406,17 @@ export class StockComponent implements OnInit {
   ngOnInit(): void {
     this.requestedGroupId = this.route.snapshot.queryParamMap.get('groupId') || '';
     this.shouldAutoOpenAddStock = this.route.snapshot.queryParamMap.get('openAdd') === '1';
+    this.syncViewportWidth();
     this.loadInitialData();
+  }
+
+  private syncViewportWidth(): void {
+    this.viewportWidth.set(window.innerWidth);
+  }
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.syncViewportWidth();
   }
 
   loadInitialData(): void {

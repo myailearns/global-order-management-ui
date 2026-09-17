@@ -1,87 +1,65 @@
 <div class="gom-users-list">
   <div class="gom-users-list__header">
     <div class="gom-users-list__title-wrap">
-      <h1>{{ translationKeys.TITLE_USERS | translate }}</h1>
+      <gom-page-heading navRoute="/saas-admin/users"></gom-page-heading>
       <p class="gom-users-list__subtitle">{{ 'saas.admin.users.subtitle' | translate }}</p>
     </div>
     <gom-lib-button
       variant="primary"
+      [size]="isMobileHeader() ? 'compact-icon' : 'default'"
       (buttonClick)="onInviteUser()"
       [gomDisableIfNoCapability]="'tenant-admin'"
       [disabled]="loading() || !canCreate()"
-      aria-label="Invite new user">
-      {{ translationKeys.BTN_INVITE_USER | translate }}
+      [attr.aria-label]="translationKeys.BTN_INVITE_USER | translate"
+      [buttonTitle]="translationKeys.BTN_INVITE_USER | translate">
+      <i class="ri-user-add-line" aria-hidden="true"></i>
+      @if (!isMobileHeader()) {
+        {{ translationKeys.BTN_INVITE_USER | translate }}
+      }
     </gom-lib-button>
   </div>
 
-  <!-- Search and Filters -->
-  <div class="gom-users-list__filters">
-    <div class="gom-users-list__status-filter">
-      <span class="gom-users-list__filter-label">{{ 'common.labels.status' | translate }}</span>
-      <select
-        [ngModel]="selectedStatusFilter()"
-        (ngModelChange)="onStatusFilterChange($event)"
-        class="gom-users-list__status-select"
-        aria-label="Filter by status">
-        <option [ngValue]="null">{{ 'saas.admin.users.opt_all_statuses' | translate }}</option>
-        <option [ngValue]="'ACTIVE'">{{ 'saas.admin.users.opt_active' | translate }}</option>
-        <option [ngValue]="'INACTIVE'">{{ 'saas.admin.users.opt_inactive' | translate }}</option>
-      </select>
-    </div>
-  </div>
-
-  <div class="gom-users-list__meta">
-    {{ 'saas.admin.users.msg_showing' | translate:{ count: filteredUsers().length, total: total() } }}
-  </div>
-
-  <!-- Error State -->
   @if (errorMessage(); as error) {
     <div class="gom-alert gom-alert--error" role="alert">
       {{ error }}
     </div>
   }
 
-  <!-- Loading State -->
   @if (loading()) {
     <div class="gom-users-list__loading" aria-live="polite">{{ 'saas.admin.users.msg_loading' | translate }}</div>
   }
 
-  <!-- Users Table -->
   <div class="gom-users-list__table-wrap">
     <gom-lib-table
       [columns]="columns()"
-      [rows]="filteredUsers()"
-      [totalItems]="total()"
+      [rows]="tableRows()"
       [loading]="loading()"
+      [showPagination]="false"
+      [pageSize]="tablePageSize()"
+      [advancedFilterDefinitions]="filterDefinitions"
+      [searchPlaceholder]="translationKeys.PH_SEARCH_USERS | translate"
       [emptyMessage]="'common.msg_no_results' | translate"
       (rowAction)="onTableAction($event)"
-      aria-label="Tenant users list">
+      aria-label="Access users list">
     </gom-lib-table>
   </div>
-
-  <!-- Pagination -->
-  @if (!loading() && total() > 0) {
-    <div class="gom-users-list__pagination">
-      <button
-        [disabled]="page() === 1"
-        (click)="page.set(page() - 1); loadUsers()"
-        class="gom-users-list__pagination-btn"
-        aria-label="Previous page">
-        {{ 'saas.admin.users.btn_prev' | translate }}
-      </button>
-      <span class="gom-users-list__pagination-info">
-        {{ 'saas.admin.users.lbl_page' | translate:{ page: page(), total: totalPages } }}
-      </span>
-      <button
-        [disabled]="page() >= totalPages"
-        (click)="page.set(page() + 1); loadUsers()"
-        class="gom-users-list__pagination-btn"
-        aria-label="Next page">
-        {{ 'saas.admin.users.btn_next' | translate }}
-      </button>
-    </div>
-  }
 </div>
+
+<gom-lib-modal
+  [title]="userModalTitle"
+  [(show)]="formModalOpen"
+  (closed)="onUserModalClosed()"
+  size="large"
+>
+  @if (formModalOpen()) {
+    <gom-user-invite-form
+      [modalMode]="true"
+      [userIdInput]="editingUserId()"
+      (formSaved)="onUserFormSaved()"
+      (formCancelled)="onUserFormCancelled()"
+    ></gom-user-invite-form>
+  }
+</gom-lib-modal>
 
 <gom-lib-modal
   [title]="'saas.admin.users.title_assign_roles' | translate"
@@ -100,14 +78,12 @@
       } @else {
         <div class="gom-users-list__role-list">
           @for (role of availableRoles; track role._id) {
-            <label class="gom-users-list__role-option">
-              <input
-                type="checkbox"
-                [checked]="isRoleSelected(role._id)"
-                (change)="toggleSelectedRole(role._id)"
-              />
-              <span>{{ role.name }} ({{ role.roleKey }})</span>
-            </label>
+            <gom-lib-checkbox
+              [label]="role.name + ' (' + role.roleKey + ')'"
+              [ngModel]="isRoleSelected(role._id)"
+              [ngModelOptions]="{ standalone: true }"
+              (checkedChange)="toggleSelectedRole(role._id)"
+            ></gom-lib-checkbox>
           }
         </div>
       }
@@ -120,6 +96,29 @@
       <gom-lib-button type="button" variant="secondary" (buttonClick)="closeAssignRoles()">{{ 'common.btn_cancel' | translate }}</gom-lib-button>
       <gom-lib-button type="button" [disabled]="!canSubmitRoleAssignments" (buttonClick)="saveRoleAssignments()">
         {{ 'saas.admin.users.btn_save_roles' | translate }}
+      </gom-lib-button>
+    </div>
+  </footer>
+</gom-lib-modal>
+
+<gom-lib-modal
+  [title]="'saas.admin.users.title_delete' | translate"
+  [(show)]="deleteConfirmModalOpen"
+  (closed)="onDeleteConfirmClosed()"
+  size="small"
+>
+  <div class="gom-delete-confirm__content">
+    <p>{{ 'saas.admin.users.msg_delete_confirm' | translate:{ name: userToDeleteName() } }}</p>
+  </div>
+
+  <footer gom-modal-actions class="gom-modal__action-layout">
+    <div class="gom-modal__action-layout-start"></div>
+    <div class="gom-modal__action-layout-end">
+      <gom-lib-button variant="secondary" (buttonClick)="onDeleteConfirmClosed()">
+        {{ 'common.btn_cancel' | translate }}
+      </gom-lib-button>
+      <gom-lib-button variant="danger" icon="ri-delete-bin-line" (buttonClick)="onConfirmDeleteUser()">
+        {{ 'common.actions.delete' | translate }}
       </gom-lib-button>
     </div>
   </footer>

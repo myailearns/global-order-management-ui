@@ -1,33 +1,54 @@
 <section class="master-page">
   <header class="master-page__header">
-    <h2><i class="ri-stock-line" aria-hidden="true"></i> Stock</h2>
+    <gom-page-heading navRoute="/product/stock"></gom-page-heading>
     <div class="master-page__header-actions">
-      <gom-lib-button
-        type="button"
-        variant="secondary"
-        (buttonClick)="saveReorderLevel()"
-        [disabled]="saving() || reorderForm.invalid || !selectedGroupId() || !reorderForm.dirty"
-      >
-        <i class="ri-alarm-warning-line" aria-hidden="true"></i> Save Alert Threshold
-      </gom-lib-button>
-      <gom-lib-button
-        type="button"
-        variant="secondary"
-        (buttonClick)="openCorrection()"
-        gomDisableIfNoFeature="stock.create"
-        [disabled]="saving() || !canCreateStock() || !selectedGroupId()"
-      >
-        <i class="ri-tools-line" aria-hidden="true"></i> Stock Correction
-      </gom-lib-button>
-      <gom-lib-button
-        type="button"
-        variant="primary"
-        (buttonClick)="openAddStock()"
-        gomDisableIfNoFeature="stock.create"
-        [disabled]="saving() || !canCreateStock()"
-      >
-        <i class="ri-add-line" aria-hidden="true"></i> Add Stock
-      </gom-lib-button>
+      @if (isMobileHeader()) {
+        <gom-lib-button
+          type="button"
+          variant="primary"
+          size="compact-icon"
+          (buttonClick)="openAddStock()"
+          gomDisableIfNoFeature="stock.create"
+          [disabled]="saving() || !canCreateStock()"
+          aria-label="Add Stock"
+          buttonTitle="Add Stock"
+        >
+          <i class="ri-add-line" aria-hidden="true"></i>
+        </gom-lib-button>
+      } @else {
+        <gom-lib-button
+          type="button"
+          variant="primary"
+          (buttonClick)="openAddStock()"
+          gomDisableIfNoFeature="stock.create"
+          [disabled]="saving() || !canCreateStock()"
+        >
+          <i class="ri-add-line" aria-hidden="true"></i> Add Stock
+        </gom-lib-button>
+      }
+      <div class="master-page__more-menu">
+        <core-lib-menu
+          #headerActionsMenu
+          [menuType]="'submenu'"
+          [menuList]="headerMenuList"
+          [showMenuListArrow]="false"
+          [showMobileBackArrow]="false"
+          [backButtonText]="'Actions'"
+        ></core-lib-menu>
+
+        <gom-lib-button
+          type="button"
+          variant="secondary"
+          [size]="isMobileHeader() ? 'compact-icon' : 'default'"
+          aria-label="More actions"
+          [disabled]="saving() || !selectedGroupId()"
+          (buttonClick)="headerActionsMenu.toggle()"
+          [buttonTitle]="'More actions'"
+        >
+          <i class="ri-more-2-line" aria-hidden="true"></i>
+        </gom-lib-button>
+      </div>
+     
     </div>
   </header>
 
@@ -40,18 +61,9 @@
     </div>
   }
 
-  @if (canCreateStock()) {
-    <div class="quota-banner">
-      @if (stockCreateLimit() !== null) {
-        <p>Stock movement quota: {{ stockCreateUsed() }} / {{ stockCreateLimit() }} used ({{ stockCreateRemaining() }} remaining)</p>
-      } @else {
-        <p>Stock movement quota: {{ stockCreateUsed() }} used (unlimited)</p>
-      }
-    </div>
-  }
 
   <section class="stock-controls">
-    <div style="display: grid; grid-template-columns: 1fr; gap: 1.5rem;">
+    <div class="stock-controls__layout">
       <!-- Row 1: Group Selection -->
       <gom-lib-select
         label="Group"
@@ -62,7 +74,7 @@
       ></gom-lib-select>
 
       <!-- Row 2: Threshold Input + Save Button -->
-      <div style="display: grid; grid-template-columns: 1fr auto; gap: 1rem; align-items: flex-end;">
+      <div class="stock-controls__action-row">
         <gom-lib-input
           label="Low Stock Alert Threshold"
           type="number"
@@ -81,7 +93,7 @@
       </div>
 
       <!-- Row 3: Costing Method Input + Save Button -->
-      <div style="display: grid; grid-template-columns: 1fr auto; gap: 1rem; align-items: flex-end;">
+      <div class="stock-controls__action-row">
         <gom-lib-select
           label="Costing Method"
           placeholder="Select costing method"
@@ -179,45 +191,21 @@
             }
           </p>
         </header>
-        <div style="overflow-x: auto; border: 1px solid #e0e0e0; border-radius: 4px;">
-          <table style="width: 100%; border-collapse: collapse;">
-            <thead>
-              <tr style="background-color: #f5f5f5; border-bottom: 2px solid #e0e0e0;">
-                <th style="padding: 0.75rem; text-align: left; font-weight: 600; font-size: 0.875rem; color: #444;">Variant</th>
-                <th style="padding: 0.75rem; text-align: center; font-weight: 600; font-size: 0.875rem; color: #444;">Unit</th>
-                <th style="padding: 0.75rem; text-align: right; font-weight: 600; font-size: 0.875rem; color: #444;">On Hand</th>
-                <th style="padding: 0.75rem; text-align: right; font-weight: 600; font-size: 0.875rem; color: #444;">Reserved</th>
-                <th style="padding: 0.75rem; text-align: right; font-weight: 600; font-size: 0.875rem; color: #444;">Available</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (variant of variantStockInfo(); track variant.variantId) {
-                <tr style="border-bottom: 1px solid #eee;">
-                  <td style="padding: 0.75rem; font-weight: 500; font-size: 0.875rem;">
-                    <i class="ri-t-shirt-line" aria-hidden="true" style="margin-right: 0.5rem; color: #666;"></i>
-                    {{ variant.variantName }}
-                  </td>
-                  <td style="padding: 0.75rem; text-align: center; font-size: 0.875rem; color: #666;">
-                    @if (variant.unit) {
-                      {{ variant.unit.symbol }}
-                    } @else {
-                      –
-                    }
-                  </td>
-                  <td style="padding: 0.75rem; text-align: right; font-size: 0.875rem; font-weight: 500;">
-                    {{ variant.onHand }}
-                  </td>
-                  <td style="padding: 0.75rem; text-align: right; font-size: 0.875rem; color: #666;">
-                    {{ variant.reserved }}
-                  </td>
-                  <td style="padding: 0.75rem; text-align: right; font-size: 0.875rem; font-weight: 600;" [style.color]="variant.available > 0 ? '#2e7d32' : '#d32f2f'">
-                    {{ variant.available }}
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
+        <gom-lib-table
+          [columns]="variantBreakdownColumns"
+          [rows]="variantBreakdownRows()"
+          [loading]="loading()"
+          [dataMode]="'client'"
+          [totalItems]="variantBreakdownRows().length"
+          [showPagination]="false"
+          [showSearch]="false"
+          [showFilterButton]="false"
+          [showClearFilterButton]="false"
+          [enableColumnSearch]="false"
+          [enableColumnVisibility]="false"
+          [showExport]="false"
+          [mobileCardView]="false"
+        ></gom-lib-table>
       </article>
     }
   }

@@ -50,16 +50,6 @@
     </div>
   }
 
-  @if (canCreateCategory()) {
-    <div class="quota-banner">
-      @if (categoryCreateLimit() !== null) {
-        <p>Category quota: {{ categoryCreateUsed() }} / {{ categoryCreateLimit() }} used ({{ categoryCreateRemaining() }} remaining)</p>
-      } @else {
-        <p>Category quota: {{ categoryCreateUsed() }} used (unlimited)</p>
-      }
-    </div>
-  }
-
   <gom-categories-list
     [categories]="categories()"
     [loading]="loading()"
@@ -131,6 +121,7 @@
   <gom-category-associations-modal
     [isOpen]="associationsOpen()"
     [category]="associationsCategory()"
+    [initialTab]="associationsInitialTab()"
     (closed)="onAssociationsClosed()"
   ></gom-category-associations-modal>
 

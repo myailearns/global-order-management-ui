@@ -7,6 +7,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .master-page__error {
@@ -84,5 +85,21 @@
 
   .member-add-row {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .master-page__header {
+    flex-wrap: nowrap;
+  }
+
+  .master-page__header > gom-page-heading {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .master-page__header > gom-lib-button {
+    flex: 0 0 auto;
+    padding-inline: 0.5rem;
   }
 }

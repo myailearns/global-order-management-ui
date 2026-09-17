@@ -694,72 +694,72 @@
   },
   {
     "featureKey": "employee.list",
-    "displayName": "View Accounts",
+    "displayName": "View Employees",
     "module": "tenant-admin",
-    "description": "List and view all tenant accounts",
+    "description": "List and view all tenant employees",
     "planAvailability": ["STARTER", "GROWTH", "SCALE"],
     "dependencies": [],
     "actions": ["view", "search", "filter", "export"]
   },
   {
     "featureKey": "employee.create",
-    "displayName": "Create Account",
+    "displayName": "Create Employee",
     "module": "tenant-admin",
-    "description": "Create new tenant accounts",
+    "description": "Create new tenant employees",
     "planAvailability": ["STARTER", "GROWTH", "SCALE"],
     "dependencies": [],
     "actions": ["create"]
   },
   {
     "featureKey": "employee.edit",
-    "displayName": "Edit Account",
+    "displayName": "Edit Employee",
     "module": "tenant-admin",
-    "description": "Edit existing account details",
+    "description": "Edit existing employee details",
     "planAvailability": ["STARTER", "GROWTH", "SCALE"],
     "dependencies": ["employee.list"],
     "actions": ["edit", "update", "assign-role"]
   },
   {
     "featureKey": "employee.delete",
-    "displayName": "Delete Account",
+    "displayName": "Delete Employee",
     "module": "tenant-admin",
-    "description": "Delete tenant accounts",
+    "description": "Delete tenant employees",
     "planAvailability": ["GROWTH", "SCALE"],
     "dependencies": ["employee.list"],
     "actions": ["delete", "deactivate"]
   },
   {
     "featureKey": "user.list",
-    "displayName": "View Users",
+    "displayName": "View Access Users",
     "module": "tenant-admin",
-    "description": "List and view all tenant users",
+    "description": "List and view all tenant login users",
     "planAvailability": ["STARTER", "GROWTH", "SCALE"],
     "dependencies": [],
     "actions": ["view", "search", "filter", "export"]
   },
   {
     "featureKey": "user.create",
-    "displayName": "Create User",
+    "displayName": "Create Access User",
     "module": "tenant-admin",
-    "description": "Create new tenant users/accounts",
+    "description": "Create new tenant login users",
     "planAvailability": ["STARTER", "GROWTH", "SCALE"],
     "dependencies": [],
     "actions": ["create"]
   },
   {
     "featureKey": "user.edit",
-    "displayName": "Edit User",
+    "displayName": "Edit Access User",
     "module": "tenant-admin",
-    "description": "Edit existing user accounts and permissions",
+    "description": "Edit existing login users and permissions",
     "planAvailability": ["STARTER", "GROWTH", "SCALE"],
     "dependencies": ["user.list"],
     "actions": ["edit", "update", "reset-password", "assign-role"]
   },
   {
     "featureKey": "user.delete",
-    "displayName": "Delete User",
+    "displayName": "Delete Access User",
     "module": "tenant-admin",
-    "description": "Delete tenant users",
+    "description": "Delete tenant login users",
     "planAvailability": ["GROWTH", "SCALE"],
     "dependencies": ["user.list"],
     "actions": ["delete", "deactivate"]
