@@ -1,0 +1,56 @@
+<section class="business-categories-page">
+  <header class="business-categories-page__header">
+    <div>
+      <h1>{{ 'businessCategories.title' | translate }}</h1>
+      <p>{{ 'businessCategories.description' | translate }}</p>
+    </div>
+
+    <div class="business-categories-page__header-actions">
+      @if (canWrite()) {
+        <gom-lib-button (buttonClick)="openCreate()" [disabled]="actionBusy()">
+          <i class="ri-add-line" aria-hidden="true"></i>
+          {{ 'businessCategories.actions.create' | translate }}
+        </gom-lib-button>
+      }
+
+      <gom-lib-button variant="secondary" (buttonClick)="importCategories()" [disabled]="actionBusy()">
+        <i class="ri-upload-2-line" aria-hidden="true"></i>
+        {{ 'businessCategories.actions.import' | translate }}
+      </gom-lib-button>
+
+      <gom-lib-button variant="secondary" (buttonClick)="downloadTemplate()" [disabled]="actionBusy()">
+        <i class="ri-download-2-line" aria-hidden="true"></i>
+        {{ 'businessCategories.actions.downloadTemplate' | translate }}
+      </gom-lib-button>
+    </div>
+  </header>
+
+  <gom-lib-table
+    [columns]="columns"
+    [rows]="rows()"
+    [loading]="loading()"
+    [totalItems]="rows().length"
+    [searchPlaceholder]="'businessCategories.table.searchPlaceholder' | translate"
+    [emptyMessage]="'businessCategories.table.empty' | translate"
+    (rowAction)="onRowAction($event)"
+  ></gom-lib-table>
+</section>
+
+<gom-categories-form
+  [isOpen]="categoryFormOpen()"
+  [initialData]="editingCategoryData()"
+  (formSubmit)="onCategoryFormSubmit($event)"
+  (formCancel)="onCategoryFormCancel()"
+></gom-categories-form>
+
+<gom-lib-confirmation-modal
+  [(show)]="deleteConfirmOpen"
+  title="{{ 'businessCategories.delete.title' | translate }}"
+  [message]="deleteMessage"
+  confirmText="{{ 'businessCategories.actions.delete' | translate }}"
+  cancelText="{{ 'common.btn_cancel' | translate }}"
+  confirmVariant="danger"
+  [busy]="loading()"
+  (confirmed)="confirmDelete()"
+  (cancelled)="closeDeleteConfirm()"
+></gom-lib-confirmation-modal>

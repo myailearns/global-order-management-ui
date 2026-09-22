@@ -237,3 +237,73 @@
   grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
   gap: 0.5rem;
 }
+
+/* Clone Modal Styles */
+.clone-tiers-section {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e4ebf3;
+}
+
+.clone-tiers-section h3 {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.96rem;
+  color: #102a43;
+  font-weight: 600;
+}
+
+.tier-selection-control {
+  margin-bottom: 0.75rem;
+  padding: 0.6rem;
+  background: #f8fbff;
+  border: 1px solid #d9e2ec;
+  border-radius: 0.55rem;
+}
+
+.tier-selection-control label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  color: #102a43;
+  font-weight: 500;
+}
+
+.tier-selection-control input[type="checkbox"] {
+  cursor: pointer;
+}
+
+.tier-list {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.tier-item {
+  padding: 0.6rem;
+  background: #fafbfc;
+  border: 1px solid #e4ebf3;
+  border-radius: 0.55rem;
+}
+
+.tier-item label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  color: #243b53;
+}
+
+.tier-item input[type="checkbox"] {
+  cursor: pointer;
+}
+
+.tier-name {
+  font-weight: 500;
+  color: #102a43;
+}
+
+.tier-features {
+  font-size: 0.85rem;
+  color: #627d98;
+  margin-left: auto;
+}

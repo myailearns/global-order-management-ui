@@ -56,7 +56,7 @@ export class BusinessDetailsComponent implements OnInit {
   readonly savedProfile = signal<BusinessProfile | null>(null);
   readonly logoPreview = signal('');
   readonly canEdit = computed(
-    () => this.authSession.canWrite('tenant-admin') && this.authSession.hasFeature('roles.edit'),
+    () => this.authSession.canWrite('tenant-admin') && this.authSession.hasFeature('tenantRole.edit'),
   );
 
   readonly businessTypeOptions: GomSelectOption[] = [

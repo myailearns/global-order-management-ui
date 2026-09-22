@@ -59,7 +59,7 @@ export class CourierPartnersComponent implements OnInit {
   readonly isMobileHeader = computed<boolean>(() => this.viewportWidth() <= 768);
   readonly canViewPartner = computed(() => this.authSession.hasFeature('courierPartner.view'));
   readonly canCreatePartner = computed(() => this.authSession.hasFeature('courierPartner.create'));
-  readonly canUpdatePartner = computed(() => this.authSession.hasFeature('courierPartner.update'));
+  readonly canUpdatePartner = computed(() => this.authSession.hasFeature('courierPartner.edit'));
   readonly canDeletePartner = computed(() => this.authSession.hasFeature('courierPartner.delete'));
   readonly courierPartnerCreateLimit = computed(() => this.authSession.getFeatureConfigNumber('courierPartner.create', 'max_count'));
   readonly courierPartnerCreateUsed = computed(() => this.partners().length);

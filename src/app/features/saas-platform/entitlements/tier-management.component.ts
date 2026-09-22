@@ -27,11 +27,12 @@ const STANDARD_CONFIG_KEYS = new Set([
   'max_groups',
 ]);
 
-const BILLING_CYCLE_CONFIG: Array<{ code: BillingDurationCode; label: string; months: number; defaultDiscountPercent: number }> = [
+const BILLING_CYCLE_CONFIG: Array<{ code: BillingDurationCode; label: string; months: number | null; defaultDiscountPercent: number; isUnlimited?: boolean }> = [
   { code: '1_MONTH', label: '1 Month', months: 1, defaultDiscountPercent: 0 },
   { code: '3_MONTHS', label: '3 Months', months: 3, defaultDiscountPercent: 5 },
   { code: '6_MONTHS', label: '6 Months', months: 6, defaultDiscountPercent: 10 },
   { code: '1_YEAR', label: '1 Year', months: 12, defaultDiscountPercent: 12 },
+  { code: 'FULLY_FREE', label: 'Fully Free', months: null, defaultDiscountPercent: 0, isUnlimited: true },
 ];
 
 @Component({
@@ -116,7 +117,7 @@ const BILLING_CYCLE_CONFIG: Array<{ code: BillingDurationCode; label: string; mo
             [options]="tierTrialModeOptions"
           ></gom-lib-select>
 
-          @if (tierTrialModeControl.value !== 'NONE') {
+          @if (tierTrialModeControl.value !== 'NONE' && !isFullyFreeBillingEnabled()) {
           <gom-lib-input
             [formControl]="tierTrialDurationControl"
             type="number"
@@ -175,7 +176,12 @@ const BILLING_CYCLE_CONFIG: Array<{ code: BillingDurationCode; label: string; mo
             @for (cycle of billingCycleConfig; track cycle.code) {
             <article class="tier-cycle-card">
               <div class="tier-cycle-card__header">
-                <strong>{{ cycle.label }}</strong>
+                <div class="tier-cycle-card__header-copy">
+                  <strong>{{ cycle.label }}</strong>
+                  @if (cycle.isUnlimited) {
+                  <span class="tier-cycle-card__hint">Unlimited duration, zero billing</span>
+                  }
+                </div>
                 <gom-lib-switch
                   [checked]="cycleEnabledControl(cycle.code).value"
                   (checkedChange)="cycleEnabledControl(cycle.code).setValue($event)"
@@ -187,18 +193,21 @@ const BILLING_CYCLE_CONFIG: Array<{ code: BillingDurationCode; label: string; mo
                   [formControl]="cycleBaseAmountControl(cycle.code)"
                   type="number"
                   label="Base Amount"
+                  [disabled]="!!cycle.isUnlimited"
                 ></gom-lib-input>
 
                 <gom-lib-input
                   [formControl]="cycleDiscountControl(cycle.code)"
                   type="number"
                   label="Discount %"
+                  [disabled]="!!cycle.isUnlimited"
                 ></gom-lib-input>
 
                 <gom-lib-input
                   [formControl]="cycleFinalAmountControl(cycle.code)"
                   type="number"
                   label="Final Amount"
+                  [disabled]="true"
                 ></gom-lib-input>
               </div>
             </article>
@@ -437,6 +446,16 @@ const BILLING_CYCLE_CONFIG: Array<{ code: BillingDurationCode; label: string; mo
       gap: 0.6rem;
     }
 
+    .tier-cycle-card__header-copy {
+      display: grid;
+      gap: 0.15rem;
+    }
+
+    .tier-cycle-card__hint {
+      color: var(--gom-color-text-secondary, #6a7a89);
+      font-size: 0.78rem;
+    }
+
     .tier-cycle-card__body {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -599,6 +618,7 @@ export class TierManagementComponent implements OnInit {
     '3_MONTHS': new FormControl<boolean>(true, { nonNullable: true }),
     '6_MONTHS': new FormControl<boolean>(true, { nonNullable: true }),
     '1_YEAR': new FormControl<boolean>(true, { nonNullable: true }),
+    'FULLY_FREE': new FormControl<boolean>(true, { nonNullable: true }),
   };
 
   readonly cycleBaseAmountControlMap: Record<BillingDurationCode, FormControl<string>> = {
@@ -606,6 +626,7 @@ export class TierManagementComponent implements OnInit {
     '3_MONTHS': new FormControl<string>('0', { nonNullable: true }),
     '6_MONTHS': new FormControl<string>('0', { nonNullable: true }),
     '1_YEAR': new FormControl<string>('0', { nonNullable: true }),
+    'FULLY_FREE': new FormControl<string>('0', { nonNullable: true }),
   };
 
   readonly cycleDiscountControlMap: Record<BillingDurationCode, FormControl<string>> = {
@@ -613,6 +634,7 @@ export class TierManagementComponent implements OnInit {
     '3_MONTHS': new FormControl<string>('5', { nonNullable: true }),
     '6_MONTHS': new FormControl<string>('10', { nonNullable: true }),
     '1_YEAR': new FormControl<string>('12', { nonNullable: true }),
+    'FULLY_FREE': new FormControl<string>('0', { nonNullable: true }),
   };
 
   readonly cycleFinalAmountControlMap: Record<BillingDurationCode, FormControl<string>> = {
@@ -620,6 +642,7 @@ export class TierManagementComponent implements OnInit {
     '3_MONTHS': new FormControl<string>('0', { nonNullable: true }),
     '6_MONTHS': new FormControl<string>('0', { nonNullable: true }),
     '1_YEAR': new FormControl<string>('0', { nonNullable: true }),
+    'FULLY_FREE': new FormControl<string>('0', { nonNullable: true }),
   };
 
   readonly billingCycleConfig = BILLING_CYCLE_CONFIG;
@@ -728,8 +751,10 @@ export class TierManagementComponent implements OnInit {
     this.billingCycleConfig.forEach((cycle) => {
       const entry = pricingByCode.get(cycle.code);
 
-      const derivedBaseAmount = entry?.baseAmount ?? this.roundHalfUpToTwoDecimals(baseOneMonthAmount * cycle.months);
-      const derivedDiscountPercent = entry?.discountPercent ?? cycle.defaultDiscountPercent;
+      const derivedBaseAmount = cycle.isUnlimited
+        ? 0
+        : (entry?.baseAmount ?? this.roundHalfUpToTwoDecimals(baseOneMonthAmount * Number(cycle.months || 0)));
+      const derivedDiscountPercent = cycle.isUnlimited ? 0 : (entry?.discountPercent ?? cycle.defaultDiscountPercent);
       const derivedEnabled = entry?.isEnabled ?? true;
 
       this.cycleEnabledControl(cycle.code).setValue(Boolean(derivedEnabled), { emitEvent: false });
@@ -788,7 +813,19 @@ export class TierManagementComponent implements OnInit {
     return this.cycleFinalAmountControlMap[code];
   }
 
+  isFullyFreeBillingEnabled(): boolean {
+    return this.cycleEnabledControl('FULLY_FREE').value;
+  }
+
   private recomputeCycleFinalAmount(code: BillingDurationCode): void {
+    const cycle = this.billingCycleConfig.find((item) => item.code === code);
+    if (cycle?.isUnlimited) {
+      this.cycleBaseAmountControl(code).setValue('0', { emitEvent: false });
+      this.cycleDiscountControl(code).setValue('0', { emitEvent: false });
+      this.cycleFinalAmountControl(code).setValue('0', { emitEvent: false });
+      return;
+    }
+
     const baseAmount = this.parseCurrencyOrPercent(this.cycleBaseAmountControl(code).value, 0);
     const discountPercent = this.parseCurrencyOrPercent(this.cycleDiscountControl(code).value, 0);
     const boundedDiscount = Math.max(0, Math.min(100, discountPercent));
@@ -817,7 +854,7 @@ export class TierManagementComponent implements OnInit {
     this.suppressAutoCycleBaseSync = true;
     try {
       this.billingCycleConfig.forEach((cycle) => {
-        if (cycle.code === '1_MONTH') {
+        if (cycle.code === '1_MONTH' || cycle.isUnlimited || !cycle.months) {
           return;
         }
 
@@ -1287,6 +1324,13 @@ export class TierManagementComponent implements OnInit {
           finalAmount: 0,
           isEnabled: true,
         },
+        {
+          durationCode: 'FULLY_FREE',
+          baseAmount: 0,
+          discountPercent: 0,
+          finalAmount: 0,
+          isEnabled: true,
+        },
       ],
       featureKeys: [],
       featureConfigs: {},
@@ -1521,8 +1565,8 @@ export class TierManagementComponent implements OnInit {
     const cyclePricing: TierCyclePricing[] = [];
     let hasEnabled = false;
     for (const cycle of this.billingCycleConfig) {
-      const baseAmount = this.parseCurrencyOrPercent(this.cycleBaseAmountControl(cycle.code).value, NaN);
-      const discountPercent = this.parseCurrencyOrPercent(this.cycleDiscountControl(cycle.code).value, NaN);
+      const baseAmount = cycle.isUnlimited ? 0 : this.parseCurrencyOrPercent(this.cycleBaseAmountControl(cycle.code).value, NaN);
+      const discountPercent = cycle.isUnlimited ? 0 : this.parseCurrencyOrPercent(this.cycleDiscountControl(cycle.code).value, NaN);
 
       if (!Number.isFinite(baseAmount) || baseAmount < 0 || !this.hasMaxTwoDecimals(baseAmount)) {
         this.toast.error(`${cycle.label}: base amount must be non-negative with up to 2 decimals`);
@@ -1539,11 +1583,13 @@ export class TierManagementComponent implements OnInit {
         hasEnabled = true;
       }
 
-      const finalAmount = this.roundHalfUpToTwoDecimals(baseAmount - ((baseAmount * discountPercent) / 100));
+      const finalAmount = cycle.isUnlimited
+        ? 0
+        : this.roundHalfUpToTwoDecimals(baseAmount - ((baseAmount * discountPercent) / 100));
       cyclePricing.push({
         durationCode: cycle.code,
-        baseAmount,
-        discountPercent,
+        baseAmount: cycle.isUnlimited ? 0 : baseAmount,
+        discountPercent: cycle.isUnlimited ? 0 : discountPercent,
         finalAmount,
         isEnabled,
       });
@@ -1565,13 +1611,13 @@ export class TierManagementComponent implements OnInit {
   private normalizeCyclePricingForCompare(cyclePricing: Array<Partial<TierCyclePricing>>): Array<TierCyclePricing> {
     return BILLING_CYCLE_CONFIG.map((cycle) => {
       const current = (cyclePricing || []).find((item) => String(item.durationCode || '').trim().toUpperCase() === cycle.code);
-      const baseAmount = this.roundHalfUpToTwoDecimals(Number(current?.baseAmount ?? 0));
-      const discountPercent = this.roundHalfUpToTwoDecimals(Number(current?.discountPercent ?? 0));
+      const baseAmount = cycle.isUnlimited ? 0 : this.roundHalfUpToTwoDecimals(Number(current?.baseAmount ?? 0));
+      const discountPercent = cycle.isUnlimited ? 0 : this.roundHalfUpToTwoDecimals(Number(current?.discountPercent ?? 0));
       return {
         durationCode: cycle.code,
         baseAmount,
         discountPercent,
-        finalAmount: this.roundHalfUpToTwoDecimals(baseAmount - ((baseAmount * discountPercent) / 100)),
+        finalAmount: cycle.isUnlimited ? 0 : this.roundHalfUpToTwoDecimals(baseAmount - ((baseAmount * discountPercent) / 100)),
         isEnabled: Boolean(current?.isEnabled),
       };
     });
