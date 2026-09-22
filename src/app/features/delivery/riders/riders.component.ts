@@ -62,7 +62,7 @@ export class RidersComponent implements OnInit {
   readonly canListRiders = computed(() => this.authSession.hasFeature('rider.list'));
   readonly canViewRider = computed(() => this.authSession.hasFeature('rider.view'));
   readonly canCreateRider = computed(() => this.authSession.hasFeature('rider.create'));
-  readonly canUpdateRider = computed(() => this.authSession.hasFeature('rider.update'));
+  readonly canUpdateRider = computed(() => this.authSession.hasFeature('rider.edit'));
   readonly canDeleteRider = computed(() => this.authSession.hasFeature('rider.delete'));
   readonly riderCreateLimit = computed(() => this.authSession.getFeatureConfigNumber('rider.create', 'max_count'));
   readonly riderCreateUsed = computed(() => this.riders().length);

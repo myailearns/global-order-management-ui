@@ -46,6 +46,9 @@ import { RolesListComponent } from './features/saas-tenant-admin/roles/list/role
 import { RoleMatrixComponent } from './features/saas-tenant-admin/roles/matrix';
 import { PlatformTemplatesComponent } from './features/saas-platform/templates/platform-templates.component';
 import { BusinessTemplatesComponent } from './features/saas-platform/business-templates/business-templates.component';
+import { BusinessTypesComponent } from './features/saas-platform/business-types/business-types.component';
+import { BusinessCategoriesComponent } from './features/saas-platform/business-categories/business-categories.component';
+import { BusinessTypeConfigureComponent } from './features/saas-platform/business-type-configure/business-type-configure.component';
 import { MediaLibraryComponent } from './shared/components/media-library/media-library.component';
 import { BrowseTemplatesComponent } from './features/templates/browse-templates.component';
 import { AccessDeniedComponent } from './features/auth/access-denied/access-denied.component';
@@ -639,6 +642,36 @@ export const routes: Routes = [
 					title: 'Platform Media',
 					description: 'Manage shared platform images available to all tenants.',
 					mode: 'platform',
+				},
+			},
+			{
+				path: 'settings/business-types',
+				component: BusinessTypesComponent,
+				data: {
+					actor: 'platform',
+					capability: 'platform-admin',
+					title: 'Business Type',
+					description: 'Manage platform-level business type definitions for tenant onboarding.',
+				},
+			},
+			{
+				path: 'settings/business-types/:businessTypeId/configure',
+				component: BusinessTypeConfigureComponent,
+				data: {
+					actor: 'platform',
+					capability: 'platform-admin',
+					title: 'Business Type Configure',
+					description: 'Configure business type setup and mappings for platform-managed onboarding.',
+				},
+			},
+			{
+				path: 'settings/business-categories',
+				component: BusinessCategoriesComponent,
+				data: {
+					actor: 'platform',
+					capability: 'platform-admin',
+					title: 'Business Categories',
+					description: 'Manage platform-level business category definitions for tenant onboarding.',
 				},
 			},
 			{

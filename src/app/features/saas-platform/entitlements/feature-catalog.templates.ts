@@ -132,6 +132,13 @@ export const FEATURE_TEMPLATES: FeatureTemplate[] = [
   { featureKey: 'tenantRole.add', displayName: 'Create Role', module: 'staff-management', dependencies: [], filters: [{ key: 'max_count', defaultValue: 5 }] },
   { featureKey: 'tenantRole.edit', displayName: 'Edit Role', module: 'staff-management', dependencies: ['tenantRole.view'] },
   { featureKey: 'tenantRole.delete', displayName: 'Delete Role', module: 'staff-management', dependencies: ['tenantRole.view'] },
+  { featureKey: 'employees.view', displayName: 'View Employees/Staff', module: 'tenant-admin', dependencies: [] },
+  { featureKey: 'employees.add', displayName: 'Create Employee', module: 'tenant-admin', dependencies: [], filters: [{ key: 'max_count', defaultValue: 10 }] },
+  { featureKey: 'employees.edit', displayName: 'Edit Employee', module: 'tenant-admin', dependencies: ['employees.view'] },
+  { featureKey: 'employees.delete', displayName: 'Delete Employee', module: 'tenant-admin', dependencies: ['employees.view'] },
+  { featureKey: 'employees.export', displayName: 'Export Employees', module: 'tenant-admin', dependencies: ['employees.view'] },
+  { featureKey: 'permissions.view', displayName: 'View Permissions', module: 'tenant-admin', dependencies: [] },
+  { featureKey: 'permissions.export', displayName: 'Export Permissions', module: 'tenant-admin', dependencies: ['permissions.view'] },
   { featureKey: 'employeeCode.view', displayName: 'View Employee Code Settings', module: 'settings', dependencies: [] },
   { featureKey: 'employeeCode.config', displayName: 'Configure Employee Code', module: 'settings', dependencies: ['employeeCode.view'] },
   { featureKey: 'notification.broadcast', displayName: 'Send Push Notifications', module: 'settings', dependencies: [] },
@@ -147,6 +154,7 @@ export const FEATURE_TEMPLATES: FeatureTemplate[] = [
   { featureKey: 'media.list', displayName: 'View Media Library', module: 'product', dependencies: [] },
   { featureKey: 'media.upload', displayName: 'Upload Media', module: 'product', dependencies: ['media.list'], filters: [{ key: 'max_images', defaultValue: 10 }, { key: 'max_videos', defaultValue: 1 }] },
   { featureKey: 'media.delete', displayName: 'Delete Media', module: 'product', dependencies: ['media.list'] },
+  { featureKey: 'pricing.simple.edit', displayName: 'Edit Simple Pricing', module: 'product', dependencies: ['variant.list'] },
 ];
 
 export function toFeatureTemplateSyncPayload() {

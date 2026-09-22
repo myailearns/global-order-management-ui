@@ -55,6 +55,18 @@ export class EntitlementsService {
       .pipe(map((res) => res.data));
   }
 
+  getPackage(id: string): Observable<PackagePlan & { tiers?: any[] }> {
+    return this.http
+      .get<ApiResponse<PackagePlan & { tiers?: any[] }>>(`${this.baseUrl}/packages/${id}`, { headers: this.platformHeaders })
+      .pipe(map((res) => res.data));
+  }
+
+  clonePackage(sourceId: string, payload: { name: string; selectedTierKeys: string[] }): Observable<PackagePlan> {
+    return this.http
+      .post<ApiResponse<PackagePlan>>(`${this.baseUrl}/packages/${sourceId}/clone`, payload, { headers: this.platformHeaders })
+      .pipe(map((res) => res.data));
+  }
+
   listPackageTiers(packageId: string, page = 1, limit = 50): Observable<TierListResult> {
     const params = new ngHttp.HttpParams().set('page', String(page)).set('limit', String(limit));
     return this.http

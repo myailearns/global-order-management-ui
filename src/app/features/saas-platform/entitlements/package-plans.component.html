@@ -204,3 +204,57 @@
     </div>
   </footer>
 </gom-lib-modal>
+
+<!-- Clone Package Modal -->
+<gom-lib-modal title="Clone Package" [(show)]="cloneModalOpen" size="medium">
+  <form class="epic2-page__form" [formGroup]="cloneForm">
+    <gom-lib-input
+      formControlName="name"
+      label="New Package Name"
+      placeholder="Enter new package name"
+      [required]="true"
+    ></gom-lib-input>
+
+    @if (cloneSource(); as source) {
+    <div class="clone-tiers-section">
+      <h3>Select Tiers to Clone</h3>
+      <div class="tier-selection-control">
+        <label>
+          <input
+            type="checkbox"
+            [checked]="isAllTiersSelected()"
+            (change)="toggleAllTiers()"
+          />
+          <span>Select All Tiers</span>
+        </label>
+      </div>
+
+      <div class="tier-list">
+        @for (tier of source.tiers; track tier.tierKey) {
+        <div class="tier-item">
+          <label>
+            <input
+              type="checkbox"
+              [checked]="isTierSelected(tier.tierKey)"
+              (change)="toggleTierSelection(tier.tierKey)"
+            />
+            <span class="tier-name">{{ tier.displayName || tier.tierKey }}</span>
+            <span class="tier-features">({{ (tier.featureKeys || []).length }} features)</span>
+          </label>
+        </div>
+        }
+      </div>
+    </div>
+    }
+  </form>
+
+  <footer class="gom-modal__action-layout" gom-modal-actions>
+    <div class="gom-modal__action-layout-start"></div>
+    <div class="gom-modal__action-layout-end">
+      <gom-lib-button type="button" variant="secondary" (buttonClick)="closeCloneModal()">Cancel</gom-lib-button>
+      <gom-lib-button type="button" (buttonClick)="confirmClone()" [disabled]="cloneBusy() || !cloneForm.valid">
+        {{ cloneBusy() ? 'Cloning...' : 'Clone' }}
+      </gom-lib-button>
+    </div>
+  </footer>
+</gom-lib-modal>

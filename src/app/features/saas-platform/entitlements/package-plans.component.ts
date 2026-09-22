@@ -67,6 +67,16 @@ export class PackagePlansComponent implements OnInit, OnDestroy {
   readonly deleteTarget = signal<PackagePlan | null>(null);
   readonly selectedId = signal<string | null>(null);
   readonly featureKeysSig = signal<string[]>([]);
+  
+  // Clone modal state
+  readonly cloneModalOpen = signal(false);
+  readonly cloneSource = signal<(PackagePlan & { tiers?: any[] }) | null>(null);
+  readonly cloneBusy = signal(false);
+  readonly cloneForm = this.fb.group({
+    name: ['', [Validators.required]],
+  });
+  readonly cloneTierSelections = signal<Record<string, boolean>>({});
+
   private pendingFeatureConfigs: Record<string, FeatureConfigOverride[]> = {};
 
   // Features that have at least one config key — built from currently selected featureKeys
@@ -176,6 +186,7 @@ export class PackagePlansComponent implements OnInit, OnDestroy {
           actionKey: 'manage-tiers',
           variant: 'primary',
         },
+        { label: 'Clone', icon: 'ri-file-copy-line', actionKey: 'clone', variant: 'secondary' },
         { label: 'Edit', actionKey: 'edit', variant: 'secondary' },
         { label: 'Delete', icon: 'ri-delete-bin-line', actionKey: 'delete', variant: 'danger' },
       ],
@@ -521,6 +532,110 @@ export class PackagePlansComponent implements OnInit, OnDestroy {
     this.modalOpen.set(true);
   }
 
+  openCloneModal(sourcePackage: PackagePlan & { tiers?: any[] }): void {
+ if (!this.canWrite() || this.cloneBusy()) {
+      return;
+    }
+
+    // Fetch full package details with tiers
+    this.service.getPackage(sourcePackage._id).subscribe({
+      next: (pkg) => {
+        this.cloneSource.set(pkg);
+        
+        // Initialize tier selections (all selected by default)
+        const tierSelections: Record<string, boolean> = {};
+        const tiers = pkg.tiers || [];
+        tiers.forEach((tier: any) => {
+          tierSelections[tier.tierKey] = true;
+        });
+        this.cloneTierSelections.set(tierSelections);
+        
+        // Set clone form with source package name
+        this.cloneForm.patchValue({
+          name: `${pkg.name} (Copy)`,
+        });
+        
+        this.cloneModalOpen.set(true);
+      },
+      error: (error) => {
+        this.toast.error(String(error?.error?.message || 'Failed to fetch package details'));
+      },
+    });
+  }
+
+  closeCloneModal(): void {
+    if (this.cloneBusy()) {
+      return;
+    }
+    this.cloneModalOpen.set(false);
+    this.cloneSource.set(null);
+    this.cloneTierSelections.set({});
+    this.cloneForm.reset();
+  }
+
+  toggleTierSelection(tierKey: string): void {
+    const selections = { ...this.cloneTierSelections() };
+    selections[tierKey] = !selections[tierKey];
+    this.cloneTierSelections.set(selections);
+  }
+
+  isAllTiersSelected(): boolean {
+    const selections = this.cloneTierSelections();
+    const tiers = this.cloneSource()?.tiers || [];
+    if (tiers.length === 0) return false;
+    return tiers.every((tier: any) => selections[tier.tierKey]);
+  }
+
+  toggleAllTiers(): void {
+    const selections = { ...this.cloneTierSelections() };
+    const tiers = this.cloneSource()?.tiers || [];
+    const allSelected = this.isAllTiersSelected();
+    
+    tiers.forEach((tier: any) => {
+      selections[tier.tierKey] = !allSelected;
+    });
+    
+    this.cloneTierSelections.set(selections);
+  }
+
+  isTierSelected(tierKey: string): boolean {
+    return this.cloneTierSelections()[tierKey] || false;
+  }
+
+  confirmClone(): void {
+    const source = this.cloneSource();
+    if (!this.canWrite() || !source || this.cloneBusy() || !this.cloneForm.valid) {
+      return;
+    }
+
+    const selections = this.cloneTierSelections();
+    const selectedTierKeys = Object.keys(selections).filter((key) => selections[key]);
+    
+    if (selectedTierKeys.length === 0) {
+      this.toast.error('Please select at least one tier to clone');
+      return;
+    }
+
+    this.cloneBusy.set(true);
+    const cloneName = String(this.cloneForm.get('name')?.value || '').trim();
+    
+    this.service.clonePackage(source._id, {
+      name: cloneName,
+      selectedTierKeys,
+    }).subscribe({
+      next: () => {
+        this.cloneBusy.set(false);
+        this.closeCloneModal();
+        this.toast.success(`Package "${cloneName}" cloned successfully with ${selectedTierKeys.length} tier(s)`);
+        this.load();
+      },
+      error: (error) => {
+        this.cloneBusy.set(false);
+        this.toast.error(String(error?.error?.message || 'Failed to clone package'));
+      },
+    });
+  }
+
   onRowAction(event: { actionKey: string; row: PackageRow }): void {
     if (!this.canWrite()) {
       return;
@@ -529,6 +644,15 @@ export class PackagePlansComponent implements OnInit, OnDestroy {
     if (event.actionKey === 'manage-tiers') {
       // Navigate to tier management page for this package
       this.router.navigate(['/saas-platform/packages', event.row.id, 'tiers']);
+      return;
+    }
+
+    if (event.actionKey === 'clone') {
+      const cloneItem = this.packages().find((x) => x._id === event.row.id);
+      if (!cloneItem) {
+        return;
+      }
+      this.openCloneModal(cloneItem);
       return;
     }
 

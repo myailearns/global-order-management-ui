@@ -66,6 +66,8 @@
                                    "platformTemplates":  "Platform Templates",
                                    "businessTemplates":  "Business Templates",
                                    "platformMedia":  "Platform Media",
+                                   "businessType":  "Business Type",
+                                   "businessCategories":  "Business Categories",
                                    "accountManagement":  "Account Management",
                                    "adminApp":  "Admin App",
                                    "createOrderSettings":  "Create Order Settings",
@@ -1437,6 +1439,127 @@
                                               "taxProfilesTitle":  "Tax Profiles"
                                           }
                           },
+            "businessTypes":  {
+                                  "title":  "Business Types",
+                                  "description":  "Manage platform business types and map them to business categories.",
+                                  "actions":  {
+                                                  "create":  "Create Business Type",
+                                                  "import":  "Import",
+                                                  "downloadTemplate":  "Download Template",
+                                                  "configure":  "Configure",
+                                                  "save":  "Save",
+                                                  "edit":  "Edit",
+                                                  "delete":  "Delete"
+                                              },
+                                  "table":  {
+                                                "columns":  {
+                                                                "name":  "Business Name",
+                                                                "categoryName":  "Business Category Name",
+                                                                "actions":  "Actions"
+                                                            },
+                                                "searchPlaceholder":  "Search business types...",
+                                                "empty":  "No business types available yet."
+                                            },
+                                  "form":  {
+                                               "name":  "Business Name",
+                                               "categories":  "Business Categories",
+                                               "categoriesPlaceholder":  "Select business categories",
+                                               "categoriesSearchPlaceholder":  "Search business categories"
+                                           },
+                                  "modal":  {
+                                                "createTitle":  "Create Business Type",
+                                                "editTitle":  "Edit Business Type"
+                                            },
+                                  "delete":  {
+                                                 "title":  "Delete Business Type",
+                                                 "message":  "Are you sure you want to delete '{{name}}'?"
+                                             },
+                                  "messages":  {
+                                                   "loadError":  "Failed to load business types.",
+                                                   "loadCategoriesError":  "Failed to load business categories.",
+                                                   "saveError":  "Failed to save business type.",
+                                                   "deleteError":  "Failed to delete business type.",
+                                                   "created":  "Business type created.",
+                                                   "updated":  "Business type updated.",
+                                                   "deleted":  "Business type deleted.",
+                                               "invalidFileType":  "Please upload a valid Excel file (.xlsx or .xls).",
+                                               "fileTooLarge":  "File size exceeds 10MB limit. Please upload a smaller file.",
+                                               "importError":  "Failed to import business types. Please check the file and try again.",
+                                               "importCompleted":  "Successfully created {{count}} business types.",
+                                               "importCompletedWithErrors":  "Created {{created}} business types. {{failed}} row(s) failed.",
+                                                   "templateDownloaded":  "Template downloaded successfully.",
+                                                   "templateDownloadError":  "Failed to download template. Please try again."
+                                             }
+                              },
+            "businessCategories":  {
+                                         "title":  "Business Categories",
+                                         "description":  "Manage platform business categories used during tenant onboarding.",
+                                         "actions":  {
+                                                         "create":  "Create Business Category",
+                                                         "import":  "Import",
+                                                         "downloadTemplate":  "Download Template",
+                                                         "edit":  "Edit",
+                                                         "delete":  "Delete"
+                                                     },
+                                         "table":  {
+                                                       "columns":  {
+                                                                       "name":  "Category Name",
+                                                                       "actions":  "Actions"
+                                                                   },
+                                                       "searchPlaceholder":  "Search business categories...",
+                                                       "empty":  "No business categories available yet."
+                                                   },
+                                         "delete":  {
+                                                        "title":  "Delete Business Category",
+                                                        "message":  "Are you sure you want to delete \"{{name}}\"?"
+                                                    },
+                                         "messages":  {
+                                                          "loadError":  "Failed to load business categories.",
+                                                          "saveError":  "Failed to save business category.",
+                                                          "deleteError":  "Failed to delete business category.",
+                                                          "created":  "Business category created.",
+                                                          "updated":  "Business category updated.",
+                                                          "deleted":  "Business category deleted.",
+                                                          "invalidFileType":  "Please upload a valid Excel file (.xlsx or .xls).",
+                                                          "fileTooLarge":  "File size exceeds 10MB limit. Please upload a smaller file.",
+                                                          "importAccepted":  "Upload accepted. Processing business categories...",
+                                                          "importError":  "Failed to import business categories. Please check the file and try again.",
+                                                          "importStatusError":  "Failed to track import progress. Refresh and check the categories list.",
+                                                          "importCompleted":  "Successfully created {{count}} business categories.",
+                                                          "importCompletedWithErrors":  "Created {{created}} business categories. {{failed}} row(s) failed.",
+                                                          "importFailed":  "Business category import failed.",
+                                                          "downloadNotAllowed":  "You do not have permission to download the template.",
+                                                          "templateDownloaded":  "Template downloaded successfully.",
+                                                          "templateDownloadError":  "Failed to download template. Please try again."
+                                                      }
+                                     },
+            "businessTypeConfigure":  {
+                                            "eyebrow":  "Platform Admin",
+                                            "title":  "Business Type Configuration",
+                                            "description":  "Configure which platform templates are attached to this business type.",
+                                            "categoriesLabel":  "Business categories",
+                                            "backToBusinessTypes":  "Back to Business Types",
+                                            "searchPlaceholder":  "Search configuration items...",
+                                            "empty":  "No configuration items available.",
+                                            "manageTitle":  "Manage Configuration",
+                                            "manageDescription":  "Attach or detach platform templates for the selected business type.",
+                                            "manageCounts":  "All: {{all}} | Attached: {{attached}} | Available: {{available}}",
+                                            "selectedCount":  "{{count}} selected",
+                                            "actions":  {
+                                                            "manage":  "Manage"
+                                                        },
+                                            "sections":  {
+                                                             "title":  "Configuration Template Status",
+                                                             "description":  "Platform template elements linked to the selected business type."
+                                                         },
+                                            "sectionDescriptions":  {
+                                                                       "categories":  "Attach platform template categories for this business type.",
+                                                                       "fields":  "Attach platform template fields for this business type.",
+                                                                       "field-groups":  "Attach field groups for reusable form structures.",
+                                                                       "units":  "Attach measurement units available to this business type.",
+                                                                       "tax-profiles":  "Attach tax profiles applicable to this business type."
+                                                                   }
+                                        },
     "media":  {
                   "title":  "Platform Media Library",
                   "description":  "Manage shared platform media available to all tenants.",
