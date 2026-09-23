@@ -11,7 +11,6 @@ import {
   GomTableComponent,
   GomTableRow,
 } from '@gomlibs/ui';
-import { ButtonModule } from '../../../../../../naqp-dev-web-core-components-library/src/projects/naqp-dev-web-core-components-library/components/src/core/buttons';
 import { PageHeadingComponent } from '../../../shared/components/page-heading/page-heading.component';
 
 import {
@@ -67,7 +66,6 @@ type BulkPreviewRow = GomTableRow & {
     ReactiveFormsModule,
     FormControlsModule,
     MenuComponent,
-    ButtonModule,
     PageHeadingComponent,
     GomModalComponent,
     GomTableComponent,
