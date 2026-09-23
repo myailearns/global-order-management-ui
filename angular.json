@@ -28,11 +28,6 @@
               },
               {
                 "glob": "**/*",
-                "input": "../naqp-dev-web-core-components-library/src/projects/naqp-dev-web-core-components-library/assets/fonts",
-                "output": "/assets/fonts/"
-              },
-              {
-                "glob": "**/*",
                 "input": "src/assets",
                 "output": "/assets/"
               }
@@ -43,8 +38,6 @@
             ],
             "stylePreprocessorOptions": {
               "includePaths": [
-                "../gom-libs/projects/gom-ui/src/lib/theming/styles",
-                "../naqp-dev-web-core-components-library/src/projects/naqp-dev-web-core-components-library/assets/styles/core",
                 "node_modules/@gomlibs/ui/src/lib/theming/styles"
               ]
             }
@@ -111,8 +104,8 @@
               },
               {
                 "glob": "**/*",
-                "input": "../naqp-dev-web-core-components-library/src/projects/naqp-dev-web-core-components-library/assets/fonts",
-                "output": "/assets/fonts/"
+                "input": "src/assets",
+                "output": "/assets/"
               }
             ],
             "styles": [
@@ -120,8 +113,6 @@
             ],
             "stylePreprocessorOptions": {
               "includePaths": [
-                "../gom-libs/projects/gom-ui/src/lib/theming/styles",
-                "../naqp-dev-web-core-components-library/src/projects/naqp-dev-web-core-components-library/assets/styles/core",
                 "node_modules/@gomlibs/ui/src/lib/theming/styles"
               ]
             }
