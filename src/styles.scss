@@ -5,7 +5,7 @@
 
 // Import theme system (palette, colors, breakpoints, typography, sizing)
 @use "theme" as *;
-@use "../../naqp-dev-web-core-components-library/src/projects/naqp-dev-web-core-components-library/assets/styles/core/fonts-typography" as typography;
+@use "fonts-typography" as typography;
 
 // Import Remix Icon font
 @import "remixicon/fonts/remixicon.css";

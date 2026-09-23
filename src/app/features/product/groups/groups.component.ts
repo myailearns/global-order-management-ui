@@ -34,7 +34,6 @@ import {
   showButtonIcon,
   showButtonText,
 } from '@gomlibs/ui';
-import { ButtonModule } from '../../../../../../naqp-dev-web-core-components-library/src/projects/naqp-dev-web-core-components-library/components/src/core/buttons';
 import { PageHeadingComponent } from '../../../shared/components/page-heading/page-heading.component';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { MediaAssetService } from '../../saas-platform/media/media-asset.service';
@@ -183,7 +182,6 @@ interface BulkVariantFailureRow extends GomTableRow {
     RichTextEditorComponent,
     QuickCreateGroupComponent,
     MenuModule,
-    ButtonModule,
     PageHeadingComponent,
   ],
   templateUrl: './groups.component.html',
@@ -2469,12 +2467,10 @@ export class GroupsComponent implements OnInit, OnDestroy {
         const nextValue = parseFactor();
         if (operator === '*') {
           value *= nextValue;
+        } else if (nextValue === 0) {
+          value = 0;
         } else {
-          if (nextValue === 0) {
-            value = 0;
-          } else {
-            value /= nextValue;
-          }
+          value /= nextValue;
         }
       }
       return value;

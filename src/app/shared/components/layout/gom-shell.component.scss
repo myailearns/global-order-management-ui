@@ -1,5 +1,5 @@
 @use "theme" as theme;
-@use "../../../../../../naqp-dev-web-core-components-library/src/projects/naqp-dev-web-core-components-library/assets/styles/core/fonts-typography" as typography;
+@use "fonts-typography" as typography;
 
 .gom-shell {
   min-height: 100vh;
@@ -369,7 +369,6 @@
     color: rgba(204, 220, 234, 0.82);
     @include typography.get-fonts("tmna-interface-label-01");
     line-height: 1.25;
-    // text-transform: uppercase;
     letter-spacing: 0.08em;
 
     i {

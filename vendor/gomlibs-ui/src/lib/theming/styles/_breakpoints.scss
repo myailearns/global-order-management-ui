@@ -1,0 +1,113 @@
+@use "sass:map";
+
+/**
+ * Global Order Management - Responsive Breakpoints
+ * Reference: NAQP Core Components Library
+ * All values in rem units (1rem = 16px by default)
+ */
+
+/* ============================================
+   BREAKPOINT MAP - REM Units
+   ============================================ */
+$breakpoints: (
+  xs: 23.4375rem,      // 375px - Extra small (phone)
+  sm: 26.75rem,        // 428px - Small (phone)
+  md: 52.5rem,         // 840px - Medium (tablet)
+  lg: 90rem,           // 1440px - Large (desktop)
+  xl: 120rem,          // 1920px - Extra large (wide desktop)
+);
+
+/* ============================================
+   SEMANTIC BREAKPOINT ALIASES
+   ============================================ */
+$breakpoint-names: (
+  phone: 26.75rem,     // 428px
+  tablet: 52.5rem,     // 840px
+  desktop: 90rem,      // 1440px
+);
+
+/* ============================================
+   BREAKPOINT ACCESSOR FUNCTIONS
+   ============================================ */
+
+/// Get a breakpoint value by name
+/// @param {String} $key - The breakpoint name (xs, sm, md, lg, xl, phone, tablet, desktop)
+/// @return {Number} The breakpoint value in rem
+@function get-breakpoint($key) {
+  $all-breakpoints: map.merge($breakpoints, $breakpoint-names);
+  
+  @if not map.has-key($all-breakpoints, $key) {
+    @error "The breakpoint `#{$key}` does not exist. Available breakpoints: #{map-keys($all-breakpoints)}";
+  }
+  @return map.get($all-breakpoints, $key);
+}
+
+/* ============================================
+   RESPONSIVE MIXINS
+   ============================================ */
+
+/// Mobile-first responsive mixin
+/// @param {String} $breakpoint - The breakpoint name or value
+/// @example
+///   @include breakpoint-up(md) {
+///     width: 50%;
+///   }
+@mixin breakpoint-up($breakpoint) {
+  @media (min-width: get-breakpoint($breakpoint)) {
+    @content;
+  }
+}
+
+/// Desktop-first responsive mixin
+/// @param {String} $breakpoint - The breakpoint name or value
+/// @example
+///   @include breakpoint-down(md) {
+///     width: 100%;
+///   }
+@mixin breakpoint-down($breakpoint) {
+  @media (max-width: calc(get-breakpoint($breakpoint) - 0.0625rem)) {
+    @content;
+  }
+}
+
+/// Range responsive mixin
+/// @param {String} $min - Minimum breakpoint
+/// @param {String} $max - Maximum breakpoint
+/// @example
+///   @include breakpoint-between(sm, lg) {
+///     width: 75%;
+///   }
+@mixin breakpoint-between($min, $max) {
+  @media (min-width: get-breakpoint($min)) and (max-width: calc(get-breakpoint($max) - 0.0625rem)) {
+    @content;
+  }
+}
+
+/// Exact breakpoint only
+/// @param {String} $breakpoint - The breakpoint name or value
+/// @example
+///   @include breakpoint-only(md) {
+///     width: 66.66%;
+///   }
+@mixin breakpoint-only($breakpoint) {
+  $breakpoints-list: map-keys($breakpoints);
+  $index: index($breakpoints-list, $breakpoint);
+  
+  @if $index == null {
+    @error "Breakpoint `#{$breakpoint}` not found in $breakpoints map";
+  }
+  
+  @if $index == 1 {
+    @media (max-width: calc(get-breakpoint(nth($breakpoints-list, $index + 1)) - 0.0625rem)) {
+      @content;
+    }
+  } @else if $index == length($breakpoints-list) {
+    @media (min-width: get-breakpoint($breakpoint)) {
+      @content;
+    }
+  } @else {
+    @media (min-width: get-breakpoint($breakpoint)) and (max-width: calc(get-breakpoint(nth($breakpoints-list, $index + 1)) - 0.0625rem)) {
+      @content;
+    }
+  }
+}
