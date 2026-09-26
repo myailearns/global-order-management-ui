@@ -33,6 +33,7 @@
                                    "riders":  "Riders",
                                    "courierPartners":  "Courier Partners",
                                    "settings":  "Settings",
+                                   "setup":  "Setup",
                                    "webApp":  "Web App",
                                    "notifications":  "Notifications",
                                    "notificationsSetting":  "Notifications Setting",
@@ -68,6 +69,7 @@
                                    "platformMedia":  "Platform Media",
                                    "businessType":  "Business Type",
                                    "businessCategories":  "Business Categories",
+                                   "businessSetup":  "Business Setup",
                                    "accountManagement":  "Account Management",
                                    "adminApp":  "Admin App",
                                    "createOrderSettings":  "Create Order Settings",
@@ -1533,6 +1535,174 @@
                                                           "templateDownloadError":  "Failed to download template. Please try again."
                                                       }
                                      },
+            "businessSetup":  {
+                                    "categoryManager":  {
+                                                            "title":  "{{businessType}} - Manage Categories",
+                                                            "description":  "Enable or disable the platform categories available to this business type.",
+                                                            "searchPlaceholder":  "Search categories...",
+                                                            "empty":  "No categories are configured for this business type.",
+                                                            "summary":  {
+                                                                            "total":  "Total Categories",
+                                                                            "enabled":  "Enabled",
+                                                                            "disabled":  "Disabled"
+                                                                        },
+                                                            "columns":  {
+                                                                            "name":  "Category Name",
+                                                                            "code":  "Code",
+                                                                            "sourceType":  "Source Type",
+                                                                            "assignedProducts":  "Assigned Products",
+                                                                            "status":  "Status",
+                                                                            "actions":  "Available Actions"
+                                                                        },
+                                                            "source":  {
+                                                                           "platform":  "Platform"
+                                                                       },
+                                                            "status":  {
+                                                                           "enabled":  "Enabled",
+                                                                           "disabled":  "Disabled"
+                                                                       },
+                                                            "actions":  {
+                                                                            "enable":  "Enable",
+                                                                            "disable":  "Disable",
+                                                                            "updating":  "Updating...",
+                                                                            "retry":  "Retry",
+                                                                            "close":  "Close"
+                                                                        },
+                                                            "messages":  {
+                                                                             "loadError":  "Failed to load categories.",
+                                                                             "updateError":  "Failed to update category.",
+                                                                             "enabled":  "Category {{name}} enabled.",
+                                                                             "disabled":  "Category {{name}} disabled."
+                                                                         }
+                                                        },
+                                    "fieldManager":  {
+                                                         "title":  "{{businessType}} - Manage Fields",
+                                                         "description":  "Enable or disable the platform fields available to this business type.",
+                                                         "searchPlaceholder":  "Search fields...",
+                                                         "empty":  "No fields are configured for this business type.",
+                                                         "summary":  {
+                                                                         "total":  "Total Fields",
+                                                                         "enabled":  "Enabled",
+                                                                         "disabled":  "Disabled"
+                                                                     },
+                                                         "columns":  {
+                                                                         "name":  "Field Name",
+                                                                         "key":  "Key",
+                                                                         "type":  "Type",
+                                                                         "kind":  "Field Kind",
+                                                                         "required":  "Required",
+                                                                         "status":  "Status",
+                                                                         "actions":  "Available Actions"
+                                                                     },
+                                                         "kind":  {
+                                                                      "pricing":  "Pricing",
+                                                                      "metadata":  "Metadata"
+                                                                  },
+                                                         "required":  {
+                                                                          "yes":  "Yes",
+                                                                          "no":  "No"
+                                                                      },
+                                                         "status":  {
+                                                                        "enabled":  "Enabled",
+                                                                        "disabled":  "Disabled"
+                                                                    },
+                                                         "actions":  {
+                                                                         "enable":  "Enable",
+                                                                         "disable":  "Disable",
+                                                                         "updating":  "Updating...",
+                                                                         "retry":  "Retry",
+                                                                         "close":  "Close"
+                                                                     },
+                                                         "messages":  {
+                                                                          "loadError":  "Failed to load fields.",
+                                                                          "updateError":  "Failed to update field.",
+                                                                          "enabled":  "Field {{name}} enabled.",
+                                                                          "disabled":  "Field {{name}} disabled."
+                                                                      }
+                                                     },
+                                    "fieldGroupManager":  {
+                                                              "title":  "{{businessType}} - Manage Field Groups",
+                                                              "description":  "Enable or disable the platform field groups available to this business type.",
+                                                              "searchPlaceholder":  "Search field groups...",
+                                                              "empty":  "No field groups are configured for this business type.",
+                                                              "summary":  {
+                                                                              "total":  "Total Field Groups",
+                                                                              "enabled":  "Enabled",
+                                                                              "disabled":  "Disabled"
+                                                                          },
+                                                              "columns":  {
+                                                                              "name":  "Field Group Name",
+                                                                              "version":  "Version",
+                                                                              "fields":  "Fields",
+                                                                              "source":  "Source",
+                                                                              "status":  "Status",
+                                                                              "actions":  "Available Actions"
+                                                                          },
+                                                              "source":  {
+                                                                             "platform":  "Platform"
+                                                                         },
+                                                              "status":  {
+                                                                             "enabled":  "Enabled",
+                                                                             "disabled":  "Disabled"
+                                                                         },
+                                                              "actions":  {
+                                                                              "enable":  "Enable",
+                                                                              "disable":  "Disable",
+                                                                              "updating":  "Updating...",
+                                                                              "retry":  "Retry",
+                                                                              "close":  "Close"
+                                                                          },
+                                                              "messages":  {
+                                                                               "loadError":  "Failed to load field groups.",
+                                                                               "updateError":  "Failed to update field group.",
+                                                                               "enabled":  "Field group {{name}} enabled.",
+                                                                               "disabled":  "Field group {{name}} disabled."
+                                                                           }
+                                                          },
+                                    "unitManager":  {
+                                                        "title":  "{{businessType}} - Manage Units",
+                                                        "description":  "Enable or disable the platform measurement units available to this business type.",
+                                                        "searchPlaceholder":  "Search units...",
+                                                        "empty":  "No units are configured for this business type.",
+                                                        "summary":  {
+                                                                        "total":  "Total Units",
+                                                                        "enabled":  "Enabled",
+                                                                        "disabled":  "Disabled"
+                                                                    },
+                                                        "columns":  {
+                                                                        "name":  "Unit Name",
+                                                                        "symbol":  "Symbol",
+                                                                        "baseUnit":  "Base Unit",
+                                                                        "conversionFactor":  "Conversion Factor",
+                                                                        "source":  "Source",
+                                                                        "status":  "Status",
+                                                                        "actions":  "Available Actions"
+                                                                    },
+                                                        "baseUnit":  {
+                                                                         "none":  "Base unit"
+                                                                     },
+                                                        "source":  {
+                                                                       "platform":  "Platform"
+                                                                   },
+                                                        "status":  {
+                                                                       "enabled":  "Enabled",
+                                                                       "disabled":  "Disabled"
+                                                                   },
+                                                        "actions":  {
+                                                                        "enable":  "Enable",
+                                                                        "disable":  "Disable",
+                                                                        "updating":  "Updating...",
+                                                                        "retry":  "Retry",
+                                                                        "close":  "Close"
+                                                                    },
+                                                        "messages":  {
+                                                                         "loadError":  "Failed to load units.",
+                                                                         "updateError":  "Failed to update unit.",
+                                                                         "enabled":  "Unit {{name}} enabled.",
+                                                                         "disabled":  "Unit {{name}} disabled."
+                                                                     }
+                                                    }
+                                },
             "businessTypeConfigure":  {
                                             "eyebrow":  "Platform Admin",
                                             "title":  "Business Type Configuration",

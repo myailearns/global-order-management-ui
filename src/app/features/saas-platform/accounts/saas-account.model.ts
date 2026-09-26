@@ -108,6 +108,8 @@ export interface TenantAccount {
   timezone: string;
   planId: string;
   gstin?: string | null;
+  businessType?: string | null;
+  businessSetupTypeIds?: string[];
   businessAddress?: string | null;
   logoUrl?: string | null;
   website?: string | null;
@@ -156,6 +158,8 @@ export interface CreateAccountRequest {
   countryCode: string;
   packageId: string;
   tierId: string;
+  businessType?: string;
+  businessSetupTypeIds?: string[];
   legalBusinessName?: string;
   tenantCode?: string;
   primaryContactName?: string;
@@ -190,6 +194,8 @@ export interface CompleteIncompleteAccountPayload {
   packageId: string;
   tierId: string;
   tierKey?: string;
+  businessType?: string;
+  businessSetupTypeIds?: string[];
   trialMode: string;
   trialDurationDays: number;
   firstTenantAdminName: string;
@@ -238,6 +244,8 @@ export interface UpdateAccountRequest {
   packageId?: string;
   tierId?: string;
   tierKey?: string;
+  businessType?: string;
+  businessSetupTypeIds?: string[];
   billingEmail?: string;
   businessEmail?: string;
   accountOwnerEmail?: string;

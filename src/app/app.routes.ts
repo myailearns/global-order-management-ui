@@ -25,6 +25,7 @@ import { BusinessDetailsComponent } from './features/admin-app/business-details/
 import { PaymentOptionsComponent } from './features/admin-app/payment-options/payment-options.component';
 import { RidersComponent } from './features/delivery/riders';
 import { CourierPartnersComponent } from './features/delivery/courier-partners';
+import { BusinessSetupComponent } from './features/setup/business-setup';
 import { EmployeeCodeConfigComponent } from './features/settings/employee-code-config';
 import { StorefrontConfigComponent } from './features/settings/storefront-config';
 import { DeliveryManagementComponent } from './features/settings/delivery-management/delivery-management.component';
@@ -373,6 +374,17 @@ export const routes: Routes = [
 					title: 'Customer Groups',
 					description: 'Manage manual customer segments for targeted outreach.',
 					featureKeys: ['customerGroup.list'],
+				},
+			},
+			{
+				path: 'setup/business-setup',
+				component: BusinessSetupComponent,
+				data: {
+					actor: 'tenant',
+					capability: 'tenant-admin',
+					featureKeys: ['businessSetup.list', 'businessSetup.manage'],
+					title: 'Business Setup',
+					description: 'Configure business setup features that are enabled for the tenant package.',
 				},
 			},
 			{

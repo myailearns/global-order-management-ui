@@ -25,6 +25,7 @@ export class UnitsComponent implements OnInit {
 
   readonly text = UNIT_UI_TEXT;
   readonly units = signal<Unit[]>([]);
+  readonly activeUnitOptions = signal<Unit[]>([]);
   readonly totalUnits = signal(0);
   readonly unitTablePageIndex = signal(0);
   readonly unitTablePageSize = signal(50);
@@ -60,7 +61,7 @@ export class UnitsComponent implements OnInit {
   // categoryOptions removed - units are now global
 
   readonly baseUnitNameById = computed<Record<string, string>>(() =>
-    this.units().reduce<Record<string, string>>((acc, unit) => {
+    [...this.units(), ...this.activeUnitOptions()].reduce<Record<string, string>>((acc, unit) => {
       if (unit._id) {
         acc[unit._id] = `${unit.name} (${unit.symbol})`;
       }
@@ -69,8 +70,7 @@ export class UnitsComponent implements OnInit {
   );
 
   readonly unitAssignOptions = computed<UnitAssignOption[]>(() =>
-    this.units()
-      .filter((unit) => unit.status !== 'INACTIVE')
+    this.activeUnitOptions()
       .map((unit) => ({
         id: unit._id || '',
         name: `${unit.name} (${unit.symbol})`,
@@ -108,7 +108,7 @@ export class UnitsComponent implements OnInit {
     this.errorMessage.set(null);
 
     // Only load units - categories removed
-    this.unitsService.getUnits({ page: 1, limit: this.unitTablePageSize() }).subscribe({
+    this.unitsService.getUnits({ page: 1, limit: this.unitTablePageSize(), ownership: 'TENANT' }).subscribe({
       next: (result) => {
         const pagination = result.pagination;
         this.totalUnits.set(pagination.total);
@@ -116,7 +116,7 @@ export class UnitsComponent implements OnInit {
         this.allUnitsLoaded.set(pagination.total <= 500);
 
         if (pagination.total <= 500 && pagination.hasMore) {
-          this.unitsService.getUnits({ page: 1, limit: pagination.total }).subscribe({
+          this.unitsService.getUnits({ page: 1, limit: pagination.total, ownership: 'TENANT' }).subscribe({
             next: (allRes) => this.units.set(allRes.data ?? []),
           });
         } else {
@@ -124,6 +124,7 @@ export class UnitsComponent implements OnInit {
         }
 
         this.loading.set(false);
+        this.loadActiveUnitOptions();
       },
       error: (error) => {
         console.error('Error loading units:', error);
@@ -151,6 +152,7 @@ export class UnitsComponent implements OnInit {
       search,
       sortBy,
       order,
+      ownership: 'TENANT',
     }).subscribe({
       next: (response) => {
         this.allUnitsLoaded.set(false);
@@ -170,7 +172,7 @@ export class UnitsComponent implements OnInit {
 
   loadAllUnits(): void {
     this.loading.set(true);
-    this.unitsService.getUnits({ page: 1, limit: this.totalUnits() }).subscribe({
+    this.unitsService.getUnits({ page: 1, limit: this.totalUnits(), ownership: 'TENANT' }).subscribe({
       next: (response) => {
         this.units.set(response.data ?? []);
         this.totalUnits.set(response.pagination.total);
@@ -358,6 +360,13 @@ export class UnitsComponent implements OnInit {
     this.onViewClose();
     this.pendingDeleteUnit.set(unit);
     this.deleteConfirmOpen.set(true);
+  }
+
+  private loadActiveUnitOptions(): void {
+    this.unitsService.getUnits({ page: 1, limit: 1000, status: 'ACTIVE' }).subscribe({
+      next: (response) => this.activeUnitOptions.set(response.data ?? []),
+      error: (error) => console.error('Error loading active unit options:', error),
+    });
   }
 
   private extractApiMessage(error: unknown): string {

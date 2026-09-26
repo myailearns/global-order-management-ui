@@ -1,0 +1,218 @@
+<section class="business-setup-page">
+  @if (errorMessage()) {
+    <div class="business-setup-page__error" role="alert">
+      <span>{{ errorMessage() }}</span>
+      <gom-lib-button type="button" variant="ghost" (buttonClick)="load()">Retry</gom-lib-button>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="business-setup-page__loading">
+      <i class="ri-loader-4-line business-setup-page__spin" aria-hidden="true"></i>
+      <span>Loading business setup profiles...</span>
+    </div>
+  } @else if (isManageView() && managedProfile(); as profile) {
+    <header class="business-setup-page__detail-header">
+      <div class="business-setup-page__breadcrumb-row">
+        <button type="button" class="business-setup-page__back-button" (click)="closeManageProfile()">
+          <i class="ri-arrow-left-line" aria-hidden="true"></i>
+          <span>Business Setup</span>
+        </button>
+        <i class="ri-arrow-right-s-line business-setup-page__breadcrumb-separator" aria-hidden="true"></i>
+        <span class="business-setup-page__breadcrumb-current">{{ profile.name }}</span>
+      </div>
+      <span class="business-setup-page__mode-pill">{{ setupModeLabel() }}</span>
+    </header>
+
+    <section class="business-setup-manage-hero">
+      <div>
+        <h2>{{ profile.name }} Configuration</h2>
+        <p>{{ profile.description || 'Customize properties, default entities, tax standards, and product attributes for this business type.' }}</p>
+      </div>
+    </section>
+
+    <section class="business-setup-manage-list">
+      @for (section of managedSections(); track section.key) {
+        <article class="business-setup-manage-card">
+          <div class="business-setup-manage-card__icon">
+            <i [class]="section.iconClass" aria-hidden="true"></i>
+          </div>
+
+          <div class="business-setup-manage-card__content">
+            <div class="business-setup-manage-card__title-row">
+              <h3>{{ section.label }}</h3>
+              <span class="business-setup-manage-card__status" [class.business-setup-manage-card__status--ready]="section.count > 0" [class.business-setup-manage-card__status--idle]="section.count === 0">
+                {{ section.statusLabel }}
+              </span>
+            </div>
+            <p>{{ section.description }}</p>
+          </div>
+
+          <div class="business-setup-manage-card__summary">
+            <strong>{{ section.itemLabel }}</strong>
+            <span>Configured</span>
+          </div>
+
+          <gom-lib-button type="button" variant="secondary" (buttonClick)="openSection(section.key)">Manage</gom-lib-button>
+        </article>
+      }
+    </section>
+
+    @if (isCategoryManagerOpen() && managedProfile(); as profile) {
+      <gom-business-type-category-manager
+        [businessTypeId]="managingCategoryBusinessTypeId() || ''"
+        [businessTypeName]="profile.name"
+        (closeManager)="closeCategoryManager()"
+        (categoriesUpdated)="onCategoriesUpdated()"
+      ></gom-business-type-category-manager>
+    }
+
+    @if (isFieldManagerOpen() && managedProfile(); as profile) {
+      <gom-business-type-field-manager
+        [businessTypeId]="managingFieldBusinessTypeId() || ''"
+        [businessTypeName]="profile.name"
+        (closeManager)="closeFieldManager()"
+        (fieldsUpdated)="onFieldsUpdated()"
+      ></gom-business-type-field-manager>
+    }
+
+    @if (isFieldGroupManagerOpen() && managedProfile(); as profile) {
+      <gom-business-type-field-group-manager
+        [businessTypeId]="managingFieldGroupBusinessTypeId() || ''"
+        [businessTypeName]="profile.name"
+        (closeManager)="closeFieldGroupManager()"
+        (fieldGroupsUpdated)="onFieldGroupsUpdated()"
+      ></gom-business-type-field-group-manager>
+    }
+
+    @if (isUnitManagerOpen() && managedProfile(); as profile) {
+      <gom-business-type-unit-manager
+        [businessTypeId]="managingUnitBusinessTypeId() || ''"
+        [businessTypeName]="profile.name"
+        (closeManager)="closeUnitManager()"
+        (unitsUpdated)="onUnitsUpdated()"
+      ></gom-business-type-unit-manager>
+    }
+  } @else {
+    <header class="business-setup-page__header">
+      <div class="business-setup-page__header-row">
+        <gom-page-heading navRoute="/setup/business-setup"></gom-page-heading>
+        <span class="business-setup-page__mode-pill">{{ setupModeLabel() }}</span>
+      </div>
+      <p class="business-setup-page__description">Review tenant-ready business profiles and continue the setup flow for each assigned business type.</p>
+    </header>
+
+    <section class="business-setup-banner">
+      <div>
+        <h2>Setup Your Business Entities</h2>
+        <p>Manage profiles, confirm category structures, and review the pre-configured setup blocks available for each business type on this tenant.</p>
+      </div>
+      <span class="business-setup-banner__count">{{ profileCount() }}</span>
+    </section>
+
+    <section class="business-setup-card business-setup-card--table">
+      <div class="business-setup-card__header">
+        <div>
+          <h3>Active Stores &amp; Profiles</h3>
+          <p>Select an assigned business profile to inspect its setup readiness and managed sections.</p>
+        </div>
+        <gom-lib-button type="button" variant="secondary" (buttonClick)="load()">Refresh</gom-lib-button>
+      </div>
+
+      @if (profiles().length) {
+        <div class="business-setup-table-shell">
+          <table class="business-setup-table">
+            <thead>
+              <tr>
+                <th>Business Name</th>
+                <th>Type</th>
+                <th>Setup Status</th>
+                <th>Completion</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (profile of profiles(); track profile.id) {
+                <tr [class.business-setup-table__row--active]="activeProfile()?.id === profile.id">
+                  <td>
+                    <div class="business-setup-table__name-cell">
+                      <span class="business-setup-table__icon"><i [class]="profile.icon" aria-hidden="true"></i></span>
+                      <div>
+                        <strong>{{ profile.name }}</strong>
+                        @if (profile.isPrimary) {
+                          <span class="business-setup-table__primary-badge">Primary</span>
+                        }
+                      </div>
+                    </div>
+                  </td>
+                  <td>{{ profile.businessCategoryLabel || 'General Setup' }}</td>
+                  <td>
+                    <span class="business-setup-table__status-chip" [class.business-setup-table__status-chip--active]="profile.setupStatus === 'ACTIVE'" [class.business-setup-table__status-chip--progress]="profile.setupStatus === 'IN_PROGRESS'" [class.business-setup-table__status-chip--idle]="profile.setupStatus === 'NOT_STARTED'">
+                      {{ statusLabel(profile.setupStatus) }}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="business-setup-table__progress-cell">
+                      <div class="business-setup-table__progress-track">
+                        <span class="business-setup-table__progress-bar" [class.business-setup-table__progress-bar--active]="profile.setupStatus === 'ACTIVE'" [class.business-setup-table__progress-bar--progress]="profile.setupStatus === 'IN_PROGRESS'" [style.width.%]="profile.completionPercent"></span>
+                      </div>
+                      <span>{{ profile.completionPercent }}%</span>
+                    </div>
+                  </td>
+                  <td>
+                    <gom-lib-button type="button" [variant]="activeProfile()?.id === profile.id ? 'primary' : 'secondary'" (buttonClick)="openManageProfile(profile.id)">
+                      {{ canManage() ? 'Manage' : 'View' }}
+                    </gom-lib-button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <div class="business-setup-card__empty-state">
+          <h4>No business profiles assigned</h4>
+          <p>This tenant does not yet have any mapped business setup profiles. Assign a business type to the tenant account to populate this screen.</p>
+        </div>
+      }
+    </section>
+
+    @if (activeProfile(); as profile) {
+      <section class="business-setup-card business-setup-card--detail">
+        <div class="business-setup-card__header business-setup-card__header--detail">
+          <div>
+            <p class="business-setup-card__eyebrow">Selected Profile</p>
+            <h3>{{ profile.name }}</h3>
+            <p>{{ profile.description || 'This business type is available for tenant onboarding and setup configuration.' }}</p>
+          </div>
+          <div class="business-setup-card__summary-metrics">
+            <div>
+              <strong>{{ profile.configuredSectionCount }}</strong>
+              <span>Sections Ready</span>
+            </div>
+            <div>
+              <strong>{{ profile.configuredItemCount }}</strong>
+              <span>Items Configured</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="business-setup-card__meta-row">
+          <span>{{ profile.businessCategoryLabel || 'General Setup' }}</span>
+          <span>{{ statusLabel(profile.setupStatus) }}</span>
+          <span>{{ profile.completionPercent }}% complete</span>
+        </div>
+
+        <div class="business-setup-card__section-grid">
+          @for (section of profile.sections; track section.key) {
+            <article class="business-setup-card__section-item">
+              <span class="business-setup-card__section-count">{{ section.count }}</span>
+              <h4>{{ section.label }}</h4>
+              <p>{{ sectionHint(section.key) }}</p>
+            </article>
+          }
+        </div>
+      </section>
+    }
+  }
+</section>

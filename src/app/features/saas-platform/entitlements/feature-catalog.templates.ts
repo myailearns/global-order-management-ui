@@ -141,6 +141,8 @@ export const FEATURE_TEMPLATES: FeatureTemplate[] = [
   { featureKey: 'permissions.export', displayName: 'Export Permissions', module: 'tenant-admin', dependencies: ['permissions.view'] },
   { featureKey: 'employeeCode.view', displayName: 'View Employee Code Settings', module: 'settings', dependencies: [] },
   { featureKey: 'employeeCode.config', displayName: 'Configure Employee Code', module: 'settings', dependencies: ['employeeCode.view'] },
+  { featureKey: 'businessSetup.list', displayName: 'View Business Setup', module: 'setup', dependencies: [] },
+  { featureKey: 'businessSetup.manage', displayName: 'Manage Business Setup', module: 'setup', dependencies: ['businessSetup.list'] },
   { featureKey: 'notification.broadcast', displayName: 'Send Push Notifications', module: 'settings', dependencies: [] },
   { featureKey: 'notification.manage', displayName: 'Manage Notifications', module: 'settings', dependencies: [] },
   { featureKey: 'storefront.config', displayName: 'Configure Storefront', module: 'settings', dependencies: [] },

@@ -5,7 +5,7 @@ export interface NavItem {
   route: string;
   icon: string;
   translationKey: string;
-  section: 'Master Setup' | 'Marketplace' | 'Product Setup' | 'Order Management' | 'Account Management' | 'Admin App' | 'Web App' | 'Settings' | 'Notifications';
+  section: 'Master Setup' | 'Marketplace' | 'Product Setup' | 'Order Management' | 'Account Management' | 'Admin App' | 'Setup' | 'Web App' | 'Settings' | 'Notifications';
   actor: UserActor;
   capability?: AppCapability;
   featureKeys?: string[];
@@ -33,6 +33,7 @@ export const NAV_ICONS = {
   customerGroups: 'ri-team-line',
   riders: 'ri-bike-line',
   courierPartners: 'ri-truck-line',
+  businessSetup: 'ri-store-3-line',
   employeeCode: 'ri-settings-3-line',
   storefront: 'ri-store-line',
   branding: 'ri-palette-line',
@@ -86,6 +87,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: 'Customer Groups', route: '/customers/groups', icon: NAV_ICONS.customerGroups, translationKey: 'app.navigation.customerGroups', section: 'Order Management', actor: 'tenant', capability: 'customer-groups', featureKeys: ['customerGroup.list'] },
   { label: 'Riders', route: '/delivery/riders', icon: NAV_ICONS.riders, translationKey: 'app.navigation.riders', section: 'Order Management', actor: 'tenant', capability: 'delivery', featureKeys: ['rider.list'] },
   { label: 'Courier Partners', route: '/delivery/courier-partners', icon: NAV_ICONS.courierPartners, translationKey: 'app.navigation.courierPartners', section: 'Order Management', actor: 'tenant', capability: 'delivery', featureKeys: ['courierPartner.list'] },
+  { label: 'Business Setup', route: '/setup/business-setup', icon: NAV_ICONS.businessSetup, translationKey: 'app.navigation.businessSetup', section: 'Setup', actor: 'tenant', capability: 'tenant-admin', featureKeys: ['businessSetup.list', 'businessSetup.manage'] },
   { label: 'Employee Code', route: '/settings/employee-code', icon: NAV_ICONS.employeeCode, translationKey: 'app.navigation.employeeCode', section: 'Settings', actor: 'tenant', capability: 'tenant-admin', featureKeys: ['employeeCode.view', 'employeeCode.config'] },
   { label: 'Storefront', route: '/settings/web-app/storefront', icon: NAV_ICONS.storefront, translationKey: 'app.navigation.storefront', section: 'Web App', actor: 'tenant', capability: 'tenant-admin', featureKeys: ['storefront.config'] },
   { label: 'Branding', route: '/settings/web-app/branding', icon: NAV_ICONS.branding, translationKey: 'app.navigation.branding', section: 'Web App', actor: 'tenant', capability: 'tenant-admin', featureKeys: ['storefront.config'] },

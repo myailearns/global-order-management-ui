@@ -106,6 +106,7 @@ export class GomShellComponent implements OnInit, OnDestroy {
     'Order Management': true,
     'Account Management': true,
     'Admin App': true,
+    'Setup': true,
     'Web App': true,
     'Settings': true,
     'Notifications': true,
@@ -134,7 +135,7 @@ export class GomShellComponent implements OnInit, OnDestroy {
 
   readonly sections = computed<Array<NavItem['section']>>(() => {
     const visibleItems = this.groupedNavItems();
-    const orderedSections: Array<NavItem['section']> = ['Master Setup', 'Marketplace', 'Product Setup', 'Order Management', 'Account Management', 'Admin App', 'Web App', 'Settings', 'Notifications'];
+    const orderedSections: Array<NavItem['section']> = ['Master Setup', 'Marketplace', 'Product Setup', 'Order Management', 'Account Management', 'Admin App', 'Setup', 'Web App', 'Settings', 'Notifications'];
     return orderedSections.filter((section) => visibleItems.some((item) => item.section === section));
   });
 
@@ -441,6 +442,10 @@ export class GomShellComponent implements OnInit, OnDestroy {
 
     if (section === 'Admin App') {
       return 'app.navigation.adminApp';
+    }
+
+    if (section === 'Setup') {
+      return 'app.navigation.setup';
     }
 
     if (section === 'Web App') {

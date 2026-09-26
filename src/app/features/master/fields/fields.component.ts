@@ -136,7 +136,7 @@ export class FieldsComponent implements OnInit {
     this.errorMessage.set(null);
 
     const fieldsRequest = this.canViewField()
-      ? this.fieldsService.getFields({ page: 1, limit: this.fieldTablePageSize() })
+      ? this.fieldsService.getFields({ page: 1, limit: this.fieldTablePageSize(), ownership: 'TENANT' })
       : of({ success: true, data: [], pagination: { page: 1, limit: 50, total: 0, hasMore: false, totalPages: 1, canLoadAll: false } });
 
     const fieldGroupsRequest = this.canViewFieldGroups()
@@ -155,7 +155,7 @@ export class FieldsComponent implements OnInit {
         this.fieldGroups.set(response.fieldGroups.data ?? []);
 
         if (pagination.total <= 500 && pagination.hasMore && this.canViewField()) {
-          this.fieldsService.getFields({ page: 1, limit: pagination.total }).subscribe({
+          this.fieldsService.getFields({ page: 1, limit: pagination.total, ownership: 'TENANT' }).subscribe({
             next: (allRes) => this.fields.set(allRes.data ?? []),
           });
         } else {
@@ -190,6 +190,7 @@ export class FieldsComponent implements OnInit {
       search,
       sortBy,
       order,
+      ownership: 'TENANT',
     }).subscribe({
       next: (response) => {
         this.allFieldsLoaded.set(false);
@@ -209,7 +210,7 @@ export class FieldsComponent implements OnInit {
 
   loadAllFields(): void {
     this.loading.set(true);
-    this.fieldsService.getFields({ page: 1, limit: this.totalFields() }).subscribe({
+    this.fieldsService.getFields({ page: 1, limit: this.totalFields(), ownership: 'TENANT' }).subscribe({
       next: (response) => {
         this.fields.set(response.data ?? []);
         this.totalFields.set(response.pagination.total);

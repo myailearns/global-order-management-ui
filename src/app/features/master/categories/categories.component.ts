@@ -115,7 +115,7 @@ export class CategoriesComponent implements OnInit, OnDestroy {
     this.categoryTablePageIndex.set(0);
     this.allCategoriesLoaded.set(false);
 
-    this.categoriesService.getCategories(1, this.categoryTablePageSize()).subscribe({
+    this.categoriesService.getCategories(1, this.categoryTablePageSize(), undefined, undefined, undefined, undefined, 'TENANT').subscribe({
       next: (response) => {
         const pagination = response.pagination;
         this.totalCategories.set(pagination.total);
@@ -123,7 +123,7 @@ export class CategoriesComponent implements OnInit, OnDestroy {
         this.allCategoriesLoaded.set(pagination.total <= 500);
 
         if (pagination.total <= 500 && pagination.hasMore) {
-          this.categoriesService.getCategories(1, pagination.total).subscribe({
+          this.categoriesService.getCategories(1, pagination.total, undefined, undefined, undefined, undefined, 'TENANT').subscribe({
             next: (allRes) => this.categories.set(allRes.data || []),
           });
         } else {
@@ -150,7 +150,7 @@ export class CategoriesComponent implements OnInit, OnDestroy {
     const sortBy = query.sort?.key;
     const order = query.sort?.direction as 'asc' | 'desc' | undefined;
 
-    this.categoriesService.getCategories(query.pageIndex + 1, query.pageSize, undefined, search, sortBy, order).subscribe({
+    this.categoriesService.getCategories(query.pageIndex + 1, query.pageSize, undefined, search, sortBy, order, 'TENANT').subscribe({
       next: (res) => {
         this.allCategoriesLoaded.set(false);
         this.categories.set(res.data ?? []);
@@ -166,7 +166,7 @@ export class CategoriesComponent implements OnInit, OnDestroy {
 
   loadAllCategories(): void {
     this.loading.set(true);
-    this.categoriesService.getCategories(1, this.totalCategories()).subscribe({
+    this.categoriesService.getCategories(1, this.totalCategories(), undefined, undefined, undefined, undefined, 'TENANT').subscribe({
       next: (res) => {
         this.categories.set(res.data ?? []);
         this.totalCategories.set(res.pagination.total);

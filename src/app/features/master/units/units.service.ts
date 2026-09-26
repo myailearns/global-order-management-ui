@@ -14,6 +14,8 @@ export interface CategoryOption {
 
 export interface Unit {
   _id?: string;
+  source?: 'PLATFORM' | 'TENANT';
+  templateRef?: string | null;
   name: string;
   symbol: string;
   baseUnitId: string | null;
@@ -73,6 +75,7 @@ export class UnitsService {
     search?: string;
     sortBy?: string;
     order?: 'asc' | 'desc';
+    ownership?: 'TENANT';
   }): Observable<ApiPaginated<Unit>> {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set('page', String(params.page));
@@ -81,6 +84,7 @@ export class UnitsService {
     if (params?.search) searchParams.set('search', params.search);
     if (params?.sortBy) searchParams.set('sortBy', params.sortBy);
     if (params?.order) searchParams.set('order', params.order);
+    if (params?.ownership) searchParams.set('ownership', params.ownership);
     searchParams.set('_ts', String(Date.now()));
 
     return this.http.get<ApiPaginated<Unit>>(`${this.apiUrl}?${searchParams.toString()}`);

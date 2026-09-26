@@ -267,8 +267,8 @@ export class FieldGroupsComponent implements OnInit {
     this.errorMessage.set(null);
 
     forkJoin({
-      fieldGroups: this.fieldGroupsService.listFieldGroups({ page: 1, limit: this.fieldGroupTablePageSize() }),
-      fields: this.fieldGroupsService.listFields({ page: 1, limit: 5000 }),
+      fieldGroups: this.fieldGroupsService.listFieldGroups({ page: 1, limit: this.fieldGroupTablePageSize(), ownership: 'TENANT' }),
+      fields: this.fieldGroupsService.listFields({ page: 1, limit: 5000, status: 'ACTIVE' }),
       groups: this.fieldGroupsService.listGroups({ page: 1, limit: 5000 }),
       // REMOVED: Category association - field groups are now global
       // categories: this.fieldGroupsService.listCategories({ page: 1, limit: 5000, status: 'ACTIVE' }),
@@ -280,7 +280,7 @@ export class FieldGroupsComponent implements OnInit {
         this.allFieldGroupsLoaded.set(pagination.total <= 500);
 
         if (pagination.total <= 500 && pagination.hasMore) {
-          this.fieldGroupsService.listFieldGroups({ page: 1, limit: pagination.total }).subscribe({
+          this.fieldGroupsService.listFieldGroups({ page: 1, limit: pagination.total, ownership: 'TENANT' }).subscribe({
             next: (allRes) => this.fieldGroups.set(allRes.data ?? []),
           });
         } else {
@@ -319,6 +319,7 @@ export class FieldGroupsComponent implements OnInit {
       search,
       sortBy,
       order,
+      ownership: 'TENANT',
     }).subscribe({
       next: (response) => {
         this.allFieldGroupsLoaded.set(false);
@@ -338,7 +339,7 @@ export class FieldGroupsComponent implements OnInit {
 
   loadAllFieldGroups(): void {
     this.loading.set(true);
-    this.fieldGroupsService.listFieldGroups({ page: 1, limit: this.totalFieldGroups() }).subscribe({
+    this.fieldGroupsService.listFieldGroups({ page: 1, limit: this.totalFieldGroups(), ownership: 'TENANT' }).subscribe({
       next: (response) => {
         this.fieldGroups.set(response.data ?? []);
         this.totalFieldGroups.set(response.pagination.total);

@@ -103,6 +103,7 @@ export class FieldGroupsService {
     search?: string;
     sortBy?: string;
     order?: 'asc' | 'desc';
+    ownership?: 'TENANT';
   }): Observable<ApiPaginated<FieldGroup>> {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set('page', String(params.page));
@@ -111,6 +112,7 @@ export class FieldGroupsService {
     if (params?.search) searchParams.set('search', params.search);
     if (params?.sortBy) searchParams.set('sortBy', params.sortBy);
     if (params?.order) searchParams.set('order', params.order);
+    if (params?.ownership) searchParams.set('ownership', params.ownership);
 
     const query = searchParams.toString();
     const url = query ? `${this.fieldGroupsUrl}?${query}` : this.fieldGroupsUrl;

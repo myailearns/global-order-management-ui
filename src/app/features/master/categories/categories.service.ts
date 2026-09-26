@@ -8,6 +8,8 @@ export interface Category {
   _id?: string;
   name: string;
   description?: string;
+  source?: 'PLATFORM' | 'TENANT';
+  templateRef?: string | null;
   groupCount?: number;
   imageAssetId?: string | null;
   imageUrl?: string;
@@ -81,7 +83,15 @@ export class CategoriesService {
     return this.authSession.getTenantHeaders();
   }
 
-  getCategories(page?: number, limit?: number, status?: 'ACTIVE' | 'INACTIVE', search?: string, sortBy?: string, order?: 'asc' | 'desc'): Observable<ApiPaginated<Category>> {
+  getCategories(
+    page?: number,
+    limit?: number,
+    status?: 'ACTIVE' | 'INACTIVE',
+    search?: string,
+    sortBy?: string,
+    order?: 'asc' | 'desc',
+    ownership?: 'TENANT',
+  ): Observable<ApiPaginated<Category>> {
     const params = new URLSearchParams();
     if (page) params.set('page', String(page));
     if (limit) params.set('limit', String(limit));
@@ -89,6 +99,7 @@ export class CategoriesService {
     if (search) params.set('search', search);
     if (sortBy) params.set('sortBy', sortBy);
     if (order) params.set('order', order);
+    if (ownership) params.set('ownership', ownership);
 
     const query = params.toString();
     const url = query ? `${this.apiUrl}?${query}` : this.apiUrl;

@@ -1,0 +1,81 @@
+@use "theme" as theme;
+
+.category-manager {
+  display: grid;
+  gap: theme.get-gap(md);
+
+  &__description {
+    margin: 0;
+    color: theme.get-text(default-light);
+    font-size: theme.get-font-size(sm);
+  }
+
+  &__summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: theme.get-gap(sm);
+  }
+
+  &__summary-item {
+    display: grid;
+    gap: theme.get-gap(xxs);
+    padding: theme.get-spacing(sm);
+    border: theme.get-border-size(hairline) solid theme.get-border(standard);
+    border-radius: theme.get-radius(sm);
+    background: theme.get-background(secondary);
+
+    span {
+      color: theme.get-text(default-light);
+      font-size: theme.get-font-size(xs);
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    strong {
+      color: theme.get-text(default);
+      @include theme.typography-heading(md);
+    }
+
+    &--enabled strong {
+      color: theme.get-text(success);
+    }
+
+    &--disabled strong {
+      color: theme.get-text(danger);
+    }
+  }
+
+  &__error {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: theme.get-gap(sm);
+    padding: theme.get-spacing(sm);
+    border: theme.get-border-size(hairline) solid theme.get-border(danger);
+    border-radius: theme.get-radius(sm);
+    background: theme.get-background(danger-light);
+    color: theme.get-text(danger);
+  }
+}
+
+.gom-modal__action-layout-end {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@include theme.breakpoint-down(sm) {
+  .category-manager {
+    &__summary {
+      grid-template-columns: 1fr;
+    }
+
+    &__error {
+      align-items: stretch;
+      flex-direction: column;
+    }
+  }
+
+  .gom-modal__action-layout-end {
+    width: 100%;
+  }
+}

@@ -126,6 +126,10 @@ export class AuthSessionService {
       return '/saas-admin/offers';
     }
 
+    if (this.hasFeature('businessSetup.list')) {
+      return '/setup/business-setup';
+    }
+
     // Check settings pages
     if (this.hasFeature('storefront.config')) {
       return '/settings/web-app/storefront';

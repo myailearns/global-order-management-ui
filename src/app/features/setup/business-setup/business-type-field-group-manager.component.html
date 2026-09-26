@@ -1,0 +1,61 @@
+<gom-lib-modal
+  [(show)]="modalOpen"
+  [title]="modalTitle()"
+  size="large"
+  mobilePresentation="fullscreen"
+  (closed)="closeManager.emit()"
+>
+  <section class="field-group-manager">
+    <p class="field-group-manager__description">
+      {{ 'businessSetup.fieldGroupManager.description' | translate }}
+    </p>
+
+    @if (!loading()) {
+      <div class="field-group-manager__summary" aria-live="polite">
+        <article class="field-group-manager__summary-item">
+          <span>{{ 'businessSetup.fieldGroupManager.summary.total' | translate }}</span>
+          <strong>{{ counts().all }}</strong>
+        </article>
+        <article class="field-group-manager__summary-item field-group-manager__summary-item--enabled">
+          <span>{{ 'businessSetup.fieldGroupManager.summary.enabled' | translate }}</span>
+          <strong>{{ counts().enabled }}</strong>
+        </article>
+        <article class="field-group-manager__summary-item field-group-manager__summary-item--disabled">
+          <span>{{ 'businessSetup.fieldGroupManager.summary.disabled' | translate }}</span>
+          <strong>{{ counts().disabled }}</strong>
+        </article>
+      </div>
+    }
+
+    @if (errorMessage()) {
+      <div class="field-group-manager__error" role="alert">
+        <span>{{ errorMessage() }}</span>
+        <gom-lib-button type="button" variant="secondary" (buttonClick)="loadFieldGroups()">
+          {{ 'businessSetup.fieldGroupManager.actions.retry' | translate }}
+        </gom-lib-button>
+      </div>
+    } @else {
+      <gom-lib-table
+        [columns]="columns"
+        [rows]="rows()"
+        [loading]="loading()"
+        [totalItems]="rows().length"
+        [pageSize]="10"
+        [pageSizeOptions]="[5, 10, 20]"
+        [showPagination]="rows().length > 5"
+        [searchPlaceholder]="'businessSetup.fieldGroupManager.searchPlaceholder' | translate"
+        [emptyMessage]="'businessSetup.fieldGroupManager.empty' | translate"
+        (rowAction)="onRowAction($event)"
+      ></gom-lib-table>
+    }
+  </section>
+
+  <footer class="gom-modal__action-layout" gom-modal-actions>
+    <div class="gom-modal__action-layout-start"></div>
+    <div class="gom-modal__action-layout-end">
+      <gom-lib-button type="button" variant="secondary" (buttonClick)="close()">
+        {{ 'businessSetup.fieldGroupManager.actions.close' | translate }}
+      </gom-lib-button>
+    </div>
+  </footer>
+</gom-lib-modal>

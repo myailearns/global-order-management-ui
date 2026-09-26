@@ -1,0 +1,61 @@
+<gom-lib-modal
+  [(show)]="modalOpen"
+  [title]="modalTitle()"
+  size="large"
+  mobilePresentation="fullscreen"
+  (closed)="closeManager.emit()"
+>
+  <section class="unit-manager">
+    <p class="unit-manager__description">
+      {{ 'businessSetup.unitManager.description' | translate }}
+    </p>
+
+    @if (!loading()) {
+      <div class="unit-manager__summary" aria-live="polite">
+        <article class="unit-manager__summary-item">
+          <span>{{ 'businessSetup.unitManager.summary.total' | translate }}</span>
+          <strong>{{ counts().all }}</strong>
+        </article>
+        <article class="unit-manager__summary-item unit-manager__summary-item--enabled">
+          <span>{{ 'businessSetup.unitManager.summary.enabled' | translate }}</span>
+          <strong>{{ counts().enabled }}</strong>
+        </article>
+        <article class="unit-manager__summary-item unit-manager__summary-item--disabled">
+          <span>{{ 'businessSetup.unitManager.summary.disabled' | translate }}</span>
+          <strong>{{ counts().disabled }}</strong>
+        </article>
+      </div>
+    }
+
+    @if (errorMessage()) {
+      <div class="unit-manager__error" role="alert">
+        <span>{{ errorMessage() }}</span>
+        <gom-lib-button type="button" variant="secondary" (buttonClick)="loadUnits()">
+          {{ 'businessSetup.unitManager.actions.retry' | translate }}
+        </gom-lib-button>
+      </div>
+    } @else {
+      <gom-lib-table
+        [columns]="columns"
+        [rows]="rows()"
+        [loading]="loading()"
+        [totalItems]="rows().length"
+        [pageSize]="10"
+        [pageSizeOptions]="[5, 10, 20]"
+        [showPagination]="rows().length > 5"
+        [searchPlaceholder]="'businessSetup.unitManager.searchPlaceholder' | translate"
+        [emptyMessage]="'businessSetup.unitManager.empty' | translate"
+        (rowAction)="onRowAction($event)"
+      ></gom-lib-table>
+    }
+  </section>
+
+  <footer class="gom-modal__action-layout" gom-modal-actions>
+    <div class="gom-modal__action-layout-start"></div>
+    <div class="gom-modal__action-layout-end">
+      <gom-lib-button type="button" variant="secondary" (buttonClick)="close()">
+        {{ 'businessSetup.unitManager.actions.close' | translate }}
+      </gom-lib-button>
+    </div>
+  </footer>
+</gom-lib-modal>

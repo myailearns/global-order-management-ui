@@ -12,6 +12,8 @@ export type FieldCurrencyCode = 'INR';
 
 export interface Field {
   _id?: string;
+  source?: 'PLATFORM' | 'TENANT';
+  templateRef?: string | null;
   name: string;
   key: string;
   type: FieldType;
@@ -96,6 +98,7 @@ export class FieldsService {
     search?: string;
     sortBy?: string;
     order?: 'asc' | 'desc';
+    ownership?: 'TENANT';
   }): Observable<ApiPaginated<Field>> {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set('page', String(params.page));
@@ -104,6 +107,7 @@ export class FieldsService {
     if (params?.search) searchParams.set('search', params.search);
     if (params?.sortBy) searchParams.set('sortBy', params.sortBy);
     if (params?.order) searchParams.set('order', params.order);
+    if (params?.ownership) searchParams.set('ownership', params.ownership);
 
     const query = searchParams.toString();
     const url = query ? `${this.apiUrl}?${query}` : this.apiUrl;

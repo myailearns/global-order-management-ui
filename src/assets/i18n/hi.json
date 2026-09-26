@@ -47,6 +47,7 @@
       "riders": "राइडर्स",
       "courierPartners": "कूरियर पार्टनर्स",
       "settings": "सेटिंग्स",
+      "setup": "सेटअप",
       "webApp": "वेब ऐप",
       "notifications": "सूचनाएं",
       "notificationsSetting": "सूचना सेटिंग",
@@ -68,6 +69,7 @@
       "saasFeatures": "सास फीचर्स",
       "platformTenantRoles": "प्लेटफॉर्म टेनेंट रोल्स",
       "tenantEntitlements": "टेनेंट एंटाइटलमेंट्स",
+      "businessSetup": "बिजनेस सेटअप",
       "tenantRoles": "टेनेंट रोल्स",
       "categoryTemplates": "कैटेगरी टेम्प्लेट्स",
       "marketplace": "मार्केटप्लेस",
@@ -187,6 +189,144 @@
       "downloadNotAllowed": "आपको टेम्पलेट डाउनलोड करने की अनुमति नहीं है।",
       "templateDownloaded": "टेम्पलेट सफलतापूर्वक डाउनलोड हो गया।",
       "templateDownloadError": "टेम्पलेट डाउनलोड नहीं हो सका। कृपया फिर से प्रयास करें।"
+    }
+  },
+  "businessSetup": {
+    "categoryManager": {
+      "title": "{{businessType}} - कैटेगरी प्रबंधन",
+      "description": "इस बिज़नेस टाइप के लिए उपलब्ध प्लेटफ़ॉर्म कैटेगरी सक्षम या अक्षम करें।",
+      "searchPlaceholder": "कैटेगरी खोजें...",
+      "empty": "इस बिज़नेस टाइप के लिए कोई कैटेगरी कॉन्फ़िगर नहीं है।",
+      "summary": {
+        "total": "कुल कैटेगरी",
+        "enabled": "सक्षम",
+        "disabled": "अक्षम"
+      },
+      "columns": {
+        "name": "कैटेगरी का नाम",
+        "code": "कोड",
+        "sourceType": "स्रोत प्रकार",
+        "assignedProducts": "असाइन किए गए प्रोडक्ट",
+        "status": "स्थिति",
+        "actions": "उपलब्ध कार्रवाइयां"
+      },
+      "source": {
+        "platform": "प्लेटफ़ॉर्म"
+      },
+      "status": {
+        "enabled": "सक्षम",
+        "disabled": "अक्षम"
+      },
+      "actions": {
+        "enable": "सक्षम करें",
+        "disable": "अक्षम करें",
+        "updating": "अपडेट हो रहा है...",
+        "retry": "फिर से प्रयास करें",
+        "close": "बंद करें"
+      },
+      "messages": {
+        "loadError": "कैटेगरी लोड नहीं हो सकीं।",
+        "updateError": "कैटेगरी अपडेट नहीं हो सकी।",
+        "enabled": "कैटेगरी {{name}} सक्षम की गई।",
+        "disabled": "कैटेगरी {{name}} अक्षम की गई।"
+      }
+    },
+    "fieldManager": {
+      "title": "{{businessType}} - फील्ड प्रबंधन",
+      "description": "इस बिज़नेस टाइप के लिए उपलब्ध प्लेटफ़ॉर्म फील्ड सक्षम या अक्षम करें।",
+      "searchPlaceholder": "फील्ड खोजें...",
+      "empty": "इस बिज़नेस टाइप के लिए कोई फील्ड कॉन्फ़िगर नहीं है।",
+      "summary": {
+        "total": "कुल फील्ड",
+        "enabled": "सक्षम",
+        "disabled": "अक्षम"
+      },
+      "columns": {
+        "name": "फील्ड का नाम",
+        "key": "कुंजी",
+        "type": "प्रकार",
+        "kind": "फील्ड प्रकार",
+        "required": "आवश्यक",
+        "status": "स्थिति",
+        "actions": "उपलब्ध कार्रवाइयां"
+      },
+      "kind": {
+        "pricing": "मूल्य निर्धारण",
+        "metadata": "मेटाडेटा"
+      },
+      "required": {
+        "yes": "हाँ",
+        "no": "नहीं"
+      },
+      "status": {
+        "enabled": "सक्षम",
+        "disabled": "अक्षम"
+      },
+      "actions": {
+        "enable": "सक्षम करें",
+        "disable": "अक्षम करें",
+        "updating": "अपडेट हो रहा है...",
+        "retry": "फिर से प्रयास करें",
+        "close": "बंद करें"
+      },
+      "messages": {
+        "loadError": "फील्ड लोड नहीं हो सके।",
+        "updateError": "फील्ड अपडेट नहीं हो सका।",
+        "enabled": "फील्ड {{name}} सक्षम किया गया।",
+        "disabled": "फील्ड {{name}} अक्षम किया गया।"
+      }
+    },
+    "fieldGroupManager": {
+      "title": "{{businessType}} - फील्ड ग्रुप प्रबंधन",
+      "description": "इस बिज़नेस टाइप के लिए उपलब्ध प्लेटफ़ॉर्म फील्ड ग्रुप सक्षम या अक्षम करें।",
+      "searchPlaceholder": "फील्ड ग्रुप खोजें...",
+      "empty": "इस बिज़नेस टाइप के लिए कोई फील्ड ग्रुप कॉन्फ़िगर नहीं है।",
+      "summary": {
+        "total": "कुल फील्ड ग्रुप",
+        "enabled": "सक्षम",
+        "disabled": "अक्षम"
+      },
+      "columns": {
+        "name": "फील्ड ग्रुप का नाम",
+        "version": "संस्करण",
+        "fields": "फील्ड",
+        "source": "स्रोत",
+        "status": "स्थिति",
+        "actions": "उपलब्ध कार्रवाइयां"
+      },
+      "source": {
+        "platform": "प्लेटफ़ॉर्म"
+      },
+      "status": {
+        "enabled": "सक्षम",
+        "disabled": "अक्षम"
+      },
+      "actions": {
+        "enable": "सक्षम करें",
+        "disable": "अक्षम करें",
+        "updating": "अपडेट हो रहा है...",
+        "retry": "फिर से प्रयास करें",
+        "close": "बंद करें"
+      },
+      "messages": {
+        "loadError": "फील्ड ग्रुप लोड नहीं हो सके।",
+        "updateError": "फील्ड ग्रुप अपडेट नहीं हो सका।",
+        "enabled": "फील्ड ग्रुप {{name}} सक्षम किया गया।",
+        "disabled": "फील्ड ग्रुप {{name}} अक्षम किया गया।"
+      }
+    },
+    "unitManager": {
+      "title": "{{businessType}} - इकाई प्रबंधन",
+      "description": "इस बिज़नेस टाइप के लिए उपलब्ध प्लेटफ़ॉर्म माप इकाइयों को सक्षम या अक्षम करें।",
+      "searchPlaceholder": "इकाइयाँ खोजें...",
+      "empty": "इस बिज़नेस टाइप के लिए कोई इकाई कॉन्फ़िगर नहीं है।",
+      "summary": { "total": "कुल इकाइयाँ", "enabled": "सक्षम", "disabled": "अक्षम" },
+      "columns": { "name": "इकाई का नाम", "symbol": "चिह्न", "baseUnit": "मूल इकाई", "conversionFactor": "रूपांतरण गुणांक", "source": "स्रोत", "status": "स्थिति", "actions": "उपलब्ध कार्रवाइयां" },
+      "baseUnit": { "none": "मूल इकाई" },
+      "source": { "platform": "प्लेटफ़ॉर्म" },
+      "status": { "enabled": "सक्षम", "disabled": "अक्षम" },
+      "actions": { "enable": "सक्षम करें", "disable": "अक्षम करें", "updating": "अपडेट हो रहा है...", "retry": "फिर से प्रयास करें", "close": "बंद करें" },
+      "messages": { "loadError": "इकाइयाँ लोड नहीं हो सकीं।", "updateError": "इकाई अपडेट नहीं हो सकी।", "enabled": "इकाई {{name}} सक्षम की गई।", "disabled": "इकाई {{name}} अक्षम की गई।" }
     }
   },
   "businessTypeConfigure": {

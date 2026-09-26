@@ -390,15 +390,15 @@ export class GroupsService {
   }
 
   listFields(): Observable<ApiPaginated<Field>> {
-    return this.http.get<ApiPaginated<Field>>(this.fieldsUrl);
+    return this.http.get<ApiPaginated<Field>>(`${this.fieldsUrl}?status=ACTIVE`);
   }
 
   listFieldGroups(): Observable<ApiPaginated<FieldGroup>> {
-    return this.http.get<ApiPaginated<FieldGroup>>(this.fieldGroupsUrl);
+    return this.http.get<ApiPaginated<FieldGroup>>(`${this.fieldGroupsUrl}?status=ACTIVE`);
   }
 
   listUnits(): Observable<ApiPaginated<Unit>> {
-    return this.http.get<ApiPaginated<Unit>>(this.unitsUrl);
+    return this.http.get<ApiPaginated<Unit>>(`${this.unitsUrl}?status=ACTIVE`);
   }
 
   listTaxProfiles(): Observable<ApiPaginated<TaxProfile>> {
