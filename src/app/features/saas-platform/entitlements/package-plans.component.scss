@@ -213,3 +213,53 @@
   grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
   gap: 0.5rem;
 }
+
+.package-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: rgba(15, 23, 42, 0.58);
+  backdrop-filter: blur(4px);
+}
+
+.package-modal {
+  width: min(100%, 72rem);
+  max-height: min(92vh, 56rem);
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  border-radius: 1rem;
+  background: #ffffff;
+  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.25);
+}
+
+.package-modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem 1rem;
+  border-bottom: 1px solid #e4ebf3;
+}
+
+.package-modal__header h2 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #102a43;
+}
+
+.package-modal__body {
+  margin: 0;
+  padding: 1rem 1.5rem 1.25rem;
+  overflow: auto;
+}
+
+.package-modal__footer {
+  border-top: 1px solid #e4ebf3;
+  background: #fff;
+  padding: 1rem 1.5rem;
+}

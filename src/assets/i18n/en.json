@@ -86,6 +86,7 @@
                    "actions":  {
                                    "view":  "View",
                                    "edit":  "Edit",
+                                   "clone":  "Clone",
                                    "delete":  "Delete",
                                    "create":  "Create",
                                    "update":  "Update",
@@ -734,6 +735,7 @@
                                                    "title":  "Packages",
                                                    "btn_create":  "Create Package",
                                                    "title_create":  "Create Package",
+                                                  "title_clone":  "Clone Package",
                                                    "title_edit":  "Edit Package",
                                                    "lbl_plan_id":  "Plan Id",
                                                    "lbl_plan_name":  "Plan Name",
@@ -747,6 +749,7 @@
                                                    "hint_feature_configs":  "These values override feature default configs for this package.",
                                                    "msg_no_feature_configs":  "Selected features do not have config keys. Add config keys in Feature Catalog first.",
                                                    "ph_feature_config":  "Enter override value",
+                                                  "msg_clone_plan_id":  "A new plan ID will be generated automatically from the package name.",
                                                    "btn_save":  "Save"
                                                },
                                   "entitlements":  {

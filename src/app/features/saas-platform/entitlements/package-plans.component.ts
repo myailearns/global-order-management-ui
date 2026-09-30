@@ -4,7 +4,7 @@ import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, Validator
 import { TranslateModule } from '@ngx-translate/core';
 import { Subject, takeUntil } from 'rxjs';
 
-import { GomAlertToastService, GomButtonComponent, GomInputComponent, GomModalComponent, GomSelectComponent, GomTableColumn, GomTableComponent, GomTableRow, GomTextareaComponent } from '@gomlibs/ui';
+import { GomAlertToastService, GomButtonComponent, GomInputComponent, GomSelectComponent, GomTableColumn, GomTableComponent, GomTableRow, GomTextareaComponent } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { EntitlementsService } from './entitlements.service';
 import { FeatureCatalogItem, FeatureConfigOverride, PackagePlan } from './entitlements.model';
@@ -29,7 +29,6 @@ interface PackageRow extends GomTableRow {
     GomInputComponent,
     GomSelectComponent,
     GomTextareaComponent,
-    GomModalComponent,
     GomTableComponent,
   ],
   templateUrl: './package-plans.component.html',
@@ -55,8 +54,13 @@ export class PackagePlansComponent implements OnInit, OnDestroy {
   readonly features = signal<FeatureCatalogItem[]>([]);
   readonly modalOpen = signal(false);
   readonly selectedId = signal<string | null>(null);
+  readonly dialogMode = signal<'create' | 'edit' | 'clone'>('create');
+  readonly modalTitleText = signal('Create Package');
+  readonly modalActionText = signal('Save');
   readonly featureKeysSig = signal<string[]>([]);
   private pendingFeatureConfigs: Record<string, FeatureConfigOverride[]> = {};
+
+  readonly isCloneMode = computed(() => this.dialogMode() === 'clone');
 
   // Features that have at least one config key — built from currently selected featureKeys
   readonly selectedFeaturesWithConfigs = signal<FeatureCatalogItem[]>([]);
@@ -137,7 +141,10 @@ export class PackagePlansComponent implements OnInit, OnDestroy {
       key: 'id',
       header: 'Actions',
       width: '10rem',
-      actionButtons: [{ label: 'Edit', actionKey: 'edit', variant: 'secondary' }],
+      actionButtons: [
+        { label: 'Edit', actionKey: 'edit', variant: 'secondary' },
+        { label: 'Clone', actionKey: 'clone', variant: 'secondary' },
+      ],
     },
   ];
 
@@ -374,6 +381,9 @@ export class PackagePlansComponent implements OnInit, OnDestroy {
 
   openCreate(): void {
     this.selectedId.set(null);
+    this.dialogMode.set('create');
+    this.modalTitleText.set('Create Package');
+    this.modalActionText.set('Save');
     this.pendingFeatureConfigs = {};
     this.activeModule.set('all');
     this.featureSearch.set('');
@@ -385,11 +395,61 @@ export class PackagePlansComponent implements OnInit, OnDestroy {
     this.modalOpen.set(true);
   }
 
+  private _generatePlanId(sourceName: string): string {
+    let normalized = String(sourceName || '')
+      .trim()
+      .toUpperCase()
+      .replace(/[^A-Z0-9]+/g, '_')
+      .replace(/_+/g, '_');
+
+    while (normalized.startsWith('_')) {
+      normalized = normalized.slice(1);
+    }
+
+    while (normalized.endsWith('_')) {
+      normalized = normalized.slice(0, -1);
+    }
+
+    return normalized || `PACKAGE_${Date.now()}`;
+  }
+
+  private _openPackageForm(item: PackagePlan, mode: 'edit' | 'clone'): void {
+    this.selectedId.set(mode === 'edit' ? item._id : null);
+    this.dialogMode.set(mode);
+    this.modalTitleText.set(mode === 'clone' ? 'Clone Package' : 'Edit Package');
+    this.modalActionText.set(mode === 'clone' ? 'Clone' : 'Save');
+    this.pendingFeatureConfigs = item.featureConfigs ?? {};
+    this.activeModule.set('all');
+    this.featureSearch.set('');
+    this.activeBuilderTab.set('features');
+
+    const nextName = mode === 'clone' ? `${item.name} Copy` : item.name;
+    const nextPlanId = mode === 'clone'
+      ? this._generatePlanId(nextName)
+      : item.planId;
+
+    this.form.patchValue({
+      planId: nextPlanId,
+      name: nextName,
+      description: item.description || '',
+      tier: item.tier,
+      status: item.status,
+      featureKeys: item.featureKeys,
+    }, { emitEvent: false });
+
+    this.featureKeysSig.set(item.featureKeys ?? []);
+    this._rebuildConfigOverrides(item.featureKeys, this.pendingFeatureConfigs);
+
+    this.form.controls.planId.disable();
+
+    this.modalOpen.set(true);
+  }
+
   onRowAction(event: { actionKey: string; row: PackageRow }): void {
     if (!this.canWrite()) {
       return;
     }
-    if (event.actionKey !== 'edit') {
+    if (event.actionKey !== 'edit' && event.actionKey !== 'clone') {
       return;
     }
 
@@ -398,25 +458,12 @@ export class PackagePlansComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.selectedId.set(item._id);
-    this.pendingFeatureConfigs = item.featureConfigs ?? {};
-    this._rebuildConfigOverrides([], {});
-    this.form.patchValue({
-      planId: item.planId,
-      name: item.name,
-      description: item.description || '',
-      tier: item.tier,
-      status: item.status,
-      featureKeys: item.featureKeys,
-    }, { emitEvent: false });
-    this.featureKeysSig.set(item.featureKeys ?? []);
-    this.activeModule.set('all');
-    this.featureSearch.set('');
-    this.activeBuilderTab.set('features');
-    // Pre-populate config overrides from saved plan
-    this._rebuildConfigOverrides(item.featureKeys, this.pendingFeatureConfigs);
-    this.form.controls.planId.disable();
-    this.modalOpen.set(true);
+    if (event.actionKey === 'clone') {
+      this._openPackageForm(item, 'clone');
+      return;
+    }
+
+    this._openPackageForm(item, 'edit');
   }
 
   save(): void {
@@ -426,6 +473,9 @@ export class PackagePlansComponent implements OnInit, OnDestroy {
     }
 
     const raw = this.form.getRawValue();
+    const planId = this.dialogMode() === 'clone'
+      ? this._generatePlanId(String(raw.name || ''))
+      : String(raw.planId || '').trim().toUpperCase();
 
     // Build featureConfigs from configOverridesForm
     const featureConfigs: Record<string, FeatureConfigOverride[]> = {};
@@ -457,7 +507,7 @@ export class PackagePlansComponent implements OnInit, OnDestroy {
     });
 
     const payload = {
-      planId: String(raw.planId || '').trim().toUpperCase(),
+      planId,
       name: String(raw.name || '').trim(),
       description: String(raw.description || '').trim(),
       tier: String(raw.tier || 'STARTER').trim().toUpperCase(),

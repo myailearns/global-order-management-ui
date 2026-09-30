@@ -15,103 +15,118 @@
   ></gom-lib-table>
 </section>
 
-<gom-lib-modal [title]="selectedId() ? ('saas.platform.packages.title_edit' | translate) : ('saas.platform.packages.title_create' | translate)" [(show)]="modalOpen" size="large">
-  <form class="epic2-page__form" [formGroup]="form">
-    <gom-lib-input formControlName="planId" [label]="'saas.platform.packages.lbl_plan_id' | translate" [required]="true"></gom-lib-input>
-    <gom-lib-input formControlName="name" [label]="'saas.platform.packages.lbl_plan_name' | translate" [required]="true"></gom-lib-input>
-    <gom-lib-textarea formControlName="description" [label]="'saas.platform.packages.lbl_description' | translate" [rows]="3"></gom-lib-textarea>
-    <gom-lib-select formControlName="tier" [label]="'saas.platform.packages.lbl_tier' | translate" [options]="[
-      { value: 'STARTER', label: 'STARTER' },
-      { value: 'GROWTH', label: 'GROWTH' },
-      { value: 'SCALE', label: 'SCALE' },
-      { value: 'CUSTOM', label: 'CUSTOM' }
-    ]"></gom-lib-select>
-    <gom-lib-select formControlName="status" [label]="'saas.platform.packages.lbl_status' | translate" [options]="[
-      { value: 'ACTIVE', label: 'ACTIVE' },
-      { value: 'INACTIVE', label: 'INACTIVE' }
-    ]"></gom-lib-select>
-    <section class="package-builder">
-      <div class="package-builder__toolbar">
-        <p class="package-builder__label">Modules</p>
-        <div class="package-builder__chips">
-          <button type="button" class="package-builder__chip" [class.package-builder__chip--active]="activeModule() === 'all'" (click)="selectModule('all')">All</button>
-          @for (module of moduleList(); track module) {
-          <button
-            type="button"
-            class="package-builder__chip"
-            [class.package-builder__chip--active]="activeModule() === module"
-            (click)="selectModule(module)"
-          >
-            {{ module }}
-          </button>
+@if (modalOpen()) {
+  <div class="package-modal-backdrop" (click)="modalOpen.set(false)" (keydown.enter)="modalOpen.set(false)" (keydown.space)="modalOpen.set(false)">
+    <dialog class="package-modal" open [attr.aria-label]="modalTitleText()" (click)="$event.stopPropagation()" (keydown.escape)="modalOpen.set(false)">
+      <header class="package-modal__header">
+        <div>
+          <h2>{{ modalTitleText() }}</h2>
+          @if (isCloneMode()) {
+            <p class="package-feature-configs__selection-note">{{ 'saas.platform.packages.msg_clone_plan_id' | translate }}</p>
           }
         </div>
+      </header>
 
-        <label class="package-builder__search">
-          <span>Search Features</span>
-          <input
-            type="text"
-            [value]="featureSearch()"
-            (input)="setFeatureSearch($any($event.target).value)"
-            placeholder="Type feature name or key"
-          />
-        </label>
-
-      </div>
-
-      <!-- Features list -->
-      <div class="package-builder__list" aria-label="Package features list">
-        @if (!filteredFeatures().length) {
-        <p class="package-feature-configs__empty-note">No features found for current filter.</p>
+      <form class="epic2-page__form package-modal__body" [formGroup]="form">
+        @if (!isCloneMode()) {
+          <gom-lib-input formControlName="planId" [label]="'saas.platform.packages.lbl_plan_id' | translate" [required]="true"></gom-lib-input>
         }
-        @for (feature of filteredFeatures(); track feature.featureKey) {
-        <article class="package-builder__item">
-          <label class="package-feature-item__toggle">
-            <input
-              type="checkbox"
-              [checked]="isFeatureSelected(feature.featureKey)"
-              (change)="toggleFeature(feature.featureKey, $any($event.target).checked)"
-            />
-            <span>
-              {{ feature.displayName }}
-              <small>({{ feature.featureKey }})</small>
-            </span>
-          </label>
-        </article>
-        }
-      </div>
-
-      <!-- Feature Configurations -->
-      @if (selectedFeaturesResolved().length) {
-      <section class="package-config-editor">
-        <h3>Feature Configurations</h3>
-        @for (feature of selectedFeaturesResolved(); track feature.featureKey) {
-          @if (featureConfigKeys(feature).length) {
-          <article class="package-config-editor__feature">
-            <p class="package-config-editor__title">{{ feature.displayName }} <small>({{ feature.featureKey }})</small></p>
-            <div class="package-feature-item__configs">
-              @for (configKey of featureConfigKeys(feature); track configKey) {
-              <gom-lib-input
-                [formControl]="$any(getConfigControl(feature.featureKey, configKey))"
-                [label]="configLabel(feature, configKey)"
-                [required]="isMaxCountConfig(configKey)"
-                [placeholder]="'saas.platform.packages.ph_feature_config' | translate"
-              ></gom-lib-input>
+        <gom-lib-input formControlName="name" [label]="'saas.platform.packages.lbl_plan_name' | translate" [required]="true"></gom-lib-input>
+        <gom-lib-textarea formControlName="description" [label]="'saas.platform.packages.lbl_description' | translate" [rows]="3"></gom-lib-textarea>
+        <gom-lib-select formControlName="tier" [label]="'saas.platform.packages.lbl_tier' | translate" [options]="[
+          { value: 'STARTER', label: 'STARTER' },
+          { value: 'GROWTH', label: 'GROWTH' },
+          { value: 'SCALE', label: 'SCALE' },
+          { value: 'CUSTOM', label: 'CUSTOM' }
+        ]"></gom-lib-select>
+        <gom-lib-select formControlName="status" [label]="'saas.platform.packages.lbl_status' | translate" [options]="[
+          { value: 'ACTIVE', label: 'ACTIVE' },
+          { value: 'INACTIVE', label: 'INACTIVE' }
+        ]"></gom-lib-select>
+        <section class="package-builder">
+          <div class="package-builder__toolbar">
+            <p class="package-builder__label">Modules</p>
+            <div class="package-builder__chips">
+              <button type="button" class="package-builder__chip" [class.package-builder__chip--active]="activeModule() === 'all'" (click)="selectModule('all')">All</button>
+              @for (module of moduleList(); track module) {
+              <button
+                type="button"
+                class="package-builder__chip"
+                [class.package-builder__chip--active]="activeModule() === module"
+                (click)="selectModule(module)"
+              >
+                {{ module }}
+              </button>
               }
             </div>
-          </article>
-          }
-        }
-      </section>
-      }
-    </section>
-  </form>
 
-  <footer class="gom-modal__action-layout" gom-modal-actions>
-    <div class="gom-modal__action-layout-start"></div>
-    <div class="gom-modal__action-layout-end">
-      <gom-lib-button type="button" variant="secondary" (buttonClick)="modalOpen.set(false)">{{ 'common.btn_cancel' | translate }}</gom-lib-button>
-      <gom-lib-button type="button" (buttonClick)="save()" [disabled]="loading()">{{ 'saas.platform.packages.btn_save' | translate }}</gom-lib-button>
-    </div>
-  </footer>
-</gom-lib-modal>
+            <label class="package-builder__search">
+              <span>Search Features</span>
+              <input
+                type="text"
+                [value]="featureSearch()"
+                (input)="setFeatureSearch($any($event.target).value)"
+                placeholder="Type feature name or key"
+              />
+            </label>
+
+          </div>
+
+          <!-- Features list -->
+          <div class="package-builder__list" aria-label="Package features list">
+            @if (!filteredFeatures().length) {
+            <p class="package-feature-configs__empty-note">No features found for current filter.</p>
+            }
+            @for (feature of filteredFeatures(); track feature.featureKey) {
+            <article class="package-builder__item">
+              <label class="package-feature-item__toggle">
+                <input
+                  type="checkbox"
+                  [checked]="isFeatureSelected(feature.featureKey)"
+                  (change)="toggleFeature(feature.featureKey, $any($event.target).checked)"
+                />
+                <span>
+                  {{ feature.displayName }}
+                  <small>({{ feature.featureKey }})</small>
+                </span>
+              </label>
+            </article>
+            }
+          </div>
+
+          <!-- Feature Configurations -->
+          @if (selectedFeaturesResolved().length) {
+          <section class="package-config-editor">
+            <h3>Feature Configurations</h3>
+            @for (feature of selectedFeaturesResolved(); track feature.featureKey) {
+              @if (featureConfigKeys(feature).length) {
+              <article class="package-config-editor__feature">
+                <p class="package-config-editor__title">{{ feature.displayName }} <small>({{ feature.featureKey }})</small></p>
+                <div class="package-feature-item__configs">
+                  @for (configKey of featureConfigKeys(feature); track configKey) {
+                  <gom-lib-input
+                    [formControl]="$any(getConfigControl(feature.featureKey, configKey))"
+                    [label]="configLabel(feature, configKey)"
+                    [required]="isMaxCountConfig(configKey)"
+                    [placeholder]="'saas.platform.packages.ph_feature_config' | translate"
+                  ></gom-lib-input>
+                  }
+                </div>
+              </article>
+              }
+            }
+          </section>
+          }
+        </section>
+      </form>
+
+      <footer class="gom-modal__action-layout package-modal__footer">
+        <div class="gom-modal__action-layout-start"></div>
+        <div class="gom-modal__action-layout-end">
+          <gom-lib-button type="button" variant="secondary" (buttonClick)="modalOpen.set(false)">{{ 'common.btn_cancel' | translate }}</gom-lib-button>
+          <gom-lib-button type="button" (buttonClick)="save()" [disabled]="loading()">{{ modalActionText() }}</gom-lib-button>
+        </div>
+      </footer>
+    </dialog>
+  </div>
+}
