@@ -263,6 +263,7 @@ export class SaasAccountsComponent implements OnInit {
     }
 
     const transitions: Record<AccountStatus, AccountStatus[]> = {
+      INCOMPLETE: [],
       TRIAL: ['TRIAL_ENDED', 'ACTIVE', 'SUSPENDED', 'CANCELLED'],
       TRIAL_ENDED: ['ACTIVE', 'SUSPENDED', 'CANCELLED'],
       ACTIVE: ['SUSPENDED', 'CANCELLED'],
@@ -270,7 +271,8 @@ export class SaasAccountsComponent implements OnInit {
       CANCELLED: [],
     };
 
-    return transitions[account.accountStatus].map((status) => ({ value: status, label: status }));
+    const currentStatus = account.accountStatus as AccountStatus;
+    return (transitions[currentStatus] || []).map((status: AccountStatus) => ({ value: status, label: status }));
   });
 
   readonly accountForm = this.fb.group({
