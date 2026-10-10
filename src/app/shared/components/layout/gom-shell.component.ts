@@ -88,7 +88,15 @@ export class GomShellComponent implements OnInit, OnDestroy {
     ),
     { initialValue: this.router.url },
   );
-  readonly isAuthRoute = computed(() => this.currentUrl().startsWith('/auth'));
+  readonly isAuthRoute = computed(() => {
+    const path = this.currentUrl().split('?')[0];
+    return path === '/platform-login'
+      || path === '/tenant-login'
+      || path.startsWith('/tenant-login/')
+      || path === '/reset-password'
+      || path === '/access-denied'
+      || path.startsWith('/auth');
+  });
   readonly showTopbarSearch = computed(() => this.headerSearch.activeContext() === 'orders-create');
   readonly isCreateOrderRoute = computed(() => {
     const url = this.currentUrl();
@@ -539,9 +547,10 @@ export class GomShellComponent implements OnInit, OnDestroy {
   }
 
   logout(): void {
+    const redirectUrl = this.authSession.getLoginRouteForActor(this.currentSession()?.actorType ?? 'tenant');
     this.authSession.logout();
     this.closeMenu();
     this.closeProfileMenu();
-    void this.router.navigateByUrl('/auth', { replaceUrl: true });
+    void this.router.navigateByUrl(redirectUrl, { replaceUrl: true });
   }
 }

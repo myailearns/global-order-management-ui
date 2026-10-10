@@ -7,6 +7,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { GomAlertToastService, GomButtonComponent, GomInputComponent, GomSelectComponent, GomSelectOption } from '@gomlibs/ui';
 import { TenantAccessService } from '../../services';
 import { CreateEmployeeRequest, EmployeeStatus, UpdateEmployeeRequest } from '../../models';
+import { PASSWORD_POLICY_REGEX } from '../../../../shared/validators/password-policy';
 
 @Component({
   selector: 'gom-employee-form',
@@ -141,7 +142,7 @@ export class EmployeeFormComponent implements OnInit, OnChanges {
       return;
     }
 
-    this.router.navigate(['/saas-admin/employees']);
+    void this.router.navigate(['/saas-admin/employees']);
   }
 
   private initializeFormContext(): void {
@@ -180,7 +181,7 @@ export class EmployeeFormComponent implements OnInit, OnChanges {
       return;
     }
 
-    this.router.navigate(['/saas-admin/employees']);
+    void this.router.navigate(['/saas-admin/employees']);
   }
 
   private loadEmployee(employeeId: string): void {
@@ -207,7 +208,7 @@ export class EmployeeFormComponent implements OnInit, OnChanges {
     }
 
     if (this.form.controls.passwordMode.value === 'manual') {
-      this.form.controls.password.setValidators([Validators.required, Validators.minLength(8)]);
+      this.form.controls.password.setValidators([Validators.required, Validators.minLength(8), Validators.pattern(PASSWORD_POLICY_REGEX)]);
     } else {
       this.form.controls.password.clearValidators();
       this.form.controls.password.setValue('', { emitEvent: false });
