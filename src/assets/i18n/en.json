@@ -1347,7 +1347,20 @@
                                 "invalid_platform_credentials":  "Invalid platform admin credentials.",
                                 "invalid_tenant_credentials":  "Invalid tenant admin credentials or tenant code.",
                                 "account_locked":  "Your account is locked. Contact your admin.",
-                                "no_assigned_roles":  "No roles assigned to access this. Contact your admin."
+                                "no_assigned_roles":  "No roles assigned to access this. Contact your admin.",
+                                "password_reset_account_not_found":  "The tenant ID or registered email address was not found.",
+                                "invalid_forgot_password_request":  "Enter a valid tenant ID and registered email address.",
+                                "invalid_forgot_tenant_id_request":  "Enter a valid registered email address.",
+                                "tenant_id_recovery_email_not_found":  "This email address is not registered with any tenant account.",
+                                "tenant_id_recovery_delivery_failed":  "We could not send the Tenant ID email right now. Please try again later.",
+                                "tenant_id_recovery_failed":  "Unable to process the Tenant ID recovery right now.",
+                                "invalid_reset_token":  "This reset link request is invalid.",
+                                "invalid_reset_password_request":  "Enter a valid new password to continue.",
+                                "reset_link_invalid_or_expired":  "This reset link is no longer valid. Request a fresh link.",
+                                "reset_link_not_found":  "We could not find that reset request anymore.",
+                                "password_too_short":  "Your password must be at least 8 characters and include uppercase, lowercase, number, and special character.",
+                                "password_reset_delivery_failed":  "We could not send the temporary password right now. Please try again later.",
+                                "password_reset_failed":  "Unable to process the password reset right now."
                             }
              },
     "categoryTemplates":  {
