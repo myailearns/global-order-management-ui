@@ -52,9 +52,9 @@ import { BusinessTypeConfigureComponent } from './features/saas-platform/busines
 import { MediaLibraryComponent } from './shared/components/media-library/media-library.component';
 import { BrowseTemplatesComponent } from './features/templates/browse-templates.component';
 import { AccessDeniedComponent } from './features/auth/access-denied/access-denied.component';
-import { AuthEntryComponent } from './features/auth/auth-entry/auth-entry.component';
 import { AuthLandingComponent } from './features/auth/auth-landing/auth-landing.component';
 import { PlatformLoginComponent } from './features/auth/platform-login/platform-login.component';
+import { ResetPasswordComponent } from './features/auth/reset-password/reset-password.component';
 import { TenantLoginComponent } from './features/auth/tenant-login/tenant-login.component';
 import { guestOnlyGuard, protectedRouteGuard } from './core/auth/auth.guards';
 
@@ -64,32 +64,62 @@ export const routes: Routes = [
 		canActivate: [
 			(route: ActivatedRouteSnapshot) => {
 				const tenantCode = route.paramMap.get('tenantCode') || '';
-				return inject(Router).createUrlTree(['/auth/tenant-login'], { queryParams: { tenantCode } });
+				return inject(Router).createUrlTree(['/tenant-login'], { queryParams: { tenantCode } });
 			},
 		],
-		component: AuthEntryComponent,
+		component: TenantLoginComponent,
+	},
+	{
+		path: 'platform-login',
+		component: PlatformLoginComponent,
+		canActivate: [guestOnlyGuard],
+	},
+	{
+		path: 'tenant-login',
+		component: TenantLoginComponent,
+		canActivate: [guestOnlyGuard],
+	},
+	{
+		path: 'tenant-login/:tenantCode',
+		component: TenantLoginComponent,
+		canActivate: [guestOnlyGuard],
+	},
+	{
+		path: 'reset-password',
+		component: ResetPasswordComponent,
+		canActivate: [guestOnlyGuard],
+	},
+	{
+		path: 'access-denied',
+		component: AccessDeniedComponent,
 	},
 	{
 		path: 'auth',
 		children: [
 			{
 				path: '',
-				component: AuthEntryComponent,
-				canActivate: [guestOnlyGuard],
+				pathMatch: 'full',
+				redirectTo: '/tenant-login',
 			},
 			{
 				path: 'platform-login',
-				component: PlatformLoginComponent,
-				canActivate: [guestOnlyGuard],
+				redirectTo: '/platform-login',
 			},
 			{
 				path: 'tenant-login',
-				component: TenantLoginComponent,
-				canActivate: [guestOnlyGuard],
+				redirectTo: '/tenant-login',
+			},
+			{
+				path: 'tenant-login/:tenantCode',
+				redirectTo: '/tenant-login/:tenantCode',
+			},
+			{
+				path: 'reset-password',
+				redirectTo: '/reset-password',
 			},
 			{
 				path: 'access-denied',
-				component: AccessDeniedComponent,
+				redirectTo: '/access-denied',
 			},
 		],
 	},
