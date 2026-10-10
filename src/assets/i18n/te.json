@@ -1325,7 +1325,20 @@
     },
     "errors": {
       "invalid_platform_credentials": "చెల్లని ప్లాట్‌ఫాం అడ్మిన్ వివరాలు.",
-      "invalid_tenant_credentials": "చెల్లని టేనెంట్ అడ్మిన్ వివరాలు లేదా టేనెంట్ కోడ్."
+      "invalid_tenant_credentials": "చెల్లని టేనెంట్ అడ్మిన్ వివరాలు లేదా టేనెంట్ కోడ్.",
+      "password_reset_account_not_found": "టేనెంట్ ఐడి లేదా నమోదైన ఇమెయిల్ చిరునామా కనబడలేదు.",
+      "invalid_forgot_password_request": "చెల్లుబాటు అయ్యే టేనెంట్ ఐడి మరియు నమోదైన ఇమెయిల్ చిరునామాను నమోదు చేయండి.",
+      "invalid_forgot_tenant_id_request": "చెల్లుబాటు అయ్యే registered email address ను నమోదు చేయండి.",
+      "tenant_id_recovery_email_not_found": "ఈ email address ఏ tenant account తోనూ registered కాలేదు.",
+      "tenant_id_recovery_delivery_failed": "మేము ప్రస్తుతం Tenant ID email ను పంపలేకపోయాము. దయచేసి తర్వాత మళ్లీ ప్రయత్నించండి.",
+      "tenant_id_recovery_failed": "ప్రస్తుతం Tenant ID recovery ను process చేయలేకపోయాము.",
+      "invalid_reset_token": "ఈ రీసెట్ లింక్ అభ్యర్థన చెల్లదు.",
+      "invalid_reset_password_request": "కొనసాగడానికి చెల్లుబాటు అయ్యే కొత్త పాస్‌వర్డ్‌ను నమోదు చేయండి.",
+      "reset_link_invalid_or_expired": "ఈ రీసెట్ లింక్ ఇప్పుడు చెల్లదు. కొత్త లింక్‌ను అభ్యర్థించండి.",
+      "reset_link_not_found": "ఆ రీసెట్ అభ్యర్థనను మేము ఇక కనుగొనలేకపోయాము.",
+      "password_too_short": "మీ పాస్‌వర్డ్ కనీసం 8 అక్షరాల పొడవు ఉండాలి మరియు uppercase, lowercase, number, special character కలిగి ఉండాలి.",
+      "password_reset_delivery_failed": "మేము ప్రస్తుతం రీసెట్ లింక్‌ను పంపలేకపోయాము. దయచేసి తరువాత మళ్లీ ప్రయత్నించండి.",
+      "password_reset_failed": "ప్రస్తుతం పాస్‌వర్డ్ రీసెట్ ప్రక్రియను పూర్తి చేయలేకపోయాము."
     }
   },
   "categoryTemplates": {

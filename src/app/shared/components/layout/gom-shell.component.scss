@@ -315,6 +315,7 @@
 
 .gom-shell__content--auth {
   min-height: 100vh;
+  padding: 0;
 }
 
 .gom-shell__backdrop {
@@ -447,7 +448,7 @@
   height: 1.2rem;
   padding: 0 0.3rem;
   border-radius: 0.6rem;
-  background-color: #e53935;
+  background-color: #c62828;
   color: #fff;
   font-size: 0.65rem;
   font-weight: 700;
@@ -470,6 +471,10 @@
 }
 
 .gom-shell__content.gom-shell__content--flush {
+  padding: 0;
+}
+
+.gom-shell__content.gom-shell__content--auth {
   padding: 0;
 }
 
@@ -506,6 +511,10 @@
   }
 
   .gom-shell__content.gom-shell__content--flush {
+    padding: 0;
+  }
+
+  .gom-shell__content.gom-shell__content--auth {
     padding: 0;
   }
 
@@ -565,6 +574,10 @@
   }
 
   .gom-shell__content.gom-shell__content--flush {
+    padding: 0;
+  }
+
+  .gom-shell__content.gom-shell__content--auth {
     padding: 0;
   }
 }

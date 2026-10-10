@@ -37,7 +37,8 @@ export class AccessDeniedComponent {
   }
 
   logout(): void {
+    const redirectUrl = this.authSession.getLoginRouteForActor(this.authSession.session()?.actorType ?? 'tenant');
     this.authSession.logout();
-    void this.router.navigateByUrl('/auth', { replaceUrl: true });
+    void this.router.navigateByUrl(redirectUrl, { replaceUrl: true });
   }
 }
