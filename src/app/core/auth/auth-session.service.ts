@@ -20,6 +20,18 @@ interface ApiResponse<TData> {
   data: TData;
 }
 
+interface ResetTokenValidationResult {
+  valid: boolean;
+  reason: 'valid' | 'expired' | 'used' | 'invalid';
+  canResend: boolean;
+}
+
+const INVALID_RESET_TOKEN_RESULT: ResetTokenValidationResult = {
+  valid: false,
+  reason: 'invalid',
+  canResend: false,
+};
+
 @Injectable({
   providedIn: 'root',
 })
@@ -59,6 +71,104 @@ export class AuthSessionService {
     );
   }
 
+  forgotTenantPassword(request: Pick<TenantLoginRequest, 'tenantCode' | 'email'>): Observable<AuthResult> {
+    return this.http
+      .post<ApiResponse<{ delivered: boolean }>>(`${this.authApiUrl}/tenant/forgot-password`, request)
+      .pipe(
+        map(() => ({ success: true })),
+        catchError((error) => {
+          const serverKey: string = error?.error?.message || error?.error?.errorKey || '';
+          if (serverKey === 'auth.errors.password_reset_account_not_found') {
+            return of({ success: false, errorKey: 'auth.errors.password_reset_account_not_found' });
+          }
+          if (serverKey === 'auth.errors.password_reset_delivery_failed') {
+            return of({ success: false, errorKey: 'auth.errors.password_reset_delivery_failed' });
+          }
+          if (serverKey === 'auth.errors.invalid_forgot_password_request') {
+            return of({ success: false, errorKey: 'auth.errors.invalid_forgot_password_request' });
+          }
+          return of({ success: false, errorKey: 'auth.errors.password_reset_failed' });
+        }),
+      );
+  }
+
+  forgotTenantId(request: { email: string }): Observable<AuthResult> {
+    return this.http
+      .post<ApiResponse<{ delivered: boolean }>>(`${this.authApiUrl}/tenant/forgot-tenant-id`, request)
+      .pipe(
+        map(() => ({ success: true })),
+        catchError((error) => {
+          const serverKey: string = error?.error?.message || error?.error?.errorKey || '';
+          if (serverKey === 'auth.errors.tenant_id_recovery_email_not_found') {
+            return of({ success: false, errorKey: 'auth.errors.tenant_id_recovery_email_not_found' });
+          }
+          if (serverKey === 'auth.errors.tenant_id_recovery_delivery_failed') {
+            return of({ success: false, errorKey: 'auth.errors.tenant_id_recovery_delivery_failed' });
+          }
+          if (serverKey === 'auth.errors.invalid_forgot_tenant_id_request') {
+            return of({ success: false, errorKey: 'auth.errors.invalid_forgot_tenant_id_request' });
+          }
+          return of({ success: false, errorKey: 'auth.errors.tenant_id_recovery_failed' });
+        }),
+      );
+  }
+
+  validateTenantPasswordResetToken(token: string): Observable<ResetTokenValidationResult> {
+    return this.http
+      .get<ApiResponse<ResetTokenValidationResult>>(`${this.authApiUrl}/tenant/reset-password/validate`, {
+        params: { token },
+      })
+      .pipe(
+        map((response) => response.data),
+        catchError(() => of(INVALID_RESET_TOKEN_RESULT)),
+      );
+  }
+
+  resetTenantPassword(request: { token: string; newPassword: string }): Observable<AuthResult> {
+    return this.http
+      .post<ApiResponse<{ reset: boolean }>>(`${this.authApiUrl}/tenant/reset-password`, request)
+      .pipe(
+        map(() => ({ success: true })),
+        catchError((error) => {
+          const serverKey: string = error?.error?.message || error?.error?.errorKey || '';
+          if (serverKey === 'auth.errors.reset_link_invalid_or_expired') {
+            return of({ success: false, errorKey: 'auth.errors.reset_link_invalid_or_expired' });
+          }
+          if (serverKey === 'auth.errors.password_too_short') {
+            return of({ success: false, errorKey: 'auth.errors.password_too_short' });
+          }
+          if (serverKey === 'auth.errors.invalid_reset_password_request') {
+            return of({ success: false, errorKey: 'auth.errors.invalid_reset_password_request' });
+          }
+          return of({ success: false, errorKey: 'auth.errors.password_reset_failed' });
+        }),
+      );
+  }
+
+  resendTenantPasswordResetLink(request: { token: string }): Observable<AuthResult> {
+    return this.http
+      .post<ApiResponse<{ delivered: boolean }>>(`${this.authApiUrl}/tenant/reset-password/resend`, request)
+      .pipe(
+        map(() => ({ success: true })),
+        catchError((error) => {
+          const serverKey: string = error?.error?.message || error?.error?.errorKey || '';
+          if (serverKey === 'auth.errors.reset_link_not_found') {
+            return of({ success: false, errorKey: 'auth.errors.reset_link_not_found' });
+          }
+          if (serverKey === 'auth.errors.password_reset_account_not_found') {
+            return of({ success: false, errorKey: 'auth.errors.password_reset_account_not_found' });
+          }
+          if (serverKey === 'auth.errors.invalid_reset_token') {
+            return of({ success: false, errorKey: 'auth.errors.invalid_reset_token' });
+          }
+          if (serverKey === 'auth.errors.password_reset_delivery_failed') {
+            return of({ success: false, errorKey: 'auth.errors.password_reset_delivery_failed' });
+          }
+          return of({ success: false, errorKey: 'auth.errors.password_reset_failed' });
+        }),
+      );
+  }
+
   refreshStoredSession(): Observable<boolean> {
     const session = this.sessionState();
     if (session?.actorType !== 'tenant' || !session?.tenantId || !session?.userId) {
@@ -88,7 +198,7 @@ export class AuthSessionService {
   getLandingRoute(): string {
     const session = this.sessionState();
     if (!session) {
-      return '/auth';
+      return '/tenant-login';
     }
 
     // Platform users always go to SaaS Accounts
@@ -145,11 +255,11 @@ export class AuthSessionService {
 
     // If user has no accessible features, redirect to access-denied
     // This shouldn't normally happen as users should have at least one feature
-    return '/auth/access-denied?reason=feature_disabled';
+    return '/access-denied?reason=feature_disabled';
   }
 
   getLoginRouteForActor(actor: UserActor): string {
-    return actor === 'platform' ? '/auth/platform-login' : '/auth/tenant-login';
+    return actor === 'platform' ? '/platform-login' : '/tenant-login';
   }
 
   hasCapability(capability?: AppCapability): boolean {

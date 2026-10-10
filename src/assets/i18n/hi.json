@@ -1324,9 +1324,22 @@
     },
     "errors": {
       "invalid_platform_credentials": "अमान्य प्लेटफॉर्म एडमिन क्रेडेंशियल्स।",
-      "invalid_tenant_credentials": "अमान्य टेनेंट एडमिन क्रेडेंशियल्स या टेनेंट कोड।"
+      "invalid_tenant_credentials": "अमान्य टेनेंट एडमिन क्रेडेंशियल्स या टेनेंट कोड।",
+      "no_assigned_roles": "इसका उपयोग करने के लिए कोई रोल असाइन नहीं है। अपने एडमिन से संपर्क करें।",
+      "password_reset_account_not_found": "टेनेंट आईडी या पंजीकृत ईमेल पता नहीं मिला।",
+      "invalid_forgot_password_request": "मान्य टेनेंट आईडी और पंजीकृत ईमेल पता दर्ज करें।",
+      "invalid_forgot_tenant_id_request": "कृपया एक मान्य registered email address दर्ज करें।",
+      "tenant_id_recovery_email_not_found": "यह email address किसी भी tenant account के साथ registered नहीं है।",
+      "tenant_id_recovery_delivery_failed": "हम अभी Tenant ID email नहीं भेज सके। कृपया बाद में फिर प्रयास करें।",
+      "tenant_id_recovery_failed": "अभी Tenant ID recovery को process नहीं किया जा सका।",
+      "invalid_reset_token": "यह रीसेट लिंक अनुरोध अमान्य है।",
+      "invalid_reset_password_request": "जारी रखने के लिए मान्य नया पासवर्ड दर्ज करें।",
+      "reset_link_invalid_or_expired": "यह रीसेट लिंक अब मान्य नहीं है। नया लिंक मांगें।",
+      "reset_link_not_found": "यह रीसेट अनुरोध अब नहीं मिला।",
+      "password_too_short": "आपका पासवर्ड कम से कम 8 अक्षरों का होना चाहिए और उसमें uppercase, lowercase, number, और special character होना चाहिए।",
+      "password_reset_delivery_failed": "हम अभी रीसेट लिंक नहीं भेज सके। कृपया बाद में फिर प्रयास करें।",
+      "password_reset_failed": "अभी पासवर्ड रीसेट प्रोसेस नहीं हो सका।"
     }
-  },
   "categoryTemplates": {
     "pageTitle": "कैटेगरी टेम्प्लेट्स",
     "pageDescription": "कैटेगरी, फील्ड्स, यूनिट्स और अन्य चीजों को तुरंत सेटअप करने के लिए प्लेटफॉर्म टेम्प्लेट्स ब्राउज़ करें और सब्सक्राइब करें।",

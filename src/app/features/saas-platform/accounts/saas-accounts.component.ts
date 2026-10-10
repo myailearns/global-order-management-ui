@@ -9,6 +9,7 @@ import { GomAccordionComponent, GomButtonComponent, GomConfirmationModalComponen
 import { GomModalComponent } from '@gomlibs/ui';
 import { GomTableColumn, GomTableComponent, GomTableQuery, GomTableRow } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
+import { PASSWORD_POLICY_MESSAGE, PASSWORD_POLICY_REGEX } from '../../../shared/validators/password-policy';
 import { SaasAccountService } from './saas-account.service';
 import {
   AccountStatus,
@@ -284,7 +285,7 @@ export class SaasAccountsComponent implements OnInit {
     primaryContactEmail: ['', [Validators.required, Validators.email]],
     firstTenantAdminName: ['', [Validators.required]],
     firstTenantAdminEmail: ['', [Validators.required, Validators.email]],
-    firstTenantAdminPassword: ['', [Validators.required, Validators.minLength(8)]],
+    firstTenantAdminPassword: ['', [Validators.required, Validators.minLength(8), Validators.pattern(PASSWORD_POLICY_REGEX)]],
     countryCode: ['IN', [Validators.required]],
     currency: ['INR', [Validators.required]],
     timezone: ['Asia/Kolkata', [Validators.required]],
@@ -1175,7 +1176,12 @@ export class SaasAccountsComponent implements OnInit {
       }
 
       if (control.hasError('minlength') && entry.key === 'firstTenantAdminPassword') {
-        errors.push('First Tenant Admin Password must be at least 8 characters.');
+        errors.push(PASSWORD_POLICY_MESSAGE);
+        return;
+      }
+
+      if (control.hasError('pattern') && entry.key === 'firstTenantAdminPassword') {
+        errors.push(PASSWORD_POLICY_MESSAGE);
         return;
       }
 
@@ -1248,7 +1254,7 @@ export class SaasAccountsComponent implements OnInit {
     if (isCreateMode) {
       nameControl.setValidators([Validators.required]);
       emailControl.setValidators([Validators.required, Validators.email]);
-      control.setValidators([Validators.required, Validators.minLength(8)]);
+      control.setValidators([Validators.required, Validators.minLength(8), Validators.pattern(PASSWORD_POLICY_REGEX)]);
     } else {
       nameControl.clearValidators();
       emailControl.clearValidators();

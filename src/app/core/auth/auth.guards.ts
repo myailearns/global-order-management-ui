@@ -29,13 +29,13 @@ export const protectedRouteGuard: CanActivateChildFn = (childRoute, state) => {
   }
 
   if (session.actorType !== actor) {
-    return router.createUrlTree(['/auth/access-denied'], {
+    return router.createUrlTree(['/access-denied'], {
       queryParams: { reason: 'actor_mismatch' },
     });
   }
 
   if (capability && !authSession.hasCapability(capability)) {
-    return router.createUrlTree(['/auth/access-denied'], {
+    return router.createUrlTree(['/access-denied'], {
       queryParams: { reason: 'feature_disabled' },
     });
   }
@@ -47,7 +47,7 @@ export const protectedRouteGuard: CanActivateChildFn = (childRoute, state) => {
     // Check if user has the first feature key, which should be the .list permission
     const listPermission = routeFeatureKeys[0];
     if (!authSession.hasFeature(listPermission)) {
-      return router.createUrlTree(['/auth/access-denied'], {
+      return router.createUrlTree(['/access-denied'], {
         queryParams: { reason: 'feature_disabled' },
       });
     }
