@@ -13,6 +13,23 @@ export interface FirstAdminInfo {
   status: string;
 }
 
+export interface TenantBusinessCategoryRef {
+  _id: string;
+  name: string;
+  description?: string;
+  status?: string;
+}
+
+export interface TenantBusinessSetupTypeRef {
+  _id: string;
+  name: string;
+  code?: string;
+  description?: string;
+  icon?: string;
+  status?: string;
+  businessCategoryIds?: Array<string | TenantBusinessCategoryRef>;
+}
+
 export const BILLING_DURATION_LABELS: Record<BillingDurationCode, string> = {
   '1_MONTH': '1 Month',
   '3_MONTHS': '3 Months',
@@ -96,6 +113,8 @@ export interface TenantAccount {
   accountName: string;
   legalBusinessName: string;
   tenantCode: string;
+  businessCategoryId?: string | TenantBusinessCategoryRef | null;
+  businessSetupTypeIds?: Array<string | TenantBusinessSetupTypeRef>;
   packageId?: string | null;
   tierId?: string | null;
   tierKey?: string | null;
@@ -156,9 +175,12 @@ export interface CreateAccountRequest {
   countryCode: string;
   packageId: string;
   tierId: string;
+  billingCycle?: BillingDurationCode;
   legalBusinessName?: string;
   tenantCode?: string;
   primaryContactName?: string;
+  businessCategoryId?: string;
+  businessSetupTypeIds?: string[];
   currency?: string;
   timezone?: string;
   planId?: string;
@@ -189,7 +211,10 @@ export interface CompleteIncompleteAccountPayload {
   planId: string;
   packageId: string;
   tierId: string;
+  billingCycle?: BillingDurationCode;
   tierKey?: string;
+  businessCategoryId?: string;
+  businessSetupTypeIds?: string[];
   trialMode: string;
   trialDurationDays: number;
   firstTenantAdminName: string;
@@ -231,6 +256,8 @@ export interface UpdateAccountRequest {
   primaryContactName?: string;
   primaryContactPhone?: string;
   primaryContactEmail?: string;
+  businessCategoryId?: string;
+  businessSetupTypeIds?: string[];
   countryCode?: string;
   currency?: string;
   timezone?: string;

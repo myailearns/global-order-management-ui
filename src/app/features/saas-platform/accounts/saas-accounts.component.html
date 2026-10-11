@@ -101,7 +101,7 @@
   <form class="saas-accounts__form" [formGroup]="accountForm">
     <div class="saas-accounts__step-indicator">
       <strong>Step {{ createStep() }} of 2</strong>
-      <span>@if (createStep() === 1) { Business Contact } @else { Subscription + Super Admin }</span>
+      <span>@if (createStep() === 1) { Business Contact } @else { Setup Admin + Provisioning }</span>
     </div>
 
     @if (validationErrors().length) {
@@ -117,41 +117,91 @@
 
     @if (createStep() === 1) {
       <h3>Step 1: Business Contact</h3>
-      <gom-lib-input formControlName="accountName" label="Business Name" [required]="true"></gom-lib-input>
-      <gom-lib-input formControlName="primaryContactPhone" label="Mobile Number" [required]="true"></gom-lib-input>
-      <gom-lib-input formControlName="primaryContactEmail" label="Contact Email" [required]="true" type="email"></gom-lib-input>
-      <gom-lib-input formControlName="countryCode" label="Country" [required]="true"></gom-lib-input>
+      <section class="saas-accounts__section">
+        <gom-lib-input formControlName="accountName" label="Business Name" [required]="true"></gom-lib-input>
+
+        <div class="saas-accounts__grid saas-accounts__grid--two-column">
+          <gom-lib-input formControlName="primaryContactName" label="Full Name" [required]="true"></gom-lib-input>
+          <gom-lib-input formControlName="primaryContactEmail" label="Email Address" [required]="true" type="email"></gom-lib-input>
+        </div>
+
+        <div class="saas-accounts__grid saas-accounts__grid--two-column">
+          <gom-lib-input formControlName="primaryContactPhone" label="Phone Number" [required]="true"></gom-lib-input>
+          <gom-lib-input formControlName="countryCode" label="Country" [required]="true"></gom-lib-input>
+        </div>
+
+        <gom-lib-select
+          formControlName="businessCategoryId"
+          label="Select Your Business Category"
+          [required]="true"
+          [options]="businessCategoryOptions()"
+        ></gom-lib-select>
+
+        <gom-lib-select
+          formControlName="businessSetupTypeIds"
+          label="Business Type"
+          [required]="true"
+          [options]="businessTypeOptions()"
+          [multiple]="true"
+          [searchable]="businessTypeOptions().length > 8"
+          [disabled]="!accountForm.controls.businessCategoryId.value || businessTypesLoading()"
+        ></gom-lib-select>
+
+        @if (businessTypesLoading()) {
+          <p class="saas-accounts__field-note">Loading business types for the selected category...</p>
+        } @else if (accountForm.controls.businessCategoryId.value && !businessTypeOptions().length) {
+          <p class="saas-accounts__field-note">No active business types found for the selected category.</p>
+        }
+      </section>
     }
 
     @if (createStep() === 2) {
-      <h3>Step 2: Subscription and Super Admin</h3>
-      <gom-lib-select formControlName="packageId" label="Package" [required]="true" [options]="packageOptions()"></gom-lib-select>
-      <gom-lib-select formControlName="tierId" label="Tier" [required]="true" [options]="tierOptions()"></gom-lib-select>
+      <h3>Step 2: Setup Admin</h3>
 
-      @if (!tierOptions().length) {
-      <p class="saas-accounts__plan-help">No tiers found for selected package. Create tiers before onboarding account.</p>
-      }
+      <section class="saas-accounts__section">
+        <gom-lib-input formControlName="firstTenantAdminEmail" label="Admin Email" type="email" [required]="!editingAccountId() || isCompletingIncomplete()"></gom-lib-input>
+        <p class="saas-accounts__field-note">Pre-filled from the primary contact email. You can change it before creating the account.</p>
 
-      @if (selectedTier()) {
-      <p class="saas-accounts__plan-help">Trial settings below are configured for <strong>{{ selectedTier()?.displayName || selectedTier()?.tierKey }}</strong> tier. Change to override if allowed.</p>
-      }
+        <gom-lib-input
+          formControlName="firstTenantAdminPassword"
+          label="Create Password"
+          type="password"
+          [required]="!editingAccountId() || isCompletingIncomplete()"
+          [placeholder]="editingAccountId() && !isCompletingIncomplete() ? 'Leave empty to keep current password' : ''"
+        ></gom-lib-input>
+        <p class="saas-accounts__field-note">{{ 'Minimum 8 characters with uppercase, lowercase, number, and special character.' }}</p>
+      </section>
 
-      <gom-lib-select formControlName="trialMode" label="Trial Mode" [required]="true" [options]="createTrialModeOptions()"></gom-lib-select>
-      <gom-lib-input formControlName="trialDurationDays" type="number" label="Trial Duration (Days)" [required]="true"></gom-lib-input>
+      <section class="saas-accounts__section">
+        <h4 class="saas-accounts__section-title">Provisioning Setup</h4>
+        <gom-lib-select formControlName="packageId" label="Package" [required]="true" [options]="packageOptions()"></gom-lib-select>
+        <gom-lib-select formControlName="tierId" label="Tier" [required]="true" [options]="tierOptions()"></gom-lib-select>
 
-      <gom-lib-input formControlName="firstTenantAdminName" label="Super Admin Name" [required]="!editingAccountId() || isCompletingIncomplete()"></gom-lib-input>
-      <gom-lib-input formControlName="firstTenantAdminEmail" label="Super Admin Email" type="email" [required]="!editingAccountId() || isCompletingIncomplete()"></gom-lib-input>
-      <gom-lib-input formControlName="firstTenantAdminPassword" label="Super Admin Password" type="password" [required]="!editingAccountId() || isCompletingIncomplete()" [placeholder]="editingAccountId() && !isCompletingIncomplete() ? 'Leave empty to keep current password' : ''"></gom-lib-input>
-
-      <section class="saas-accounts__summary-card">
-        <h4>Provisioning Summary</h4>
-        <p><strong>Package:</strong> {{ accountForm.controls.packageId.value || '-' }}</p>
-        <p><strong>Tier:</strong> {{ selectedTier()?.displayName || selectedTier()?.tierKey || '-' }}</p>
-        <p><strong>Trial Mode:</strong> {{ accountForm.controls.trialMode.value || '-' }}</p>
-        <p><strong>Trial Days:</strong> {{ accountForm.controls.trialDurationDays.value || '-' }}</p>
-        @if (!tierAllowsTrialOverride()) {
-        <p>Trial override is disabled for this tier.</p>
+        @if (!tierOptions().length) {
+        <p class="saas-accounts__plan-help">No tiers found for selected package. Create tiers before onboarding account.</p>
         }
+
+        @if (selectedTier()) {
+        <p class="saas-accounts__plan-help">Trial settings below are configured for <strong>{{ selectedTier()?.displayName || selectedTier()?.tierKey }}</strong> tier. Change to override if allowed.</p>
+        }
+
+        <div class="saas-accounts__grid saas-accounts__grid--two-column">
+          <gom-lib-select formControlName="trialMode" label="Trial Mode" [required]="true" [options]="createTrialModeOptions()"></gom-lib-select>
+          <gom-lib-input formControlName="trialDurationDays" type="number" label="Trial Duration (Days)" [required]="true"></gom-lib-input>
+        </div>
+
+        <section class="saas-accounts__summary-card">
+          <h4>Provisioning Summary</h4>
+          <p><strong>Business Name:</strong> {{ accountForm.controls.accountName.value || '-' }}</p>
+          <p><strong>Admin Email:</strong> {{ accountForm.controls.firstTenantAdminEmail.value || '-' }}</p>
+          <p><strong>Package:</strong> {{ accountForm.controls.packageId.value || '-' }}</p>
+          <p><strong>Tier:</strong> {{ selectedTier()?.displayName || selectedTier()?.tierKey || '-' }}</p>
+          <p><strong>Trial Mode:</strong> {{ accountForm.controls.trialMode.value || '-' }}</p>
+          <p><strong>Trial Days:</strong> {{ accountForm.controls.trialDurationDays.value || '-' }}</p>
+          @if (!tierAllowsTrialOverride()) {
+          <p>Trial override is disabled for this tier.</p>
+          }
+        </section>
       </section>
     }
   </form>
