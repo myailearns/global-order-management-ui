@@ -16,7 +16,7 @@ import {
   GomSwitchComponent,
 } from '@gomlibs/ui';
 import { EntitlementsService } from './entitlements.service';
-import { BillingDurationCode, FeatureCatalogItem, PostTrialAction, TierCyclePricing, TierFeatureMap, TrialMode } from './entitlements.model';
+import { BillingDurationCode, FeatureCatalogItem, PostTrialAction, TierCyclePricing, TierFeatureMap, TierTag, TierTagType, TrialMode } from './entitlements.model';
 import { toFallbackFeatureCatalogItems, toFeatureTemplateSyncPayload } from './feature-catalog.templates';
 
 const STANDARD_CONFIG_KEYS = new Set([
@@ -34,6 +34,15 @@ const BILLING_CYCLE_CONFIG: Array<{ code: BillingDurationCode; label: string; mo
   { code: '1_YEAR', label: '1 Year', months: 12, defaultDiscountPercent: 12 },
   { code: 'FULLY_FREE', label: 'Fully Free', months: null, defaultDiscountPercent: 0, isUnlimited: true },
 ];
+
+const TIER_TAG_TYPE_OPTIONS: Array<{ value: TierTagType; label: string }> = [
+  { value: 'PRIMARY', label: 'Primary' },
+  { value: 'SECONDARY', label: 'Secondary' },
+  { value: 'INFO', label: 'Info' },
+  { value: 'DANGER', label: 'Danger' },
+];
+
+type TierTagRow = TierTag & { id: string };
 
 @Component({
   selector: 'gom-tier-management',
@@ -98,6 +107,48 @@ const BILLING_CYCLE_CONFIG: Array<{ code: BillingDurationCode; label: string; mo
             placeholder="Enter display name (e.g., Basic, Professional, Enterprise)"
             [label]="'Tier Display Name'"
           ></gom-lib-input>
+        </section>
+
+        <section class="tier-meta-panel">
+          <div class="tier-meta-panel__header">
+            <h3>Tier Tags & Highlight</h3>
+
+            <div class="tier-meta-panel__switch-row" role="group" aria-label="Highlight tier">
+              <span>Highlight</span>
+              <gom-lib-switch
+                [checked]="!!tierHighlightControl.value"
+                (checkedChange)="tierHighlightControl.setValue($event)"
+              ></gom-lib-switch>
+            </div>
+          </div>
+
+          <div class="tier-meta-panel__tags">
+            @for (tag of tierTags(); track tag.id) {
+            <div class="tier-tag-row">
+              <gom-lib-input
+                [formControl]="tierTagNameControl(tag.id)"
+                label="Tag name"
+                placeholder="Example: Best Value"
+              ></gom-lib-input>
+
+              <gom-lib-select
+                [formControl]="tierTagTypeControl(tag.id)"
+                [options]="tierTagTypeOptions"
+                label="Tag type"
+              ></gom-lib-select>
+
+              <gom-lib-button variant="secondary" (buttonClick)="removeTierTag(tag.id)">Remove</gom-lib-button>
+            </div>
+            }
+
+            @if (!tierTags().length) {
+            <p class="tier-meta-panel__empty">No tags added for this tier yet.</p>
+            }
+          </div>
+
+          <div class="tier-meta-panel__actions">
+            <gom-lib-button variant="secondary" (buttonClick)="addTierTag()">+ Add Tag</gom-lib-button>
+          </div>
         </section>
 
         <section class="tier-trial-policy-panel">
@@ -578,6 +629,69 @@ const BILLING_CYCLE_CONFIG: Array<{ code: BillingDurationCode; label: string; mo
       color: var(--gom-color-text-secondary, #556);
     }
 
+    .tier-meta-panel {
+      border: 1px solid var(--gom-color-border-muted, #e6edf2);
+      border-radius: 0.6rem;
+      padding: 0.65rem;
+      display: grid;
+      gap: 0.6rem;
+    }
+
+    .tier-meta-panel__header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.7rem;
+      padding-bottom: 0.45rem;
+      border-bottom: 1px solid var(--gom-color-border-muted, #e6edf2);
+    }
+
+    .tier-meta-panel__header h3 {
+      margin: 0;
+      font-size: 1rem;
+    }
+
+    .tier-meta-panel__switch-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.7rem;
+      color: var(--gom-color-text-primary, #243b53);
+      font-size: 0.92rem;
+    }
+
+    .tier-meta-panel__tags {
+      display: grid;
+      gap: 0.5rem;
+      min-height: 0;
+    }
+
+    .tier-tag-row {
+      display: grid;
+      grid-template-columns: 1fr 180px auto;
+      gap: 0.5rem;
+      align-items: flex-end;
+      padding: 0.45rem;
+      border: 1px solid var(--gom-color-border-muted, #e6edf2);
+      border-radius: 0.45rem;
+      background: #fafcff;
+    }
+
+    .tier-meta-panel__empty {
+      margin: 0;
+      padding: 0.45rem;
+      color: var(--gom-color-text-secondary, #6a7a89);
+      font-size: 0.9rem;
+      font-style: italic;
+    }
+
+    .tier-meta-panel__actions {
+      display: flex;
+      gap: 0.5rem;
+      padding-top: 0.45rem;
+      border-top: 1px solid var(--gom-color-border-muted, #e6edf2);
+    }
+
     @media (max-width: 900px) {
       .feature-transfer {
         grid-template-columns: 1fr;
@@ -587,6 +701,11 @@ const BILLING_CYCLE_CONFIG: Array<{ code: BillingDurationCode; label: string; mo
       .tier-billing-policy-panel__cycles,
       .tier-cycle-card__body {
         grid-template-columns: 1fr;
+      }
+
+      .tier-tag-row {
+        grid-template-columns: 1fr;
+        align-items: stretch;
       }
     }
   `],
@@ -612,6 +731,7 @@ export class TierManagementComponent implements OnInit {
   readonly tierAllowFullFeatureTrialControl = new FormControl<boolean>(true, { nonNullable: true });
   readonly tierSetupFeeControl = new FormControl<string>('0', { nonNullable: true });
   readonly tierCurrencyControl = new FormControl<string>('INR', { nonNullable: true });
+  readonly tierHighlightControl = new FormControl<boolean>(false, { nonNullable: true });
 
   readonly cycleEnabledControlMap: Record<BillingDurationCode, FormControl<boolean>> = {
     '1_MONTH': new FormControl<boolean>(true, { nonNullable: true }),
@@ -646,6 +766,7 @@ export class TierManagementComponent implements OnInit {
   };
 
   readonly billingCycleConfig = BILLING_CYCLE_CONFIG;
+  readonly tierTagTypeOptions = TIER_TAG_TYPE_OPTIONS;
 
   readonly tierTrialModeOptions = [
     { value: 'PLAN_BASED_TRIAL', label: 'Plan Based Trial' },
@@ -673,9 +794,13 @@ export class TierManagementComponent implements OnInit {
   readonly features = signal<FeatureCatalogItem[]>([]);
   readonly selectedFeatureKeys = signal<string[]>([]);
   readonly selectedFeatureConfigs = signal<Record<string, Record<string, number>>>({});
+  readonly tierTags = signal<TierTagRow[]>([]);
   private readonly featureControlMap = new Map<string, FormControl<boolean>>();
   private readonly configControlMap = new Map<string, FormControl<string>>();
+  private readonly tierTagNameControlMap = new Map<string, FormControl<string>>();
+  private readonly tierTagTypeControlMap = new Map<string, FormControl<TierTagType>>();
   private suppressAutoCycleBaseSync = false;
+  private tierTagIdSeed = 0;
 
   readonly moduleOptions = computed(() => {
     const modules = [...new Set(this.features().map((item) => String(item.module || '').trim()).filter(Boolean))]
@@ -813,6 +938,51 @@ export class TierManagementComponent implements OnInit {
     return this.cycleFinalAmountControlMap[code];
   }
 
+  tierTagNameControl(id: string): FormControl<string> {
+    const control = this.tierTagNameControlMap.get(id);
+    if (control) {
+      return control;
+    }
+    const newControl = new FormControl<string>('', { nonNullable: true });
+    this.tierTagNameControlMap.set(id, newControl);
+    return newControl;
+  }
+
+  tierTagTypeControl(id: string): FormControl<TierTagType> {
+    const control = this.tierTagTypeControlMap.get(id);
+    if (control) {
+      return control;
+    }
+    const newControl = new FormControl<TierTagType>('PRIMARY', { nonNullable: true });
+    this.tierTagTypeControlMap.set(id, newControl);
+    return newControl;
+  }
+
+  addTierTag(): void {
+    const id = `tag-${this.tierTagIdSeed++}`;
+    this.tierTagNameControl(id);
+    this.tierTagTypeControl(id);
+    const currentTags = this.tierTags();
+    this.tierTags.set([...currentTags, { id, name: '', type: 'PRIMARY' }]);
+  }
+
+  removeTierTag(id: string): void {
+    this.tierTags.set(this.tierTags().filter((tag) => tag.id !== id));
+    this.tierTagNameControlMap.delete(id);
+    this.tierTagTypeControlMap.delete(id);
+  }
+
+  private loadTierTags(tags: TierTag[] | undefined): void {
+    const tagRows: TierTagRow[] = (tags || []).map((tag, index) => {
+      const id = `tag-${index}`;
+      this.tierTagNameControl(id).setValue(String(tag.name || ''), { emitEvent: false });
+      this.tierTagTypeControl(id).setValue((tag.type || 'PRIMARY') as TierTagType, { emitEvent: false });
+      return { id, name: tag.name, type: tag.type };
+    });
+    this.tierTagIdSeed = tagRows.length;
+    this.tierTags.set(tagRows);
+  }
+
   isFullyFreeBillingEnabled(): boolean {
     return this.cycleEnabledControl('FULLY_FREE').value;
   }
@@ -896,9 +1066,11 @@ export class TierManagementComponent implements OnInit {
           this.tierFallbackTierControl.setValue(String(current.fallbackTierKey || ''), { emitEvent: false });
           this.tierAllowCustomTrialDaysControl.setValue(current.allowCustomTrialDays ?? true, { emitEvent: false });
           this.tierAllowFullFeatureTrialControl.setValue(current.allowFullFeatureTrial ?? true, { emitEvent: false });
+          this.tierHighlightControl.setValue(Boolean(current.highlight ?? false), { emitEvent: false });
           this.applyTierPricingControls(current);
           this.setSelectedFeatureKeys(Array.isArray(current.featureKeys) ? [...current.featureKeys] : []);
           this.setSelectedFeatureConfigs(this.normalizeTierFeatureConfigs(current.featureConfigs));
+          this.loadTierTags(current.tags);
         } else {
           this.activeTierId.set('');
           this.tierControl.setValue('', { emitEvent: false });
@@ -910,9 +1082,11 @@ export class TierManagementComponent implements OnInit {
           this.tierFallbackTierControl.setValue('', { emitEvent: false });
           this.tierAllowCustomTrialDaysControl.setValue(true, { emitEvent: false });
           this.tierAllowFullFeatureTrialControl.setValue(true, { emitEvent: false });
+          this.tierHighlightControl.setValue(false, { emitEvent: false });
           this.resetTierPricingControls();
           this.setSelectedFeatureKeys([]);
           this.setSelectedFeatureConfigs({});
+          this.loadTierTags(undefined);
         }
 
         this.loading.set(false);
@@ -996,9 +1170,11 @@ export class TierManagementComponent implements OnInit {
     this.tierFallbackTierControl.setValue(String(tier.fallbackTierKey || ''), { emitEvent: false });
     this.tierAllowCustomTrialDaysControl.setValue(tier.allowCustomTrialDays ?? true, { emitEvent: false });
     this.tierAllowFullFeatureTrialControl.setValue(tier.allowFullFeatureTrial ?? true, { emitEvent: false });
+    this.tierHighlightControl.setValue(Boolean(tier.highlight ?? false), { emitEvent: false });
     this.applyTierPricingControls(tier);
     this.setSelectedFeatureKeys(Array.isArray(tier.featureKeys) ? [...tier.featureKeys] : []);
     this.setSelectedFeatureConfigs(this.normalizeTierFeatureConfigs(tier.featureConfigs));
+    this.loadTierTags(tier.tags);
     this.moduleControl.setValue('all', { emitEvent: false });
     this.activeModule.set('all');
     this.searchControl.setValue('', { emitEvent: false });
@@ -1459,6 +1635,8 @@ export class TierManagementComponent implements OnInit {
                 currency: pricingPayload.currency,
                 trialDurationDays: pricingPayload.trialDurationDays,
                 cyclePricing: pricingPayload.cyclePricing,
+                highlight: Boolean(this.tierHighlightControl.value),
+                tags: this.buildTierTagsPayload(),
               };
 
               const currentCyclePricing = this.normalizeCyclePricingForCompare(currentTier?.cyclePricing || []);
@@ -1477,6 +1655,8 @@ export class TierManagementComponent implements OnInit {
                 || String(currentTier.currency || 'INR').trim().toUpperCase() !== updatePayload.currency
                 || Number(currentTier.trialDurationDays ?? currentTier.defaultTrialDurationDays ?? 14) !== Number(updatePayload.trialDurationDays)
                 || JSON.stringify(currentCyclePricing) !== JSON.stringify(nextCyclePricing)
+                || Boolean(currentTier.highlight ?? false) !== updatePayload.highlight
+                || JSON.stringify(currentTier.tags || []) !== JSON.stringify(updatePayload.tags)
               );
 
               if (!changed) {
@@ -1606,6 +1786,18 @@ export class TierManagementComponent implements OnInit {
       trialDurationDays,
       cyclePricing,
     };
+  }
+
+  private buildTierTagsPayload(): TierTag[] {
+    const tags: TierTag[] = [];
+    for (const tagRow of this.tierTags()) {
+      const name = String(this.tierTagNameControl(tagRow.id).value || '').trim();
+      const type = this.tierTagTypeControl(tagRow.id).value || 'PRIMARY';
+      if (name) {
+        tags.push({ name, type });
+      }
+    }
+    return tags;
   }
 
   private normalizeCyclePricingForCompare(cyclePricing: Array<Partial<TierCyclePricing>>): Array<TierCyclePricing> {

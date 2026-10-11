@@ -23,6 +23,12 @@ export interface FeatureConfigOverride {
 export type TrialMode = 'FULL_APP_TRIAL' | 'PLAN_BASED_TRIAL' | 'NONE';
 export type PostTrialAction = 'CONVERT_TO_PAID' | 'DOWNGRADE_TO_TIER' | 'SUSPEND_PREMIUM_ACCESS';
 export type BillingDurationCode = '1_MONTH' | '3_MONTHS' | '6_MONTHS' | '1_YEAR' | 'FULLY_FREE';
+export type TierTagType = 'PRIMARY' | 'SECONDARY' | 'INFO' | 'DANGER';
+
+export interface TierTag {
+  name: string;
+  type: TierTagType;
+}
 
 export interface TierCyclePricing {
   durationCode: BillingDurationCode;
@@ -56,6 +62,8 @@ export interface TierFeatureMap {
   packageId: string;
   tierKey: string;
   displayName?: string;
+  tags?: TierTag[];
+  highlight?: boolean;
   trialEnabled?: boolean;
   defaultTrialMode?: TrialMode;
   defaultTrialDurationDays?: number | null;
@@ -80,6 +88,8 @@ export interface TierFeatureMap {
 export interface CreateTierPayload {
   tierKey: string;
   displayName?: string;
+  tags?: TierTag[];
+  highlight?: boolean;
   trialEnabled?: boolean;
   defaultTrialMode?: TrialMode;
   defaultTrialDurationDays?: number | null;
