@@ -1,0 +1,51 @@
+@use "theme" as theme;
+
+.business-categories-page {
+  padding: theme.get-spacing(md);
+  display: grid;
+  gap: theme.get-gap(lg);
+
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: theme.get-gap(md);
+
+    > div:first-child {
+      display: grid;
+      gap: theme.get-gap(xxs);
+    }
+
+    h1 {
+      margin: 0;
+      @include theme.typography-heading(lg);
+      color: theme.get-text(default);
+    }
+
+    p {
+      margin: 0;
+      color: theme.get-text(hint);
+      font-size: theme.get-font-size(sm);
+    }
+  }
+
+  &__header-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: theme.get-gap(sm);
+    justify-content: flex-end;
+  }
+}
+
+@include theme.breakpoint-down(sm) {
+  .business-categories-page {
+    &__header {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    &__header-actions {
+      justify-content: stretch;
+    }
+  }
+}

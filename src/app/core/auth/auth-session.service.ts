@@ -20,6 +20,18 @@ interface ApiResponse<TData> {
   data: TData;
 }
 
+interface ResetTokenValidationResult {
+  valid: boolean;
+  reason: 'valid' | 'expired' | 'used' | 'invalid';
+  canResend: boolean;
+}
+
+const INVALID_RESET_TOKEN_RESULT: ResetTokenValidationResult = {
+  valid: false,
+  reason: 'invalid',
+  canResend: false,
+};
+
 @Injectable({
   providedIn: 'root',
 })
@@ -46,8 +58,115 @@ export class AuthSessionService {
       map((response) => response.data),
       tap((session) => this.setSession(this.sanitizeSession(session))),
       map(() => ({ success: true })),
-      catchError(() => of({ success: false, errorKey: 'auth.errors.invalid_tenant_credentials' })),
+      catchError((error) => {
+        const serverKey: string = error?.error?.message || error?.error?.errorKey || '';
+        if (serverKey === 'auth.errors.account_locked') {
+          return of({ success: false, errorKey: 'auth.errors.account_locked' });
+        }
+        if (serverKey === 'auth.errors.no_assigned_roles') {
+          return of({ success: false, errorKey: 'auth.errors.no_assigned_roles' });
+        }
+        return of({ success: false, errorKey: 'auth.errors.invalid_tenant_credentials' });
+      }),
     );
+  }
+
+  forgotTenantPassword(request: Pick<TenantLoginRequest, 'tenantCode' | 'email'>): Observable<AuthResult> {
+    return this.http
+      .post<ApiResponse<{ delivered: boolean }>>(`${this.authApiUrl}/tenant/forgot-password`, request)
+      .pipe(
+        map(() => ({ success: true })),
+        catchError((error) => {
+          const serverKey: string = error?.error?.message || error?.error?.errorKey || '';
+          if (serverKey === 'auth.errors.password_reset_account_not_found') {
+            return of({ success: false, errorKey: 'auth.errors.password_reset_account_not_found' });
+          }
+          if (serverKey === 'auth.errors.password_reset_delivery_failed') {
+            return of({ success: false, errorKey: 'auth.errors.password_reset_delivery_failed' });
+          }
+          if (serverKey === 'auth.errors.invalid_forgot_password_request') {
+            return of({ success: false, errorKey: 'auth.errors.invalid_forgot_password_request' });
+          }
+          return of({ success: false, errorKey: 'auth.errors.password_reset_failed' });
+        }),
+      );
+  }
+
+  forgotTenantId(request: { email: string }): Observable<AuthResult> {
+    return this.http
+      .post<ApiResponse<{ delivered: boolean }>>(`${this.authApiUrl}/tenant/forgot-tenant-id`, request)
+      .pipe(
+        map(() => ({ success: true })),
+        catchError((error) => {
+          const serverKey: string = error?.error?.message || error?.error?.errorKey || '';
+          if (serverKey === 'auth.errors.tenant_id_recovery_email_not_found') {
+            return of({ success: false, errorKey: 'auth.errors.tenant_id_recovery_email_not_found' });
+          }
+          if (serverKey === 'auth.errors.tenant_id_recovery_delivery_failed') {
+            return of({ success: false, errorKey: 'auth.errors.tenant_id_recovery_delivery_failed' });
+          }
+          if (serverKey === 'auth.errors.invalid_forgot_tenant_id_request') {
+            return of({ success: false, errorKey: 'auth.errors.invalid_forgot_tenant_id_request' });
+          }
+          return of({ success: false, errorKey: 'auth.errors.tenant_id_recovery_failed' });
+        }),
+      );
+  }
+
+  validateTenantPasswordResetToken(token: string): Observable<ResetTokenValidationResult> {
+    return this.http
+      .get<ApiResponse<ResetTokenValidationResult>>(`${this.authApiUrl}/tenant/reset-password/validate`, {
+        params: { token },
+      })
+      .pipe(
+        map((response) => response.data),
+        catchError(() => of(INVALID_RESET_TOKEN_RESULT)),
+      );
+  }
+
+  resetTenantPassword(request: { token: string; newPassword: string }): Observable<AuthResult> {
+    return this.http
+      .post<ApiResponse<{ reset: boolean }>>(`${this.authApiUrl}/tenant/reset-password`, request)
+      .pipe(
+        map(() => ({ success: true })),
+        catchError((error) => {
+          const serverKey: string = error?.error?.message || error?.error?.errorKey || '';
+          if (serverKey === 'auth.errors.reset_link_invalid_or_expired') {
+            return of({ success: false, errorKey: 'auth.errors.reset_link_invalid_or_expired' });
+          }
+          if (serverKey === 'auth.errors.password_too_short') {
+            return of({ success: false, errorKey: 'auth.errors.password_too_short' });
+          }
+          if (serverKey === 'auth.errors.invalid_reset_password_request') {
+            return of({ success: false, errorKey: 'auth.errors.invalid_reset_password_request' });
+          }
+          return of({ success: false, errorKey: 'auth.errors.password_reset_failed' });
+        }),
+      );
+  }
+
+  resendTenantPasswordResetLink(request: { token: string }): Observable<AuthResult> {
+    return this.http
+      .post<ApiResponse<{ delivered: boolean }>>(`${this.authApiUrl}/tenant/reset-password/resend`, request)
+      .pipe(
+        map(() => ({ success: true })),
+        catchError((error) => {
+          const serverKey: string = error?.error?.message || error?.error?.errorKey || '';
+          if (serverKey === 'auth.errors.reset_link_not_found') {
+            return of({ success: false, errorKey: 'auth.errors.reset_link_not_found' });
+          }
+          if (serverKey === 'auth.errors.password_reset_account_not_found') {
+            return of({ success: false, errorKey: 'auth.errors.password_reset_account_not_found' });
+          }
+          if (serverKey === 'auth.errors.invalid_reset_token') {
+            return of({ success: false, errorKey: 'auth.errors.invalid_reset_token' });
+          }
+          if (serverKey === 'auth.errors.password_reset_delivery_failed') {
+            return of({ success: false, errorKey: 'auth.errors.password_reset_delivery_failed' });
+          }
+          return of({ success: false, errorKey: 'auth.errors.password_reset_failed' });
+        }),
+      );
   }
 
   refreshStoredSession(): Observable<boolean> {
@@ -79,14 +198,68 @@ export class AuthSessionService {
   getLandingRoute(): string {
     const session = this.sessionState();
     if (!session) {
-      return '/auth';
+      return '/tenant-login';
     }
 
-    return session.actorType === 'platform' ? '/settings/saas-accounts' : '/saas-admin/dashboard';
+    // Platform users always go to SaaS Accounts
+    if (session.actorType === 'platform') {
+      return '/settings/saas-accounts';
+    }
+
+    // For tenant users, try to find the first accessible route based on their features
+    // Priority order: Dashboard -> Users -> Employees -> Categories -> Orders -> Settings
+    if (this.hasFeature('dashboard.view')) {
+      return '/saas-admin/dashboard';
+    }
+
+    if (this.hasFeature('user.list')) {
+      return '/saas-admin/users';
+    }
+
+    if (this.hasFeature('tenantAccount.view')) {
+      return '/saas-admin/employees';
+    }
+
+    if (this.hasFeature('category.list')) {
+      return '/masters/categories';
+    }
+
+    if (this.hasFeature('order.list')) {
+      return '/orders';
+    }
+
+    if (this.hasFeature('group.list')) {
+      return '/product/groups';
+    }
+
+    if (this.hasFeature('offer.list')) {
+      return '/saas-admin/offers';
+    }
+
+    // Check settings pages
+    if (this.hasFeature('storefront.config')) {
+      return '/settings/web-app/storefront';
+    }
+
+    if (this.hasFeature('delivery.management')) {
+      return '/settings/delivery-management';
+    }
+
+    if (this.hasFeature('notification.manage')) {
+      return '/settings/notification-settings';
+    }
+
+    if (this.hasFeature('employeeCode.config')) {
+      return '/settings/employee-code';
+    }
+
+    // If user has no accessible features, redirect to access-denied
+    // This shouldn't normally happen as users should have at least one feature
+    return '/access-denied?reason=feature_disabled';
   }
 
   getLoginRouteForActor(actor: UserActor): string {
-    return actor === 'platform' ? '/auth/platform-login' : '/auth/tenant-login';
+    return actor === 'platform' ? '/platform-login' : '/tenant-login';
   }
 
   hasCapability(capability?: AppCapability): boolean {
@@ -119,12 +292,18 @@ export class AuthSessionService {
 
     const session = this.sessionState();
     if (!session) {
+      console.log('[DEBUG] hasFeature: No session found');
       return false;
     }
 
     // Platform admins bypass all feature entitlement checks
     if (session.actorType === 'platform') {
       return true;
+    }
+
+    // When effectivePermissionKeys is present (role-gated employees), use it for fine-grained checks
+    if (Array.isArray(session.effectivePermissionKeys) && session.effectivePermissionKeys.length > 0) {
+      return session.effectivePermissionKeys.includes(normalized);
     }
 
     const keys = Array.isArray(session.featureKeys)
@@ -191,6 +370,9 @@ export class AuthSessionService {
     nextSession.featureKeys = Array.isArray(session.featureKeys)
       ? [...new Set(session.featureKeys.map((item) => String(item || '').trim().toLowerCase()).filter(Boolean))]
       : [];
+    nextSession.effectivePermissionKeys = Array.isArray(session.effectivePermissionKeys)
+      ? [...new Set(session.effectivePermissionKeys.map((item) => String(item || '').trim().toLowerCase()).filter(Boolean))]
+      : undefined;
     nextSession.effectiveFeatureConfigs = this.normalizeEffectiveFeatureConfigs(session.effectiveFeatureConfigs);
     if (session.actorType === 'tenant') {
       nextSession.tenantCode = String(session.tenantCode || '').trim().toUpperCase();

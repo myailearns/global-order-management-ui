@@ -1,14 +1,52 @@
 <div class="categories-list">
   <header class="categories-list__header">
-    <h2><i class="ri-tags-line" aria-hidden="true"></i> {{ text.pageTitle | translate }}</h2>
+    <gom-page-heading [title]="text.pageTitle | translate" [iconClass]="headingIcon"></gom-page-heading>
+    <div class="categories-list__actions">
       <gom-lib-button
+        type="button"
         class="btn-add"
+        variant="primary"
+        [size]="isMobileHeader() ? 'compact-icon' : 'default'"
         (buttonClick)="onAddNew()"
         gomDisableIfNoFeature="category.create"
         [disabled]="loading || !canCreate"
+        [attr.aria-label]="text.addCategory | translate"
+        [buttonTitle]="text.addCategory | translate"
       >
-        <i class="ri-add-line" aria-hidden="true"></i> {{ text.addCategory | translate }}
+        <i class="ri-add-line" aria-hidden="true"></i>
+        @if (!isMobileHeader()) {
+          {{ text.addCategory | translate }}
+        }
       </gom-lib-button>
+
+      <div class="categories-list__more-menu" #moreMenuBoundary>
+        <gom-lib-button
+          type="button"
+          variant="secondary"
+          [size]="isMobileHeader() ? 'compact-icon' : 'default'"
+          gomDisableIfNoFeature="category.create"
+          [disabled]="loading || !canCreate"
+          aria-label="More actions"
+          [buttonTitle]="'More actions'"
+          (buttonClick)="toggleHeaderActionsMenu()"
+        >
+          <i class="ri-more-2-line" aria-hidden="true"></i>
+        </gom-lib-button>
+
+        @if (headerActionsOpen()) {
+          <div class="categories-list__menu-panel" role="menu" aria-label="Category actions">
+            <button type="button" class="categories-list__menu-item" role="menuitem" (click)="onDownloadTemplateFromMenu()">
+              <i class="ri-download-line" aria-hidden="true"></i>
+              <span>Download Template</span>
+            </button>
+            <button type="button" class="categories-list__menu-item" role="menuitem" (click)="onUploadTemplateFromMenu()">
+              <i class="ri-upload-line" aria-hidden="true"></i>
+              <span>Upload Template</span>
+            </button>
+          </div>
+        }
+      </div>
+    </div>
   </header>
 
   <section class="categories-list__table-shell">

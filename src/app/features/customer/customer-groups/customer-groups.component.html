@@ -1,10 +1,20 @@
 <section class="master-page">
   <header class="master-page__header">
-    <h2><i class="ri-team-line" aria-hidden="true"></i> Customer Groups</h2>
+    <gom-page-heading navRoute="/customers/groups"></gom-page-heading>
     @if (canWrite()) {
-    <gom-lib-button type="button" variant="primary" (buttonClick)="openCreate()">
-      <i class="ri-add-line" aria-hidden="true"></i> Create Group
-    </gom-lib-button>
+      <gom-lib-button
+        type="button"
+        variant="primary"
+        [size]="isMobileHeader() ? 'compact-icon' : 'default'"
+        (buttonClick)="openCreate()"
+        [attr.aria-label]="'Create Group'"
+        [buttonTitle]="'Create Group'"
+      >
+        <i class="ri-add-line" aria-hidden="true"></i>
+        @if (!isMobileHeader()) {
+          Create Group
+        }
+      </gom-lib-button>
     }
   </header>
 

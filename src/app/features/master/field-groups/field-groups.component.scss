@@ -11,11 +11,6 @@
   justify-content: space-between;
   gap: theme.get-gap(sm);
   flex-wrap: wrap;
-
-  h2 {
-    margin: 0;
-    @include theme.typography-heading(xl);
-  }
 }
 
 .master-page__table-shell {
@@ -39,12 +34,19 @@
   align-items: center;
 }
 
-@include theme.breakpoint-down(sm) {
+@include theme.breakpoint-down(md) {
   .master-page__header {
-    align-items: stretch;
+    flex-wrap: nowrap;
+    align-items: center;
   }
 
-  gom-button {
-    width: 100%;
+  .master-page__header > gom-page-heading {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  gom-lib-button {
+    flex: 0 0 auto;
+    padding-inline: theme.get-spacing(xs);
   }
 }

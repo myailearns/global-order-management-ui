@@ -19,6 +19,7 @@ export interface Unit {
   baseUnitId: string | null;
   conversionFactor: number;
   status: UnitStatus;
+  /** @deprecated Category association removed - units are now global */
   categoryIds?: string[];
   createdAt?: string;
   updatedAt?: string;
@@ -30,7 +31,8 @@ export interface UnitPayload {
   baseUnitId: string | null;
   conversionFactor: number;
   status: UnitStatus;
-  categoryIds: string[];
+  /** @deprecated Category association removed - units are now global */
+  categoryIds?: string[];
 }
 
 interface ApiSuccess<T> {

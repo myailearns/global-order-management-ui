@@ -1,0 +1,307 @@
+@use "theme" as theme;
+
+:host ::ng-deep .gom-modal__dialog--large {
+  max-width: 56rem;
+  gap: 0;
+  padding: 0;
+}
+
+:host ::ng-deep .gom-modal__header {
+  padding: theme.get-spacing(lg) theme.get-spacing(lg) theme.get-spacing(sm);
+  border-bottom: 0;
+}
+
+:host ::ng-deep .gom-modal__title {
+  color: theme.get-text(default);
+  @include theme.typography-heading(md);
+}
+
+:host ::ng-deep .gom-modal__close {
+  min-width: 2rem;
+  min-height: 2rem;
+  border: 0;
+  color: theme.get-text(default-light);
+}
+
+:host ::ng-deep .gom-modal__content {
+  min-height: 0;
+  overflow: visible;
+}
+
+:host ::ng-deep .gom-modal__footer {
+  padding: theme.get-spacing(md) theme.get-spacing(lg);
+  border-top: theme.get-border-size(hairline) solid theme.get-border(standard);
+}
+
+.sp-review-modal {
+  padding: 0 theme.get-spacing(lg) theme.get-spacing(lg);
+}
+
+.sp-review-modal__description {
+  margin: 0 0 theme.get-spacing(lg);
+  color: theme.get-text(default-light);
+  font-size: theme.get-font-size(sm);
+}
+
+.sp-review-modal__table-wrap {
+  overflow-x: auto;
+  border: theme.get-border-size(hairline) solid theme.get-border(standard);
+  border-radius: theme.get-radius(md);
+}
+
+.sp-review-modal__mobile-list {
+  display: none;
+}
+
+.sp-review-modal__table {
+  width: 100%;
+  min-width: 42rem;
+  border-collapse: collapse;
+  table-layout: fixed;
+  color: theme.get-text(default);
+  font-size: theme.get-font-size(sm);
+
+  th,
+  td {
+    padding: theme.get-spacing(sm) theme.get-spacing(md);
+    border-bottom: theme.get-border-size(hairline) solid theme.get-border(standard);
+    text-align: left;
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+
+  th {
+    color: theme.get-text(default-light);
+    background: theme.get-background(secondary);
+    font-size: theme.get-font-size(xs);
+    font-weight: 600;
+  }
+
+  th:first-child { width: 29%; }
+
+  th:nth-child(2),
+  th:nth-child(3),
+  th:nth-child(4) { width: 19%; }
+
+  th:last-child { width: 14%; }
+
+  tbody tr:last-child td { border-bottom: 0; }
+
+  td i {
+    margin: 0 theme.get-spacing(xxs);
+    color: theme.get-text(hint);
+    font-size: theme.get-font-size(xs);
+  }
+}
+
+.sp-review-modal__product { font-weight: 600; }
+
+.sp-review-modal__old-value { color: theme.get-text(default-light); }
+
+.sp-review-modal__positive { color: theme.get-text(success); }
+
+.sp-review-modal__impact {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.5rem;
+  padding: 0.125rem theme.get-spacing(xs);
+  border-radius: theme.get-radius(sm);
+  color: theme.get-text(success);
+  background: theme.get-background(success-light);
+  font-size: theme.get-font-size(xs);
+  font-weight: 700;
+}
+
+.sp-review-modal__impact--negative {
+  color: theme.get-text(danger);
+  background: theme.get-background(danger-light);
+}
+
+.sp-review-modal__summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: theme.get-spacing(md);
+  margin-top: theme.get-spacing(lg);
+  padding: theme.get-spacing(md);
+  border: theme.get-border-size(hairline) solid #f5c242;
+  border-radius: theme.get-radius(md);
+  color: #9a4c08;
+  background: #fffbeb;
+  font-size: theme.get-font-size(sm);
+
+  strong:last-child { color: theme.get-text(success); }
+
+  p {
+    margin: 0;
+    color: #4b5563;
+    font-size: theme.get-font-size(sm);
+    width: 100%;
+  }
+
+  i {
+    margin-right: theme.get-spacing(xs);
+    color: #f59e0b;
+  }
+}
+
+.sp-review-modal__empty {
+  display: flex;
+  min-height: 12rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: theme.get-spacing(sm);
+  color: theme.get-text(default-light);
+}
+
+.sp-review-modal__empty-icon {
+  color: theme.get-text(success);
+  font-size: 2.5rem;
+}
+
+.sp-review-modal__footer { justify-content: flex-end; }
+
+.sp-review-modal__footer .gom-modal__action-layout-end {
+  display: flex;
+  align-items: center;
+  gap: theme.get-spacing(sm);
+}
+
+.sp-review-modal__back-button {
+  background: transparent !important;
+  border: 0 !important;
+  color: #334155 !important;
+  text-decoration: underline;
+  padding: 0 !important;
+  min-height: 0 !important;
+  min-width: 0 !important;
+  box-shadow: none !important;
+}
+
+@include theme.breakpoint-down(sm) {
+  :host ::ng-deep .gom-modal__dialog--large {
+    width: 100vw;
+    max-width: 100vw;
+    min-height: 100dvh;
+    border-radius: 0;
+    margin: 0;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+  }
+
+  :host ::ng-deep .gom-modal__header,
+  :host ::ng-deep .gom-modal__footer {
+    padding: theme.get-spacing(md);
+  }
+
+  :host ::ng-deep .gom-modal__content {
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .sp-review-modal {
+    padding: 0 theme.get-spacing(md) theme.get-spacing(md);
+    overflow-x: hidden;
+  }
+
+  .sp-review-modal__description {
+    margin-bottom: theme.get-spacing(md);
+    font-size: theme.get-font-size(body);
+  }
+
+  .sp-review-modal__table-wrap {
+    display: none;
+  }
+
+  .sp-review-modal__mobile-list {
+    display: grid;
+    gap: theme.get-spacing(md);
+  }
+
+  .sp-review-modal__mobile-card {
+    border: theme.get-border-size(hairline) solid #dce3f4;
+    border-radius: theme.get-radius(lg);
+    padding: theme.get-spacing(md);
+    background: #fff;
+    overflow-x: hidden;
+
+    h4 {
+      margin: 0 0 theme.get-spacing(sm);
+      color: theme.get-text(default);
+      @include theme.typography-heading(sm);
+    }
+  }
+
+  .sp-review-modal__mobile-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: theme.get-spacing(sm);
+
+    span {
+      display: block;
+      color: #94a3b8;
+      font-size: theme.get-font-size(xs);
+      margin-bottom: theme.get-spacing(xxs);
+    }
+
+    strong {
+      display: inline-flex;
+      align-items: center;
+      color: theme.get-text(default);
+      font-size: theme.get-font-size(sm);
+      font-weight: 700;
+      gap: theme.get-spacing(xxs);
+      min-width: 0;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+
+    i {
+      color: #94a3b8;
+      font-size: theme.get-font-size(xs);
+    }
+  }
+
+  .sp-review-modal__summary {
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    text-align: center;
+    border-color: #86efac;
+    background: #ecfdf5;
+    color: #064e3b;
+
+    strong:last-child {
+      color: #065f46;
+    }
+
+    p {
+      color: #047857;
+      font-size: theme.get-font-size(sm);
+    }
+
+    i {
+      color: #10b981;
+    }
+  }
+
+  .sp-review-modal__footer .gom-modal__action-layout-end {
+    width: 100%;
+    flex-direction: column-reverse;
+    align-items: center;
+    gap: theme.get-spacing(sm);
+  }
+
+  .sp-review-modal__footer .gom-modal__action-layout-end > * { width: 100%; }
+
+  .sp-review-modal__footer .gom-modal__action-layout-end > .sp-review-modal__back-button {
+    width: auto;
+    align-self: center;
+  }
+
+  .sp-review-modal__back-button {
+    justify-content: center;
+  }
+}

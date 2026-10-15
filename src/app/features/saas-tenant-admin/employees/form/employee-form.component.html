@@ -3,17 +3,47 @@
     <h1>{{ (employeeId ? 'saas.admin.employees.title_edit' : 'saas.admin.employees.title_create') | translate }}</h1>
   }
 
-  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="employee-form__grid">
-    <gom-lib-input formControlName="employeeCode" [label]="'saas.admin.employees.lbl_employee_code' | translate" [required]="true"></gom-lib-input>
-    <gom-lib-input formControlName="fullName" [label]="'saas.admin.employees.lbl_full_name' | translate" [required]="true"></gom-lib-input>
-    <gom-lib-input formControlName="department" [label]="'saas.admin.employees.lbl_department' | translate"></gom-lib-input>
-    <gom-lib-input formControlName="designation" [label]="'saas.admin.employees.lbl_designation' | translate"></gom-lib-input>
-    <gom-lib-select formControlName="status" [label]="'saas.admin.employees.lbl_status' | translate" [options]="statusOptions"></gom-lib-select>
-    <gom-lib-select formControlName="userId" [label]="'saas.admin.employees.lbl_linked_user' | translate" [options]="userOptions"></gom-lib-select>
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="employee-form__layout">
+    <div class="employee-form__grid">
+      <gom-lib-input formControlName="fullName" [label]="'saas.admin.employees.lbl_full_name' | translate" [required]="true"></gom-lib-input>
+      <gom-lib-input formControlName="email" [label]="'saas.admin.employees.lbl_email' | translate" [required]="true" type="email"></gom-lib-input>
 
-    <div class="employee-form__actions">
-      <gom-lib-button type="button" variant="secondary" (buttonClick)="onCancel()">{{ 'common.btn_cancel' | translate }}</gom-lib-button>
-      <gom-lib-button type="submit" [disabled]="submitting">{{ (employeeId ? 'saas.admin.employees.btn_update' : 'saas.admin.employees.btn_create') | translate }}</gom-lib-button>
+      @if (!employeeId) {
+        <gom-lib-select
+          formControlName="passwordMode"
+          [label]="'saas.admin.employees.lbl_password_mode' | translate"
+          [options]="[
+            { value: 'auto', label: ('saas.admin.employees.opt_password_auto' | translate) },
+            { value: 'manual', label: ('saas.admin.employees.opt_password_manual' | translate) }
+          ]">
+        </gom-lib-select>
+
+        @if (form.controls.passwordMode.value === 'manual') {
+          <gom-lib-input
+            formControlName="password"
+            [label]="'saas.admin.employees.lbl_password' | translate"
+            [required]="true"
+            type="password">
+          </gom-lib-input>
+        }
+      }
+
+      <gom-lib-select formControlName="status" [label]="'saas.admin.employees.lbl_status' | translate" [options]="statusOptions"></gom-lib-select>
     </div>
+
+    @if (modalMode) {
+      <footer gom-modal-actions class="employee-form__actions employee-form__actions--modal gom-modal__action-layout">
+        <div class="gom-modal__action-layout-start"></div>
+        <div class="gom-modal__action-layout-end">
+          <gom-lib-button type="button" variant="secondary" (buttonClick)="onCancel()">{{ 'common.btn_cancel' | translate }}</gom-lib-button>
+          <gom-lib-button type="submit" [disabled]="submitting">{{ (employeeId ? 'saas.admin.employees.btn_update' : 'saas.admin.employees.btn_create') | translate }}</gom-lib-button>
+        </div>
+      </footer>
+    } @else {
+      <div class="employee-form__actions">
+        <gom-lib-button type="button" variant="secondary" (buttonClick)="onCancel()">{{ 'common.btn_cancel' | translate }}</gom-lib-button>
+        <gom-lib-button type="submit" [disabled]="submitting">{{ (employeeId ? 'saas.admin.employees.btn_update' : 'saas.admin.employees.btn_create') | translate }}</gom-lib-button>
+      </div>
+    }
   </form>
 </section>

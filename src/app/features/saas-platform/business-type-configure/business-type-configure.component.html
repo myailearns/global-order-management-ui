@@ -1,0 +1,84 @@
+<section class="business-type-configure-page">
+  <div class="business-type-configure-page__hero">
+    <div class="business-type-configure-page__hero-main">
+      <p class="business-type-configure-page__eyebrow">{{ 'businessTypeConfigure.eyebrow' | translate }}</p>
+      <h1>{{ businessTypeName() || ('businessTypeConfigure.title' | translate) }}</h1>
+      <p>{{ 'businessTypeConfigure.description' | translate }}</p>
+
+      @if (summary()?.businessType?.businessCategories?.length) {
+        <p class="business-type-configure-page__meta">
+          {{ 'businessTypeConfigure.categoriesLabel' | translate }}:
+          {{ businessCategoryNames() }}
+        </p>
+      }
+    </div>
+
+    <a class="business-type-configure-page__back" routerLink="/settings/business-types">
+      {{ 'businessTypeConfigure.backToBusinessTypes' | translate }}
+    </a>
+  </div>
+
+  <section class="business-type-configure-page__section">
+    <div class="business-type-configure-page__section-heading">
+      <div>
+        <h2>{{ 'businessTypeConfigure.sections.title' | translate }}</h2>
+        <p>{{ 'businessTypeConfigure.sections.description' | translate }}</p>
+      </div>
+    </div>
+
+    <div class="business-type-configure-page__cards">
+      @for (section of sectionCards(); track section.key) {
+        <article class="business-type-configure-page__config-card" [class.business-type-configure-page__config-card--active]="activeSection() === section.key">
+          <div class="business-type-configure-page__config-card-header">
+            <h3>{{ section.label }}</h3>
+            <span>{{ section.count }}</span>
+          </div>
+
+          <p>{{ ('businessTypeConfigure.sectionDescriptions.' + section.key) | translate }}</p>
+
+          <gom-lib-button variant="secondary" (buttonClick)="selectSection(section.key)">
+            {{ 'businessTypeConfigure.actions.manage' | translate }}
+          </gom-lib-button>
+        </article>
+      }
+    </div>
+  </section>
+
+  <section class="business-type-configure-page__section business-type-configure-page__manage-shell">
+    <div class="business-type-configure-page__section-heading">
+      <div>
+        <h2>{{ selectedSectionCard()?.label || ('businessTypeConfigure.manageTitle' | translate) }}</h2>
+        <p>
+          {{ 'businessTypeConfigure.manageDescription' | translate }}
+          @if (sectionData()) {
+            <span>
+              {{ 'businessTypeConfigure.manageCounts' | translate:{ all: sectionData()?.counts?.all || 0, attached: sectionData()?.counts?.attached || 0, available: sectionData()?.counts?.available || 0 } }}
+            </span>
+          }
+        </p>
+      </div>
+
+      @if (selectedCount() > 0) {
+        <div class="business-type-configure-page__selection-chip">
+          {{ 'businessTypeConfigure.selectedCount' | translate:{ count: selectedCount() } }}
+        </div>
+      }
+    </div>
+
+    <gom-lib-table
+      [columns]="columns()"
+      [rows]="rows()"
+      [loading]="sectionLoading()"
+      [totalItems]="rows().length"
+      [enableRowSelection]="true"
+      [bulkActions]="bulkActions"
+      [bulkActionBusyKey]="bulkActionBusyKey()"
+      selectionItemLabel="item"
+      [searchPlaceholder]="'businessTypeConfigure.searchPlaceholder' | translate"
+      [emptyMessage]="'businessTypeConfigure.empty' | translate"
+      (rowAction)="onRowAction($event)"
+      (selectedRowsChange)="onSelectedRowsChange($event)"
+      (bulkAction)="onBulkAction($event)"
+    ></gom-lib-table>
+  </section>
+</section>

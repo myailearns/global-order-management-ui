@@ -7,7 +7,7 @@ import { GomButtonContentMode, getButtonContentMode, showButtonIcon, showButtonT
 import { GomButtonComponent, GomInputComponent, GomSelectComponent, GomSelectOption } from '@gomlibs/ui';
 import { GomModalComponent } from '@gomlibs/ui';
 import {
-  CategoryOption,
+  // CategoryOption, // REMOVED: Category association no longer needed
   FieldGroup,
   FieldGroupFieldItem,
   FieldGroupPayload,
@@ -42,7 +42,8 @@ export class FieldGroupsFormComponent implements OnChanges {
   @Input() isOpen = false;
   @Input() initialData: FieldGroup | null = null;
   readonly fields = input<PricingField[]>([]);
-  readonly categories = input<CategoryOption[]>([]);
+  // REMOVED: Category association - field groups are now global
+  // readonly categories = input<CategoryOption[]>([]);
   readonly groups = input<ProductGroupUsage[]>([]);
   @Output() formSubmit = new EventEmitter<FieldGroupPayload>();
   @Output() formCancel = new EventEmitter<void>();
@@ -67,9 +68,10 @@ export class FieldGroupsFormComponent implements OnChanges {
   });
 
   selectedAddFieldIds: string[] = [];
-  selectedCategoryIds: string[] = [];
+  // REMOVED: Category association - field groups are now global
+  // selectedCategoryIds: string[] = [];
   addFieldSelectCloseToken = 0;
-  categorySelectCloseToken = 0;
+  // categorySelectCloseToken = 0;
 
   readonly statusOptions: GomSelectOption[] = [
     { label: '', value: 'ACTIVE' },
@@ -102,11 +104,12 @@ export class FieldGroupsFormComponent implements OnChanges {
       .map((field) => ({ value: field._id, label: `${field.name} (${field.key})` }));
   });
 
-  readonly categoryOptions = computed<GomSelectOption[]>(() =>
-    this.categories()
-      .filter((category) => category.status === 'ACTIVE')
-      .map((category) => ({ value: category._id, label: category.name }))
-  );
+  // REMOVED: Category association - field groups are now global
+  // readonly categoryOptions = computed<GomSelectOption[]>(() =>
+  //   this.categories()
+  //     .filter((category) => category.status === 'ACTIVE')
+  //     .map((category) => ({ value: category._id, label: category.name }))
+  // );
 
   readonly fieldUsageById = computed(() => {
     const usage = new Map<string, string[]>();
@@ -158,9 +161,10 @@ export class FieldGroupsFormComponent implements OnChanges {
     this.selectedAddFieldIds = [...values];
   }
 
-  onMappedCategorySelectionChange(values: string[]): void {
-    this.selectedCategoryIds = [...values];
-  }
+  // REMOVED: Category association - field groups are now global
+  // onMappedCategorySelectionChange(values: string[]): void {
+  //   this.selectedCategoryIds = [...values];
+  // }
 
   addSelectedField(): void {
     if (!this.selectedAddFieldIds.length) {
@@ -285,8 +289,9 @@ export class FieldGroupsFormComponent implements OnChanges {
       name: fg.name,
       status: fg.status,
     });
-    this.selectedCategoryIds = [...(fg.categoryIds || [])];
-    this.categorySelectCloseToken += 1;
+    // REMOVED: Category association - field groups are now global
+    // this.selectedCategoryIds = [...(fg.categoryIds || [])];
+    // this.categorySelectCloseToken += 1;
 
     [...fg.fields]
       .sort((a, b) => a.order - b.order)
@@ -323,9 +328,10 @@ export class FieldGroupsFormComponent implements OnChanges {
       status: 'ACTIVE',
     });
     this.selectedAddFieldIds = [];
-    this.selectedCategoryIds = [];
+    // REMOVED: Category association - field groups are now global
+    // this.selectedCategoryIds = [];
     this.addFieldSelectCloseToken += 1;
-    this.categorySelectCloseToken += 1;
+    // this.categorySelectCloseToken += 1;
     this.errorMessage.set(null);
 
     while (this.fieldItems.length > 0) {
@@ -380,7 +386,8 @@ export class FieldGroupsFormComponent implements OnChanges {
     return {
       name: String(this.form.controls.name.value || '').trim(),
       status: (this.form.controls.status.value || 'ACTIVE') as 'ACTIVE' | 'INACTIVE',
-      categoryIds: [...this.selectedCategoryIds],
+      // REMOVED: Category association - field groups are now global
+      // categoryIds: [...this.selectedCategoryIds],
       fields: fields.filter((item): item is NonNullable<typeof item> => !!item),
     };
   }

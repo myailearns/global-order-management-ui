@@ -1,17 +1,7 @@
 <section class="master-page">
   <header class="master-page__header">
-    <h2><i class="ri-user-3-line" aria-hidden="true"></i> Customers</h2>
-    <div class="master-page__header-actions">
-      <gom-lib-input
-        label="Search"
-        type="search"
-        placeholder="Search customer, phone, pincode"
-        (valueChange)="onSearchChange($event)"
-      ></gom-lib-input>
-      <gom-lib-button type="button" variant="secondary" (buttonClick)="loadCustomers()">
-        Refresh
-      </gom-lib-button>
-    </div>
+    <gom-page-heading navRoute="/customers/list"></gom-page-heading>
+   
   </header>
 
   @if (errorMessage()) {

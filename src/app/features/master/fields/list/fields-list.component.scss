@@ -11,11 +11,6 @@
   justify-content: space-between;
   gap: theme.get-gap(sm);
   flex-wrap: wrap;
-
-  h2 {
-    margin: 0;
-    @include theme.typography-heading(xl);
-  }
 }
 
 .fields-list__table-shell {
@@ -29,16 +24,19 @@
   display: inline-flex;
 }
 
-@include theme.breakpoint-down(sm) {
+@include theme.breakpoint-down(md) {
   .fields-list__header {
-    align-items: stretch;
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+
+  .fields-list__header > gom-page-heading {
+    min-width: 0;
+    flex: 1 1 auto;
   }
 
   .btn-add {
-    width: 100%;
-
-    ::ng-deep .gom-button {
-      width: 100%;
-    }
+    flex: 0 0 auto;
+    padding-inline: theme.get-spacing(xs);
   }
 }

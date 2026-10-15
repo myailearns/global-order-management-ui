@@ -30,7 +30,7 @@ export class ServiceablePincodesConfigComponent implements OnInit {
   readonly loading = signal(false);
   readonly saving = signal(false);
   readonly errorMessage = signal<string | null>(null);
-  readonly canWrite = computed(() => this.authSession.canWrite('tenant-admin'));
+  readonly canEdit = computed(() => this.authSession.hasFeature('pincode.config'));
 
   readonly pincodeModeOptions = [
     { value: 'DISABLED', label: 'Disabled — No pincode check, delivery section hidden' },
@@ -79,7 +79,7 @@ export class ServiceablePincodesConfigComponent implements OnInit {
   }
 
   save(): void {
-    if (!this.canWrite()) {
+    if (!this.canEdit()) {
       return;
     }
 

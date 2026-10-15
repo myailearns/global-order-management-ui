@@ -1,0 +1,281 @@
+@use "theme" as theme;
+
+:host {
+  display: block;
+}
+
+.price-history {
+  display: grid;
+  gap: theme.get-spacing(md);
+}
+
+.price-history__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: theme.get-spacing(md);
+}
+
+.price-history__header-copy {
+  display: grid;
+  gap: theme.get-spacing(xxs);
+}
+
+.price-history__back-link {
+  width: fit-content;
+  border: 0;
+  background: transparent;
+  color: theme.get-text(primary);
+  display: inline-flex;
+  align-items: center;
+  gap: theme.get-spacing(xxs);
+  padding: 0;
+  cursor: pointer;
+  @include theme.typography-caption;
+  font-weight: 600;
+}
+
+.price-history__header h1 {
+  margin: 0;
+  @include theme.typography-heading(xl);
+  color: theme.get-text(primary);
+}
+
+.price-history__header p {
+  margin: theme.get-spacing(xxs) 0 0;
+  color: theme.get-text(hint);
+  @include theme.typography-caption;
+}
+
+.price-history__error {
+  border: theme.get-border-size(thin) solid theme.get-border(danger);
+  background: theme.get-background(danger-light);
+  color: theme.get-text(danger);
+  padding: theme.get-spacing(sm);
+  border-radius: theme.get-radius(sm);
+}
+
+.price-history__trend,
+.price-history__table-wrap {
+  border: theme.get-border-size(thin) solid theme.get-border(standard);
+  border-radius: theme.get-radius(md);
+  background: theme.get-background(standard);
+}
+
+.price-history__trend {
+  padding: theme.get-spacing(md) theme.get-spacing(lg);
+  display: grid;
+  gap: theme.get-spacing(md);
+}
+
+.price-history__trend-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: theme.get-spacing(sm);
+  flex-wrap: wrap;
+}
+
+.price-history__trend-head h2 {
+  margin: 0;
+  @include theme.typography-label;
+  text-transform: uppercase;
+  color: theme.get-text(default-light);
+}
+
+.price-history__range {
+  display: flex;
+  gap: theme.get-spacing(xs);
+  flex-wrap: wrap;
+}
+
+.price-history__range-btn {
+  border: theme.get-border-size(thin) solid theme.get-border(standard);
+  background: theme.get-background(secondary);
+  color: theme.get-text(default);
+  border-radius: theme.get-radius(sm);
+  padding: theme.get-spacing(xs) theme.get-spacing(sm);
+  cursor: pointer;
+  @include theme.typography-caption;
+  font-weight: 600;
+}
+
+.price-history__range-btn.is-active {
+  border-color: theme.get-border(primary);
+  background: theme.get-background(primary);
+  color: theme.get-text(on-primary);
+  font-weight: 600;
+}
+
+.price-history__trend-grid {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: theme.get-spacing(md);
+  align-items: stretch;
+}
+
+.price-history__summary {
+  border: theme.get-border-size(thin) solid theme.get-border(light);
+  border-radius: theme.get-radius(sm);
+  padding: theme.get-spacing(md);
+  display: grid;
+  gap: theme.get-spacing(xxs);
+}
+
+.price-history__summary small {
+  color: theme.get-text(default-light);
+  @include theme.typography-caption;
+}
+
+.price-history__summary span {
+  @include theme.typography-caption;
+  color: theme.get-text(hint);
+}
+
+.price-history__summary strong {
+  @include theme.typography-heading(xl);
+  color: theme.get-text(primary);
+}
+
+.price-history__summary p {
+  margin: 0;
+  @include theme.typography-body;
+  font-weight: 600;
+}
+
+.price-history__summary p.is-positive {
+  color: theme.get-text(success);
+}
+
+.price-history__summary p.is-negative {
+  color: theme.get-text(danger);
+}
+
+.price-history__summary-note {
+  margin-top: theme.get-spacing(xs);
+}
+
+.price-history__chart {
+  border: theme.get-border-size(thin) solid theme.get-border(light);
+  border-radius: theme.get-radius(sm);
+  padding: theme.get-spacing(xs);
+  min-height: 220px;
+  display: flex;
+  align-items: center;
+}
+
+.price-history__chart svg {
+  width: 100%;
+  height: 220px;
+}
+
+.price-history__chart-panel {
+  fill: theme.get-background(secondary);
+}
+
+.price-history__chart-grid {
+  stroke: theme.get-border(light);
+  stroke-width: 1;
+}
+
+.price-history__chart-y-label {
+  fill: theme.get-text(default-light);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.price-history__chart-line {
+  fill: none;
+  stroke: theme.get-border(primary);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.price-history__chart-point {
+  fill: theme.get-border(primary);
+  stroke: theme.get-background(standard);
+  stroke-width: 1.5;
+}
+
+.price-history__chart-point-latest {
+  fill: theme.get-border(primary);
+  stroke: theme.get-background(standard);
+  stroke-width: 2;
+}
+
+.price-history__chart-badge {
+  fill: theme.get-background(standard);
+  stroke: theme.get-border(standard);
+}
+
+.price-history__chart-badge-text {
+  fill: theme.get-text(primary);
+  font-size: 10px;
+  font-weight: 700;
+  text-anchor: middle;
+}
+
+.price-history__chart-x-label {
+  fill: theme.get-text(default-light);
+  font-size: 11px;
+  font-weight: 500;
+  text-anchor: middle;
+}
+
+.price-history__chart-empty {
+  margin: 0;
+  color: theme.get-text(hint);
+  @include theme.typography-caption;
+}
+
+.price-history__table-wrap {
+  overflow: hidden;
+}
+
+:host ::ng-deep .price-history__table-wrap .gom-table-shell {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+:host ::ng-deep .price-history__table-wrap .gom-table-toolbar {
+  padding: theme.get-spacing(sm) theme.get-spacing(md);
+  border-bottom: theme.get-border-size(thin) solid theme.get-border(light);
+}
+
+:host ::ng-deep .price-history__table-wrap th,
+:host ::ng-deep .price-history__table-wrap td {
+  padding: theme.get-spacing(xs) theme.get-spacing(sm);
+}
+
+:host ::ng-deep .price-history__table-wrap th {
+  color: theme.get-text(default-light);
+  font-weight: 700;
+  font-size: 0.72rem;
+}
+
+:host ::ng-deep .price-history__table-wrap td.price-history__change--positive {
+  color: theme.get-text(success);
+  font-weight: 600;
+}
+
+:host ::ng-deep .price-history__table-wrap td.price-history__change--negative {
+  color: theme.get-text(danger);
+  font-weight: 600;
+}
+
+@include theme.breakpoint-down(md) {
+  .price-history__header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .price-history__chart {
+    display: none;
+  }
+
+  .price-history__trend-grid {
+    grid-template-columns: 1fr;
+  }
+}

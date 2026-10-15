@@ -38,6 +38,7 @@ export interface FieldGroup {
   name: string;
   version: number;
   fields: FieldGroupFieldItem[];
+  /** @deprecated Category association removed - field groups are now global */
   categoryIds?: string[];
   status: 'ACTIVE' | 'INACTIVE';
   createdAt?: string;
@@ -65,7 +66,8 @@ export interface PricingField {
 export interface FieldGroupPayload {
   name: string;
   status: 'ACTIVE' | 'INACTIVE';
-  categoryIds: string[];
+  /** @deprecated Category association removed - field groups are now global */
+  categoryIds?: string[];
   fields: Array<{
     fieldId: string;
     order: number;

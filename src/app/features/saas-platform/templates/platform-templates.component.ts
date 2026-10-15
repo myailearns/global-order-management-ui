@@ -90,10 +90,10 @@ export class PlatformTemplatesComponent implements OnInit {
     { key: 'name', header: 'Name', sortable: true, filterable: true },
     { key: 'description', header: 'Description', filterable: true, textMode: 'wrap' },
     { key: 'status', header: 'Status', sortable: true },
-    { key: 'actions', header: 'Actions', width: '14rem', actionButtons: [
-      { label: 'Manage', actionKey: 'manage', variant: 'secondary', icon: 'ri-links-line' },
-      { label: 'Edit', actionKey: 'edit', variant: 'secondary' },
-      { label: 'Delete', actionKey: 'delete', variant: 'secondary' },
+        { key: 'actions', header: 'Actions', width: '14rem', actionButtons: [
+          { label: 'Manage', actionKey: 'manage', variant: 'secondary', icon: 'ri-links-line' },
+          { label: 'Edit', icon: 'ri-pencil-line', actionKey: 'edit', variant: 'secondary' },
+          { label: 'Delete', icon: 'ri-delete-bin-line', actionKey: 'delete', variant: 'secondary' },
     ]},
   ];
 
@@ -103,9 +103,9 @@ export class PlatformTemplatesComponent implements OnInit {
     { key: 'type', header: 'Type', sortable: true },
     { key: 'defaultValue', header: 'Default' },
     { key: 'status', header: 'Status', sortable: true },
-    { key: 'actions', header: 'Actions', width: '10rem', actionButtons: [
-      { label: 'Edit', actionKey: 'edit', variant: 'secondary' },
-      { label: 'Delete', actionKey: 'delete', variant: 'secondary' },
+        { key: 'actions', header: 'Actions', width: '10rem', actionButtons: [
+          { label: 'Edit', icon: 'ri-pencil-line', actionKey: 'edit', variant: 'secondary' },
+          { label: 'Delete', icon: 'ri-delete-bin-line', actionKey: 'delete', variant: 'secondary' },
     ]},
   ];
 
@@ -114,9 +114,9 @@ export class PlatformTemplatesComponent implements OnInit {
     { key: 'version', header: 'Version' },
     { key: 'fieldsCount', header: 'Fields Count' },
     { key: 'categoriesCount', header: 'Categories' },
-    { key: 'actions', header: 'Actions', width: '10rem', actionButtons: [
-      { label: 'Edit', actionKey: 'edit', variant: 'secondary' },
-      { label: 'Delete', actionKey: 'delete', variant: 'secondary' },
+        { key: 'actions', header: 'Actions', width: '10rem', actionButtons: [
+          { label: 'Edit', icon: 'ri-pencil-line', actionKey: 'edit', variant: 'secondary' },
+          { label: 'Delete', icon: 'ri-delete-bin-line', actionKey: 'delete', variant: 'secondary' },
     ]},
   ];
 
@@ -124,9 +124,9 @@ export class PlatformTemplatesComponent implements OnInit {
     { key: 'name', header: 'Name', sortable: true, filterable: true },
     { key: 'symbol', header: 'Symbol', sortable: true },
     { key: 'conversionFactor', header: 'Conversion' },
-    { key: 'actions', header: 'Actions', width: '10rem', actionButtons: [
-      { label: 'Edit', actionKey: 'edit', variant: 'secondary' },
-      { label: 'Delete', actionKey: 'delete', variant: 'secondary' },
+        { key: 'actions', header: 'Actions', width: '10rem', actionButtons: [
+          { label: 'Edit', icon: 'ri-pencil-line', actionKey: 'edit', variant: 'secondary' },
+          { label: 'Delete', icon: 'ri-delete-bin-line', actionKey: 'delete', variant: 'secondary' },
     ]},
   ];
 
@@ -137,9 +137,9 @@ export class PlatformTemplatesComponent implements OnInit {
     { key: 'rateDisplay', header: 'Rate' },
     { key: 'inclusiveDisplay', header: 'Inclusive' },
     { key: 'hsnCode', header: 'HSN' },
-    { key: 'actions', header: 'Actions', width: '10rem', actionButtons: [
-      { label: 'Edit', actionKey: 'edit', variant: 'secondary' },
-      { label: 'Delete', actionKey: 'delete', variant: 'secondary' },
+        { key: 'actions', header: 'Actions', width: '10rem', actionButtons: [
+          { label: 'Edit', icon: 'ri-pencil-line', actionKey: 'edit', variant: 'secondary' },
+          { label: 'Delete', icon: 'ri-delete-bin-line', actionKey: 'delete', variant: 'secondary' },
     ]},
   ];
 

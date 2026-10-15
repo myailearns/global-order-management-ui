@@ -1,33 +1,207 @@
 <section class="gom-login-page">
-  <div class="gom-login-page__panel gom-login-page__panel--accent">
-    <p class="gom-login-page__eyebrow">{{ 'auth.common.dev_mode' | translate }}</p>
-    <h1>{{ 'auth.tenant.title' | translate }}</h1>
-    <p class="gom-login-page__subtitle">{{ 'auth.tenant.subtitle' | translate }}</p>
+  <div class="gom-login-page__brand-panel">
+    <div class="gom-login-page__brand-shell">
+      <img class="gom-login-page__logo" src="/assets/logo/logo.svg" alt="VenBuz" />
 
-    <div class="gom-login-page__demo-card">
-      <h2>{{ 'auth.tenant.demo_title' | translate }}</h2>
-      <p>{{ 'auth.tenant.demo_starter' | translate }}</p>
-      <p>{{ 'auth.tenant.demo_growth' | translate }}</p>
-      <p>{{ 'auth.tenant.demo_scale' | translate }}</p>
-      <p>{{ 'auth.tenant.demo_password' | translate }}</p>
+      <div class="gom-login-page__brand-copy">
+        <h1>One Platform.<br />Every Business.</h1>
+        <p>Manage your store, stock and daily operations in one connected workspace.</p>
+      </div>
+
+      <div class="gom-login-page__illustration" aria-hidden="true">
+        <img src="/assets/Connected_businesses.svg" alt="" />
+      </div>
+
+      <div class="gom-login-page__feature-block">
+        <p class="gom-login-page__feature-label">Everything you need</p>
+
+        <div class="gom-login-page__feature-grid">
+          <div class="gom-login-page__feature-item">
+            <span class="gom-login-page__feature-icon"><i class="ri-store-2-line" aria-hidden="true"></i></span>
+            <span>Online Store</span>
+          </div>
+
+          <div class="gom-login-page__feature-item">
+            <span class="gom-login-page__feature-icon"><i class="ri-database-2-line" aria-hidden="true"></i></span>
+            <span>Inventory</span>
+          </div>
+
+          <div class="gom-login-page__feature-item">
+            <span class="gom-login-page__feature-icon"><i class="ri-bank-card-line" aria-hidden="true"></i></span>
+            <span>POS</span>
+          </div>
+
+          <div class="gom-login-page__feature-item">
+            <span class="gom-login-page__feature-icon"><i class="ri-file-list-3-line" aria-hidden="true"></i></span>
+            <span>Order Management</span>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div class="gom-login-page__panel">
-    <a routerLink="/auth" class="gom-login-page__back">{{ 'auth.common.back_to_entry' | translate }}</a>
+  <div class="gom-login-page__form-panel">
+    <div class="gom-login-page__form-shell">
+      <div class="gom-login-page__form-content">
+        @if (view() === 'login') {
+          <div class="gom-login-page__heading-block">
+            <h2>Sign in</h2>
+            <p>Authorized access for platform administrators.</p>
+          </div>
 
-    <form class="gom-login-page__form" [formGroup]="form" (ngSubmit)="submit()">
-      <gom-lib-input formControlName="tenantCode" [label]="'auth.tenant.lbl_tenant_code' | translate" [required]="true"></gom-lib-input>
-      <gom-lib-input formControlName="email" type="email" [label]="'auth.tenant.lbl_email' | translate" [required]="true"></gom-lib-input>
-      <gom-lib-input formControlName="password" type="password" [label]="'auth.tenant.lbl_password' | translate" [required]="true"></gom-lib-input>
+          <form class="gom-login-form" [formGroup]="form" (ngSubmit)="submit()">
+            <div class="gom-login-form__field-block">
+              <label class="gom-login-form__label" for="tenant-login-email">Email ID</label>
+              <gom-lib-input
+                id="tenant-login-email"
+                formControlName="email"
+                type="email"
+                placeholder="Enter your email address"
+              ></gom-lib-input>
+            </div>
 
-      @if (errorMessage()) {
-        <p class="gom-login-page__error" role="alert">{{ errorMessage() }}</p>
-      }
+            <div class="gom-login-form__field-block">
+              <div class="gom-login-form__label-row">
+                <label class="gom-login-form__label" for="tenant-login-password">Password</label>
+                <button type="button" class="gom-login-form__meta-link" (click)="openForgotPassword()">Forgot Password?</button>
+              </div>
 
-      <gom-lib-button type="submit" [disabled]="form.invalid || submitting()">
-        {{ 'auth.tenant.btn_submit' | translate }}
-      </gom-lib-button>
-    </form>
+              <div class="gom-login-form__password-wrap">
+                <gom-lib-input
+                  id="tenant-login-password"
+                  formControlName="password"
+                  [type]="passwordVisible() ? 'text' : 'password'"
+                  placeholder="Enter your password"
+                ></gom-lib-input>
+
+                <button
+                  type="button"
+                  class="gom-login-form__visibility-toggle"
+                  [attr.aria-label]="passwordVisible() ? 'Hide password' : 'Show password'"
+                  (click)="togglePasswordVisibility()"
+                >
+                  <i [class]="passwordVisible() ? 'ri-eye-off-line' : 'ri-eye-line'" aria-hidden="true"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="gom-login-form__field-block">
+              <div class="gom-login-form__label-row">
+                <label class="gom-login-form__label" for="tenant-login-code">Tenant ID</label>
+                <button type="button" class="gom-login-form__meta-link" (click)="openForgotTenantId()">Forgot Tenant ID?</button>
+              </div>
+
+              <gom-lib-input
+                id="tenant-login-code"
+                formControlName="tenantCode"
+                placeholder="Enter your Tenant ID"
+                hint="The workspace ID provided by your business."
+              ></gom-lib-input>
+            </div>
+
+            @if (errorMessage()) {
+              <p class="gom-login-form__error" role="alert">{{ errorMessage() }}</p>
+            }
+
+            <gom-lib-button type="submit" [disabled]="form.invalid || submitting()">
+              <span>{{ submitting() ? 'Signing in...' : 'Sign In' }}</span>
+              <span class="gom-login-form__button-icon" aria-hidden="true">
+                <i class="ri-arrow-right-line"></i>
+              </span>
+            </gom-lib-button>
+          </form>
+        } @else if (view() === 'forgot-password') {
+          <div class="gom-login-page__forgot-icon" aria-hidden="true">
+            <i class="ri-lock-line"></i>
+          </div>
+
+          <div class="gom-login-page__heading-block gom-login-page__heading-block--forgot">
+            <h2>Forgot your password?</h2>
+            <p>No worries! Enter your registered email address and Tenant ID to reset your password.</p>
+          </div>
+
+          <p class="gom-login-page__forgot-note">Both fields are required.</p>
+
+          <form class="gom-login-form gom-login-form--forgot" [formGroup]="forgotPasswordForm" (ngSubmit)="submitForgotPassword()">
+            <div class="gom-login-form__field-block">
+              <label class="gom-login-form__label" for="tenant-forgot-email">Registered Email ID</label>
+              <gom-lib-input
+                id="tenant-forgot-email"
+                formControlName="email"
+                type="email"
+                placeholder="Enter your registered email address"
+              ></gom-lib-input>
+            </div>
+
+            <div class="gom-login-form__field-block">
+              <label class="gom-login-form__label" for="tenant-forgot-code">Tenant ID</label>
+              <gom-lib-input
+                id="tenant-forgot-code"
+                formControlName="tenantCode"
+                placeholder="Enter your Tenant ID"
+                hint="The workspace ID provided by your business."
+              ></gom-lib-input>
+            </div>
+
+            <gom-lib-button type="submit" [disabled]="forgotPasswordForm.invalid || submitting()">
+              @if (submitting()) {
+                <i class="ri-loader-4-line ri-spin" aria-hidden="true"></i>
+              }
+              <span>{{ submitting() ? 'Sending reset link...' : 'Continue' }}</span>
+            </gom-lib-button>
+
+            <button type="button" class="gom-login-page__back-link" (click)="backToLogin()">
+              <i class="ri-arrow-left-line" aria-hidden="true"></i>
+              <span>Back to Login</span>
+            </button>
+          </form>
+        } @else {
+          <div class="gom-login-page__forgot-icon" aria-hidden="true">
+            <i class="ri-lock-line"></i>
+          </div>
+
+          <div class="gom-login-page__heading-block gom-login-page__heading-block--forgot">
+            <h2>Forgot your Tenant ID?</h2>
+            <p>No worries! Enter your registered email address to recover your business account's Tenant ID.</p>
+          </div>
+
+          <p class="gom-login-page__forgot-note">Email address is required.</p>
+
+          <form class="gom-login-form gom-login-form--forgot" [formGroup]="forgotTenantIdForm" (ngSubmit)="submitForgotTenantId()">
+            <div class="gom-login-form__field-block">
+              <label class="gom-login-form__label" for="tenant-forgot-id-email">Registered Email ID</label>
+              <gom-lib-input
+                id="tenant-forgot-id-email"
+                formControlName="email"
+                type="email"
+                placeholder="Enter your registered email address"
+                [error]="forgotTenantIdEmailError()"
+              ></gom-lib-input>
+            </div>
+
+            @if (errorMessage()) {
+              <p class="gom-login-form__error" role="alert">{{ errorMessage() }}</p>
+            }
+
+            <gom-lib-button type="submit" [disabled]="forgotTenantIdForm.invalid || submitting()">
+              @if (submitting()) {
+                <i class="ri-loader-4-line ri-spin" aria-hidden="true"></i>
+              }
+              <span>{{ submitting() ? 'Sending Tenant ID...' : 'Continue' }}</span>
+            </gom-lib-button>
+
+            <button type="button" class="gom-login-page__back-link" (click)="backToLogin()">
+              <i class="ri-arrow-left-line" aria-hidden="true"></i>
+              <span>Back to Login</span>
+            </button>
+          </form>
+        }
+      </div>
+
+      <div class="gom-login-page__legal">
+        <p><i class="ri-lock-line" aria-hidden="true"></i> Authorized access only</p>
+        <p>&copy; {{ currentYear }} VenBuz. All rights reserved.</p>
+      </div>
+    </div>
   </div>
 </section>

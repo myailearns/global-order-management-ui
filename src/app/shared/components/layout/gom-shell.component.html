@@ -6,54 +6,167 @@
       <router-outlet></router-outlet>
     </main>
   } @else {
-  <header class="gom-shell__topbar">
+  <header class="gom-shell__topbar" [class.gom-shell__topbar--with-search]="showTopbarSearch()">
     <div class="gom-shell__topbar-start">
       <button
         type="button"
         class="gom-shell__menu-button"
-        (click)="toggleMenu()"
-        [attr.aria-expanded]="menuOpen()"
+        (click)="toggleNav()"
+        [attr.aria-expanded]="isNavExpanded()"
         aria-controls="gom-side-nav"
         [attr.aria-label]="'app.navigation.toggle' | translate"
       >
         <i class="ri-menu-2-line" aria-hidden="true"></i>
       </button>
 
-      <div class="gom-shell__brand-mark" aria-hidden="true">
-        <i class="ri-global-line"></i>
-      </div>
+      <img
+        class="gom-shell__brand-logo"
+        src="assets/logo/logo.svg"
+        alt="{{ 'app.name' | translate }}"
+      />
+      @if (tenantApplicationName()) {
+        <div class="gom-shell__brand">
+          <p class="gom-shell__eyebrow">{{ tenantApplicationName() }}</p>
+        </div>
+      }
+    </div>
 
-      <div class="gom-shell__brand">
-        <p class="gom-shell__eyebrow">{{ 'app.name' | translate }}</p>
-        <h1>{{ 'app.module' | translate }}</h1>
-      </div>
+    <div class="gom-shell__topbar-center">
+      @if (showTopbarSearch()) {
+        <div class="gom-shell__topbar-search" role="search" aria-label="Product search">
+          <gom-lib-input
+            [ngModel]="topbarSearchValue"
+            (ngModelChange)="onTopbarSearchChange($event)"
+            placeholder="Search product name or scan barcode..."
+          ></gom-lib-input>
+        </div>
+      }
     </div>
 
     <div class="gom-shell__topbar-actions">
-      <label class="gom-shell__lang-picker">
-        <span>{{ 'app.language.label' | translate }}</span>
-        <gom-lib-select
-          [options]="languageSelectOptions"
-          [placeholder]="('app.language.label' | translate)"
-          [ngModel]="currentLanguage()"
-          (ngModelChange)="changeLanguage($event)"
-        ></gom-lib-select>
-      </label>
+      @if (isCreateOrderRoute() && catalogStorageEnabled()) {
+        <button
+          type="button"
+          class="gom-shell__action-button"
+          aria-label="Catalog synchronization"
+          title="Catalog synchronization"
+          (click)="openCatalogSyncModal()"
+        >
+          <i
+            class="ri-refresh-line"
+            [class.gom-shell__sync-icon--spinning]="catalogRefreshing()"
+            aria-hidden="true"
+          ></i>
+        </button>
+      }
 
-      <button type="button" class="gom-shell__action-button" [attr.aria-label]="'app.actions.notifications' | translate">
-        <i class="ri-notification-3-line" aria-hidden="true"></i>
-      </button>
-      <button type="button" class="gom-shell__action-button" [attr.aria-label]="'app.actions.logout' | translate" (click)="logout()">
-        <i class="ri-logout-box-r-line" aria-hidden="true"></i>
-      </button>
-      <button
-        type="button"
-        class="gom-shell__profile-chip"
-        [attr.aria-label]="'app.actions.profile' | translate"
-        [attr.title]="currentSession()?.displayName || ''"
-      >
-        <span>{{ currentSession()?.initials || 'GU' }}</span>
-      </button>
+      <!-- Notification Bell -->
+      @if (currentSession()?.actorType === 'tenant') {
+        <div class="gom-shell__notif-wrap">
+          <button
+            type="button"
+            class="gom-shell__action-button gom-shell__notif-bell"
+            [attr.aria-label]="'app.actions.notifications' | translate"
+            [attr.aria-expanded]="notifPanelOpen()"
+            (click)="toggleNotifPanel()"
+          >
+            <i class="ri-notification-3-line" aria-hidden="true"></i>
+            @if (unreadNotifCount() > 0) {
+              <span class="gom-shell__notif-badge" aria-live="polite">{{ unreadNotifCount() > 99 ? '99+' : unreadNotifCount() }}</span>
+            }
+          </button>
+
+          @if (notifPanelOpen()) {
+            <div class="gom-shell__notif-panel" role="dialog" aria-label="Notifications">
+              <div class="gom-shell__notif-panel-head">
+                <h2>Notifications</h2>
+                @if (unreadNotifCount() > 0) {
+                  <button type="button" class="gom-shell__notif-mark-all" (click)="markAllNotifsRead()">Mark all read</button>
+                }
+              </div>
+              @if (notifLoading()) {
+                <div class="gom-shell__notif-loading"><i class="ri-loader-4-line" aria-hidden="true"></i> Loading…</div>
+              } @else if (notifications().length === 0) {
+                <div class="gom-shell__notif-empty"><i class="ri-notification-off-line" aria-hidden="true"></i><span>No notifications yet</span></div>
+              } @else {
+                <ul class="gom-shell__notif-list">
+                  @for (notif of notifications(); track notif._id) {
+                    <li
+                      class="gom-shell__notif-item"
+                      [class.gom-shell__notif-item--unread]="!notif.readAt"
+                      (click)="markNotifRead(notif)"
+                    >
+                      <div class="gom-shell__notif-dot" aria-hidden="true"></div>
+                      <div class="gom-shell__notif-content">
+                        <p class="gom-shell__notif-title">{{ notif.title }}</p>
+                        <p class="gom-shell__notif-body">{{ notif.body }}</p>
+                      </div>
+                    </li>
+                  }
+                </ul>
+              }
+            </div>
+            <!-- Click-outside backdrop -->
+            <button type="button" class="gom-shell__notif-backdrop" aria-hidden="true" (click)="closeNotifPanel()"></button>
+          }
+        </div>
+        <button
+          type="button"
+          class="gom-shell__action-button"
+          aria-label="Clear local Create Order catalog"
+          title="Clear Local Storage"
+          (click)="openClearLocalCatalogConfirmation()"
+        >
+          <i class="ri-database-2-line" aria-hidden="true"></i>
+        </button>
+      }
+      <div class="gom-shell__profile-wrap">
+        <button
+          type="button"
+          class="gom-shell__profile-chip"
+          [attr.aria-label]="'app.actions.profile' | translate"
+          [attr.aria-expanded]="profileMenuOpen()"
+          [attr.title]="currentSession()?.displayName || ''"
+          (click)="toggleProfileMenu()"
+        >
+          <i class="ri-user-line" aria-hidden="true"></i>
+        </button>
+
+        @if (profileMenuOpen()) {
+          <div class="gom-shell__profile-panel">
+            <div class="gom-shell__profile-panel-head">
+              <h2>{{ currentSession()?.displayName || 'Guest User' }}</h2>
+            </div>
+
+            <button type="button" class="gom-shell__profile-link" (click)="openProfileSettings()">
+              <i class="ri-user-settings-line" aria-hidden="true"></i>
+              <span>Change Password</span>
+            </button>
+
+            <div class="gom-shell__profile-section">
+              <h3>Language</h3>
+              <div class="gom-shell__profile-language-list">
+                @for (option of languageOptions; track option.value) {
+                  <button
+                    type="button"
+                    class="gom-shell__profile-language-option"
+                    [class.gom-shell__profile-language-option--active]="currentLanguage() === option.value"
+                    (click)="changeLanguage(option.value)"
+                  >
+                    {{ option.labelKey | translate }}
+                  </button>
+                }
+              </div>
+            </div>
+
+            <button type="button" class="gom-shell__profile-logout" (click)="logout()">
+              <i class="ri-logout-box-r-line" aria-hidden="true"></i>
+              <span>Logout</span>
+            </button>
+          </div>
+          <button type="button" class="gom-shell__profile-backdrop" (click)="closeProfileMenu()"></button>
+        }
+      </div>
     </div>
   </header>
 
@@ -72,21 +185,28 @@
       [class.gom-shell__sidenav--open]="menuOpen()"
       aria-label="Main navigation"
     >
-      <div class="gom-shell__sidenav-head">
-        <div class="gom-shell__sidenav-headcopy">
-          <p>{{ 'app.navigation.workspace' | translate }}</p>
-          <h3>{{ 'app.navigation.menu' | translate }}</h3>
-        </div>
-        <button
-          type="button"
-          class="gom-shell__sidenav-toggle"
-          (click)="toggleDesktopNav()"
-          [attr.aria-label]="desktopNavCollapsed() ? ('app.navigation.expandSidebar' | translate) : ('app.navigation.collapseSidebar' | translate)"
-          [attr.aria-expanded]="!desktopNavCollapsed()"
-        >
-          <i [class]="desktopNavCollapsed() ? 'ri-arrow-right-s-line' : 'ri-arrow-left-s-line'" aria-hidden="true"></i>
-        </button>
-      </div>
+      @if (standaloneNavItems().length) {
+        <section class="gom-shell__section gom-shell__section--standalone">
+          <nav aria-label="Quick navigation">
+            <ul>
+              @for (item of standaloneNavItems(); track item.route) {
+                <li>
+                  <a
+                    [routerLink]="item.route"
+                    routerLinkActive="is-active"
+                    [attr.title]="desktopNavCollapsed() ? (item.translationKey | translate) : null"
+                    (click)="closeMenu()"
+                  >
+                    <span class="gom-shell__nav-icon"><i [class]="item.icon" aria-hidden="true"></i></span>
+                    <span class="gom-shell__nav-label">{{ item.translationKey | translate }}</span>
+                    <span class="gom-shell__nav-trail" aria-hidden="true"><i class="ri-arrow-right-s-line"></i></span>
+                  </a>
+                </li>
+              }
+            </ul>
+          </nav>
+        </section>
+      }
 
       @for (section of sections(); track section) {
         <section class="gom-shell__section">
@@ -103,7 +223,7 @@
           </button>
 
           @if (isSectionExpanded(section)) {
-            <nav>
+            <nav [attr.aria-label]="getSectionTranslationKey(section) | translate">
               <ul>
                 @for (item of navItemsBySection(section); track item.route) {
                   <li>
@@ -115,6 +235,9 @@
                     >
                       <span class="gom-shell__nav-icon"><i [class]="item.icon" aria-hidden="true"></i></span>
                       <span class="gom-shell__nav-label">{{ item.translationKey | translate }}</span>
+                      @if (item.route === '/product/stock' && pendingPricingCount() > 0) {
+                        <span class="gom-shell__nav-badge" title="Pending price approvals">{{ pendingPricingCount() }}</span>
+                      }
                       <span class="gom-shell__nav-trail" aria-hidden="true"><i class="ri-arrow-right-s-line"></i></span>
                     </a>
                   </li>
@@ -126,9 +249,61 @@
       }
     </aside>
 
-    <main class="gom-shell__content">
+    <main class="gom-shell__content" [class.gom-shell__content--flush]="isCreateOrderRoute()">
       <router-outlet></router-outlet>
     </main>
   </div>
   }
+
+  <gom-lib-confirmation-modal
+    [show]="clearLocalCatalogConfirmOpen()"
+    title="Clear Local Storage"
+    message="Clear the cached Create Order catalog for this tenant and store? Your current order cart will not be changed."
+    confirmText="Clear Local Storage"
+    cancelText="Cancel"
+    confirmVariant="danger"
+    [busy]="clearingLocalCatalog()"
+    (confirmed)="confirmClearLocalCatalog()"
+    (cancelled)="cancelClearLocalCatalog()"
+  ></gom-lib-confirmation-modal>
+
+  <gom-lib-modal
+    [show]="catalogSyncModalOpen()"
+    title="Catalog Synchronization"
+    size="small"
+    [closeOnBackdropClick]="!catalogRefreshing()"
+    (closed)="closeCatalogSyncModal()"
+  >
+    <div class="gom-shell__catalog-sync">
+      <div class="gom-shell__catalog-sync-status">
+        <i class="ri-database-2-line" aria-hidden="true"></i>
+        <div>
+          <strong>Local catalog</strong>
+          <span>Last updated: {{ formatCatalogLastUpdated() }}</span>
+        </div>
+      </div>
+      <p>Resync downloads all available categories, groups, and every variant page. Your current cart will not be changed.</p>
+      <div class="gom-shell__catalog-sync-actions">
+        <gom-lib-button
+          type="button"
+          variant="secondary"
+          [disabled]="catalogRefreshing()"
+          (buttonClick)="closeCatalogSyncModal()"
+        >Close</gom-lib-button>
+        <gom-lib-button
+          type="button"
+          variant="primary"
+          [disabled]="catalogRefreshing()"
+          (buttonClick)="resyncCatalog()"
+        >
+          <i
+            class="ri-refresh-line"
+            [class.gom-shell__sync-icon--spinning]="catalogRefreshing()"
+            aria-hidden="true"
+          ></i>
+          {{ catalogRefreshing() ? 'Synchronizing...' : 'Resync Catalog' }}
+        </gom-lib-button>
+      </div>
+    </div>
+  </gom-lib-modal>
 </div>

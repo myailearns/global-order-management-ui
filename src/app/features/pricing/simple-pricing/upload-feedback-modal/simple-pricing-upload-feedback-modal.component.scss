@@ -1,0 +1,68 @@
+@use "theme" as theme;
+
+.sp-upload-feedback {
+  display: flex;
+  flex-direction: column;
+  gap: theme.get-gap(md);
+  max-height: 70vh;
+  overflow: auto;
+  padding: theme.get-spacing(xs) 0;
+
+  &__loading {
+    color: theme.get-text(default-light);
+    padding: theme.get-spacing(md) 0;
+  }
+
+  &__summary {
+    display: grid;
+    gap: theme.get-gap(sm);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    @media (min-width: 768px) {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+
+  &__stat {
+    border: 1px solid theme.get-border(standard);
+    border-radius: theme.get-radius(md);
+    background: theme.get-background(secondary);
+    padding: theme.get-spacing(sm);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    color: theme.get-text(default);
+
+    &--success {
+      border-color: theme.get-border(success);
+    }
+
+    &--danger {
+      border-color: theme.get-border(danger);
+    }
+
+    &--warning {
+      border-color: theme.get-border(warning);
+    }
+  }
+
+  &__label {
+    font-size: theme.get-font-size(xs);
+    color: theme.get-text(default-light);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  &__section {
+    display: flex;
+    flex-direction: column;
+    gap: theme.get-gap(xs);
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: theme.get-gap(xs);
+  }
+}

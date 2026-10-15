@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, ElementRef, inject, OnInit, signal, viewChild } from '@angular/core';
+import { Component, HostListener, computed, ElementRef, inject, OnInit, signal, viewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
@@ -10,6 +10,8 @@ import {
   GomInputComponent,
   GomModalComponent,
 } from '@gomlibs/ui';
+import { PageHeadingComponent } from '../page-heading/page-heading.component';
+import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { MediaAssetService } from '../../../features/saas-platform/media/media-asset.service';
 import { MediaAsset, MediaType, MediaUsageDetail, StorageSummary } from '../../../features/saas-platform/media/media-asset.model';
 
@@ -34,6 +36,7 @@ export interface QueueItem {
     GomInputComponent,
     GomModalComponent,
     GomConfirmationModalComponent,
+    PageHeadingComponent,
   ],
   templateUrl: './media-library.component.html',
   styleUrl: './media-library.component.scss',
@@ -43,9 +46,15 @@ export class MediaLibraryComponent implements OnInit {
   private readonly mediaService = inject(MediaAssetService);
   private readonly toast = inject(GomAlertToastService);
   private readonly route = inject(ActivatedRoute);
+  private readonly authSession = inject(AuthSessionService);
 
   readonly mode = signal<MediaLibraryMode>('tenant');
   readonly isPlatform = computed(() => this.mode() === 'platform');
+
+  // Permissions
+  readonly canListMedia = computed(() => this.authSession.hasFeature('media.list'));
+  readonly canUploadMedia = computed(() => this.authSession.hasFeature('media.upload'));
+  readonly canDeleteMedia = computed(() => this.authSession.hasFeature('media.delete'));
 
   readonly loading = signal(false);
   readonly activeMediaType = signal<MediaType>('IMAGE');
@@ -61,6 +70,8 @@ export class MediaLibraryComponent implements OnInit {
   readonly uploadQueue = signal<QueueItem[]>([]);
   readonly uploadProgress = signal<{ current: number; total: number } | null>(null);
   readonly dragging = signal(false);
+  readonly viewportWidth = signal<number>(window.innerWidth);
+  readonly isMobileHeader = computed<boolean>(() => this.viewportWidth() <= 768);
   private nextQueueId = 1;
 
   readonly pendingCount = computed(() => this.uploadQueue().filter((q) => q.status === 'pending').length);
@@ -93,6 +104,11 @@ export class MediaLibraryComponent implements OnInit {
     if (pct >= 75) return 'warning';
     return 'normal';
   });
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.viewportWidth.set(window.innerWidth);
+  }
 
   private readonly IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
   private readonly VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime'];
@@ -346,9 +362,16 @@ export class MediaLibraryComponent implements OnInit {
         await firstValueFrom(upload$);
         this.setQueueItemStatus(item.id, 'done');
         succeeded++;
-      } catch {
+      } catch (error: any) {
         this.setQueueItemStatus(item.id, 'failed');
         failed++;
+        
+        // Show specific error message from backend (e.g., feature limit errors)
+        if (error?.error?.message) {
+          this.toast.error(error.error.message);
+        } else if (error?.message) {
+          this.toast.error(error.message);
+        }
       }
     }
 
@@ -357,9 +380,10 @@ export class MediaLibraryComponent implements OnInit {
     if (failed === 0) {
       this.toast.success(`${succeeded} media file(s) uploaded successfully.`);
       this.uploadModalOpen.set(false);
-    } else {
-      this.toast.error(`${succeeded} uploaded, ${failed} failed.`);
+    } else if (succeeded > 0) {
+      this.toast.warning(`${succeeded} uploaded successfully, ${failed} failed. Check error messages above.`);
     }
+    // If all failed and we already showed specific error messages, don't show generic message
 
     this.loadMedia();
     if (this.isPlatform()) {
@@ -457,6 +481,11 @@ export class MediaLibraryComponent implements OnInit {
   }
 
   canDeleteAsset(asset: MediaAsset): boolean {
-    return this.isPlatform() || !this.isSharedAsset(asset);
+    // Platform mode: can delete any asset
+    // Tenant mode: can only delete own assets (not shared platform assets) AND must have delete permission
+    if (this.isPlatform()) {
+      return true;
+    }
+    return !this.isSharedAsset(asset) && this.canDeleteMedia();
   }
 }

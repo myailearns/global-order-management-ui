@@ -1,0 +1,644 @@
+<div class="simple-pricing">
+
+  <!-- ── Page header ──────────────────────────────────────── -->
+  <div class="simple-pricing__header">
+    <div class="simple-pricing__header-top">
+      <h1 class="simple-pricing__title">{{ 'pricing.simple.title' | translate }}</h1>
+
+      <div  (click)="$event.stopPropagation()">
+        <gom-lib-button
+          type="button"
+          variant="secondary"
+          size="icon"
+          title="More actions"
+          class="simple-pricing__header-menu-trigger"
+          (buttonClick)="toggleHeaderActionsMenu()">
+          <i class="ri-more-2-fill" aria-hidden="true"></i>
+        </gom-lib-button>
+      </div>
+    </div>
+    <p class="simple-pricing__description">{{ 'pricing.simple.description' | translate }}</p>
+
+    <div class="simple-pricing__header-toolbar">
+      <div class="simple-pricing__header-search">
+        <gom-simple-pricing-search-autocomplete
+          [resetKey]="searchAutocompleteResetKey()"
+          (suggestionSelected)="onSearchSuggestionSelected($event)"
+          (cleared)="onSearchCleared()">
+        </gom-simple-pricing-search-autocomplete>
+      </div>
+
+      <div class="simple-pricing__header-menu simple-pricing__header-menu--desktop" (click)="$event.stopPropagation()">
+        <input
+          #refreshTemplateInput
+          id="simplePricingRefreshInput"
+          class="simple-pricing__file-input"
+          type="file"
+          accept=".xlsx"
+          aria-label="Refresh simple pricing template"
+          (change)="onRefreshTemplateSelected($event)">
+        <label class="simple-pricing__file-input-label" for="simplePricingRefreshInput">Refresh simple pricing template</label>
+
+        <input
+          #uploadTemplateInput
+          id="simplePricingUploadInput"
+          class="simple-pricing__file-input"
+          type="file"
+          accept=".xlsx"
+          aria-label="Upload simple pricing template"
+          (change)="onUploadTemplateSelected($event)">
+        <label class="simple-pricing__file-input-label" for="simplePricingUploadInput">Upload simple pricing template</label>
+
+      </div>
+    </div>
+
+    @if (headerActionsMenuOpen()) {
+      <div class="simple-pricing__header-menu-dropdown" role="menu" aria-label="Header actions">
+        <gom-lib-button
+          type="button"
+          variant="secondary"
+          class="simple-pricing__header-menu-item"
+          [disabled]="refreshingTemplate()"
+          (buttonClick)="refreshTemplateInput.click(); closeHeaderActionsMenu()">
+          <i class="ri-refresh-line" aria-hidden="true"></i>
+          @if (refreshingTemplate()) {
+            Updating...
+          } @else {
+            Update Template
+          }
+        </gom-lib-button>
+
+        <gom-lib-button
+          type="button"
+          variant="secondary"
+          class="simple-pricing__header-menu-item"
+          [disabled]="uploadingTemplate()"
+          (buttonClick)="uploadTemplateInput.click(); closeHeaderActionsMenu()">
+          <i class="ri-upload-2-line" aria-hidden="true"></i>
+          @if (uploadingTemplate()) {
+            Uploading...
+          } @else {
+            Upload Template
+          }
+        </gom-lib-button>
+
+        <gom-lib-button
+          type="button"
+          variant="secondary"
+          class="simple-pricing__header-menu-item"
+          [disabled]="loadingUploadHistory()"
+          (buttonClick)="openUploadHistory(); closeHeaderActionsMenu()">
+          <i class="ri-history-line" aria-hidden="true"></i>
+          @if (loadingUploadHistory()) {
+            Loading...
+          } @else {
+            Temporary History
+          }
+        </gom-lib-button>
+
+        <gom-lib-button
+          type="button"
+          variant="secondary"
+          class="simple-pricing__header-menu-item"
+          [disabled]="downloadingTemplate()"
+          (buttonClick)="openDownloadTemplateModal(); closeHeaderActionsMenu()">
+          <i class="ri-download-2-line" aria-hidden="true"></i>
+          @if (downloadingTemplate()) {
+            Downloading...
+          } @else {
+            Download Template
+          }
+        </gom-lib-button>
+      </div>
+    }
+  </div>
+
+  <!-- ── Filters ───────────────────────────────────────────── -->
+  <div class="simple-pricing__filters">
+    <div class="simple-pricing__filter-item">
+      <gom-lib-select
+        [formControl]="categoryControl"
+        [options]="categoryOptions()"
+        [placeholder]="'pricing.simple.filter.category' | translate"
+        [label]="'pricing.simple.filter.category' | translate"
+        [searchable]="true"
+        [searchPlaceholder]="'pricing.simple.filter.categorySearch' | translate">
+      </gom-lib-select>
+    </div>
+    <div class="simple-pricing__filter-item">
+      <gom-lib-select
+        [formControl]="groupControl"
+        [options]="groupOptions()"
+        placeholder="Group"
+        label="Group"
+        [searchable]="true"
+        searchPlaceholder="Search group">
+      </gom-lib-select>
+    </div>
+    <div class="simple-pricing__filter-item">
+      <gom-lib-select
+        [formControl]="groupTypeControl"
+        [options]="groupTypeOptions"
+        [placeholder]="'pricing.simple.filter.groupType' | translate"
+        [label]="'pricing.simple.filter.groupType' | translate">
+      </gom-lib-select>
+    </div>
+  </div>
+
+  <!-- ── Error banner ──────────────────────────────────────── -->
+  @if (errorMessage()) {
+    <div class="simple-pricing__error" role="alert">{{ errorMessage() }}</div>
+  }
+
+  @if (uploadAttentionVisible()) {
+    @for (job of uploadAttentionJobs(); track job.jobId) {
+      <div class="simple-pricing__upload-attention" role="alert">
+        <div class="simple-pricing__upload-attention-content">
+          <strong>Simple Pricing Upload:</strong>
+          <span>
+            @if (job.isTerminal) {
+              {{ job.status }} · Total {{ job.totals.totalRows }}, Success {{ job.totals.successRows }}, Failed {{ job.totals.failedRows }}, Unresolved {{ job.totals.unresolvedRows }}
+              @if (job.status === 'CANCELLED') {
+                · Canceled by user (in-flight rows were completed)
+              }
+            } @else {
+              @if (job.status === 'CANCELLING') {
+                Cancel requested · finishing in-flight row ({{ job.totals.processedRows }}/{{ job.totals.totalRows }})
+              } @else {
+                Processing in background · {{ job.status }} ({{ job.totals.processedRows }}/{{ job.totals.totalRows }})
+              }
+            }
+          </span>
+        </div>
+        <div class="simple-pricing__upload-attention-actions">
+          @if (!job.isTerminal) {
+            <gom-lib-button
+              type="button"
+              variant="secondary"
+              [disabled]="job.status === 'CANCELLING'"
+              (buttonClick)="cancelCurrentUploadJob(job.jobId)">
+              @if (job.status === 'CANCELLING') {
+                Cancelling...
+              } @else {
+                Cancel
+              }
+            </gom-lib-button>
+          }
+          <gom-lib-button type="button" variant="secondary" (buttonClick)="openUploadFeedback(job.jobId)">View Feedback</gom-lib-button>
+        </div>
+      </div>
+    }
+  }
+
+  <!-- ── Loading ───────────────────────────────────────────── -->
+  @if (loading()) {
+    <div class="simple-pricing__loading">{{ 'common.loading' | translate }}</div>
+  } @else if (searchPinnedSuggestion() && filteredEntities().length === 0 && (loadingMore() || hasMoreItems())) {
+    <!-- Pinned entity is on a page not yet loaded; keep fetching. -->
+    <div class="simple-pricing__loading">
+      <i class="ri-loader-4-line"></i> Searching for <strong>{{ searchPinnedSuggestion()!.name }}</strong>…
+    </div>
+  } @else if (searchPinnedSuggestion() && filteredEntities().length === 0 && !loadingMore() && !hasMoreItems()) {
+    <!-- Entity truly not found after loading everything. -->
+    <div class="simple-pricing__empty-state">
+      <i class="ri-search-line simple-pricing__empty-icon"></i>
+      <p>No item found for <strong>{{ searchPinnedSuggestion()!.name }}</strong>.</p>
+    </div>
+  } @else {
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- MOBILE: Card list (hidden on desktop)                 -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <div class="simple-pricing__card-list" data-price-group>
+
+      @if (tableRows().length === 0) {
+        <div class="simple-pricing__empty-state">
+          <i class="ri-price-tag-3-line simple-pricing__empty-icon"></i>
+          <p>{{ 'pricing.simple.empty' | translate }}</p>
+        </div>
+      }
+
+      @for (row of tableRows(); track row.id) {
+        <div class="simple-pricing__card"
+             [class.simple-pricing__card--dirty]="inlinePriceEdits()[row.id] !== undefined">
+
+          <!-- Card top: name + action buttons -->
+          <div class="simple-pricing__card-header">
+            <span class="simple-pricing__card-name">{{ row.name }}</span>
+            <div class="simple-pricing__card-btns simple-pricing__row-actions">
+              <gom-lib-button
+                variant="primary"
+                size="icon"
+                [title]="row.hasNoCostPrice ? 'Set cost price to enable inline editing' : ('common.actions.edit' | translate)"
+                (buttonClick)="openEditById(row.id)">
+                <i class="ri-pencil-line"></i>
+              </gom-lib-button>
+              <gom-lib-button variant="secondary" size="icon"
+                title="{{ 'pricing.simple.action.info' | translate }}"
+                (buttonClick)="openInfoById(row.id)">
+                <i class="ri-information-line"></i>
+              </gom-lib-button>
+            </div>
+          </div>
+
+          <!-- Card body: price input + profit chips -->
+          <div class="simple-pricing__card-body">
+            <!-- Selling price – large, prominent input -->
+            <div class="simple-pricing__card-price-field"
+                 [class.simple-pricing__price-field--no-cost]="row.hasNoCostPrice">
+              <span class="simple-pricing__card-label">
+                {{ 'pricing.simple.col.sellingPrice' | translate }}
+              </span>
+              <div data-price-input (keydown)="navigatePriceRow($event, $index)">
+              <gom-lib-input
+                type="text"
+                inputmode="decimal"
+                [label]="''"
+                [placeholder]="row.hasNoCostPrice ? 'Set cost price first' : '0.00'"
+                [formControl]="getSellingPriceControl(row.id)">
+              </gom-lib-input>
+              </div>
+              @if (row.hasNoCostPrice) {
+                <span class="simple-pricing__no-cost-hint">
+                  <i class="ri-alert-line"></i> Set cost price via
+                  <button class="simple-pricing__no-cost-link" type="button" (click)="openEditById(row.id)">Edit form</button>
+                </span>
+              }
+            </div>
+
+            <!-- Profit column -->
+            <div class="simple-pricing__card-profit-col">
+              <div class="simple-pricing__card-profit-item">
+                <span class="simple-pricing__card-label">{{ 'pricing.simple.col.definedProfit' | translate }}</span>
+                <span class="simple-pricing__card-profit-value">{{ row.definedProfit }}</span>
+              </div>
+              <div class="simple-pricing__card-profit-item">
+                <span class="simple-pricing__card-label">{{ 'pricing.simple.col.affectedProfit' | translate }}</span>
+                @if (row.affectedProfit !== '—') {
+                  <gom-lib-chip [tone]="row.affectedProfitTone">{{ row.affectedProfit }}</gom-lib-chip>
+                } @else {
+                  <span class="simple-pricing__card-profit-value">{{ row.affectedProfit }}</span>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Card footer: price summary -->
+          <div class="simple-pricing__card-footer">
+            <span class="simple-pricing__card-summary">{{ row.priceSummary }}</span>
+            @if (inlinePriceEdits()[row.id] !== undefined) {
+              <span class="simple-pricing__card-edited-badge">
+                <i class="ri-edit-circle-line"></i> Edited
+              </span>
+            }
+          </div>
+
+        </div>
+      }
+    </div>
+    <!-- end card list -->
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- DESKTOP: Table (hidden on mobile)                     -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <div class="simple-pricing__table-actions simple-pricing__desktop-only">
+      <span class="simple-pricing__dirty-count">
+        {{ 'pricing.simple.bulk.editedRows' | translate:{ count: dirtyRowCount() } }}
+      </span>
+      <gom-lib-button
+        type="button"
+        variant="primary"
+        [disabled]="!canSaveAll()"
+        (buttonClick)="saveAllInlineEdits()">
+        @if (bulkSaving()) {
+          {{ 'pricing.simple.bulk.saving' | translate }}
+        } @else {
+          {{ 'pricing.simple.bulk.saveAll' | translate }}
+        }
+      </gom-lib-button>
+    </div>
+
+    <div class="simple-pricing__table-wrap gom-table-wrap simple-pricing__desktop-only" data-price-group>
+      <table class="gom-table">
+        <thead>
+          <tr>
+            <th scope="col">
+              <div class="simple-pricing__column-search-header">
+                <span>{{ 'pricing.simple.col.item' | translate }}</span>
+                <gom-lib-input
+                  class="simple-pricing__column-search"
+                  [formControl]="searchControl"
+                  type="search"
+                  [placeholder]="'pricing.simple.filter.search' | translate"
+                  [label]="''"
+                  prefixIcon="ri-search-line">
+                </gom-lib-input>
+              </div>
+            </th>
+            <th scope="col">{{ 'pricing.simple.col.sellingPrice' | translate }}</th>
+            <th scope="col">{{ 'pricing.simple.col.definedProfit' | translate }}</th>
+            <th scope="col">{{ 'pricing.simple.col.affectedProfit' | translate }}</th>
+            <th scope="col">{{ 'pricing.simple.col.priceSummary' | translate }}</th>
+            <th scope="col">{{ 'common.labels.actions' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (tableRows().length === 0) {
+            <tr>
+              <td colspan="6" class="simple-pricing__empty">{{ 'pricing.simple.empty' | translate }}</td>
+            </tr>
+          }
+          @for (row of tableRows(); track row.id) {
+            <tr [class.simple-pricing__row--dirty]="inlinePriceEdits()[row.id] !== undefined">
+              <td>
+                <div class="simple-pricing__name-cell">
+                  <span class="simple-pricing__entity-name">{{ row.name }}</span>
+                </div>
+              </td>
+              <td class="simple-pricing__price-cell simple-pricing__selling-price-cell"
+                  [class.simple-pricing__price-cell--no-cost]="row.hasNoCostPrice"
+                  [attr.title]="row.hasNoCostPrice ? 'Set cost price via the Edit form to enable inline editing' : null">
+                <div data-price-input (keydown)="navigatePriceRow($event, $index)">
+                <gom-lib-input
+                  type="text"
+                  inputmode="decimal"
+                  [label]="''"
+                  [placeholder]="row.hasNoCostPrice ? 'Set cost price first' : '0.00'"
+                  [formControl]="getSellingPriceControl(row.id)">
+                </gom-lib-input>
+                </div>
+              </td>
+              <td>{{ row.definedProfit }}</td>
+              <td>
+                @if (row.affectedProfit !== '—') {
+                  <gom-lib-chip [tone]="row.affectedProfitTone">{{ row.affectedProfit }}</gom-lib-chip>
+                } @else {
+                  {{ row.affectedProfit }}
+                }
+              </td>
+              <td>{{ row.priceSummary }}</td>
+              <td>
+                <div class="gom-table-actions simple-pricing__row-actions">
+                  <gom-lib-button
+                    variant="primary"
+                    size="icon"
+                    [title]="row.hasNoCostPrice ? 'Set cost price to enable inline editing' : ('common.actions.edit' | translate)"
+                    (buttonClick)="openEditById(row.id)">
+                    <i class="ri-pencil-line"></i>
+                  </gom-lib-button>
+                  <gom-lib-button variant="secondary" size="icon" title="{{ 'pricing.simple.action.info' | translate }}" (buttonClick)="openInfoById(row.id)">
+                    <i class="ri-information-line"></i>
+                  </gom-lib-button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <!-- end desktop table -->
+
+    @if (hasMoreItems()) {
+      <div class="simple-pricing__load-more">
+        <gom-lib-button
+          type="button"
+          variant="secondary"
+          [disabled]="loadingMore()"
+          (buttonClick)="loadMoreData()">
+          @if (loadingMore()) {
+            {{ 'common.loading' | translate }}
+          } @else {
+            Load More
+          }
+        </gom-lib-button>
+      </div>
+    }
+
+  }
+  <!-- end @else loading -->
+
+  <!-- ── Sticky Save Bar (mobile – shown when edits exist) ── -->
+  <div class="simple-pricing__save-bar"
+       [class.simple-pricing__save-bar--visible]="canSaveAll()">
+    <span class="simple-pricing__save-bar-count">
+      <i class="ri-edit-circle-line"></i>
+      {{ dirtyRowCount() }} {{ dirtyRowCount() === 1 ? 'item' : 'items' }} edited
+    </span>
+    <gom-lib-button
+      type="button"
+      variant="primary"
+      [disabled]="bulkSaving()"
+      (buttonClick)="saveAllInlineEdits()">
+      @if (bulkSaving()) {
+        <i class="ri-loader-4-line"></i> {{ 'pricing.simple.bulk.saving' | translate }}
+      } @else {
+        <i class="ri-save-line"></i> {{ 'pricing.simple.bulk.saveAll' | translate }}
+      }
+    </gom-lib-button>
+  </div>
+
+</div>
+
+<!-- ── Edit modal ───────────────────────────────────────── -->
+@if (editModalOpen() && selectedEntity()) {
+  <gom-simple-pricing-edit-modal
+    [entity]="selectedEntity()!"
+    [saving]="saving()"
+    (saved)="onEditSaved($event)"
+    (closed)="closeEdit()">
+  </gom-simple-pricing-edit-modal>
+}
+
+<!-- ── Info modal ───────────────────────────────────────── -->
+@if (infoModalOpen() && selectedEntity()) {
+  <gom-simple-pricing-info-modal
+    [entity]="selectedEntity()!"
+    (closed)="closeInfo()">
+  </gom-simple-pricing-info-modal>
+}
+
+<!-- ── Review modal ─────────────────────────────────────── -->
+@if (reviewModalOpen()) {
+  <gom-simple-pricing-review-modal
+    [items]="reviewItems()"
+    (confirmed)="onReviewConfirmed($event)"
+    (cancelled)="onReviewCancelled()">
+  </gom-simple-pricing-review-modal>
+}
+
+@if (downloadTemplateModalOpen()) {
+  <gom-lib-modal
+    [show]="true"
+    title="Download Simple Pricing Template"
+    [closeOnBackdropClick]="true"
+    size="medium"
+    (closed)="closeDownloadTemplateModal()">
+    <section class="simple-pricing-download-template">
+      <div class="simple-pricing-download-template__grid">
+        <gom-lib-select
+          [multiple]="true"
+          [formControl]="downloadCategoryControl"
+          [options]="downloadCategoryOptions()"
+          [placeholder]="'Select category'"
+          [label]="'Category'"
+          [searchable]="true"
+          [searchPlaceholder]="'Search category'">
+        </gom-lib-select>
+
+        <gom-lib-select
+          [multiple]="true"
+          [formControl]="downloadGroupTypeControl"
+          [options]="downloadGroupTypeOptions"
+          [placeholder]="'Select group type'"
+          [label]="'Group Type'">
+        </gom-lib-select>
+
+        <gom-lib-select
+          [multiple]="true"
+          [formControl]="downloadGroupControl"
+          [options]="downloadGroupOptions()"
+          [placeholder]="'Select group'"
+          [label]="'Group'"
+          [searchable]="true"
+          [searchPlaceholder]="'Search group'">
+        </gom-lib-select>
+      </div>
+    </section>
+
+    <div gom-modal-actions class="gom-modal__action-layout">
+      <div class="gom-modal__action-layout-end">
+        <gom-lib-button type="button" variant="secondary" (buttonClick)="closeDownloadTemplateModal()">
+          Cancel
+        </gom-lib-button>
+        <gom-lib-button
+          type="button"
+          variant="primary"
+          [disabled]="downloadingTemplate()"
+          (buttonClick)="downloadTemplate()">
+          @if (downloadingTemplate()) {
+            Downloading...
+          } @else {
+            Download
+          }
+        </gom-lib-button>
+      </div>
+    </div>
+  </gom-lib-modal>
+}
+
+@if (uploadHistoryOpen()) {
+  <gom-lib-modal
+    [show]="true"
+    title="Temporary History"
+    [closeOnBackdropClick]="true"
+    size="large"
+    (closed)="closeUploadHistory()">
+    <section class="simple-pricing-history">
+      @if (uploadHistoryRows().length === 0) {
+        <p class="simple-pricing-history__empty">No upload history available.</p>
+      } @else {
+        <div class="simple-pricing-history__table-wrap">
+          <gom-lib-table
+            [columns]="uploadHistoryColumns"
+            [rows]="uploadHistoryTableRows()"
+            [loading]="loadingUploadHistory()"
+            [dataMode]="'client'"
+            [totalItems]="uploadHistoryTableRows().length"
+            [pageIndex]="0"
+            [pageSize]="10"
+            [pageSizeOptions]="[10, 20, 50]"
+            emptyMessage="No upload history available."
+            [mobileCardView]="true"
+            (rowAction)="onUploadHistoryRowAction($event)">
+          </gom-lib-table>
+        </div>
+      }
+    </section>
+
+    <div gom-modal-actions class="gom-modal__action-layout">
+      <div class="gom-modal__action-layout-end">
+        <gom-lib-button type="button" variant="secondary" (buttonClick)="closeUploadHistory()">Close</gom-lib-button>
+      </div>
+    </div>
+  </gom-lib-modal>
+}
+
+@if (uploadFeedbackOpen()) {
+  <gom-simple-pricing-upload-feedback-modal
+    [loading]="loadingUploadFeedback()"
+    [results]="uploadResults()"
+    [showRowActions]="!uploadFeedbackReadOnly()"
+    [showAcknowledge]="!uploadFeedbackReadOnly() && !!uploadResults()?.job?.isTerminal"
+    (closed)="closeUploadFeedback()"
+    (closeRow)="dismissUploadRow($event)"
+    (acknowledgeAll)="acknowledgeUploadFeedback()">
+  </gom-simple-pricing-upload-feedback-modal>
+}
+
+@if (refreshPreviewOpen() && refreshPreviewData(); as preview) {
+  <div class="simple-pricing-refresh-preview-overlay">
+    <section class="simple-pricing-refresh-preview">
+      <div class="simple-pricing-refresh-preview__header">
+        <h3>Update Template Preview</h3>
+      </div>
+
+      <div class="simple-pricing-refresh-preview__summary">
+        <div class="simple-pricing-refresh-preview__stat">
+          <span class="simple-pricing-refresh-preview__stat-label">Total Rows</span>
+          <strong>{{ preview.totalRows }}</strong>
+        </div>
+        <div class="simple-pricing-refresh-preview__stat simple-pricing-refresh-preview__stat--added">
+          <span class="simple-pricing-refresh-preview__stat-label">Added</span>
+          <strong>{{ preview.addedRows }}</strong>
+        </div>
+        <div class="simple-pricing-refresh-preview__stat">
+          <span class="simple-pricing-refresh-preview__stat-label">Retained</span>
+          <strong>{{ preview.retainedRows }}</strong>
+        </div>
+        <div class="simple-pricing-refresh-preview__stat simple-pricing-refresh-preview__stat--removed">
+          <span class="simple-pricing-refresh-preview__stat-label">Removed</span>
+          <strong>{{ preview.removedRows }}</strong>
+        </div>
+      </div>
+
+      <div class="simple-pricing-refresh-preview__lists">
+        <div class="simple-pricing-refresh-preview__list-block">
+          <h4>Added Items ({{ preview.addedItems.length }})</h4>
+          @if (preview.addedItems.length === 0) {
+            <p class="simple-pricing-refresh-preview__empty">No new items were added.</p>
+          } @else {
+            <ul class="simple-pricing-refresh-preview__list">
+              @for (item of preview.addedItems; track $index) {
+                <li>
+                  <span class="simple-pricing-refresh-preview__type">{{ item.entityType }}</span>
+                  <span>{{ item.item || 'Unnamed item' }}</span>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+
+        <div class="simple-pricing-refresh-preview__list-block">
+          <h4>Removed Items ({{ preview.removedItems.length }})</h4>
+          @if (preview.removedItems.length === 0) {
+            <p class="simple-pricing-refresh-preview__empty">No items were removed.</p>
+          } @else {
+            <ul class="simple-pricing-refresh-preview__list">
+              @for (item of preview.removedItems; track $index) {
+                <li>
+                  <span class="simple-pricing-refresh-preview__type">{{ item.entityType }}</span>
+                  <span>{{ item.item || 'Unnamed item' }}</span>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      </div>
+
+      <div class="simple-pricing-refresh-preview__actions">
+        <gom-lib-button type="button" variant="secondary" (buttonClick)="closeRefreshPreview()">Cancel</gom-lib-button>
+        <gom-lib-button type="button" variant="primary" (buttonClick)="confirmRefreshTemplateDownload()">Download Updated Template</gom-lib-button>
+      </div>
+    </section>
+  </div>
+}

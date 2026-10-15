@@ -1,14 +1,26 @@
 <section class="media-page">
   <header class="media-page__header">
     <div class="media-page__title-group">
-      <h2 class="media-page__title">
-        <i class="ri-image-line" aria-hidden="true"></i>
-        {{ (isPlatform() ? 'media.title' : 'tenantMedia.title') | translate }}
-      </h2>
+      <gom-page-heading
+        class="media-page__title"
+        [title]="(isPlatform() ? ('media.title' | translate) : ('tenantMedia.title' | translate))"
+        [navRoute]="isPlatform() ? '/settings/platform-media' : '/product/media'"
+      ></gom-page-heading>
       <p class="media-page__subtitle">{{ (isPlatform() ? 'media.description' : 'tenantMedia.description') | translate }}</p>
     </div>
-    <gom-lib-button type="button" variant="primary" (buttonClick)="openUploadModal()">
-      <i class="ri-upload-2-line" aria-hidden="true"></i> {{ (uploadButtonLabel() | translate) }}
+    <gom-lib-button
+      type="button"
+      variant="primary"
+      [size]="isMobileHeader() ? 'compact-icon' : 'default'"
+      (buttonClick)="openUploadModal()"
+      [disabled]="!canUploadMedia()"
+      [attr.aria-label]="uploadButtonLabel() | translate"
+      [buttonTitle]="uploadButtonLabel() | translate"
+    >
+      <i class="ri-upload-2-line" aria-hidden="true"></i>
+      @if (!isMobileHeader()) {
+        {{ uploadButtonLabel() | translate }}
+      }
     </gom-lib-button>
   </header>
 

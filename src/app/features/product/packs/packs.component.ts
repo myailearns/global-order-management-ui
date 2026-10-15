@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, HostListener, computed, inject, OnInit, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { forkJoin, startWith } from 'rxjs';
@@ -22,6 +22,7 @@ import {
 } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { ImagePickerComponent, PickedImage } from '../../../shared/components/image-picker/image-picker.component';
+import { PageHeadingComponent } from '../../../shared/components/page-heading/page-heading.component';
 import { DisableIfNoFeatureDirective } from '../../../shared/directives/disable-if-no-feature.directive';
 import { CreatePackPayload, Pack, PacksService, VariantOption } from './packs.service';
 
@@ -56,6 +57,7 @@ interface SelectedPackImage {
     GomModalComponent,
     GomConfirmationModalComponent,
     ImagePickerComponent,
+    PageHeadingComponent,
   ],
   templateUrl: './packs.component.html',
   styleUrl: './packs.component.scss',
@@ -67,7 +69,9 @@ export class PacksComponent implements OnInit {
   private readonly authSession = inject(AuthSessionService);
 
   readonly loading = signal(false);
-  readonly canCreatePack = computed(() => this.authSession.hasFeature('pack.create') && (this.packCreateRemaining() ?? Infinity) > 0);
+  readonly viewportWidth = signal<number>(window.innerWidth);
+  readonly isMobileHeader = computed<boolean>(() => this.viewportWidth() <= 768);
+  readonly canCreatePack = computed(() => this.authSession.hasFeature('pack.create'));
   readonly canUpdatePack = computed(() => this.authSession.hasFeature('pack.edit') || this.authSession.hasFeature('pack.update'));
   readonly canDeletePack = computed(() => this.authSession.hasFeature('pack.delete'));
   readonly packCreateLimit = computed(() => this.authSession.getFeatureConfigNumber('pack.create', 'max_count'));
@@ -80,6 +84,10 @@ export class PacksComponent implements OnInit {
 
     return Math.max(limit - this.packCreateUsed(), 0);
   });
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.viewportWidth.set(window.innerWidth);
+  }
   readonly saving = signal(false);
   readonly errorMessage = signal<string | null>(null);
 
@@ -154,12 +162,14 @@ export class PacksComponent implements OnInit {
       actionButtons: [
         {
           label: () => this.canUpdatePack() ? 'Edit' : 'No permission to edit packs',
+          icon: 'ri-pencil-line',
           actionKey: 'edit',
           variant: 'secondary',
           disabled: () => !this.canUpdatePack(),
         },
         {
           label: () => this.canDeletePack() ? 'Delete' : 'No permission to delete packs',
+          icon: 'ri-delete-bin-line',
           actionKey: 'delete',
           variant: 'secondary',
           disabled: () => !this.canDeletePack(),
@@ -381,6 +391,13 @@ export class PacksComponent implements OnInit {
   }
 
   openCreatePack(): void {
+    const remaining = this.packCreateRemaining();
+    if (remaining !== null && remaining <= 0) {
+      const limit = this.packCreateLimit();
+      this.toast.error(`Pack creation limit reached. You have used ${this.packCreateUsed()} of ${limit} allowed packs.`);
+      return;
+    }
+
     this.editingPackId.set(null);
     this.packForm.reset({
       name: '',

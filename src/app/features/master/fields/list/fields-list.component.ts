@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, OnChanges, Output, SimpleChanges, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
@@ -9,6 +9,8 @@ import {
 } from '../fields.constants';
 import { Field } from '../fields.service';
 import { DisableIfNoFeatureDirective } from '../../../../shared/directives/disable-if-no-feature.directive';
+import { getNavIcon } from '../../../../shared/components/layout/nav.config';
+import { PageHeadingComponent } from '../../../../shared/components/page-heading/page-heading.component';
 
 interface FieldTableRow extends GomTableRow {
   _id?: string;
@@ -31,7 +33,7 @@ export interface FieldAction {
 @Component({
   selector: 'gom-fields-list',
   standalone: true,
-  imports: [CommonModule, TranslateModule, GomTableComponent, GomButtonComponent, DisableIfNoFeatureDirective],
+  imports: [CommonModule, TranslateModule, GomTableComponent, GomButtonComponent, DisableIfNoFeatureDirective, PageHeadingComponent],
   templateUrl: './fields-list.component.html',
   styleUrl: './fields-list.component.scss'
 })
@@ -50,9 +52,17 @@ export class FieldsListComponent implements OnChanges {
   @Output() action = new EventEmitter<FieldAction>();
   @Output() addNew = new EventEmitter<void>();
   @Output() queryChange = new EventEmitter<GomTableQuery>();
+  readonly viewportWidth = signal<number>(window.innerWidth);
+  readonly isMobileHeader = computed<boolean>(() => this.viewportWidth() <= 768);
+  readonly headingIcon = getNavIcon('/masters/fields');
 
   readonly text = FIELD_UI_TEXT;
   private readonly translate = inject(TranslateService);
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.viewportWidth.set(window.innerWidth);
+  }
 
   readonly columns: GomTableColumn<FieldTableRow>[] = [
     { key: 'name', header: FIELD_UI_TEXT.nameLabel, sortable: true, filterable: true, width: '14rem' },
@@ -67,9 +77,9 @@ export class FieldsListComponent implements OnChanges {
       header: FIELD_UI_TEXT.actionsLabel,
       width: '9rem',
       actionButtons: [
-        { label: FIELD_UI_TEXT.viewAction, actionKey: 'view', variant: 'secondary' },
-        { label: FIELD_UI_TEXT.editAction, actionKey: 'edit', variant: 'secondary' },
-        { label: FIELD_UI_TEXT.deleteAction, actionKey: 'delete', variant: 'secondary' },
+        { label: FIELD_UI_TEXT.viewAction, icon: 'ri-eye-line', actionKey: 'view', variant: 'secondary' },
+        { label: FIELD_UI_TEXT.editAction, icon: 'ri-pencil-line', actionKey: 'edit', variant: 'secondary' },
+        { label: FIELD_UI_TEXT.deleteAction, icon: 'ri-delete-bin-line', actionKey: 'delete', variant: 'secondary' },
       ],
     },
   ];
@@ -173,13 +183,14 @@ export class FieldsListComponent implements OnChanges {
         : this.translate.instant('common.status.active');
     this.columns[7].header = this.translate.instant(this.text.actionsLabel);
     this.columns[7].actionButtons = [
-      { label: this.translate.instant(this.text.viewAction), actionKey: 'view', variant: 'secondary' },
+      { label: this.translate.instant(this.text.viewAction), icon: 'ri-eye-line', actionKey: 'view', variant: 'secondary' },
       ...(this.canEdit ? [
-        { label: this.translate.instant(this.text.editAction), actionKey: 'edit', variant: 'secondary' as const },
+        { label: this.translate.instant(this.text.editAction), icon: 'ri-pencil-line', actionKey: 'edit', variant: 'secondary' as const },
       ] : []),
       ...(this.canDelete ? [
         ({
           label: this.translate.instant(this.text.deleteAction),
+          icon: 'ri-delete-bin-line',
           actionKey: 'delete',
           variant: 'secondary' as const,
           disabled: (row: FieldTableRow) => this.isDeleteBlocked(row),

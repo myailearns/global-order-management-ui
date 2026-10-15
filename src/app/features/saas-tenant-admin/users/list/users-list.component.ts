@@ -1,30 +1,35 @@
-import { Component, inject, OnInit, signal, computed } from '@angular/core';
+import { Component, HostListener, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 import {
   GomAlertToastService,
   GomButtonComponent,
+  GomCheckboxComponent,
   GomChipTone,
   GomModalComponent,
   GomTableColumn,
   GomTableComponent,
+  GomTableFilterDefinition,
   GomTableRow,
 } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../../core/auth/auth-session.service';
 
 import { TenantAccessService } from '../../services';
-import { RoleWithPermissions, UserRoleAssignment, UserWithRoles, UserStatus } from '../../models';
-import { TRANSLATION_KEYS, UI_CONFIG, PERMISSION_KEYS } from '../../constants';
+import { RoleWithPermissions, UserWithRoles, UserStatus } from '../../models';
+import { TRANSLATION_KEYS, PERMISSION_KEYS } from '../../constants';
 import { DisableIfNoFeatureDirective } from '../../../../shared/directives/disable-if-no-feature.directive';
+import { PageHeadingComponent } from '../../../../shared/components/page-heading/page-heading.component';
+import { UserInviteFormComponent } from '../form/user-invite-form.component';
 
 interface UserRow extends GomTableRow {
+  _id: string;
   userId: string;
   fullName: string;
   email: string;
   phone: string;
+  whatsappNumber: string;
   status: UserStatus;
   roles: string;
   lastLogin: string;
@@ -40,12 +45,14 @@ interface UserRow extends GomTableRow {
   imports: [
     CommonModule,
     FormsModule,
-    ReactiveFormsModule,
     TranslateModule,
+    PageHeadingComponent,
     DisableIfNoFeatureDirective,
     GomButtonComponent,
+    GomCheckboxComponent,
     GomTableComponent,
     GomModalComponent,
+    UserInviteFormComponent,
   ],
   templateUrl: './users-list.component.html',
   styleUrl: './users-list.component.scss',
@@ -53,52 +60,84 @@ interface UserRow extends GomTableRow {
 export class UsersListComponent implements OnInit {
   private readonly service = inject(TenantAccessService);
   private readonly toast = inject(GomAlertToastService);
-  private readonly router = inject(Router);
   private readonly translate = inject(TranslateService);
   private readonly authSession = inject(AuthSessionService);
 
   readonly loading = signal(false);
-  readonly canWrite = computed(() => this.authSession.canWrite('tenant-admin'));
+  readonly viewportWidth = signal<number>(window.innerWidth);
+  readonly isMobileHeader = computed<boolean>(() => this.viewportWidth() <= 768);
+  readonly canCreate = computed(() => this.authSession.hasFeature('user.create'));
+  readonly canEdit = computed(() => this.authSession.hasFeature('user.edit'));
+  readonly canDelete = computed(() => this.authSession.hasFeature('user.delete'));
   readonly errorMessage = signal<string | null>(null);
 
   readonly users = signal<UserWithRoles[]>([]);
   readonly roles = signal<RoleWithPermissions[]>([]);
-  readonly assignmentsByUser = signal<Record<string, UserRoleAssignment[]>>({});
-  readonly page = signal(1);
-  readonly limit = signal(UI_CONFIG.USERS_PAGE_SIZE);
   readonly total = signal(0);
+  readonly formModalOpen = signal(false);
+  readonly editingUserId = signal<string | null>(null);
+  readonly deleteConfirmModalOpen = signal(false);
+  readonly deletingUserId = signal<string | null>(null);
+  readonly userToDeleteName = signal('');
   readonly assignRolesOpen = signal(false);
   readonly assignRolesLoading = signal(false);
   readonly selectedUser = signal<UserRow | null>(null);
   readonly selectedRoleIds = signal<string[]>([]);
 
-  readonly selectedStatusFilter = signal<UserStatus | null>(null);
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.viewportWidth.set(window.innerWidth);
+  }
 
-  readonly filteredUsers = computed<UserRow[]>(() => {
-    const status = this.selectedStatusFilter();
-
-    return this.users()
-      .filter((user) => {
-        // Filter by status
-        if (status && user.status !== status) {
-          return false;
-        }
-        return true;
-      })
-      .map((user) => ({
+  readonly tableRows = computed<UserRow[]>(() => {
+    return this.users().map((user) => ({
+        _id: user._id,
         userId: user._id,
         fullName: user.fullName,
         email: user.email,
         phone: user.phone || '-',
+        whatsappNumber: user.whatsappNumber || user.phone || '-',
         status: user.status,
         roles: this.getUserRoleNames(user),
         lastLogin: user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleDateString() : '-',
       }));
   });
 
+  readonly filterDefinitions: GomTableFilterDefinition<UserRow>[] = [
+    {
+      key: 'status',
+      label: this.translate.instant(TRANSLATION_KEYS.LBL_STATUS),
+      type: 'select',
+      options: [
+        { value: UserStatus.INVITED, label: this.translate.instant('saas.admin.users.opt_invited') },
+        { value: UserStatus.ACTIVE, label: this.translate.instant('saas.admin.users.opt_active') },
+        { value: UserStatus.LOCKED, label: this.translate.instant('saas.admin.users.opt_locked') },
+        { value: UserStatus.DISABLED, label: this.translate.instant('saas.admin.users.opt_disabled') },
+      ],
+    },
+  ];
+
+  readonly tablePageSize = computed(() => Math.max(this.tableRows().length || 0, 1));
+
+  get availableRoles(): RoleWithPermissions[] {
+    return this.roles().filter((role) => role.status === 'ACTIVE');
+  }
+
+  get canSubmitRoleAssignments(): boolean {
+    return !this.assignRolesLoading() && this.selectedRoleIds().length > 0;
+  }
+
+  get userModalTitle(): string {
+    return this.translate.instant(this.editingUserId() ? 'saas.admin.users.title_edit' : 'saas.admin.users.title_create');
+  }
+
+  get canManageUsers(): boolean {
+    return this.canEdit() || this.canDelete();
+  }
+
   readonly columns = computed<GomTableColumn<UserRow>[]>(() => {
     const baseColumns: GomTableColumn<UserRow>[] = [
-      { key: 'fullName', header: 'Name', sortable: true, width: '14rem' },
+      { key: 'fullName', header: this.translate.instant('saas.admin.users.lbl_full_name'), sortable: true, width: '14rem' },
       {
         key: 'email',
         header: this.translate.instant(TRANSLATION_KEYS.TBL_USER_EMAIL),
@@ -112,9 +151,16 @@ export class UsersListComponent implements OnInit {
         width: '12rem',
       },
       {
+        key: 'whatsappNumber',
+        header: this.translate.instant('saas.admin.users.tbl_whatsapp'),
+        sortable: true,
+        width: '12rem',
+      },
+      {
         key: 'status',
         header: this.translate.instant(TRANSLATION_KEYS.TBL_USER_STATUS),
         width: '8rem',
+        format: (value) => this.getUserStatusLabel(typeof value === 'string' ? value : ''),
         chipTone: (value) => this.getUserStatusTone(typeof value === 'string' ? value : ''),
       },
       { key: 'roles', header: this.translate.instant(TRANSLATION_KEYS.TBL_USER_ROLES), width: '15rem' },
@@ -125,69 +171,55 @@ export class UsersListComponent implements OnInit {
       },
     ];
 
-    if (!this.canWrite()) {
+    if (!this.canManageUsers) {
       return baseColumns;
     }
+
+    const actionButtons = [
+      ...(this.canEdit() ? [{
+        label: this.translate.instant('saas.admin.users.btn_add_role'),
+        actionKey: 'assign-roles',
+        variant: 'primary' as const,
+        icon: 'ri-admin-line',
+      }, {
+        label: this.translate.instant('common.actions.edit'),
+        actionKey: 'edit',
+        variant: 'secondary' as const,
+        icon: 'ri-pencil-line',
+      }] : []),
+      ...(this.canDelete() ? [{
+        label: this.translate.instant('common.actions.delete'),
+        actionKey: 'delete',
+        variant: 'danger' as const,
+        icon: 'ri-delete-bin-line',
+      }] : []),
+    ];
 
     return [
       ...baseColumns,
       {
         key: 'actions',
         header: this.translate.instant('common.labels.actions'),
-        width: '10rem',
-        actionButtons: [
-          {
-            label: this.translate.instant(TRANSLATION_KEYS.BTN_ASSIGN_ROLES),
-            actionKey: 'assign-roles',
-            variant: 'primary',
-            icon: 'ri-admin-line',
-          },
-          {
-            label: (row) => (row.status === UserStatus.LOCKED ? 'Unlock' : 'Lock'),
-            actionKey: 'lock-unlock',
-            variant: 'danger',
-            icon: (row) => (row.status === UserStatus.LOCKED ? 'ri-lock-unlock-line' : 'ri-lock-line'),
-          },
-          {
-            label: 'Reset Password',
-            actionKey: 'reset-password',
-            variant: 'secondary',
-            icon: 'ri-key-2-line',
-          },
-        ],
+        width: '14rem',
+        actionButtons,
       },
     ];
   });
 
   readonly permissionKeys = PERMISSION_KEYS;
   readonly translationKeys = TRANSLATION_KEYS;
-  readonly uiConfig = UI_CONFIG;
-
-  get totalPages(): number {
-    return Math.max(1, Math.ceil(this.total() / this.limit()));
-  }
 
   ngOnInit(): void {
     this.loadRoles();
     this.loadUsers();
   }
 
-  get availableRoles(): RoleWithPermissions[] {
-    return this.roles().filter((role) => role.status === 'ACTIVE');
-  }
-
-  get canSubmitRoleAssignments(): boolean {
-    return !this.assignRolesLoading() && this.selectedRoleIds().length > 0;
-  }
-
   loadUsers(): void {
     this.loading.set(true);
     this.errorMessage.set(null);
 
-    const status = this.selectedStatusFilter() || undefined;
-
     this.service
-      .listUsers(this.page(), this.limit(), undefined, status)
+      .listUsers(1, 5000)
       .subscribe({
         next: (response) => {
           this.users.set(response.users);
@@ -205,10 +237,10 @@ export class UsersListComponent implements OnInit {
   }
 
   onInviteUser(): void {
-    if (!this.canWrite()) {
+    if (!this.canCreate()) {
       return;
     }
-    this.router.navigate(['/saas-admin/users/invite']);
+    this.openUserForm(null);
   }
 
   loadRoles(): void {
@@ -222,14 +254,8 @@ export class UsersListComponent implements OnInit {
     });
   }
 
-  onStatusFilterChange(status: UserStatus | null): void {
-    this.selectedStatusFilter.set(status);
-    this.page.set(1);
-    this.loadUsers();
-  }
-
   onTableAction(event: { actionKey: string; row: UserRow }): void {
-    if (!this.canWrite()) {
+    if (!this.canManageUsers) {
       return;
     }
     const { actionKey, row } = event;
@@ -238,11 +264,11 @@ export class UsersListComponent implements OnInit {
       case 'assign-roles':
         this.openAssignRoles(row);
         break;
-      case 'lock-unlock':
-        this.onToggleLock(row);
+      case 'edit':
+        this.openUserForm(row.userId);
         break;
-      case 'reset-password':
-        this.toast.info('Reset password API is not available yet.');
+      case 'delete':
+        this.onDeleteUser(row.userId, row.fullName);
         break;
       default:
         break;
@@ -298,11 +324,11 @@ export class UsersListComponent implements OnInit {
 
     this.assignRolesLoading.set(true);
     this.service.replaceUserRoles(user.userId, this.selectedRoleIds()).subscribe({
-      next: (assignments) => {
+      next: () => {
         this.assignRolesLoading.set(false);
-        this.assignmentsByUser.update((curr) => ({ ...curr, [user.userId]: assignments }));
-        this.toast.success('Roles assigned successfully.');
+        this.toast.success(this.translate.instant('saas.admin.users.msg_role_update_success'));
         this.closeAssignRoles();
+        this.loadUsers();
       },
       error: () => {
         this.assignRolesLoading.set(false);
@@ -315,29 +341,60 @@ export class UsersListComponent implements OnInit {
     return this.selectedRoleIds().includes(roleId);
   }
 
-  private onToggleLock(row: UserRow): void {
-    const user = this.users().find((u) => u._id === row.userId);
-    if (!user) return;
+  onUserFormSaved(): void {
+    this.formModalOpen.set(false);
+    this.editingUserId.set(null);
+    this.loadUsers();
+  }
 
-    const isUnlock = row.status === UserStatus.LOCKED;
-    const actionLabel = isUnlock ? 'unlock' : 'lock';
-    if (confirm(`Are you sure you want to ${actionLabel} ${user.email}?`)) {
-      const request = isUnlock ? this.service.unlockUser(row.userId) : this.service.lockUser(row.userId);
-      request.subscribe({
-        next: () => {
-          this.toast.success(`User ${isUnlock ? 'unlocked' : 'locked'} successfully`);
-          this.loadUsers();
-        },
-        error: (err) => {
-          const message = String(err?.error?.message || '');
-          if (message.toLowerCase().includes('last active saas_admin')) {
-            this.toast.error('Cannot lock the last active SaaS admin.');
-          } else {
-            this.toast.error(`Failed to ${actionLabel} user`);
-          }
-        },
-      });
+  onUserFormCancelled(): void {
+    this.formModalOpen.set(false);
+    this.editingUserId.set(null);
+  }
+
+  onUserModalClosed(): void {
+    this.editingUserId.set(null);
+  }
+
+  onDeleteUser(userId: string, userName: string): void {
+    this.deletingUserId.set(userId);
+    this.userToDeleteName.set(userName);
+    this.deleteConfirmModalOpen.set(true);
+  }
+
+  onDeleteConfirmClosed(): void {
+    this.deleteConfirmModalOpen.set(false);
+    this.deletingUserId.set(null);
+    this.userToDeleteName.set('');
+  }
+
+  onConfirmDeleteUser(): void {
+    const userId = this.deletingUserId();
+    if (!userId) {
+      return;
     }
+
+    this.loading.set(true);
+    this.deleteConfirmModalOpen.set(false);
+    this.service.deleteUser(userId).subscribe({
+      next: () => {
+        this.toast.success(this.translate.instant('saas.admin.users.msg_delete_success'));
+        this.deletingUserId.set(null);
+        this.userToDeleteName.set('');
+        this.loadUsers();
+      },
+      error: () => {
+        this.loading.set(false);
+        this.toast.error(this.translate.instant('saas.admin.users.msg_delete_failed'));
+        this.deletingUserId.set(null);
+        this.userToDeleteName.set('');
+      },
+    });
+  }
+
+  private openUserForm(userId: string | null): void {
+    this.editingUserId.set(userId);
+    this.formModalOpen.set(true);
   }
 
   private getUserRoleNames(user: UserWithRoles): string {
@@ -345,31 +402,32 @@ export class UsersListComponent implements OnInit {
     if (assignedRoles.length > 0) {
       return assignedRoles.map((item) => item.roleName).filter(Boolean).join(', ') || '-';
     }
+    return '-';
+  }
 
-    const assignments = this.assignmentsByUser()[user._id] || [];
-    if (assignments.length === 0) {
-      return '-';
+  private getUserStatusLabel(status: string): string {
+    switch (status) {
+      case UserStatus.INVITED:
+        return this.translate.instant('saas.admin.users.opt_invited');
+      case UserStatus.ACTIVE:
+        return this.translate.instant('saas.admin.users.opt_active');
+      case UserStatus.LOCKED:
+        return this.translate.instant('saas.admin.users.opt_locked');
+      case UserStatus.DISABLED:
+        return this.translate.instant('saas.admin.users.opt_disabled');
+      default:
+        return status;
     }
-
-    const names = assignments.map((assignment) => {
-      if (typeof assignment.roleId === 'string') {
-        const role = this.roles().find((item) => item._id === assignment.roleId);
-        return role?.name || assignment.roleId;
-      }
-      return assignment.roleId?.name || '-';
-    });
-
-    return names.filter((name) => name && name !== '-').join(', ') || '-';
   }
 
   private getUserStatusTone(status: string): GomChipTone {
     switch (status) {
+      case UserStatus.INVITED:
+        return 'warning';
       case UserStatus.ACTIVE:
         return 'success';
-      case UserStatus.INVITED:
-        return 'info';
       case UserStatus.LOCKED:
-        return 'warning';
+        return 'pending';
       case UserStatus.DISABLED:
         return 'danger';
       default:

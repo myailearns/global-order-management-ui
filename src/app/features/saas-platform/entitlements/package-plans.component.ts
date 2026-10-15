@@ -1,21 +1,23 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { TranslateModule } from '@ngx-translate/core';
+import { Router } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Subject, takeUntil } from 'rxjs';
 
-import { GomAlertToastService, GomButtonComponent, GomInputComponent, GomSelectComponent, GomTableColumn, GomTableComponent, GomTableRow, GomTextareaComponent } from '@gomlibs/ui';
+import { GomAlertToastService, GomButtonComponent, GomConfirmationModalComponent, GomInputComponent, GomModalComponent, GomSelectComponent, GomSwitchComponent, GomTableColumn, GomTableComponent, GomTableRow, GomTextareaComponent } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { EntitlementsService } from './entitlements.service';
-import { FeatureCatalogItem, FeatureConfigOverride, PackagePlan } from './entitlements.model';
+import { FeatureCatalogItem, FeatureConfigOverride, PackagePlan, PostTrialAction, TrialMode } from './entitlements.model';
 
 interface PackageRow extends GomTableRow {
   id: string;
   planId: string;
   name: string;
   tier: string;
+  packageType: string;
   status: string;
-  featureCount: number;
+  tierCount: number;
 }
 
 @Component({
@@ -26,9 +28,12 @@ interface PackageRow extends GomTableRow {
     ReactiveFormsModule,
     TranslateModule,
     GomButtonComponent,
+    GomConfirmationModalComponent,
     GomInputComponent,
     GomSelectComponent,
+    GomSwitchComponent,
     GomTextareaComponent,
+    GomModalComponent,
     GomTableComponent,
   ],
   templateUrl: './package-plans.component.html',
@@ -46,6 +51,8 @@ export class PackagePlansComponent implements OnInit, OnDestroy {
   private readonly toast = inject(GomAlertToastService);
   private readonly fb = inject(FormBuilder);
   private readonly authSession = inject(AuthSessionService);
+  private readonly router = inject(Router);
+  private readonly translate = inject(TranslateService);
   private readonly destroy$ = new Subject<void>();
 
   readonly loading = signal(false);
@@ -53,14 +60,24 @@ export class PackagePlansComponent implements OnInit, OnDestroy {
   readonly packages = signal<PackagePlan[]>([]);
   readonly features = signal<FeatureCatalogItem[]>([]);
   readonly modalOpen = signal(false);
+  readonly deleteAllConfirmOpen = signal(false);
+  readonly deleteAllBusy = signal(false);
+  readonly deletePackageConfirmOpen = signal(false);
+  readonly deletePackageBusy = signal(false);
+  readonly deleteTarget = signal<PackagePlan | null>(null);
   readonly selectedId = signal<string | null>(null);
-  readonly dialogMode = signal<'create' | 'edit' | 'clone'>('create');
-  readonly modalTitleText = signal('Create Package');
-  readonly modalActionText = signal('Save');
   readonly featureKeysSig = signal<string[]>([]);
-  private pendingFeatureConfigs: Record<string, FeatureConfigOverride[]> = {};
+  
+  // Clone modal state
+  readonly cloneModalOpen = signal(false);
+  readonly cloneSource = signal<(PackagePlan & { tiers?: any[] }) | null>(null);
+  readonly cloneBusy = signal(false);
+  readonly cloneForm = this.fb.group({
+    name: ['', [Validators.required]],
+  });
+  readonly cloneTierSelections = signal<Record<string, boolean>>({});
 
-  readonly isCloneMode = computed(() => this.dialogMode() === 'clone');
+  private pendingFeatureConfigs: Record<string, FeatureConfigOverride[]> = {};
 
   // Features that have at least one config key — built from currently selected featureKeys
   readonly selectedFeaturesWithConfigs = signal<FeatureCatalogItem[]>([]);
@@ -84,14 +101,33 @@ export class PackagePlansComponent implements OnInit, OnDestroy {
   readonly featureSearch = signal('');
   readonly activeBuilderTab = signal<'features' | 'configs'>('features');
 
+  // Sprint 1: Two-step flow - create form only captures metadata
   readonly form = this.fb.group({
     planId: ['', [Validators.required]],
     name: ['', [Validators.required]],
     description: [''],
     tier: ['STARTER', [Validators.required]],
+    packageType: ['BOTH', [Validators.required]],
     status: ['ACTIVE', [Validators.required]],
-    featureKeys: this.fb.control<string[]>([]),
+    trialEnabledDefault: [true],
+    defaultTrialMode: ['PLAN_BASED_TRIAL' as TrialMode, [Validators.required]],
+    defaultTrialDurationDays: [14, [Validators.required, Validators.min(1), Validators.max(365)]],
+    defaultPostTrialAction: ['SUSPEND_PREMIUM_ACCESS' as PostTrialAction, [Validators.required]],
+    allowAccountLevelTrialOverride: [true],
+    featureKeys: this.fb.control<string[]>([]), // For backward compat with existing packages (edit mode)
   });
+
+  readonly packageTrialModeOptions = [
+    { value: 'PLAN_BASED_TRIAL', label: 'Plan Based Trial' },
+    { value: 'FULL_APP_TRIAL', label: 'Full App Trial' },
+    { value: 'NONE', label: 'No Trial' },
+  ];
+
+  readonly postTrialActionOptions = [
+    { value: 'SUSPEND_PREMIUM_ACCESS', label: 'Suspend Premium Access' },
+    { value: 'DOWNGRADE_TO_TIER', label: 'Downgrade To Tier' },
+    { value: 'CONVERT_TO_PAID', label: 'Convert To Paid' },
+  ];
 
   readonly moduleList = computed<string[]>(() =>
     [...new Set(this.features().map((feature) => String(feature.module || '').trim()).filter(Boolean))]
@@ -126,8 +162,9 @@ export class PackagePlansComponent implements OnInit, OnDestroy {
       planId: item.planId,
       name: item.name,
       tier: item.tier,
+      packageType: item.packageType || 'BOTH',
       status: item.status,
-      featureCount: item.featureKeys.length,
+      tierCount: (item.tiers?.length || 0) + (item.featureKeys?.length > 0 ? 1 : 0), // Count tiers + legacy package
     })),
   );
 
@@ -135,15 +172,23 @@ export class PackagePlansComponent implements OnInit, OnDestroy {
     { key: 'planId', header: 'Plan Id', sortable: true, width: '12rem' },
     { key: 'name', header: 'Name', sortable: true, width: '16rem' },
     { key: 'tier', header: 'Tier', width: '10rem' },
+    { key: 'packageType', header: 'Package Type', width: '10rem' },
     { key: 'status', header: 'Status', width: '10rem' },
-    { key: 'featureCount', header: 'Features', width: '8rem' },
+    { key: 'tierCount', header: this.translate.instant('saas.platform.packages.col_tiers'), width: '8rem' },
     {
       key: 'id',
       header: 'Actions',
-      width: '10rem',
+      width: '15rem',
       actionButtons: [
+        {
+          label: this.translate.instant('saas.platform.packages.btn_manage_tiers'),
+          icon: 'ri-stack-line',
+          actionKey: 'manage-tiers',
+          variant: 'primary',
+        },
+        { label: 'Clone', icon: 'ri-file-copy-line', actionKey: 'clone', variant: 'secondary' },
         { label: 'Edit', actionKey: 'edit', variant: 'secondary' },
-        { label: 'Clone', actionKey: 'clone', variant: 'secondary' },
+        { label: 'Delete', icon: 'ri-delete-bin-line', actionKey: 'delete', variant: 'danger' },
       ],
     },
   ];
@@ -379,77 +424,248 @@ export class PackagePlansComponent implements OnInit, OnDestroy {
     });
   }
 
+  openDeleteAllConfirm(): void {
+    if (!this.canWrite() || this.loading() || this.deleteAllBusy()) {
+      return;
+    }
+    this.deleteAllConfirmOpen.set(true);
+  }
+
+  closeDeleteAllConfirm(): void {
+    if (this.deleteAllBusy()) {
+      return;
+    }
+    this.deleteAllConfirmOpen.set(false);
+  }
+
+  openDeletePackageConfirm(item: PackagePlan): void {
+    if (!this.canWrite() || this.loading() || this.deletePackageBusy()) {
+      return;
+    }
+    this.deleteTarget.set(item);
+    this.deletePackageConfirmOpen.set(true);
+  }
+
+  closeDeletePackageConfirm(): void {
+    if (this.deletePackageBusy()) {
+      return;
+    }
+    this.deletePackageConfirmOpen.set(false);
+    this.deleteTarget.set(null);
+  }
+
+  confirmDeletePackage(): void {
+    const target = this.deleteTarget();
+    if (!this.canWrite() || !target?._id || this.deletePackageBusy()) {
+      return;
+    }
+
+    this.deletePackageBusy.set(true);
+    this.service.deletePackage(target._id).subscribe({
+      next: () => {
+        this.deletePackageBusy.set(false);
+        this.deletePackageConfirmOpen.set(false);
+        this.deleteTarget.set(null);
+        this.toast.success('Package deleted successfully');
+        this.load();
+      },
+      error: (error) => {
+        this.deletePackageBusy.set(false);
+        this.toast.error(String(error?.error?.message || 'Failed to delete package'));
+      },
+    });
+  }
+
+  get deletePackageConfirmMessage(): string {
+    const target = this.deleteTarget();
+    if (!target) {
+      return 'Are you sure you want to delete this package?';
+    }
+    return `Are you sure you want to delete package ${target.name} (${target.planId})? This action cannot be undone.`;
+  }
+
+  confirmDeleteAllPackages(): void {
+    if (!this.canWrite() || this.deleteAllBusy()) {
+      return;
+    }
+
+    this.deleteAllBusy.set(true);
+    this.service.deleteAllPackages().subscribe({
+      next: (result) => {
+        this.deleteAllBusy.set(false);
+        this.deleteAllConfirmOpen.set(false);
+
+        if (result.deletedCount === 0) {
+          this.toast.info('No packages to delete.');
+          return;
+        }
+
+        this.toast.success(`Deleted ${result.deletedCount} packages.`);
+        this.load();
+      },
+      error: (error) => {
+        this.deleteAllBusy.set(false);
+        this.toast.error(String(error?.error?.message || 'Failed to delete all packages'));
+      },
+    });
+  }
+
   openCreate(): void {
     this.selectedId.set(null);
-    this.dialogMode.set('create');
-    this.modalTitleText.set('Create Package');
-    this.modalActionText.set('Save');
     this.pendingFeatureConfigs = {};
     this.activeModule.set('all');
     this.featureSearch.set('');
     this.activeBuilderTab.set('features');
     this._rebuildConfigOverrides([], {});
     this.featureKeysSig.set([]);
-    this.form.reset({ planId: '', name: '', description: '', tier: 'STARTER', status: 'ACTIVE', featureKeys: [] });
-    this.form.controls.planId.enable();
-    this.modalOpen.set(true);
-  }
-
-  private _generatePlanId(sourceName: string): string {
-    let normalized = String(sourceName || '')
-      .trim()
-      .toUpperCase()
-      .replace(/[^A-Z0-9]+/g, '_')
-      .replace(/_+/g, '_');
-
-    while (normalized.startsWith('_')) {
-      normalized = normalized.slice(1);
-    }
-
-    while (normalized.endsWith('_')) {
-      normalized = normalized.slice(0, -1);
-    }
-
-    return normalized || `PACKAGE_${Date.now()}`;
-  }
-
-  private _openPackageForm(item: PackagePlan, mode: 'edit' | 'clone'): void {
-    this.selectedId.set(mode === 'edit' ? item._id : null);
-    this.dialogMode.set(mode);
-    this.modalTitleText.set(mode === 'clone' ? 'Clone Package' : 'Edit Package');
-    this.modalActionText.set(mode === 'clone' ? 'Clone' : 'Save');
-    this.pendingFeatureConfigs = item.featureConfigs ?? {};
-    this.activeModule.set('all');
-    this.featureSearch.set('');
-    this.activeBuilderTab.set('features');
-
-    const nextName = mode === 'clone' ? `${item.name} Copy` : item.name;
-    const nextPlanId = mode === 'clone'
-      ? this._generatePlanId(nextName)
-      : item.planId;
-
+    this.form.reset({ planId: '', name: '', description: '', tier: 'STARTER', packageType: 'BOTH', status: 'ACTIVE', featureKeys: [] });
     this.form.patchValue({
-      planId: nextPlanId,
-      name: nextName,
-      description: item.description || '',
-      tier: item.tier,
-      status: item.status,
-      featureKeys: item.featureKeys,
+      trialEnabledDefault: true,
+      defaultTrialMode: 'PLAN_BASED_TRIAL',
+      defaultTrialDurationDays: 14,
+      defaultPostTrialAction: 'SUSPEND_PREMIUM_ACCESS',
+      allowAccountLevelTrialOverride: true,
     }, { emitEvent: false });
-
-    this.featureKeysSig.set(item.featureKeys ?? []);
-    this._rebuildConfigOverrides(item.featureKeys, this.pendingFeatureConfigs);
-
+    // Metadata-first create: planId is auto-generated by backend, tier is configured in Manage Tiers.
     this.form.controls.planId.disable();
-
+    this.form.controls.tier.disable();
     this.modalOpen.set(true);
+  }
+
+  openCloneModal(sourcePackage: PackagePlan & { tiers?: any[] }): void {
+ if (!this.canWrite() || this.cloneBusy()) {
+      return;
+    }
+
+    // Fetch full package details with tiers
+    this.service.getPackage(sourcePackage._id).subscribe({
+      next: (pkg) => {
+        this.cloneSource.set(pkg);
+        
+        // Initialize tier selections (all selected by default)
+        const tierSelections: Record<string, boolean> = {};
+        const tiers = pkg.tiers || [];
+        tiers.forEach((tier: any) => {
+          tierSelections[tier.tierKey] = true;
+        });
+        this.cloneTierSelections.set(tierSelections);
+        
+        // Set clone form with source package name
+        this.cloneForm.patchValue({
+          name: `${pkg.name} (Copy)`,
+        });
+        
+        this.cloneModalOpen.set(true);
+      },
+      error: (error) => {
+        this.toast.error(String(error?.error?.message || 'Failed to fetch package details'));
+      },
+    });
+  }
+
+  closeCloneModal(): void {
+    if (this.cloneBusy()) {
+      return;
+    }
+    this.cloneModalOpen.set(false);
+    this.cloneSource.set(null);
+    this.cloneTierSelections.set({});
+    this.cloneForm.reset();
+  }
+
+  toggleTierSelection(tierKey: string): void {
+    const selections = { ...this.cloneTierSelections() };
+    selections[tierKey] = !selections[tierKey];
+    this.cloneTierSelections.set(selections);
+  }
+
+  isAllTiersSelected(): boolean {
+    const selections = this.cloneTierSelections();
+    const tiers = this.cloneSource()?.tiers || [];
+    if (tiers.length === 0) return false;
+    return tiers.every((tier: any) => selections[tier.tierKey]);
+  }
+
+  toggleAllTiers(): void {
+    const selections = { ...this.cloneTierSelections() };
+    const tiers = this.cloneSource()?.tiers || [];
+    const allSelected = this.isAllTiersSelected();
+    
+    tiers.forEach((tier: any) => {
+      selections[tier.tierKey] = !allSelected;
+    });
+    
+    this.cloneTierSelections.set(selections);
+  }
+
+  isTierSelected(tierKey: string): boolean {
+    return this.cloneTierSelections()[tierKey] || false;
+  }
+
+  confirmClone(): void {
+    const source = this.cloneSource();
+    if (!this.canWrite() || !source || this.cloneBusy() || !this.cloneForm.valid) {
+      return;
+    }
+
+    const selections = this.cloneTierSelections();
+    const selectedTierKeys = Object.keys(selections).filter((key) => selections[key]);
+    
+    if (selectedTierKeys.length === 0) {
+      this.toast.error('Please select at least one tier to clone');
+      return;
+    }
+
+    this.cloneBusy.set(true);
+    const cloneName = String(this.cloneForm.get('name')?.value || '').trim();
+    
+    this.service.clonePackage(source._id, {
+      name: cloneName,
+      selectedTierKeys,
+    }).subscribe({
+      next: () => {
+        this.cloneBusy.set(false);
+        this.closeCloneModal();
+        this.toast.success(`Package "${cloneName}" cloned successfully with ${selectedTierKeys.length} tier(s)`);
+        this.load();
+      },
+      error: (error) => {
+        this.cloneBusy.set(false);
+        this.toast.error(String(error?.error?.message || 'Failed to clone package'));
+      },
+    });
   }
 
   onRowAction(event: { actionKey: string; row: PackageRow }): void {
     if (!this.canWrite()) {
       return;
     }
-    if (event.actionKey !== 'edit' && event.actionKey !== 'clone') {
+
+    if (event.actionKey === 'manage-tiers') {
+      // Navigate to tier management page for this package
+      this.router.navigate(['/saas-platform/packages', event.row.id, 'tiers']);
+      return;
+    }
+
+    if (event.actionKey === 'clone') {
+      const cloneItem = this.packages().find((x) => x._id === event.row.id);
+      if (!cloneItem) {
+        return;
+      }
+      this.openCloneModal(cloneItem);
+      return;
+    }
+
+    if (event.actionKey === 'delete') {
+      const deleteItem = this.packages().find((x) => x._id === event.row.id);
+      if (!deleteItem) {
+        return;
+      }
+      this.openDeletePackageConfirm(deleteItem);
+      return;
+    }
+
+    if (event.actionKey !== 'edit') {
       return;
     }
 
@@ -458,12 +674,32 @@ export class PackagePlansComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (event.actionKey === 'clone') {
-      this._openPackageForm(item, 'clone');
-      return;
-    }
-
-    this._openPackageForm(item, 'edit');
+    this.selectedId.set(item._id);
+    this.pendingFeatureConfigs = item.featureConfigs ?? {};
+    this._rebuildConfigOverrides([], {});
+    this.form.patchValue({
+      planId: item.planId,
+      name: item.name,
+      description: item.description || '',
+      tier: item.tier,
+      packageType: item.packageType || 'BOTH',
+      status: item.status,
+      trialEnabledDefault: item.trialEnabledDefault ?? true,
+      defaultTrialMode: item.defaultTrialMode || 'PLAN_BASED_TRIAL',
+      defaultTrialDurationDays: Number(item.defaultTrialDurationDays ?? 14),
+      defaultPostTrialAction: item.defaultPostTrialAction || 'SUSPEND_PREMIUM_ACCESS',
+      allowAccountLevelTrialOverride: item.allowAccountLevelTrialOverride ?? true,
+      featureKeys: item.featureKeys,
+    }, { emitEvent: false });
+    this.featureKeysSig.set(item.featureKeys ?? []);
+    this.activeModule.set('all');
+    this.featureSearch.set('');
+    this.activeBuilderTab.set('features');
+    // Pre-populate config overrides from saved plan
+    this._rebuildConfigOverrides(item.featureKeys, this.pendingFeatureConfigs);
+    this.form.controls.planId.disable();
+    this.form.controls.tier.enable();
+    this.modalOpen.set(true);
   }
 
   save(): void {
@@ -473,9 +709,6 @@ export class PackagePlansComponent implements OnInit, OnDestroy {
     }
 
     const raw = this.form.getRawValue();
-    const planId = this.dialogMode() === 'clone'
-      ? this._generatePlanId(String(raw.name || ''))
-      : String(raw.planId || '').trim().toUpperCase();
 
     // Build featureConfigs from configOverridesForm
     const featureConfigs: Record<string, FeatureConfigOverride[]> = {};
@@ -507,16 +740,22 @@ export class PackagePlansComponent implements OnInit, OnDestroy {
     });
 
     const payload = {
-      planId,
+      planId: String(raw.planId || '').trim().toUpperCase(),
       name: String(raw.name || '').trim(),
       description: String(raw.description || '').trim(),
       tier: String(raw.tier || 'STARTER').trim().toUpperCase(),
+      packageType: String(raw.packageType || 'BOTH').trim().toUpperCase(),
       status: String(raw.status || 'ACTIVE').trim().toUpperCase(),
+      trialEnabledDefault: Boolean(raw.trialEnabledDefault),
+      defaultTrialMode: String(raw.defaultTrialMode || 'PLAN_BASED_TRIAL').trim().toUpperCase() as TrialMode,
+      defaultTrialDurationDays: Number(raw.defaultTrialDurationDays || 14),
+      defaultPostTrialAction: String(raw.defaultPostTrialAction || 'SUSPEND_PREMIUM_ACCESS').trim().toUpperCase() as PostTrialAction,
+      allowAccountLevelTrialOverride: Boolean(raw.allowAccountLevelTrialOverride),
       featureKeys: Array.isArray(raw.featureKeys)
         ? raw.featureKeys.map((value) => String(value).trim().toLowerCase()).filter(Boolean)
         : [],
       featureConfigs,
-    } as Partial<PackagePlan> & Pick<PackagePlan, 'planId' | 'name' | 'tier'>;
+    } as Partial<PackagePlan>;
 
     const id = this.selectedId();
     this.loading.set(true);
@@ -537,7 +776,19 @@ export class PackagePlansComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.service.createPackage(payload).subscribe({
+    const createPayload = {
+      name: payload.name,
+      description: payload.description,
+      packageType: payload.packageType,
+      status: payload.status,
+      trialEnabledDefault: payload.trialEnabledDefault,
+      defaultTrialMode: payload.defaultTrialMode,
+      defaultTrialDurationDays: payload.defaultTrialDurationDays,
+      defaultPostTrialAction: payload.defaultPostTrialAction,
+      allowAccountLevelTrialOverride: payload.allowAccountLevelTrialOverride,
+    } as Partial<PackagePlan> & Pick<PackagePlan, 'name'>;
+
+    this.service.createPackage(createPayload).subscribe({
       next: () => {
         this.loading.set(false);
         this.modalOpen.set(false);

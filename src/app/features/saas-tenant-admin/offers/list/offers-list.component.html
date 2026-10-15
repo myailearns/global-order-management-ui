@@ -1,20 +1,20 @@
 <div class="offers-list-container">
   <div class="offers-header">
     <div class="offers-title">
-      <h1>{{ 'gom.offers.title' | translate }}</h1>
+      <gom-page-heading navRoute="/saas-admin/offers"></gom-page-heading>
       <p>{{ 'gom.offers.subtitle' | translate }}</p>
     </div>
     <div class="offers-actions">
       <gom-lib-button
         variant="primary"
-        [disabled]="!canWrite()"
+        [disabled]="!canCreateOffer()"
         (buttonClick)="onCreate()"
       >
         {{ 'gom.offers.btn_create' | translate }}
       </gom-lib-button>
       <gom-lib-button
         variant="secondary"
-        [disabled]="!canWrite()"
+        [disabled]="!canViewOffer()"
         (buttonClick)="onSettings()"
       >
         {{ 'gom.offers.btn_settings' | translate }}

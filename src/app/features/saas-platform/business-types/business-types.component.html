@@ -1,0 +1,87 @@
+<section class="business-types-page">
+  <header class="business-types-page__header">
+    <div>
+      <h1>{{ 'businessTypes.title' | translate }}</h1>
+      <p>{{ 'businessTypes.description' | translate }}</p>
+    </div>
+
+    <div class="business-types-page__header-actions">
+      @if (canWrite()) {
+        <gom-lib-button (buttonClick)="openCreate()" [disabled]="actionBusy()">
+          <i class="ri-add-line" aria-hidden="true"></i>
+          {{ 'businessTypes.actions.create' | translate }}
+        </gom-lib-button>
+      }
+
+      <gom-lib-button variant="secondary" (buttonClick)="openImport()" [disabled]="actionBusy()">
+        <i class="ri-upload-2-line" aria-hidden="true"></i>
+        {{ 'businessTypes.actions.import' | translate }}
+      </gom-lib-button>
+
+      <gom-lib-button variant="secondary" (buttonClick)="downloadTemplate()" [disabled]="actionBusy()">
+        <i class="ri-download-2-line" aria-hidden="true"></i>
+        {{ 'businessTypes.actions.downloadTemplate' | translate }}
+      </gom-lib-button>
+    </div>
+  </header>
+
+  <gom-lib-table
+    [columns]="columns"
+    [rows]="rows()"
+    [loading]="loading()"
+    [totalItems]="rows().length"
+    [searchPlaceholder]="'businessTypes.table.searchPlaceholder' | translate"
+    [emptyMessage]="'businessTypes.table.empty' | translate"
+    (rowAction)="onRowAction($event)"
+  ></gom-lib-table>
+</section>
+
+<gom-lib-modal
+  [(show)]="modalOpen"
+  [title]="(editingBusinessType() ? 'businessTypes.modal.editTitle' : 'businessTypes.modal.createTitle') | translate"
+  size="medium"
+  (closed)="closeModal()"
+>
+  <form class="business-types-form" [formGroup]="form">
+    <gom-lib-input
+      formControlName="name"
+      [label]="'businessTypes.form.name' | translate"
+      [required]="true"
+    ></gom-lib-input>
+
+    <gom-lib-select
+      formControlName="categoryIds"
+      [label]="'businessTypes.form.categories' | translate"
+      [placeholder]="'businessTypes.form.categoriesPlaceholder' | translate"
+      [required]="true"
+      [options]="categoryOptions()"
+      [multiple]="true"
+      [searchable]="categoryOptions().length > 10"
+      [searchPlaceholder]="'businessTypes.form.categoriesSearchPlaceholder' | translate"
+    ></gom-lib-select>
+  </form>
+
+  <footer class="gom-modal__action-layout" gom-modal-actions>
+    <div class="gom-modal__action-layout-start"></div>
+    <div class="gom-modal__action-layout-end">
+      <gom-lib-button type="button" variant="secondary" (buttonClick)="closeModal()">
+        {{ 'common.btn_cancel' | translate }}
+      </gom-lib-button>
+      <gom-lib-button type="button" (buttonClick)="save()" [disabled]="loading() || form.invalid">
+        {{ 'businessTypes.actions.save' | translate }}
+      </gom-lib-button>
+    </div>
+  </footer>
+</gom-lib-modal>
+
+<gom-lib-confirmation-modal
+  [(show)]="deleteConfirmOpen"
+  [title]="'businessTypes.delete.title' | translate"
+  [message]="deleteMessage"
+  [confirmText]="'businessTypes.actions.delete' | translate"
+  [cancelText]="'common.btn_cancel' | translate"
+  confirmVariant="danger"
+  [busy]="loading()"
+  (confirmed)="confirmDelete()"
+  (cancelled)="closeDeleteConfirm()"
+></gom-lib-confirmation-modal>

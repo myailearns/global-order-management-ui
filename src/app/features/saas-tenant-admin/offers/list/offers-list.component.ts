@@ -15,6 +15,7 @@ import {
   GomTableRow,
 } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../../core/auth/auth-session.service';
+import { PageHeadingComponent } from '../../../../shared/components/page-heading/page-heading.component';
 
 import { OfferService } from '../../services';
 import {
@@ -52,6 +53,7 @@ interface OfferRow extends GomTableRow {
     TranslateModule,
     GomButtonComponent,
     GomConfirmationModalComponent,
+    PageHeadingComponent,
     GomTableComponent,
   ],
   templateUrl: './offers-list.component.html',
@@ -66,6 +68,12 @@ export class OffersListComponent implements OnInit {
   private readonly router = inject(Router);
 
   readonly loading = signal(false);
+  readonly canListOffers = computed(() => this.authSession.hasFeature('offer.list'));
+  readonly canViewOffer = computed(() => this.authSession.hasFeature('offer.view'));
+  readonly canCreateOffer = computed(() => this.authSession.hasFeature('offer.create'));
+  readonly canEditOffer = computed(() => this.authSession.hasFeature('offer.edit'));
+  readonly canDeleteOffer = computed(() => this.authSession.hasFeature('offer.delete'));
+  readonly canManageOfferState = computed(() => this.authSession.hasFeature('offer.state'));
   readonly canWrite = computed(() => this.authSession.canWrite('tenant-admin'));
   readonly errorMessage = signal<string | null>(null);
 
@@ -151,13 +159,14 @@ export class OffersListComponent implements OnInit {
           actionKey: 'edit',
           variant: 'secondary',
           icon: 'ri-pencil-line',
+          disabled: () => !this.canEditOffer(),
         },
         {
           label: (row) => this.getLifecycleActionLabel(row),
           actionKey: 'lifecycle',
           variant: 'secondary',
           icon: (row) => this.getLifecycleActionIcon(row),
-          disabled: (row) => !this.getLifecycleActionKey(row),
+          disabled: (row) => !this.canManageOfferState() || !this.getLifecycleActionKey(row),
           disabledTooltip: () => this.translate.instant('gom.offers.error_update'),
         },
         {
@@ -165,12 +174,14 @@ export class OffersListComponent implements OnInit {
           actionKey: 'duplicate',
           variant: 'secondary',
           icon: 'ri-file-copy-line',
+          disabled: () => !this.canCreateOffer(),
         },
         {
           label: this.translate.instant('common.btn_delete'),
           actionKey: 'delete',
           variant: 'danger',
           icon: 'ri-delete-bin-line',
+          disabled: () => !this.canDeleteOffer(),
         },
       ],
     },

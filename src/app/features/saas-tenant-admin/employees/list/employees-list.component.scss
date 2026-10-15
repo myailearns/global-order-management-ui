@@ -18,6 +18,21 @@
   }
 }
 
+.gom-employees-list__header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.gom-employees-list__quota-banner {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: color-mix(in srgb, var(--gom-warning) 15%, transparent);
+  border: 1px solid var(--gom-warning);
+  border-radius: var(--radius-sm);
+  color: var(--gom-text);
+  font-size: var(--text-sm);
+}
+
 .gom-employees-list__filters {
   display: flex;
   gap: 1rem;

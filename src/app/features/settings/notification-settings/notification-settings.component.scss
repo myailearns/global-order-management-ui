@@ -1,0 +1,28 @@
+.settings-section__hint {
+  font-size: 0.8125rem;
+  color: var(--gom-grey-600, #757575);
+  margin-bottom: 0.75rem;
+}
+
+.settings-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.settings-tabs__item {
+  border: 1px solid #d0d7de;
+  background: #fff;
+  color: #1f2937;
+  border-radius: 9999px;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.settings-tabs__item--active {
+  border-color: #0a5d8b;
+  background: #eaf4fb;
+  color: #0a5d8b;
+  font-weight: 600;
+}

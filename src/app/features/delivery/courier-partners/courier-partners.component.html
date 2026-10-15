@@ -1,14 +1,20 @@
 <section class="master-page">
   <header class="master-page__header">
-    <h2><i class="ri-truck-line" aria-hidden="true"></i> Courier Partners</h2>
+    <gom-page-heading navRoute="/delivery/courier-partners"></gom-page-heading>
     <gom-lib-button
       type="button"
       variant="primary"
+      [size]="isMobileHeader() ? 'compact-icon' : 'default'"
       (buttonClick)="openCreate()"
       [gomDisableIfNoFeature]="'courierPartner.create'"
-      [disabled]="saving() || !canCreatePartner() || (courierPartnerCreateRemaining() ?? 1) <= 0"
+      [disabled]="saving() || !canCreatePartner()"
+      aria-label="Add Courier Partner"
+      buttonTitle="Add Courier Partner"
     >
-      <i class="ri-add-line" aria-hidden="true"></i> Add Courier Partner
+      <i class="ri-add-line" aria-hidden="true"></i>
+      @if (!isMobileHeader()) {
+        Add Courier Partner
+      }
     </gom-lib-button>
   </header>
 

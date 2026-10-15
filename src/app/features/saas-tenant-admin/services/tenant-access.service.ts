@@ -13,6 +13,7 @@ import {
   CreateEmployeeRequest,
   UpdateEmployeeRequest,
   RoleWithPermissions,
+  EmployeeCodePreview,
   CreateRoleRequest,
   UpdateRoleRequest,
   UserRoleAssignment,
@@ -20,6 +21,21 @@ import {
   ApiListResponse,
   Permission,
   TenantAdminSummary,
+  BillingSupportCallbackRequest,
+  BillingSupportCallbackResponse,
+  TenantDashboardSummary,
+  DashboardOrdersNeedingActionResponse,
+  DashboardLowStockResponse,
+  DashboardOutOfStockResponse,
+  DashboardTopProductsResponse,
+  DashboardSlowProductsResponse,
+  AnalyticsSalesTrendsResponse,
+  AnalyticsContributionResponse,
+  AnalyticsCustomerMixResponse,
+  AnalyticsReasonSplitsResponse,
+  AnalyticsChannelSplitsResponse,
+  AnalyticsDemandHeatmapResponse,
+  AnalyticsPromotionResponse,
 } from '../models/tenant-access.model';
 
 @Injectable({
@@ -48,6 +64,237 @@ export class TenantAccessService {
         headers: this.buildTenantHeaders(tenantId),
       })
       .pipe(map((res) => res.data));
+  }
+
+  requestBillingSupportCallback(payload: BillingSupportCallbackRequest, tenantId?: string): Observable<BillingSupportCallbackResponse> {
+    return this.http
+      .post<ApiResponse<BillingSupportCallbackResponse>>(`${this.apiBaseUrl}/billing/support-callback`, payload, {
+        headers: this.buildTenantHeaders(tenantId),
+      })
+      .pipe(map((res) => res.data));
+  }
+
+  getTenantDashboardSummary(
+    params?: { fromDate?: string; toDate?: string; timezone?: string; compareMode?: string },
+    tenantId?: string
+  ): Observable<TenantDashboardSummary> {
+    let queryParams = new HttpParams();
+
+    if (params?.fromDate) {
+      queryParams = queryParams.set('fromDate', params.fromDate);
+    }
+    if (params?.toDate) {
+      queryParams = queryParams.set('toDate', params.toDate);
+    }
+    if (params?.timezone) {
+      queryParams = queryParams.set('timezone', params.timezone);
+    }
+    if (params?.compareMode) {
+      queryParams = queryParams.set('compareMode', params.compareMode);
+    }
+
+    return this.http.get<TenantDashboardSummary>(`${this.apiBaseUrl}/dashboard/summary`, {
+      params: queryParams,
+      headers: this.buildTenantHeaders(tenantId),
+    });
+  }
+
+  getDashboardOrdersNeedingAction(
+    params?: { page?: number; limit?: number; fromDate?: string; toDate?: string; timezone?: string },
+    tenantId?: string
+  ): Observable<DashboardOrdersNeedingActionResponse> {
+    let queryParams = new HttpParams();
+
+    if (params?.page) queryParams = queryParams.set('page', params.page.toString());
+    if (params?.limit) queryParams = queryParams.set('limit', params.limit.toString());
+    if (params?.fromDate) queryParams = queryParams.set('fromDate', params.fromDate);
+    if (params?.toDate) queryParams = queryParams.set('toDate', params.toDate);
+    if (params?.timezone) queryParams = queryParams.set('timezone', params.timezone);
+
+    return this.http.get<DashboardOrdersNeedingActionResponse>(`${this.apiBaseUrl}/dashboard/orders-needing-action`, {
+      params: queryParams,
+      headers: this.buildTenantHeaders(tenantId),
+    });
+  }
+
+  getDashboardLowStock(
+    params?: { page?: number; limit?: number; fromDate?: string; toDate?: string; timezone?: string },
+    tenantId?: string
+  ): Observable<DashboardLowStockResponse> {
+    let queryParams = new HttpParams();
+
+    if (params?.page) queryParams = queryParams.set('page', params.page.toString());
+    if (params?.limit) queryParams = queryParams.set('limit', params.limit.toString());
+    if (params?.fromDate) queryParams = queryParams.set('fromDate', params.fromDate);
+    if (params?.toDate) queryParams = queryParams.set('toDate', params.toDate);
+    if (params?.timezone) queryParams = queryParams.set('timezone', params.timezone);
+
+    return this.http.get<DashboardLowStockResponse>(`${this.apiBaseUrl}/dashboard/low-stock`, {
+      params: queryParams,
+      headers: this.buildTenantHeaders(tenantId),
+    });
+  }
+
+  getDashboardOutOfStock(
+    params?: { page?: number; limit?: number },
+    tenantId?: string
+  ): Observable<DashboardOutOfStockResponse> {
+    let queryParams = new HttpParams();
+    if (params?.page) queryParams = queryParams.set('page', params.page.toString());
+    if (params?.limit) queryParams = queryParams.set('limit', params.limit.toString());
+    return this.http.get<DashboardOutOfStockResponse>(`${this.apiBaseUrl}/dashboard/out-of-stock`, {
+      params: queryParams,
+      headers: this.buildTenantHeaders(tenantId),
+    });
+  }
+
+  getDashboardTopProducts(
+    params?: { page?: number; limit?: number; fromDate?: string; toDate?: string; timezone?: string },
+    tenantId?: string
+  ): Observable<DashboardTopProductsResponse> {
+    let queryParams = new HttpParams();
+
+    if (params?.page) queryParams = queryParams.set('page', params.page.toString());
+    if (params?.limit) queryParams = queryParams.set('limit', params.limit.toString());
+    if (params?.fromDate) queryParams = queryParams.set('fromDate', params.fromDate);
+    if (params?.toDate) queryParams = queryParams.set('toDate', params.toDate);
+    if (params?.timezone) queryParams = queryParams.set('timezone', params.timezone);
+
+    return this.http.get<DashboardTopProductsResponse>(`${this.apiBaseUrl}/dashboard/top-products`, {
+      params: queryParams,
+      headers: this.buildTenantHeaders(tenantId),
+    });
+  }
+
+  getDashboardSlowProducts(
+    params?: {
+      page?: number;
+      limit?: number;
+      lookbackDays?: number;
+      slowThreshold?: number;
+      fromDate?: string;
+      toDate?: string;
+      timezone?: string;
+    },
+    tenantId?: string
+  ): Observable<DashboardSlowProductsResponse> {
+    let queryParams = new HttpParams();
+
+    if (params?.page) queryParams = queryParams.set('page', params.page.toString());
+    if (params?.limit) queryParams = queryParams.set('limit', params.limit.toString());
+    if (params?.lookbackDays) queryParams = queryParams.set('lookbackDays', params.lookbackDays.toString());
+    if (params?.slowThreshold) queryParams = queryParams.set('slowThreshold', params.slowThreshold.toString());
+    if (params?.fromDate) queryParams = queryParams.set('fromDate', params.fromDate);
+    if (params?.toDate) queryParams = queryParams.set('toDate', params.toDate);
+    if (params?.timezone) queryParams = queryParams.set('timezone', params.timezone);
+
+    return this.http.get<DashboardSlowProductsResponse>(`${this.apiBaseUrl}/dashboard/slow-products`, {
+      params: queryParams,
+      headers: this.buildTenantHeaders(tenantId),
+    });
+  }
+
+  getAnalyticsSalesTrends(
+    params?: { granularity?: string; compareMode?: string; fromDate?: string; toDate?: string; timezone?: string },
+    tenantId?: string
+  ): Observable<AnalyticsSalesTrendsResponse> {
+    let queryParams = new HttpParams();
+
+    if (params?.granularity) queryParams = queryParams.set('granularity', params.granularity);
+    if (params?.compareMode) queryParams = queryParams.set('compareMode', params.compareMode);
+    if (params?.fromDate) queryParams = queryParams.set('fromDate', params.fromDate);
+    if (params?.toDate) queryParams = queryParams.set('toDate', params.toDate);
+    if (params?.timezone) queryParams = queryParams.set('timezone', params.timezone);
+
+    return this.http.get<AnalyticsSalesTrendsResponse>(`${this.apiBaseUrl}/analytics/sales-trends`, {
+      params: queryParams,
+      headers: this.buildTenantHeaders(tenantId),
+    });
+  }
+
+  getAnalyticsContribution(
+    params?: { fromDate?: string; toDate?: string; timezone?: string },
+    tenantId?: string
+  ): Observable<AnalyticsContributionResponse> {
+    let queryParams = new HttpParams();
+    if (params?.fromDate) queryParams = queryParams.set('fromDate', params.fromDate);
+    if (params?.toDate) queryParams = queryParams.set('toDate', params.toDate);
+    if (params?.timezone) queryParams = queryParams.set('timezone', params.timezone);
+    return this.http.get<AnalyticsContributionResponse>(`${this.apiBaseUrl}/analytics/contribution`, {
+      params: queryParams,
+      headers: this.buildTenantHeaders(tenantId),
+    });
+  }
+
+  getAnalyticsCustomerMix(
+    params?: { granularity?: string; fromDate?: string; toDate?: string; timezone?: string },
+    tenantId?: string
+  ): Observable<AnalyticsCustomerMixResponse> {
+    let queryParams = new HttpParams();
+    if (params?.granularity) queryParams = queryParams.set('granularity', params.granularity);
+    if (params?.fromDate) queryParams = queryParams.set('fromDate', params.fromDate);
+    if (params?.toDate) queryParams = queryParams.set('toDate', params.toDate);
+    if (params?.timezone) queryParams = queryParams.set('timezone', params.timezone);
+    return this.http.get<AnalyticsCustomerMixResponse>(`${this.apiBaseUrl}/analytics/customer-mix`, {
+      params: queryParams,
+      headers: this.buildTenantHeaders(tenantId),
+    });
+  }
+
+  getAnalyticsReasonSplits(
+    params?: { fromDate?: string; toDate?: string; timezone?: string },
+    tenantId?: string
+  ): Observable<AnalyticsReasonSplitsResponse> {
+    let queryParams = new HttpParams();
+    if (params?.fromDate) queryParams = queryParams.set('fromDate', params.fromDate);
+    if (params?.toDate) queryParams = queryParams.set('toDate', params.toDate);
+    if (params?.timezone) queryParams = queryParams.set('timezone', params.timezone);
+    return this.http.get<AnalyticsReasonSplitsResponse>(`${this.apiBaseUrl}/analytics/reason-splits`, {
+      params: queryParams,
+      headers: this.buildTenantHeaders(tenantId),
+    });
+  }
+
+  getAnalyticsChannelSplits(
+    params?: { fromDate?: string; toDate?: string; timezone?: string },
+    tenantId?: string
+  ): Observable<AnalyticsChannelSplitsResponse> {
+    let queryParams = new HttpParams();
+    if (params?.fromDate) queryParams = queryParams.set('fromDate', params.fromDate);
+    if (params?.toDate) queryParams = queryParams.set('toDate', params.toDate);
+    if (params?.timezone) queryParams = queryParams.set('timezone', params.timezone);
+    return this.http.get<AnalyticsChannelSplitsResponse>(`${this.apiBaseUrl}/analytics/channel-splits`, {
+      params: queryParams,
+      headers: this.buildTenantHeaders(tenantId),
+    });
+  }
+
+  getAnalyticsDemandHeatmap(
+    params?: { fromDate?: string; toDate?: string; timezone?: string },
+    tenantId?: string
+  ): Observable<AnalyticsDemandHeatmapResponse> {
+    let queryParams = new HttpParams();
+    if (params?.fromDate) queryParams = queryParams.set('fromDate', params.fromDate);
+    if (params?.toDate) queryParams = queryParams.set('toDate', params.toDate);
+    if (params?.timezone) queryParams = queryParams.set('timezone', params.timezone);
+    return this.http.get<AnalyticsDemandHeatmapResponse>(`${this.apiBaseUrl}/analytics/demand-heatmap`, {
+      params: queryParams,
+      headers: this.buildTenantHeaders(tenantId),
+    });
+  }
+
+  getAnalyticsPromotion(
+    params?: { fromDate?: string; toDate?: string; timezone?: string },
+    tenantId?: string
+  ): Observable<AnalyticsPromotionResponse> {
+    let queryParams = new HttpParams();
+    if (params?.fromDate) queryParams = queryParams.set('fromDate', params.fromDate);
+    if (params?.toDate) queryParams = queryParams.set('toDate', params.toDate);
+    if (params?.timezone) queryParams = queryParams.set('timezone', params.timezone);
+    return this.http.get<AnalyticsPromotionResponse>(`${this.apiBaseUrl}/analytics/promotion`, {
+      params: queryParams,
+      headers: this.buildTenantHeaders(tenantId),
+    });
   }
 
   /**
@@ -113,17 +360,21 @@ export class TenantAccessService {
       .pipe(map((res) => res.data));
   }
 
-  /**
-   * Lock a user account
-   */
-  lockUser(userId: string): Observable<UserWithRoles> {
-    return this.updateUser(userId, { status: UserStatus.LOCKED });
+  deleteUser(userId: string, tenantId?: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiBaseUrl}/users/${userId}`, { headers: this.buildTenantHeaders(tenantId) });
   }
 
   /**
-   * Unlock a user account
+   * Mark a user account inactive
    */
-  unlockUser(userId: string): Observable<UserWithRoles> {
+  deactivateUser(userId: string): Observable<UserWithRoles> {
+    return this.updateUser(userId, { status: UserStatus.DISABLED });
+  }
+
+  /**
+   * Mark a user account active
+   */
+  activateUser(userId: string): Observable<UserWithRoles> {
     return this.updateUser(userId, { status: UserStatus.ACTIVE });
   }
 
@@ -137,6 +388,12 @@ export class TenantAccessService {
   createEmployee(createRequest: CreateEmployeeRequest, tenantId?: string): Observable<EmployeeProfile> {
     return this.http
       .post<ApiResponse<EmployeeProfile>>(`${this.apiBaseUrl}/employees`, createRequest, { headers: this.buildTenantHeaders(tenantId) })
+      .pipe(map((res) => res.data));
+  }
+
+  previewEmployeeCode(tenantId?: string): Observable<EmployeeCodePreview> {
+    return this.http
+      .get<ApiResponse<EmployeeCodePreview>>(`${this.apiBaseUrl}/employees/preview-code`, { headers: this.buildTenantHeaders(tenantId) })
       .pipe(map((res) => res.data));
   }
 
@@ -198,6 +455,17 @@ export class TenantAccessService {
   }
 
   /**
+   * Delete employee profile
+   */
+  deleteEmployee(employeeId: string, tenantId?: string): Observable<void> {
+    return this.http
+      .delete<void>(
+        `${this.apiBaseUrl}/employees/${employeeId}`,
+        { headers: this.buildTenantHeaders(tenantId) },
+      );
+  }
+
+  /**
    * ============ Roles API ============
    */
 
@@ -244,6 +512,12 @@ export class TenantAccessService {
       .pipe(map((res) => res.data));
   }
 
+
+  deleteRole(roleId: string, tenantId?: string): Observable<void> {
+    return this.http
+      .delete<void>(`${this.apiBaseUrl}/roles/${roleId}`, { headers: this.buildTenantHeaders(tenantId) });
+  }
+
   /**
    * Clone a role (create new role based on existing)
    */
@@ -283,6 +557,25 @@ export class TenantAccessService {
     return this.http
       .get<ApiResponse<UserRoleAssignment[]>>(
         `${this.apiBaseUrl}/users/${userId}/assignments`,
+        { headers: this.buildTenantHeaders(tenantId) },
+      )
+      .pipe(map((res) => res.data));
+  }
+
+  getRoleUsers(roleId: string, tenantId?: string): Observable<UserWithRoles[]> {
+    return this.http
+      .get<ApiResponse<UserWithRoles[]>>(
+        `${this.apiBaseUrl}/roles/${roleId}/users`,
+        { headers: this.buildTenantHeaders(tenantId) },
+      )
+      .pipe(map((res) => res.data));
+  }
+
+  replaceRoleUsers(roleId: string, userIds: string[], tenantId?: string): Observable<UserWithRoles[]> {
+    return this.http
+      .put<ApiResponse<UserWithRoles[]>>(
+        `${this.apiBaseUrl}/roles/${roleId}/users`,
+        { userIds },
         { headers: this.buildTenantHeaders(tenantId) },
       )
       .pipe(map((res) => res.data));

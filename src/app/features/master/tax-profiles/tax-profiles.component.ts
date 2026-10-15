@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, HostListener, computed, inject, OnInit, signal } from '@angular/core';
 
 import {
   GomAlertToastService,
@@ -13,6 +13,8 @@ import { TaxProfile, TaxProfilesService } from './tax-profiles.service';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { TaxProfilesFormComponent, TaxProfileFormData, TaxProfileFormPayload } from './form/tax-profiles-form.component';
 import { DisableIfNoFeatureDirective } from '../../../shared/directives/disable-if-no-feature.directive';
+import { getNavIcon } from '../../../shared/components/layout/nav.config';
+import { PageHeadingComponent } from '../../../shared/components/page-heading/page-heading.component';
 
 interface TaxProfileRow extends GomTableRow {
   _id: string;
@@ -35,6 +37,7 @@ interface TaxProfileRow extends GomTableRow {
     GomButtonComponent,
     GomTableComponent,
     TaxProfilesFormComponent,
+    PageHeadingComponent,
   ],
   templateUrl: './tax-profiles.component.html',
   styleUrl: './tax-profiles.component.scss',
@@ -45,6 +48,9 @@ export class TaxProfilesComponent implements OnInit {
   private readonly authSession = inject(AuthSessionService);
 
   readonly loading = signal(false);
+  readonly headingIcon = getNavIcon('/masters/tax-profiles');
+  readonly viewportWidth = signal<number>(window.innerWidth);
+  readonly isMobileHeader = computed<boolean>(() => this.viewportWidth() <= 768);
   readonly canCreateTaxProfile = computed(() => this.authSession.hasFeature('taxProfile.create'));
   readonly canEditTaxProfile = computed(() => this.authSession.hasFeature('taxProfile.edit'));
   readonly errorMessage = signal<string | null>(null);
@@ -60,6 +66,11 @@ export class TaxProfilesComponent implements OnInit {
   readonly formOpen = signal(false);
   readonly editingId = signal<string | null>(null);
   readonly editingFormData = signal<TaxProfileFormData | null>(null);
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.viewportWidth.set(window.innerWidth);
+  }
 
   readonly columns: GomTableColumn<TaxProfileRow>[] = [
     { key: 'name', header: 'Tax Profile', sortable: true, filterable: true, width: '14rem' },

@@ -118,6 +118,23 @@
   flex-wrap: wrap;
 }
 
+@media (max-width: 768px) {
+  .master-page__header {
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+
+  .master-page__header > gom-page-heading {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .master-page__header > gom-lib-button {
+    flex: 0 0 auto;
+    padding-inline: 0.5rem;
+  }
+}
+
 .profit-impact-summary {
   display: grid;
   gap: theme.get-gap(xs);

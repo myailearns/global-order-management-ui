@@ -21,6 +21,7 @@ import {
   CustomerDetail,
   CustomerSummary,
 } from '../customer-engagement.service';
+import { PageHeadingComponent } from '../../../shared/components/page-heading/page-heading.component';
 
 interface CustomerRow extends GomTableRow {
   customerId: string;
@@ -55,6 +56,7 @@ interface CustomerOrderHistoryRow extends GomTableRow {
     GomInputComponent,
     GomTableComponent,
     GomModalComponent,
+    PageHeadingComponent,
   ],
   templateUrl: './customers.component.html',
   styleUrl: './customers.component.scss',
@@ -65,6 +67,10 @@ export class CustomersComponent implements OnInit {
 
   readonly loading = signal(false);
   private readonly authSession = inject(AuthSessionService);
+  readonly canListCustomers = computed(() => this.authSession.hasFeature('customer.list'));
+  readonly canViewCustomer = computed(() => this.authSession.hasFeature('customer.view'));
+  readonly canEditCustomer = computed(() => this.authSession.hasFeature('customer.edit'));
+  readonly canDeleteCustomer = computed(() => this.authSession.hasFeature('customer.delete'));
   readonly canWrite = computed(() => this.authSession.canWrite('customers'));
 
   readonly detailLoading = signal(false);
@@ -121,8 +127,10 @@ export class CustomersComponent implements OnInit {
       actionButtons: [
         {
           label: 'View Details',
+          icon: 'ri-eye-line',
           actionKey: 'view',
           variant: 'secondary',
+          disabled: () => !this.canViewCustomer(),
         },
       ],
     },

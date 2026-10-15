@@ -1,0 +1,67 @@
+<article
+  class="bill-preview"
+  [class.bill-preview--compact]="compact()"
+  [class.bill-preview--a4]="configuration().page.size === 'A4'"
+  [class.bill-preview--small]="configuration().formatting.fontSize === 'SMALL'"
+  [class.bill-preview--large]="configuration().formatting.fontSize === 'LARGE'"
+  [class.bill-preview--relaxed]="!configuration().formatting.compactSpacing"
+  [style.--bill-accent]="configuration().formatting.accentColor"
+>
+  @for (section of visibleSections(); track section.id) {
+    <section class="bill-preview__section" [class.bill-preview__section--footer]="section.type === 'FOOTER'">
+      @if (section.type === 'BUSINESS_INFO') {
+        <div
+          class="bill-preview__business"
+          [class.bill-preview__business--left]="configuration().formatting.logoPosition === 'LEFT'"
+          [class.bill-preview__business--right]="configuration().formatting.logoPosition === 'RIGHT'"
+        >
+          @for (field of visibleFields(section); track field.id) {
+            @if (field.id === 'logo') {
+              @if (logoUrlFor(field); as logoUrl) {
+                <img class="bill-preview__logo-image" [src]="logoUrl" alt="Business logo" />
+              } @else {
+                <span class="bill-preview__logo" aria-hidden="true">{{ logoFallbackText() }}</span>
+              }
+            } @else if (field.id === 'businessName') {
+              <strong>{{ valueFor(field) }}</strong>
+            } @else {
+              <span>{{ valueFor(field) }}</span>
+            }
+          }
+        </div>
+      } @else if (section.type === 'ITEMS') {
+        <h3>{{ section.label }}</h3>
+        <div class="bill-preview__table-wrap">
+          <table>
+            <thead>
+              <tr>
+                @for (field of visibleFields(section); track field.id) {
+                  <th>{{ field.label }}</th>
+                }
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of previewItems; track $index) {
+                <tr>
+                  @for (field of visibleFields(section); track field.id) {
+                    <td>{{ itemValue(item, field) }}</td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <h3>{{ section.label }}</h3>
+        <dl>
+          @for (field of visibleFields(section); track field.id) {
+            <div [class.bill-preview__total]="field.id === 'grandTotal'">
+              <dt>{{ field.label }}</dt>
+              <dd>{{ valueFor(field) }}</dd>
+            </div>
+          }
+        </dl>
+      }
+    </section>
+  }
+</article>

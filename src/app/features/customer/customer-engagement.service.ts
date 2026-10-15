@@ -250,8 +250,12 @@ export class CustomerEngagementService {
     return this.http.delete<ApiSuccess<CustomerGroupMember>>(`${this.customerGroupsUrl}/${groupId}/members/${customerId}`);
   }
 
-  searchCustomers(query: string): Observable<ApiPaginated<{ _id: string; name: string; phone: string }>> {
-    return this.http.get<ApiPaginated<{ _id: string; name: string; phone: string }>>(`${this.customersUrl}?search=${encodeURIComponent(query)}`);
+  searchCustomers(query: string): Observable<ApiPaginated<CustomerDetail>> {
+    return this.http.get<ApiPaginated<CustomerDetail>>(`${this.customersUrl}?search=${encodeURIComponent(query)}`);
+  }
+
+  createCustomer(payload: { name: string; phone: string; email?: string }): Observable<ApiSuccess<CustomerDetail>> {
+    return this.http.post<ApiSuccess<CustomerDetail>>(this.customersUrl, payload);
   }
 
   unlockPin(customerId: string, reason: string): Observable<ApiSuccess<UnlockPinResult>> {

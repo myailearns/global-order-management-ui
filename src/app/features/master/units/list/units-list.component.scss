@@ -29,16 +29,19 @@
   display: inline-flex;
 }
 
-@include theme.breakpoint-down(sm) {
+@include theme.breakpoint-down(md) {
   .units-list__header {
-    align-items: stretch;
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+
+  .units-list__header > gom-page-heading {
+    min-width: 0;
+    flex: 1 1 auto;
   }
 
   .btn-add {
-    width: 100%;
-
-    ::ng-deep .gom-button {
-      width: 100%;
-    }
+    flex: 0 0 auto;
+    padding-inline: theme.get-spacing(xs);
   }
 }

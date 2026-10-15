@@ -85,6 +85,80 @@ export interface BusinessTemplate {
   updatedAt?: string;
 }
 
+export interface BusinessCategory {
+  _id: string;
+  name: string;
+  description?: string;
+  status: 'ACTIVE' | 'INACTIVE';
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface BusinessType {
+  _id: string;
+  name: string;
+  code: string;
+  description: string;
+  icon: string;
+  businessCategoryIds: BusinessCategory[];
+  status: 'ACTIVE' | 'INACTIVE';
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export type BusinessTypeConfigSectionKey = 'categories' | 'fields' | 'field-groups' | 'units' | 'tax-profiles';
+
+export interface BusinessTypeConfigSection {
+  key: BusinessTypeConfigSectionKey;
+  label: string;
+  count: number;
+}
+
+export interface BusinessTypeConfigurationSummary {
+  businessType: {
+    _id: string;
+    name: string;
+    code: string;
+    description: string;
+    icon: string;
+    status: 'ACTIVE' | 'INACTIVE';
+    businessCategories: BusinessCategory[];
+    updatedAt?: string;
+    createdAt?: string;
+  };
+  sections: BusinessTypeConfigSection[];
+}
+
+export interface BusinessTypeConfigItem {
+  _id: string;
+  name: string;
+  description?: string;
+  key?: string;
+  type?: string;
+  defaultValue?: unknown;
+  version?: number;
+  fieldCount?: number;
+  categoryCount?: number;
+  symbol?: string;
+  conversionFactor?: number;
+  countryCode?: string;
+  taxMode?: string;
+  rate?: number;
+  inclusive?: boolean;
+  status: string;
+  updatedAt?: string;
+  createdAt?: string;
+  attached: boolean;
+}
+
+export interface BusinessTypeConfigItemsResponse {
+  resource: BusinessTypeConfigSectionKey;
+  label: string;
+  businessType: { _id: string; name: string; status: string };
+  counts: { all: number; attached: number; available: number };
+  items: BusinessTypeConfigItem[];
+}
+
 export interface BusinessTemplatePreview {
   template: BusinessTemplate;
   categories: Array<{ _id: string; name: string; description?: string }>;
@@ -113,11 +187,60 @@ interface ApiPaginated<T> {
   };
 }
 
+export interface TemplateCategoryBulkUploadAcceptedResponse {
+  success: boolean;
+  message: string;
+  data: {
+    jobId: string;
+    status: string;
+    queuedAt: string;
+  };
+}
+
+export interface TemplateCategoryBulkUploadJobStatus {
+  jobId: string;
+  status: 'QUEUED' | 'VALIDATING' | 'PROCESSING' | 'COMPLETED' | 'COMPLETED_WITH_ERRORS' | 'FAILED';
+  isTerminal: boolean;
+  totals: {
+    totalRows: number;
+    processedRows: number;
+    successRows: number;
+    failedRows: number;
+    unresolvedRows: number;
+  };
+  startedAt: string | null;
+  completedAt: string | null;
+  errorMessage: string;
+  userAcknowledged: boolean;
+  acknowledgedAt: string | null;
+}
+
+export interface BusinessTemplateTemplateDownloadResponse {
+  success: boolean;
+}
+
+export interface BusinessTypeBulkImportResultRow {
+  rowNumber: number;
+  id?: string;
+  name: string;
+  categoryName: string;
+  status: 'CREATED' | 'FAILED';
+  message: string;
+}
+
+export interface BusinessTypeBulkImportResult {
+  totalRows: number;
+  createdCount: number;
+  failedCount: number;
+  results: BusinessTypeBulkImportResultRow[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class TemplateCatalogService {
   private readonly http = inject(HttpClient);
   private readonly authSession = inject(AuthSessionService);
   private readonly baseUrl = `${environment.apiBaseUrl}/platform/templates`;
+  private readonly taxonomyBaseUrl = `${environment.apiBaseUrl}/platform/business-taxonomy`;
 
   private get headers(): HttpHeaders {
     return new HttpHeaders(this.authSession.getPlatformHeaders());
@@ -173,6 +296,121 @@ export class TemplateCatalogService {
 
   deleteCategory(id: string): Observable<ApiSuccess<null>> {
     return this.http.delete<ApiSuccess<null>>(`${this.baseUrl}/categories/${id}`, { headers: this.headers });
+  }
+
+  downloadCategoryBulkTemplate(): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/categories/bulk/template`, {
+      headers: this.headers.set('Accept', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'),
+      responseType: 'blob',
+    });
+  }
+
+  uploadCategoryBulkFile(file: File): Observable<TemplateCategoryBulkUploadAcceptedResponse> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<TemplateCategoryBulkUploadAcceptedResponse>(`${this.baseUrl}/categories/bulk/upload`, formData, {
+      headers: this.headers,
+    });
+  }
+
+  getCategoryBulkUploadStatus(jobId: string): Observable<ApiSuccess<TemplateCategoryBulkUploadJobStatus>> {
+    return this.http.get<ApiSuccess<TemplateCategoryBulkUploadJobStatus>>(`${this.baseUrl}/categories/bulk/jobs/${jobId}/status`, {
+      headers: this.headers,
+    });
+  }
+
+  // --- Business Taxonomy Categories ---
+  listBusinessCategories(params?: { page?: number; limit?: number; search?: string; sort?: string; order?: 'asc' | 'desc' }): Observable<ApiPaginated<BusinessCategory>> {
+    return this.http.get<ApiPaginated<BusinessCategory>>(`${this.taxonomyBaseUrl}/categories`, {
+      headers: this.headers,
+      params: this.buildListParams(params),
+    });
+  }
+
+  createBusinessCategory(payload: { name: string; description?: string; status?: 'ACTIVE' | 'INACTIVE' }): Observable<ApiSuccess<BusinessCategory>> {
+    return this.http.post<ApiSuccess<BusinessCategory>>(`${this.taxonomyBaseUrl}/categories`, payload, { headers: this.headers });
+  }
+
+  updateBusinessCategory(id: string, payload: Partial<BusinessCategory>): Observable<ApiSuccess<BusinessCategory>> {
+    return this.http.put<ApiSuccess<BusinessCategory>>(`${this.taxonomyBaseUrl}/categories/${id}`, payload, { headers: this.headers });
+  }
+
+  deleteBusinessCategory(id: string): Observable<ApiSuccess<null>> {
+    return this.http.delete<ApiSuccess<null>>(`${this.taxonomyBaseUrl}/categories/${id}`, { headers: this.headers });
+  }
+
+  downloadBusinessCategoryBulkTemplate(): Observable<Blob> {
+    return this.http.get(`${this.taxonomyBaseUrl}/categories/bulk/template`, {
+      headers: this.headers.set('Accept', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'),
+      responseType: 'blob',
+    });
+  }
+
+  uploadBusinessCategoryBulkFile(file: File): Observable<TemplateCategoryBulkUploadAcceptedResponse> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<TemplateCategoryBulkUploadAcceptedResponse>(`${this.taxonomyBaseUrl}/categories/bulk/upload`, formData, {
+      headers: this.headers,
+    });
+  }
+
+  getBusinessCategoryBulkUploadStatus(jobId: string): Observable<ApiSuccess<TemplateCategoryBulkUploadJobStatus>> {
+    return this.http.get<ApiSuccess<TemplateCategoryBulkUploadJobStatus>>(`${this.taxonomyBaseUrl}/categories/bulk/jobs/${jobId}/status`, {
+      headers: this.headers,
+    });
+  }
+
+  // --- Business Taxonomy Types ---
+  listBusinessTypes(params?: { page?: number; limit?: number; search?: string; sort?: string; order?: 'asc' | 'desc' }): Observable<ApiPaginated<BusinessType>> {
+    return this.http.get<ApiPaginated<BusinessType>>(`${this.taxonomyBaseUrl}/types`, {
+      headers: this.headers,
+      params: this.buildListParams(params),
+    });
+  }
+
+  createBusinessType(payload: { name: string; code: string; description?: string; icon?: string; businessCategoryIds?: string[]; status?: 'ACTIVE' | 'INACTIVE' }): Observable<ApiSuccess<BusinessType>> {
+    return this.http.post<ApiSuccess<BusinessType>>(`${this.taxonomyBaseUrl}/types`, payload, { headers: this.headers });
+  }
+
+  uploadBusinessTypeBulkFile(file: File): Observable<ApiSuccess<BusinessTypeBulkImportResult>> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<ApiSuccess<BusinessTypeBulkImportResult>>(`${this.taxonomyBaseUrl}/types/bulk/upload`, formData, {
+      headers: this.headers,
+    });
+  }
+
+  updateBusinessType(id: string, payload: Record<string, unknown>): Observable<ApiSuccess<BusinessType>> {
+    return this.http.put<ApiSuccess<BusinessType>>(`${this.taxonomyBaseUrl}/types/${id}`, payload, { headers: this.headers });
+  }
+
+  getBusinessTypeConfiguration(id: string): Observable<ApiSuccess<BusinessTypeConfigurationSummary>> {
+    return this.http.get<ApiSuccess<BusinessTypeConfigurationSummary>>(`${this.taxonomyBaseUrl}/types/${id}/configuration`, {
+      headers: this.headers,
+    });
+  }
+
+  listBusinessTypeConfigItems(id: string, resource: BusinessTypeConfigSectionKey): Observable<ApiSuccess<BusinessTypeConfigItemsResponse>> {
+    return this.http.get<ApiSuccess<BusinessTypeConfigItemsResponse>>(`${this.taxonomyBaseUrl}/types/${id}/configuration/${resource}`, {
+      headers: this.headers,
+    });
+  }
+
+  updateBusinessTypeConfigItems(id: string, resource: BusinessTypeConfigSectionKey, payload: { addIds?: string[]; removeIds?: string[]; setIds?: string[] }): Observable<ApiSuccess<{ resource: string; attachedCount: number; attachedIds: string[] }>> {
+    return this.http.patch<ApiSuccess<{ resource: string; attachedCount: number; attachedIds: string[] }>>(`${this.taxonomyBaseUrl}/types/${id}/configuration/${resource}`, payload, {
+      headers: this.headers,
+    });
+  }
+
+  deleteBusinessType(id: string): Observable<ApiSuccess<null>> {
+    return this.http.delete<ApiSuccess<null>>(`${this.taxonomyBaseUrl}/types/${id}`, { headers: this.headers });
+  }
+
+  downloadBusinessTypeTemplate(): Observable<Blob> {
+    return this.http.get(`${this.taxonomyBaseUrl}/types/template`, {
+      headers: this.headers.set('Accept', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'),
+      responseType: 'blob',
+    });
   }
 
   // --- Fields ---

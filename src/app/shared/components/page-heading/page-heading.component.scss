@@ -1,0 +1,19 @@
+@use "theme" as theme;
+
+:host {
+  display: block;
+}
+
+:host h2 {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  @include theme.typography-heading(xl);
+}
+
+@include theme.breakpoint-down(md) {
+  :host h2 {
+    font-size: 1.5rem;
+  }
+}

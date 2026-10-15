@@ -17,10 +17,10 @@ export class AuthEntryComponent {
   private readonly router = inject(Router);
 
   openPlatformLogin(): void {
-    void this.router.navigateByUrl('/auth/platform-login');
+    void this.router.navigateByUrl('/platform-login');
   }
 
   openTenantLogin(): void {
-    void this.router.navigateByUrl('/auth/tenant-login');
+    void this.router.navigateByUrl('/tenant-login');
   }
 }

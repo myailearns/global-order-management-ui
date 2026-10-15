@@ -43,7 +43,7 @@
         type="submit"
         variant="primary"
         [gomDisableIfNoCapability]="'tenant-admin'"
-        [disabled]="loading() || saving() || !canWrite()">
+        [disabled]="loading() || saving() || !canEdit()">
         {{ saving() ? 'Saving...' : 'Save Pincode Rules' }}
       </gom-lib-button>
     </div>
