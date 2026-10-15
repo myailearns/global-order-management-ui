@@ -46,6 +46,7 @@
                                    "saasFeatures":  "SaaS Features",
                                    "platformTenantRoles":  "Platform Tenant Roles",
                                    "tenantEntitlements":  "Tenant Entitlements",
+                                   "demoRequests":  "Request Demos",
                                    "templates":  "Templates",
                                    "categoryTemplates":  "Category Templates",
                                    "marketplace":  "Marketplace",

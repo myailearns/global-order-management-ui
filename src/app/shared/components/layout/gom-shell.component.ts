@@ -101,6 +101,7 @@ export class GomShellComponent {
     { label: 'Platform Templates', route: '/settings/platform-templates', icon: 'ri-file-copy-2-line', translationKey: 'app.navigation.platformTemplates', section: 'Settings', actor: 'platform', capability: 'platform-admin' },
     { label: 'Business Templates', route: '/settings/business-templates', icon: 'ri-store-2-line', translationKey: 'app.navigation.businessTemplates', section: 'Settings', actor: 'platform', capability: 'platform-admin' },
     { label: 'Platform Media', route: '/settings/platform-media', icon: 'ri-image-line', translationKey: 'app.navigation.platformMedia', section: 'Settings', actor: 'platform', capability: 'platform-admin' },
+    { label: 'Request Demos', route: '/settings/demo-requests', icon: 'ri-customer-service-2-line', translationKey: 'app.navigation.demoRequests', section: 'Settings', actor: 'platform', capability: 'platform-admin' },
     { label: 'Tenant Dashboard', route: '/saas-admin/dashboard', icon: 'ri-dashboard-line', translationKey: 'app.navigation.tenantDashboard', section: 'Settings', actor: 'tenant', capability: 'tenant-admin' },
     { label: 'Tenant Users', route: '/saas-admin/users', icon: 'ri-user-settings-line', translationKey: 'app.navigation.tenantUsers', section: 'Settings', actor: 'tenant', capability: 'tenant-admin' },
     { label: 'Offers', route: '/saas-admin/offers', icon: 'ri-coupon-2-line', translationKey: 'gom.offers.title', section: 'Settings', actor: 'tenant', capability: 'tenant-admin' },
