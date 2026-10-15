@@ -107,6 +107,11 @@ type TierTagRow = TierTag & { id: string };
             placeholder="Enter display name (e.g., Basic, Professional, Enterprise)"
             [label]="'Tier Display Name'"
           ></gom-lib-input>
+          <gom-lib-input
+            [formControl]="tierDescriptionControl"
+            placeholder="Enter a short tier description"
+            [label]="'Description'"
+          ></gom-lib-input>
         </section>
 
         <section class="tier-meta-panel">
@@ -719,6 +724,7 @@ export class TierManagementComponent implements OnInit {
 
   readonly tierControl = new FormControl<string>('', { nonNullable: true });
   readonly tierDisplayNameControl = new FormControl<string>('', { nonNullable: true });
+  readonly tierDescriptionControl = new FormControl<string>('', { nonNullable: true });
   readonly moduleControl = new FormControl<string>('all', { nonNullable: true });
   readonly searchControl = new FormControl<string>('', { nonNullable: true });
   readonly tierStatusControl = new FormControl<'ACTIVE' | 'INACTIVE'>('ACTIVE', { nonNullable: true });
@@ -799,6 +805,7 @@ export class TierManagementComponent implements OnInit {
   private readonly configControlMap = new Map<string, FormControl<string>>();
   private readonly tierTagNameControlMap = new Map<string, FormControl<string>>();
   private readonly tierTagTypeControlMap = new Map<string, FormControl<TierTagType>>();
+  private readonly tierDescriptionById = new Map<string, string>();
   private suppressAutoCycleBaseSync = false;
   private tierTagIdSeed = 0;
 
@@ -898,6 +905,7 @@ export class TierManagementComponent implements OnInit {
   ngOnInit(): void {
     this.tierControl.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((value) => this.onTierChange(value));
     this.tierDisplayNameControl.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((value) => this.onTierDisplayNameChange(value));
+    this.tierDescriptionControl.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((value) => this.onTierDescriptionChange(value));
     this.moduleControl.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((value) => this.onModuleChange(value));
     this.searchControl.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((value) => this.onFeatureSearch(value));
 
@@ -1059,6 +1067,7 @@ export class TierManagementComponent implements OnInit {
           this.tierControl.setValue(current._id, { emitEvent: false });
           this.tierStatusControl.setValue((current.status || 'ACTIVE') as 'ACTIVE' | 'INACTIVE', { emitEvent: false });
           this.tierDisplayNameControl.setValue(String(current.displayName || ''), { emitEvent: false });
+          this.tierDescriptionControl.setValue(this.tierDescriptionById.get(current._id) || '', { emitEvent: false });
           this.tierTrialEnabledControl.setValue(current.trialEnabled ?? true, { emitEvent: false });
           this.tierTrialModeControl.setValue((current.defaultTrialMode || 'PLAN_BASED_TRIAL') as TrialMode, { emitEvent: false });
           this.tierTrialDurationControl.setValue(String(Number(current.defaultTrialDurationDays ?? 14)), { emitEvent: false });
@@ -1075,6 +1084,7 @@ export class TierManagementComponent implements OnInit {
           this.activeTierId.set('');
           this.tierControl.setValue('', { emitEvent: false });
           this.tierDisplayNameControl.setValue('', { emitEvent: false });
+          this.tierDescriptionControl.setValue('', { emitEvent: false });
           this.tierTrialEnabledControl.setValue(true, { emitEvent: false });
           this.tierTrialModeControl.setValue('PLAN_BASED_TRIAL', { emitEvent: false });
           this.tierTrialDurationControl.setValue('14', { emitEvent: false });
@@ -1154,15 +1164,21 @@ export class TierManagementComponent implements OnInit {
 
   onTierChange(value: string): void {
     const nextTierId = String(value || '').trim();
+    const currentTierId = this.activeTierId();
+    if (currentTierId) {
+      this.tierDescriptionById.set(currentTierId, String(this.tierDescriptionControl.value || ''));
+    }
     this.activeTierId.set(nextTierId);
 
     const tier = this.tierItems().find((item) => item._id === nextTierId);
     if (!tier) {
+      this.tierDescriptionControl.setValue('', { emitEvent: false });
       return;
     }
 
     this.tierStatusControl.setValue((tier.status || 'ACTIVE') as 'ACTIVE' | 'INACTIVE', { emitEvent: false });
     this.tierDisplayNameControl.setValue(String(tier.displayName || ''), { emitEvent: false });
+    this.tierDescriptionControl.setValue(this.tierDescriptionById.get(tier._id) || '', { emitEvent: false });
     this.tierTrialEnabledControl.setValue(tier.trialEnabled ?? true, { emitEvent: false });
     this.tierTrialModeControl.setValue((tier.defaultTrialMode || 'PLAN_BASED_TRIAL') as TrialMode, { emitEvent: false });
     this.tierTrialDurationControl.setValue(String(Number(tier.defaultTrialDurationDays ?? 14)), { emitEvent: false });
@@ -1183,6 +1199,15 @@ export class TierManagementComponent implements OnInit {
 
   onTierDisplayNameChange(value: string): void {
     // Display name will be saved with the tier on next save
+  }
+
+  onTierDescriptionChange(value: string): void {
+    const tierId = this.activeTierId();
+    if (!tierId) {
+      return;
+    }
+
+    this.tierDescriptionById.set(tierId, String(value || ''));
   }
 
   onModuleChange(value: string): void {

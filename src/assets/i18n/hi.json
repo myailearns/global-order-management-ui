@@ -718,10 +718,8 @@
       "currency": "मुद्रा (₹)"
     },
     "currencies": {
-      "inr": "INR - भारतीय रुपया"
-    },
-    "hints": {
-      "currencyCodeFixed": "मुद्रा INR के लिए निश्चित है और बदली नहीं जा सकती।"
+      "inr": "INR - भारतीय रुपया",
+      "usd": "USD - अमेरिकी डॉलर"
     },
     "types": {
       "number": "संख्या",

@@ -501,11 +501,9 @@
                                        "currency":  "Currency (₹)"
                                    },
                    "currencies":  {
-                                      "inr":  "INR - Indian Rupee"
+                                      "inr":  "INR - Indian Rupee",
+                                      "usd":  "USD - US Dollar"
                                   },
-                   "hints":  {
-                                 "currencyCodeFixed":  "Currency is fixed to INR and cannot be changed."
-                             },
                    "types":  {
                                  "number":  "Number",
                                  "percentage":  "Percentage",

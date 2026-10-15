@@ -100,7 +100,7 @@ interface GroupWizardField {
   isRequired: boolean;
   defaultValue: number;
   valueFormat?: 'NUMBER' | 'CURRENCY';
-  currencyCode?: 'INR' | null;
+  currencyCode?: 'INR' | 'USD' | null;
 }
 
 type FormulaTarget = 'sellingPrice' | 'anchorPrice' | 'actualPrice';

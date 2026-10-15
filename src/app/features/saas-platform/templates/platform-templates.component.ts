@@ -368,6 +368,8 @@ export class PlatformTemplatesComponent implements OnInit {
           name: field.name,
           key: field.key,
           type: field.type as FieldFormData['type'],
+          valueFormat: field.valueFormat,
+          currencyCode: field.currencyCode ?? null,
           defaultValue: field.defaultValue,
           isRequired: field.isRequired ?? false,
           status: (field.status ?? 'ACTIVE') as FieldFormData['status'],

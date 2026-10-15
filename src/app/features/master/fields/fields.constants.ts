@@ -27,6 +27,7 @@ export const FIELD_VALUE_FORMAT_OPTIONS: GomSelectOption[] = [
 
 export const FIELD_CURRENCY_OPTIONS: GomSelectOption[] = [
   { label: 'fields.currencies.inr', value: 'INR' },
+  { label: 'fields.currencies.usd', value: 'USD' },
 ];
 
 export const FIELD_UI_TEXT = {
