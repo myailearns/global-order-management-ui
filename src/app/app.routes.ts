@@ -50,6 +50,7 @@ import { BusinessTypesComponent } from './features/saas-platform/business-types/
 import { BusinessCategoriesComponent } from './features/saas-platform/business-categories/business-categories.component';
 import { BusinessTypeConfigureComponent } from './features/saas-platform/business-type-configure/business-type-configure.component';
 import { MediaLibraryComponent } from './shared/components/media-library/media-library.component';
+import { DemoRequestsComponent } from './features/settings/demo-requests/demo-requests.component';
 import { BrowseTemplatesComponent } from './features/templates/browse-templates.component';
 import { AccessDeniedComponent } from './features/auth/access-denied/access-denied.component';
 import { AuthLandingComponent } from './features/auth/auth-landing/auth-landing.component';
@@ -672,6 +673,16 @@ export const routes: Routes = [
 					title: 'Platform Media',
 					description: 'Manage shared platform images available to all tenants.',
 					mode: 'platform',
+				},
+			},
+			{
+				path: 'settings/demo-requests',
+				component: DemoRequestsComponent,
+				data: {
+					actor: 'platform',
+					capability: 'platform-admin',
+					title: 'Demo Requests',
+					description: 'Track, qualify, and update inbound demo requests from prospective customers.',
 				},
 			},
 			{

@@ -60,6 +60,7 @@
                                    "saasFeatures":  "SaaS Features",
                                    "platformTenantRoles":  "Platform Tenant Roles",
                                    "tenantEntitlements":  "Tenant Entitlements",
+                                   "demoRequests":  "Request Demos",
                                    "templates":  "Templates",
                                    "categoryTemplates":  "Category Templates",
                                    "marketplace":  "Marketplace",
@@ -273,6 +274,7 @@
                    "actions":  {
                                    "view":  "View",
                                    "edit":  "Edit",
+                                   "clone":  "Clone",
                                    "delete":  "Delete",
                                    "create":  "Create",
                                    "update":  "Update",
@@ -1030,6 +1032,7 @@
                                                    "btn_create":  "Create Package",
                                                    "btn_manage_tiers":  "Manage Tiers",
                                                    "title_create":  "Create Package",
+                                                  "title_clone":  "Clone Package",
                                                    "title_edit":  "Edit Package",
                                                    "col_tiers":  "Tiers",
                                                    "info_manage_tiers":  "After creating the package, use the Manage Tiers button to configure features and tiers for this package.",
@@ -1053,6 +1056,7 @@
                                                    "hint_feature_configs":  "These values override feature default configs for this package.",
                                                    "msg_no_feature_configs":  "Selected features do not have config keys. Add config keys in Feature Catalog first.",
                                                    "ph_feature_config":  "Enter override value",
+                                                  "msg_clone_plan_id":  "A new plan ID will be generated automatically from the package name.",
                                                    "btn_save":  "Save"
                                                },
                                   "entitlements":  {
