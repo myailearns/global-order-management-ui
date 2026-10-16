@@ -77,7 +77,7 @@
           </button>
 
           @if (notifPanelOpen()) {
-            <div class="gom-shell__notif-panel" role="dialog" aria-label="Notifications">
+            <dialog class="gom-shell__notif-panel" aria-label="Notifications" open>
               <div class="gom-shell__notif-panel-head">
                 <h2>Notifications</h2>
                 @if (unreadNotifCount() > 0) {
@@ -91,23 +91,26 @@
               } @else {
                 <ul class="gom-shell__notif-list">
                   @for (notif of notifications(); track notif._id) {
-                    <li
-                      class="gom-shell__notif-item"
-                      [class.gom-shell__notif-item--unread]="!notif.readAt"
-                      (click)="markNotifRead(notif)"
-                    >
-                      <div class="gom-shell__notif-dot" aria-hidden="true"></div>
-                      <div class="gom-shell__notif-content">
-                        <p class="gom-shell__notif-title">{{ notif.title }}</p>
-                        <p class="gom-shell__notif-body">{{ notif.body }}</p>
-                      </div>
+                    <li>
+                      <button
+                        type="button"
+                        class="gom-shell__notif-item"
+                        [class.gom-shell__notif-item--unread]="!notif.readAt"
+                        (click)="markNotifRead(notif)"
+                      >
+                        <div class="gom-shell__notif-dot" aria-hidden="true"></div>
+                        <div class="gom-shell__notif-content">
+                          <p class="gom-shell__notif-title">{{ notif.title }}</p>
+                          <p class="gom-shell__notif-body">{{ notif.body }}</p>
+                        </div>
+                      </button>
                     </li>
                   }
                 </ul>
               }
-            </div>
+            </dialog>
             <!-- Click-outside backdrop -->
-            <button type="button" class="gom-shell__notif-backdrop" aria-hidden="true" (click)="closeNotifPanel()"></button>
+            <button type="button" class="gom-shell__notif-backdrop" aria-label="Close notifications" (click)="closeNotifPanel()"></button>
           }
         </div>
         <button
