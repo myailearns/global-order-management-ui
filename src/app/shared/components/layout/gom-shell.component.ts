@@ -119,50 +119,9 @@ export class GomShellComponent implements OnInit, OnDestroy {
     'Notifications': true,
   });
 
-<<<<<<< HEAD
-  readonly navItems: NavItem[] = [
-    { label: 'Categories', route: '/masters/categories', icon: 'ri-price-tag-3-line', translationKey: 'app.navigation.categories', section: 'Master Setup', actor: 'tenant', capability: 'masters', featureKeys: ['category.list', 'category.create', 'category.edit', 'category.delete'] },
-    { label: 'Fields', route: '/masters/fields', icon: 'ri-layout-grid-line', translationKey: 'app.navigation.fields', section: 'Master Setup', actor: 'tenant', capability: 'masters', featureKeys: ['field.list', 'field.create', 'field.edit', 'field.delete'] },
-    { label: 'Field Groups', route: '/masters/field-groups', icon: 'ri-folders-line', translationKey: 'app.navigation.fieldGroups', section: 'Master Setup', actor: 'tenant', capability: 'masters', featureKeys: ['fieldGroup.list', 'fieldGroup.create', 'fieldGroup.edit', 'fieldGroup.delete'] },
-    { label: 'Units', route: '/masters/units', icon: 'ri-scales-3-line', translationKey: 'app.navigation.units', section: 'Master Setup', actor: 'tenant', capability: 'masters', featureKeys: ['unit.list', 'unit.create', 'unit.edit', 'unit.delete'] },
-    { label: 'Tax Profiles', route: '/masters/tax-profiles', icon: 'ri-percent-line', translationKey: 'app.navigation.taxProfiles', section: 'Master Setup', actor: 'tenant', capability: 'masters', featureKeys: ['taxProfile.list', 'taxProfile.create', 'taxProfile.edit'] },
-    { label: 'Category Templates', route: '/templates/browse', icon: 'ri-store-2-line', translationKey: 'app.navigation.categoryTemplates', section: 'Marketplace', actor: 'tenant', capability: 'masters' },
-    { label: 'Group Creation', route: '/product/groups', icon: 'ri-folder-add-line', translationKey: 'app.navigation.groupCreation', section: 'Product Setup', actor: 'tenant', capability: 'product' },
-    { label: 'Stock', route: '/product/stock', icon: 'ri-stock-line', translationKey: 'app.navigation.stock', section: 'Product Setup', actor: 'tenant', capability: 'product' },
-    { label: 'Variants', route: '/product/variants', icon: 'ri-price-tag-3-line', translationKey: 'app.navigation.variants', section: 'Product Setup', actor: 'tenant', capability: 'product' },
-    { label: 'Packs', route: '/product/packs', icon: 'ri-box-3-line', translationKey: 'app.navigation.packs', section: 'Product Setup', actor: 'tenant', capability: 'product' },
-    { label: 'Media Library', route: '/product/media', icon: 'ri-image-line', translationKey: 'app.navigation.mediaLibrary', section: 'Product Setup', actor: 'tenant', capability: 'product', featureKeys: ['media.upload'] },
-    { label: 'Orders', route: '/orders/list', icon: 'ri-file-list-3-line', translationKey: 'app.navigation.orders', section: 'Order Management', actor: 'tenant', capability: 'orders' },
-    { label: 'Customers', route: '/customers/list', icon: 'ri-user-3-line', translationKey: 'app.navigation.customers', section: 'Order Management', actor: 'tenant', capability: 'customers' },
-    { label: 'Customer Groups', route: '/customers/groups', icon: 'ri-team-line', translationKey: 'app.navigation.customerGroups', section: 'Order Management', actor: 'tenant', capability: 'customer-groups' },
-    { label: 'Riders', route: '/delivery/riders', icon: 'ri-bike-line', translationKey: 'app.navigation.riders', section: 'Order Management', actor: 'tenant', capability: 'delivery' },
-    { label: 'Courier Partners', route: '/delivery/courier-partners', icon: 'ri-truck-line', translationKey: 'app.navigation.courierPartners', section: 'Order Management', actor: 'tenant', capability: 'delivery' },
-    { label: 'Employee Code', route: '/settings/employee-code', icon: 'ri-settings-3-line', translationKey: 'app.navigation.employeeCode', section: 'Settings', actor: 'tenant', capability: 'tenant-admin' },
-    { label: 'Serviceable Pincodes', route: '/settings/serviceable-pincodes', icon: 'ri-map-pin-range-line', translationKey: 'app.navigation.serviceablePincodes', section: 'Settings', actor: 'tenant', capability: 'tenant-admin' },
-    { label: 'Customer Storefront', route: '/settings/storefront', icon: 'ri-store-line', translationKey: 'app.navigation.storefrontConfig', section: 'Settings', actor: 'tenant', capability: 'tenant-admin' },
-    { label: 'Return & Exchange Policy', route: '/settings/return-policy', icon: 'ri-arrow-go-back-line', translationKey: 'app.navigation.returnPolicy', section: 'Settings', actor: 'tenant', capability: 'tenant-admin' },
-    { label: 'PIN Security Policy', route: '/settings/pin-security', icon: 'ri-lock-line', translationKey: 'app.navigation.pinSecurityPolicy', section: 'Settings', actor: 'tenant', capability: 'tenant-admin' },
-    { label: 'Push Notifications', route: '/settings/push-notifications', icon: 'ri-notification-3-line', translationKey: 'app.navigation.pushNotifications', section: 'Settings', actor: 'tenant', capability: 'tenant-admin', featureKeys: ['order.list', 'order.create', 'order.update'] },
-    { label: 'SaaS Accounts', route: '/settings/saas-accounts', icon: 'ri-building-2-line', translationKey: 'app.navigation.saasAccounts', section: 'Settings', actor: 'platform', capability: 'platform-admin' },
-    { label: 'SaaS Packages', route: '/settings/saas-packages', icon: 'ri-stack-line', translationKey: 'app.navigation.saasPackages', section: 'Settings', actor: 'platform', capability: 'platform-admin' },
-    { label: 'Platform Users', route: '/settings/platform-users', icon: 'ri-user-settings-line', translationKey: 'app.navigation.platformUsers', section: 'Settings', actor: 'platform', capability: 'platform-admin' },
-    { label: 'SaaS Features', route: '/settings/saas-features', icon: 'ri-function-line', translationKey: 'app.navigation.saasFeatures', section: 'Settings', actor: 'platform', capability: 'platform-admin' },
-    { label: 'Tenant Entitlements', route: '/settings/tenant-entitlements', icon: 'ri-shield-keyhole-line', translationKey: 'app.navigation.tenantEntitlements', section: 'Settings', actor: 'platform', capability: 'platform-admin' },
-    { label: 'Platform Tenant Roles', route: '/settings/tenant-roles', icon: 'ri-shield-user-line', translationKey: 'app.navigation.platformTenantRoles', section: 'Settings', actor: 'platform', capability: 'platform-admin' },
-    { label: 'Platform Templates', route: '/settings/platform-templates', icon: 'ri-file-copy-2-line', translationKey: 'app.navigation.platformTemplates', section: 'Settings', actor: 'platform', capability: 'platform-admin' },
-    { label: 'Business Templates', route: '/settings/business-templates', icon: 'ri-store-2-line', translationKey: 'app.navigation.businessTemplates', section: 'Settings', actor: 'platform', capability: 'platform-admin' },
-    { label: 'Platform Media', route: '/settings/platform-media', icon: 'ri-image-line', translationKey: 'app.navigation.platformMedia', section: 'Settings', actor: 'platform', capability: 'platform-admin' },
-    { label: 'Request Demos', route: '/settings/demo-requests', icon: 'ri-customer-service-2-line', translationKey: 'app.navigation.demoRequests', section: 'Settings', actor: 'platform', capability: 'platform-admin' },
-    { label: 'Tenant Dashboard', route: '/saas-admin/dashboard', icon: 'ri-dashboard-line', translationKey: 'app.navigation.tenantDashboard', section: 'Settings', actor: 'tenant', capability: 'tenant-admin' },
-    { label: 'Tenant Users', route: '/saas-admin/users', icon: 'ri-user-settings-line', translationKey: 'app.navigation.tenantUsers', section: 'Settings', actor: 'tenant', capability: 'tenant-admin' },
-    { label: 'Offers', route: '/saas-admin/offers', icon: 'ri-coupon-2-line', translationKey: 'gom.offers.title', section: 'Settings', actor: 'tenant', capability: 'tenant-admin' },
-    { label: 'Tenant Employees', route: '/saas-admin/employees', icon: 'ri-id-card-line', translationKey: 'app.navigation.tenantEmployees', section: 'Settings', actor: 'tenant', capability: 'tenant-admin', featureKeys: ['rider.list', 'rider.create', 'rider.update', 'rider.delete'] },
-    { label: 'Tenant Roles', route: '/saas-admin/roles', icon: 'ri-shield-check-line', translationKey: 'app.navigation.tenantRoles', section: 'Settings', actor: 'tenant', capability: 'tenant-admin' },
-  ];
-=======
   readonly navItems: NavItem[] = NAV_ITEMS;
 
-  private readonly standaloneNavOrder: string[] = ['/saas-admin/dashboard', '/saas-admin/offers'];
+  private readonly standaloneNavOrder = ['/saas-admin/dashboard', '/saas-admin/offers'];
   private readonly standaloneNavRoutes = new Set<string>(this.standaloneNavOrder);
 
   readonly standaloneNavItems = computed(() => {
@@ -180,7 +139,6 @@ export class GomShellComponent implements OnInit, OnDestroy {
   readonly groupedNavItems = computed(() =>
     this.visibleNavItems().filter((item) => !this.standaloneNavRoutes.has(item.route)),
   );
->>>>>>> master
 
   readonly sections = computed<Array<NavItem['section']>>(() => {
     const visibleItems = this.groupedNavItems();
@@ -239,7 +197,7 @@ export class GomShellComponent implements OnInit, OnDestroy {
     }
 
     const session = this.currentSession();
-    if (!session || session.actorType !== 'tenant' || !session.capabilities.includes('orders')) {
+    if (session?.actorType !== 'tenant' || !session.capabilities.includes('orders')) {
       return;
     }
 
