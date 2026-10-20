@@ -9,7 +9,9 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  @include theme.typography-heading(xl);
+  color: theme.get-text(primary);
+  font-weight: 400 !important;
+  @include theme.typography-heading(lg);
 }
 
 @include theme.breakpoint-down(md) {

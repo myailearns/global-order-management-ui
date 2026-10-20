@@ -66,7 +66,6 @@ export class FieldsListComponent implements OnChanges {
 
   readonly columns: GomTableColumn<FieldTableRow>[] = [
     { key: 'name', header: FIELD_UI_TEXT.nameLabel, sortable: true, filterable: true, width: '14rem' },
-    { key: 'key', header: FIELD_UI_TEXT.keyLabel, sortable: true, filterable: true, width: '14rem' },
     { key: 'type', header: FIELD_UI_TEXT.typeLabel, sortable: true, filterable: true, width: '11rem' },
     { key: 'defaultValue', header: FIELD_UI_TEXT.defaultValueLabel, sortable: true, width: '11rem' },
     { key: 'isRequired', header: FIELD_UI_TEXT.isRequiredLabel, sortable: true, filterable: true, width: '11rem' },
@@ -149,7 +148,9 @@ export class FieldsListComponent implements OnChanges {
     const rowId = typeof row['_id'] === 'string' ? row['_id'] : undefined;
     const rowValueFormat = typeof row['valueFormat'] === 'string' ? row['valueFormat'].trim().toUpperCase() : '';
     const valueFormat = rowValueFormat === 'CURRENCY' ? 'CURRENCY' : 'NUMBER';
-    const currencyCode = valueFormat === 'CURRENCY' ? 'INR' : null;
+    const rowCurrencyCode = typeof row['currencyCode'] === 'string' ? row['currencyCode'].trim().toUpperCase() : '';
+    const resolvedCurrencyCode = rowCurrencyCode === 'USD' ? 'USD' : 'INR';
+    const currencyCode = valueFormat === 'CURRENCY' ? resolvedCurrencyCode : null;
     return {
       _id: rowId,
       name: typeof row['name'] === 'string' ? row['name'] : '',
@@ -166,23 +167,22 @@ export class FieldsListComponent implements OnChanges {
 
   private rebuildColumns(): void {
     this.columns[0].header = this.translate.instant(this.text.nameLabel);
-    this.columns[1].header = this.translate.instant(this.text.keyLabel);
-    this.columns[2].header = this.translate.instant(this.text.typeLabel);
-    this.columns[2].format = (value, row) => this.getTranslatedTypeLabel(value, row);
-    this.columns[3].header = this.translate.instant(this.text.defaultValueLabel);
-    this.columns[4].header = this.translate.instant(this.text.isRequiredLabel);
-    this.columns[4].format = (value) =>
+    this.columns[1].header = this.translate.instant(this.text.typeLabel);
+    this.columns[1].format = (value, row) => this.getTranslatedTypeLabel(value, row);
+    this.columns[2].header = this.translate.instant(this.text.defaultValueLabel);
+    this.columns[3].header = this.translate.instant(this.text.isRequiredLabel);
+    this.columns[3].format = (value) =>
       value === 'true'
         ? this.translate.instant(this.text.yes)
         : this.translate.instant(this.text.no);
-    this.columns[5].header = this.translate.instant(this.text.usedInFieldGroupsLabel);
-    this.columns[6].header = this.translate.instant(this.text.statusLabel);
-    this.columns[6].format = (value) =>
+    this.columns[4].header = this.translate.instant(this.text.usedInFieldGroupsLabel);
+    this.columns[5].header = this.translate.instant(this.text.statusLabel);
+    this.columns[5].format = (value) =>
       value === 'INACTIVE'
         ? this.translate.instant('common.status.inactive')
         : this.translate.instant('common.status.active');
-    this.columns[7].header = this.translate.instant(this.text.actionsLabel);
-    this.columns[7].actionButtons = [
+    this.columns[6].header = this.translate.instant(this.text.actionsLabel);
+    this.columns[6].actionButtons = [
       { label: this.translate.instant(this.text.viewAction), icon: 'ri-eye-line', actionKey: 'view', variant: 'secondary' },
       ...(this.canEdit ? [
         { label: this.translate.instant(this.text.editAction), icon: 'ri-pencil-line', actionKey: 'edit', variant: 'secondary' as const },

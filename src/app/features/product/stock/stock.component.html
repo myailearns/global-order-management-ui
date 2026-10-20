@@ -5,7 +5,7 @@
       @if (isMobileHeader()) {
         <gom-lib-button
           type="button"
-          variant="primary"
+          variant="secondary"
           size="compact-icon"
           (buttonClick)="openAddStock()"
           gomDisableIfNoFeature="stock.create"
@@ -18,7 +18,7 @@
       } @else {
         <gom-lib-button
           type="button"
-          variant="primary"
+          variant="secondary"
           (buttonClick)="openAddStock()"
           gomDisableIfNoFeature="stock.create"
           [disabled]="saving() || !canCreateStock()"

@@ -38,9 +38,15 @@
                   <strong>{{ formatPrice(item.newSellingPrice) }}</strong>
                 </td>
                 <td>
-                  <span class="sp-review-modal__old-value">{{ formatAmount(item.oldProfitAmount) }}</span>
+                  <span class="sp-review-modal__value-stack sp-review-modal__old-value">
+                    <span>{{ formatAmount(item.oldProfitAmount) }}</span>
+                    <span class="sp-review-modal__percent-note">{{ item.existingProfit }}</span>
+                  </span>
                   <i class="ri-arrow-right-line" aria-hidden="true"></i>
-                  <strong class="sp-review-modal__positive">{{ formatAmount(item.newProfitAmount) }}</strong>
+                  <span class="sp-review-modal__value-stack sp-review-modal__value-stack--positive">
+                    <strong class="sp-review-modal__positive">{{ formatAmount(item.newProfitAmount) }}</strong>
+                    <span class="sp-review-modal__percent-note sp-review-modal__percent-note--positive">{{ item.newProfit }}</span>
+                  </span>
                 </td>
                 <td>
                   <span class="sp-review-modal__old-value">{{ formatMargin(item.oldMarginPercent) }}</span>
@@ -76,9 +82,15 @@
               <div>
                 <span>Profit</span>
                 <strong class="sp-review-modal__positive">
-                  {{ formatCompactAmount(item.oldProfitAmount) }}
+                  <span class="sp-review-modal__value-stack sp-review-modal__old-value">
+                    <span>{{ formatCompactAmount(item.oldProfitAmount) }}</span>
+                    <span class="sp-review-modal__percent-note">{{ item.existingProfit }}</span>
+                  </span>
                   <i class="ri-arrow-right-line" aria-hidden="true"></i>
-                  {{ formatCompactAmount(item.newProfitAmount) }}
+                  <span class="sp-review-modal__value-stack sp-review-modal__value-stack--positive">
+                    <span>{{ formatCompactAmount(item.newProfitAmount) }}</span>
+                    <span class="sp-review-modal__percent-note sp-review-modal__percent-note--positive">{{ item.newProfit }}</span>
+                  </span>
                 </strong>
               </div>
               <div>

@@ -3,9 +3,9 @@
   <!-- ── Page header ──────────────────────────────────────── -->
   <div class="simple-pricing__header">
     <div class="simple-pricing__header-top">
-      <h1 class="simple-pricing__title">{{ 'pricing.simple.title' | translate }}</h1>
+      <h1 class="simple-pricing__title">{{ 'pricing.simple.title' | translate }}rer</h1>
 
-      <div  (click)="$event.stopPropagation()">
+      <div (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
         <gom-lib-button
           type="button"
           variant="secondary"
@@ -28,7 +28,7 @@
         </gom-simple-pricing-search-autocomplete>
       </div>
 
-      <div class="simple-pricing__header-menu simple-pricing__header-menu--desktop" (click)="$event.stopPropagation()">
+      <div class="simple-pricing__header-menu simple-pricing__header-menu--desktop" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
         <input
           #refreshTemplateInput
           id="simplePricingRefreshInput"
@@ -233,11 +233,6 @@
                 (buttonClick)="openEditById(row.id)">
                 <i class="ri-pencil-line"></i>
               </gom-lib-button>
-              <gom-lib-button variant="secondary" size="icon"
-                title="{{ 'pricing.simple.action.info' | translate }}"
-                (buttonClick)="openInfoById(row.id)">
-                <i class="ri-information-line"></i>
-              </gom-lib-button>
             </div>
           </div>
 
@@ -273,11 +268,19 @@
                 <span class="simple-pricing__card-profit-value">{{ row.definedProfit }}</span>
               </div>
               <div class="simple-pricing__card-profit-item">
-                <span class="simple-pricing__card-label">{{ 'pricing.simple.col.affectedProfit' | translate }}</span>
+                <span class="simple-pricing__card-label">{{ 'pricing.simple.col.currentProfit' | translate }}</span>
                 @if (row.affectedProfit !== '—') {
                   <gom-lib-chip [tone]="row.affectedProfitTone">{{ row.affectedProfit }}</gom-lib-chip>
                 } @else {
                   <span class="simple-pricing__card-profit-value">{{ row.affectedProfit }}</span>
+                }
+              </div>
+              <div class="simple-pricing__card-profit-item">
+                <span class="simple-pricing__card-label">{{ 'pricing.simple.col.currentMargin' | translate }}</span>
+                @if (row.currentMargin !== '—') {
+                  <gom-lib-chip [tone]="row.currentMarginTone">{{ row.currentMargin }}</gom-lib-chip>
+                } @else {
+                  <span class="simple-pricing__card-profit-value">{{ row.currentMargin }}</span>
                 }
               </div>
             </div>
@@ -337,7 +340,8 @@
             </th>
             <th scope="col">{{ 'pricing.simple.col.sellingPrice' | translate }}</th>
             <th scope="col">{{ 'pricing.simple.col.definedProfit' | translate }}</th>
-            <th scope="col">{{ 'pricing.simple.col.affectedProfit' | translate }}</th>
+            <th scope="col">{{ 'pricing.simple.col.currentProfit' | translate }}</th>
+            <th scope="col">{{ 'pricing.simple.col.currentMargin' | translate }}</th>
             <th scope="col">{{ 'pricing.simple.col.priceSummary' | translate }}</th>
             <th scope="col">{{ 'common.labels.actions' | translate }}</th>
           </tr>
@@ -345,7 +349,7 @@
         <tbody>
           @if (tableRows().length === 0) {
             <tr>
-              <td colspan="6" class="simple-pricing__empty">{{ 'pricing.simple.empty' | translate }}</td>
+              <td colspan="7" class="simple-pricing__empty">{{ 'pricing.simple.empty' | translate }}</td>
             </tr>
           }
           @for (row of tableRows(); track row.id) {
@@ -376,6 +380,13 @@
                   {{ row.affectedProfit }}
                 }
               </td>
+              <td>
+                @if (row.currentMargin !== '—') {
+                  <gom-lib-chip [tone]="row.currentMarginTone">{{ row.currentMargin }}</gom-lib-chip>
+                } @else {
+                  {{ row.currentMargin }}
+                }
+              </td>
               <td>{{ row.priceSummary }}</td>
               <td>
                 <div class="gom-table-actions simple-pricing__row-actions">
@@ -386,9 +397,6 @@
                     (buttonClick)="openEditById(row.id)">
                     <i class="ri-pencil-line"></i>
                   </gom-lib-button>
-                  <gom-lib-button variant="secondary" size="icon" title="{{ 'pricing.simple.action.info' | translate }}" (buttonClick)="openInfoById(row.id)">
-                    <i class="ri-information-line"></i>
-                  </gom-lib-button>
                 </div>
               </td>
             </tr>
@@ -398,19 +406,10 @@
     </div>
     <!-- end desktop table -->
 
-    @if (hasMoreItems()) {
+    @if (loadingMore() && tableRows().length > 0) {
       <div class="simple-pricing__load-more">
-        <gom-lib-button
-          type="button"
-          variant="secondary"
-          [disabled]="loadingMore()"
-          (buttonClick)="loadMoreData()">
-          @if (loadingMore()) {
-            {{ 'common.loading' | translate }}
-          } @else {
-            Load More
-          }
-        </gom-lib-button>
+        <i class="ri-loader-4-line" aria-hidden="true"></i>
+        <span>Loading more results...</span>
       </div>
     }
 

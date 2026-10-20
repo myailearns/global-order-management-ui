@@ -18,21 +18,6 @@ export const DEFAULT_FIELDS_FORM_CONFIG: GomDynamicFormConfig = {
       },
     },
     {
-      key: 'key',
-      control: 'input',
-      inputType: 'text',
-      labelKey: 'fields.labels.keyRequired',
-      placeholderKey: 'fields.placeholders.key',
-      validators: {
-        required: true,
-        minLength: 2,
-      },
-      validationMessages: {
-        required: 'fields.validation.keyRequired',
-        minlength: 'fields.validation.keyMin',
-      },
-    },
-    {
       key: 'type',
       control: 'select',
       labelKey: 'fields.labels.type',

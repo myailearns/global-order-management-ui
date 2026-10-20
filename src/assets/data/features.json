@@ -120,16 +120,16 @@
     "featureKey": "fieldGroup.list",
     "displayName": "View Field Groups",
     "module": "masters",
-    "description": "List and view all field groups",
+    "description": "List and view all cost field groups",
     "planAvailability": ["GROWTH", "SCALE"],
     "dependencies": [],
     "actions": ["view", "search", "filter"]
   },
   {
     "featureKey": "fieldGroup.create",
-    "displayName": "Create Field Group",
+    "displayName": "Create Cost Field Group",
     "module": "masters",
-    "description": "Create new field groups",
+    "description": "Create new cost field groups",
     "planAvailability": ["GROWTH", "SCALE"],
     "dependencies": [],
     "actions": ["create"]

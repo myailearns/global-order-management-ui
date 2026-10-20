@@ -145,9 +145,9 @@ export const routes: Routes = [
 					actor: 'tenant',
 					capability: 'masters',
 					featureKeys: ['field.list', 'field.create', 'field.edit', 'field.delete'],
-					title: 'Fields',
+					title: 'Cast Fields',
 					description: 'Define atomic pricing fields like buy price, transport, and profit.',
-					ctaLabel: 'Add Field',
+					ctaLabel: 'Add Cast Field',
 				},
 			},
 			{
@@ -157,9 +157,9 @@ export const routes: Routes = [
 					actor: 'tenant',
 					capability: 'masters',
 					featureKeys: ['fieldGroup.list', 'fieldGroup.create', 'fieldGroup.edit', 'fieldGroup.delete'],
-					title: 'Field Groups',
+					title: 'Cost Field Groups',
 					description: 'Build reusable field templates to speed up group creation.',
-					ctaLabel: 'Create Field Group',
+					ctaLabel: 'Create Cost Field Group',
 				},
 			},
 			{

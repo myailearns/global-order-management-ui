@@ -1,6 +1,6 @@
 <gom-lib-button
   type="button"
-  variant="primary"
+  variant="secondary"
   [size]="isMobileHeader() ? 'compact-icon' : 'default'"
   (buttonClick)="openModal()"
   [gomDisableIfNoFeature]="'group.create'"
@@ -168,21 +168,20 @@
         ></gom-lib-select>
 
         <gom-lib-select
-          label="Tax Profile *"
+          label="Tax Profile"
           placeholder="Select tax profile"
           [options]="taxProfiles()"
           [formControl]="quickCreateForm.controls.taxProfileId"
           [searchable]="true"
-          [error]="quickCreateForm.controls.taxProfileId.touched && quickCreateForm.controls.taxProfileId.invalid ? 'Tax profile is required' : ''"
         ></gom-lib-select>
 
-        <gom-lib-select
+        <!-- <gom-lib-select
           label="Pricing Refresh Mode *"
           placeholder="Auto (Default)"
           [options]="pricingRefreshModeOptions"
           [formControl]="quickCreateForm.controls.pricingRefreshMode"
           [error]="quickCreateForm.controls.pricingRefreshMode.touched && quickCreateForm.controls.pricingRefreshMode.invalid ? 'Pricing refresh mode is required' : ''"
-        ></gom-lib-select>
+        ></gom-lib-select> -->
 
         <gom-lib-select
           label="Status *"
@@ -307,7 +306,6 @@
       }
     </section>
   </form>
-
   <footer class="gom-modal__action-layout" gom-modal-actions>
     <div class="gom-modal__action-layout-start">
       <gom-lib-button type="button" variant="secondary" (buttonClick)="cancel()" [disabled]="submitting()">
@@ -315,6 +313,7 @@
       </gom-lib-button>
     </div>
     <div class="gom-modal__action-layout-end">
+     
       <gom-lib-button
         type="button"
         variant="primary"

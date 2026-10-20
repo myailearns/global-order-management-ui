@@ -159,10 +159,10 @@ $mobile-max: 767px;
   // ── Visibility helpers ─────────────────────────────────────────────────
 
   &__desktop-only {
-    display: none !important;
+    display: none;
 
     @media (min-width: #{$mobile-max + 1px}) {
-      display: flex !important;
+      display: flex;
     }
   }
 
@@ -212,7 +212,10 @@ $mobile-max: 767px;
   &__load-more {
     display: flex;
     justify-content: center;
+    align-items: center;
+    gap: theme.get-gap(xs);
     padding: theme.get-spacing(sm) 0;
+    color: theme.get-text(default-light);
   }
 
   &__error {

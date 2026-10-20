@@ -21,7 +21,9 @@ type PriceHistoryRow = GomTableRow & {
   previousPrice: number;
   newPrice: number;
   change: number;
-  actorId: string;
+  profitPercent: string;
+  marginPercent: string;
+  actorName: string;
   source: string;
   reason: string;
 };
@@ -108,29 +110,6 @@ export class PriceHistoryComponent {
       return 0;
     }
     return values.at(-1) || 0;
-  });
-
-  readonly netChange = computed(() => {
-    const values = this.chartSeries().values;
-    if (values.length < 2) {
-      return 0;
-    }
-
-    return (values.at(-1) || 0) - values[0];
-  });
-
-  readonly netChangePercent = computed(() => {
-    const values = this.chartSeries().values;
-    if (values.length < 2) {
-      return 0;
-    }
-
-    const oldest = values[0];
-    if (!oldest) {
-      return 0;
-    }
-
-    return ((this.netChange() / oldest) * 100);
   });
 
   readonly rangeHint = computed(() => {
@@ -226,13 +205,19 @@ export class PriceHistoryComponent {
     this.filteredEntries().map((entry) => {
       const previousPrice = Number(entry.oldPrice?.sellingPrice || 0);
       const newPrice = Number(entry.newPrice?.sellingPrice || 0);
+      const actualPrice = Number(entry.newPrice?.actualPrice || 0);
+      const profitValue = newPrice - actualPrice;
+      const profitPercent = actualPrice > 0 ? (profitValue / actualPrice) * 100 : null;
+      const marginPercent = newPrice > 0 ? (profitValue / newPrice) * 100 : null;
       return {
         id: entry.id,
         createdAt: this.formatDateTime(entry.createdAt),
         previousPrice,
         newPrice,
         change: newPrice - previousPrice,
-        actorId: entry.actorId || 'system',
+        profitPercent: this.formatPercent(profitPercent),
+        marginPercent: this.formatPercent(marginPercent),
+        actorName: entry.actorName || entry.actorId || 'System',
         source: this.formatSource(entry.source),
         reason: entry.reason || '—',
       };
@@ -260,7 +245,19 @@ export class PriceHistoryComponent {
       format: (value) => this.formatSignedCurrency(Number(value)),
       cellClass: (value) => Number(value) < 0 ? 'price-history__change--negative' : 'price-history__change--positive',
     },
-    { key: 'actorId', header: 'Changed By', width: '14%' },
+    {
+      key: 'profitPercent',
+      header: 'Profit %',
+      width: '10%',
+      cellClass: (_value, row) => String(row.profitPercent || '').startsWith('-') ? 'price-history__change--negative' : 'price-history__change--positive',
+    },
+    {
+      key: 'marginPercent',
+      header: 'Margin %',
+      width: '10%',
+      cellClass: (_value, row) => String(row.marginPercent || '').startsWith('-') ? 'price-history__change--negative' : 'price-history__change--positive',
+    },
+    { key: 'actorName', header: 'Changed By', width: '14%' },
     {
       key: 'source',
       header: 'Source Channel',
@@ -287,7 +284,7 @@ export class PriceHistoryComponent {
   }
 
   goToPricing(): void {
-    this.router.navigate(['/pricing/simple']);
+    void this.router.navigate(['/pricing/simple']);
   }
 
   private loadHistory(): void {
@@ -344,6 +341,14 @@ export class PriceHistoryComponent {
     const abs = Math.abs(value);
     const formatted = this.formatCurrency(abs);
     return `${value >= 0 ? '+' : '-'}${formatted}`;
+  }
+
+  private formatPercent(value: number | null): string {
+    if (value === null || value === undefined || !Number.isFinite(value)) {
+      return '—';
+    }
+
+    return `${value >= 0 ? '+' : '-'}${Math.abs(value).toFixed(1)}%`;
   }
 
   private formatDateTime(value: string): string {
@@ -563,13 +568,16 @@ export class PriceHistoryComponent {
       return 'Stock Update';
     }
     if (normalized === 'GROUP_REFRESH') {
-      return 'Excel Import';
+      return 'Group Update';
     }
     return normalized || 'Unknown';
   }
 
   private sourceTone(sourceLabel: string): 'info' | 'success' | 'warning' | 'neutral' {
     const normalized = String(sourceLabel || '').trim().toUpperCase();
+    if (normalized.includes('GROUP')) {
+      return 'info';
+    }
     if (normalized.includes('EXCEL')) {
       return 'success';
     }

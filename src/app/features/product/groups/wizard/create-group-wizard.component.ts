@@ -95,7 +95,7 @@ interface GroupWizardField {
   isRequired: boolean;
   defaultValue: number;
   valueFormat?: 'NUMBER' | 'CURRENCY';
-  currencyCode?: 'INR' | null;
+  currencyCode?: 'INR' | 'USD' | null;
 }
 
 type FormulaTarget = 'sellingPrice' | 'anchorPrice' | 'actualPrice';
@@ -730,9 +730,12 @@ export class CreateGroupWizardComponent implements OnInit {
       return `Enter percentage value (without % sign). Example amount = ${((baseValue * percentage) / 100).toFixed(2)}`;
     }
 
-    return field.valueFormat === 'CURRENCY'
-      ? 'Amount in ₹ (INR). Example: 49.99'
-      : 'Enter numeric value.';
+    if (field.valueFormat === 'CURRENCY') {
+      const currencyHint = field.currencyCode === 'USD' ? '$ (USD)' : '₹ (INR)';
+      return `Amount in ${currencyHint}. Example: 49.99`;
+    }
+
+    return 'Enter numeric value.';
   }
 
   getFieldPlaceholder(field: GroupWizardField): string {
@@ -741,7 +744,9 @@ export class CreateGroupWizardComponent implements OnInit {
     }
 
     if (field.valueFormat === 'CURRENCY') {
-      return `Enter ${field.name} (₹)`;
+      return field.currencyCode === 'USD'
+        ? `Enter ${field.name} ($)`
+        : `Enter ${field.name} (₹)`;
     }
 
     return `Enter ${field.name}`;

@@ -238,6 +238,7 @@ export interface SimplePricingPriceHistoryEntry {
   reason: string | null;
   source: 'MANUAL_PRICING' | 'STOCK_REFRESH' | 'GROUP_REFRESH';
   actorId: string;
+  actorName?: string | null;
   createdAt: string;
 }
 
