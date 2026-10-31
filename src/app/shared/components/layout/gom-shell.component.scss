@@ -308,6 +308,191 @@
   gap: theme.get-gap(xs);
 }
 
+.gom-shell__subscription-modal {
+  display: grid;
+  gap: theme.get-gap(md);
+}
+
+.gom-shell__subscription-hero {
+  display: grid;
+  gap: theme.get-gap(sm);
+  grid-template-columns: minmax(0, 1fr) minmax(12rem, 16rem);
+  padding: theme.get-spacing(md);
+  border: theme.get-border-size(thin) solid theme.get-border(standard);
+  border-radius: theme.get-radius(md);
+  background: theme.get-background(secondary);
+}
+
+.gom-shell__subscription-kicker {
+  margin: 0 0 theme.get-gap(xxs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.72rem;
+  color: theme.get-text(hint);
+}
+
+.gom-shell__subscription-hero h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: theme.get-text(primary);
+}
+
+.gom-shell__subscription-subtext {
+  margin: theme.get-gap(xxs) 0 0;
+  font-size: 0.82rem;
+  color: theme.get-text(default-light);
+}
+
+.gom-shell__subscription-meta {
+  display: grid;
+  gap: theme.get-gap(xs);
+}
+
+.gom-shell__subscription-meta p {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: theme.get-gap(xs);
+  font-size: 0.82rem;
+  color: theme.get-text(default-light);
+}
+
+.gom-shell__subscription-meta strong {
+  color: theme.get-text(primary);
+}
+
+.gom-shell__subscription-section {
+  display: grid;
+  gap: theme.get-gap(xs);
+}
+
+.gom-shell__subscription-section h4 {
+  margin: 0;
+  font-size: 0.9rem;
+  color: theme.get-text(primary);
+}
+
+.gom-shell__subscription-grid {
+  display: grid;
+  gap: theme.get-gap(xs);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.gom-shell__subscription-card {
+  display: grid;
+  gap: theme.get-gap(xxs);
+  padding: theme.get-spacing(sm);
+  border: theme.get-border-size(thin) solid theme.get-border(standard);
+  border-radius: theme.get-radius(sm);
+  background: theme.get-background(standard);
+}
+
+.gom-shell__subscription-card p {
+  margin: 0;
+  font-size: 0.78rem;
+  color: theme.get-text(hint);
+}
+
+.gom-shell__subscription-card strong {
+  font-size: 0.95rem;
+  color: theme.get-text(primary);
+}
+
+.gom-shell__subscription-progress {
+  height: 0.3rem;
+  border-radius: 999px;
+  background: theme.get-background(secondary);
+  overflow: hidden;
+}
+
+.gom-shell__subscription-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: theme.get-background(primary);
+}
+
+.gom-shell__subscription-feature-table-wrap {
+  display: grid;
+  gap: theme.get-gap(sm);
+}
+
+.gom-shell__subscription-feature-module {
+  border: theme.get-border-size(thin) solid theme.get-border(standard);
+  border-radius: theme.get-radius(sm);
+  overflow: hidden;
+  background: theme.get-background(standard);
+}
+
+.gom-shell__subscription-feature-module h5 {
+  margin: 0;
+  padding: theme.get-spacing(xs) theme.get-spacing(sm);
+  border-bottom: theme.get-border-size(thin) solid theme.get-border(standard);
+  background: theme.get-background(secondary);
+  color: theme.get-text(primary);
+  font-size: 0.82rem;
+  font-weight: theme.get-font-weight(semibold);
+}
+
+.gom-shell__subscription-feature-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.gom-shell__subscription-feature-table th,
+.gom-shell__subscription-feature-table td {
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+  vertical-align: top;
+  font-size: 0.8rem;
+}
+
+.gom-shell__subscription-feature-table thead th {
+  color: theme.get-text(primary);
+  font-weight: theme.get-font-weight(semibold);
+  border-bottom: theme.get-border-size(thin) solid theme.get-border(standard);
+}
+
+.gom-shell__subscription-feature-table tbody td {
+  color: theme.get-text(default-light);
+  border-bottom: theme.get-border-size(hairline) solid theme.get-border(standard);
+}
+
+.gom-shell__subscription-feature-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.gom-shell__subscription-feature-table td:first-child {
+  color: theme.get-text(primary);
+  width: 38%;
+}
+
+.gom-shell__subscription-empty {
+  margin: 0;
+  font-size: 0.82rem;
+  color: theme.get-text(default-light);
+}
+
+.gom-shell__subscription-state {
+  display: inline-flex;
+  align-items: center;
+  gap: theme.get-gap(xs);
+  padding: theme.get-spacing(sm);
+  border-radius: theme.get-radius(sm);
+  background: theme.get-background(secondary);
+  color: theme.get-text(primary);
+}
+
+.gom-shell__subscription-state i {
+  font-size: 1rem;
+}
+
+.gom-shell__subscription-state--error {
+  background: rgba(theme.get-border(danger), 0.08);
+  color: theme.get-text(danger);
+}
+
 .gom-shell__layout {
   display: grid;
   grid-template-columns: 1fr;
@@ -644,6 +829,24 @@
   .gom-shell__profile-panel {
     right: -0.25rem;
     width: min(19rem, calc(100vw - 1rem));
+  }
+
+  .gom-shell__subscription-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .gom-shell__subscription-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .gom-shell__subscription-feature-table th,
+  .gom-shell__subscription-feature-table td {
+    padding: 0.55rem;
+    font-size: 0.78rem;
+  }
+
+  .gom-shell__subscription-feature-table td:first-child {
+    width: 45%;
   }
 }
 

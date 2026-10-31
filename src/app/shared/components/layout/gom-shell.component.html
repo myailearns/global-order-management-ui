@@ -146,6 +146,11 @@
               <span>Change Password</span>
             </button>
 
+            <button type="button" class="gom-shell__profile-link" (click)="openSubscriptionDetailsModal()">
+              <i class="ri-file-list-3-line" aria-hidden="true"></i>
+              <span>Subscription Details</span>
+            </button>
+
             <div class="gom-shell__profile-section">
               <h3>Language</h3>
               <div class="gom-shell__profile-language-list">
@@ -306,6 +311,113 @@
           ></i>
           {{ catalogRefreshing() ? 'Synchronizing...' : 'Resync Catalog' }}
         </gom-lib-button>
+      </div>
+    </div>
+  </gom-lib-modal>
+
+  <gom-lib-modal
+    [show]="subscriptionDetailsModalOpen()"
+    title="Subscription Details"
+    size="large"
+    (closed)="closeSubscriptionDetailsModal()"
+  >
+    <div class="gom-shell__subscription-modal">
+      @if (subscriptionDetailsLoading()) {
+        <div class="gom-shell__subscription-state">
+          <i class="ri-loader-4-line" aria-hidden="true"></i>
+          <span>Loading subscription details...</span>
+        </div>
+      } @else if (subscriptionDetailsError()) {
+        <div class="gom-shell__subscription-state gom-shell__subscription-state--error">
+          <i class="ri-error-warning-line" aria-hidden="true"></i>
+          <span>{{ subscriptionDetailsError() }}</span>
+        </div>
+      } @else if (subscriptionSummary(); as summary) {
+        <section class="gom-shell__subscription-hero">
+          <div>
+            <p class="gom-shell__subscription-kicker">Current plan</p>
+            <h3>{{ summary.package?.name || summary.package?.planId || 'N/A' }}</h3>
+            <p class="gom-shell__subscription-subtext">Tier: {{ summary.package?.tier || 'N/A' }}</p>
+            <p class="gom-shell__subscription-subtext">Status: {{ summary.tenant?.accountStatus || 'N/A' }}</p>
+          </div>
+          <div class="gom-shell__subscription-meta">
+            <p><strong>Trial end</strong><span>{{ formatSubscriptionDate(summary.tenant?.trialEndAt || null) }}</span></p>
+            <p><strong>Remaining</strong><span>{{ daysUntil(summary.tenant?.trialEndAt || null) }}</span></p>
+          </div>
+        </section>
+
+        <section class="gom-shell__subscription-section">
+          <h4>Usage limits</h4>
+          <div class="gom-shell__subscription-grid">
+            <article class="gom-shell__subscription-card">
+              <p>Users</p>
+              <strong>{{ summary.counts.users }} / {{ formatLimit(summary.limits.maxUsers) }}</strong>
+              <div class="gom-shell__subscription-progress"><span [style.width.%]="toUsagePercent(summary.counts.users, summary.limits.maxUsers)"></span></div>
+            </article>
+            <article class="gom-shell__subscription-card">
+              <p>Employees</p>
+              <strong>{{ summary.counts.employees }} / {{ formatLimit(summary.limits.maxEmployees) }}</strong>
+              <div class="gom-shell__subscription-progress"><span [style.width.%]="toUsagePercent(summary.counts.employees, summary.limits.maxEmployees)"></span></div>
+            </article>
+            <article class="gom-shell__subscription-card">
+              <p>Roles</p>
+              <strong>{{ summary.counts.roles }} / {{ formatLimit(summary.limits.maxRoles) }}</strong>
+              <div class="gom-shell__subscription-progress"><span [style.width.%]="toUsagePercent(summary.counts.roles, summary.limits.maxRoles)"></span></div>
+            </article>
+          </div>
+        </section>
+
+        <section class="gom-shell__subscription-section">
+          <h4>Included features</h4>
+          @if (subscriptionFeatureModules().length > 0) {
+            <div class="gom-shell__subscription-feature-table-wrap">
+              @for (moduleBlock of subscriptionFeatureModules(); track moduleBlock.moduleKey) {
+                <article class="gom-shell__subscription-feature-module">
+                  <h5>{{ moduleBlock.moduleLabel }}</h5>
+                  <table class="gom-shell__subscription-feature-table">
+                    <thead>
+                      <tr>
+                        <th>Feature</th>
+                        <th>Limit / Condition</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (feature of moduleBlock.rows; track feature.featureKey) {
+                        <tr>
+                          <td>{{ feature.featureName }}</td>
+                          <td>{{ feature.limitText }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </article>
+              }
+            </div>
+          } @else {
+            <p class="gom-shell__subscription-empty">No feature details found for this account.</p>
+          }
+        </section>
+
+        <section class="gom-shell__subscription-section">
+          <h4>Billing and payment history</h4>
+          <p class="gom-shell__subscription-empty">Coming soon. We will add invoice, payment, and renewal details next.</p>
+        </section>
+      } @else {
+        <p class="gom-shell__subscription-empty">No subscription data is available for this account.</p>
+      }
+
+      <div class="gom-shell__catalog-sync-actions">
+        <gom-lib-button
+          type="button"
+          variant="secondary"
+          (buttonClick)="closeSubscriptionDetailsModal()"
+        >Close</gom-lib-button>
+        <gom-lib-button
+          type="button"
+          variant="primary"
+          [disabled]="subscriptionDetailsLoading()"
+          (buttonClick)="loadSubscriptionDetails()"
+        >Refresh</gom-lib-button>
       </div>
     </div>
   </gom-lib-modal>

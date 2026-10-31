@@ -357,6 +357,41 @@ export interface VerifyPaymentResult {
   invoice: SaasInvoice;
 }
 
+export interface PaymentHistoryTimeline {
+  previousAccountStatus?: AccountStatus | null;
+  nextAccountStatus?: AccountStatus | null;
+  previousSubscriptionEndAt?: string | null;
+  nextSubscriptionStartAt?: string | null;
+  nextSubscriptionEndAt?: string | null;
+  trialEndAtAtPayment?: string | null;
+}
+
+export interface PaymentHistoryItem extends PaymentRecord {
+  packageInfo?: {
+    id: string;
+    name?: string | null;
+    planId?: string | null;
+  };
+  tierInfo?: {
+    id: string;
+    tierKey?: string | null;
+    displayName?: string | null;
+  };
+  previousTierInfo?: {
+    id: string;
+    tierKey?: string | null;
+    displayName?: string | null;
+  } | null;
+  timeline?: PaymentHistoryTimeline;
+}
+
+export interface PaymentHistoryListResponse {
+  items: PaymentHistoryItem[];
+  page: number;
+  limit: number;
+  total: number;
+}
+
 export interface PaymentContextCurrentSubscription {
   accountStatus: AccountStatus;
   tierId?: string | null;

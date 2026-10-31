@@ -18,6 +18,8 @@ import {
   FirstAdminInfo,
   PaymentRecord,
   PaymentContextResponse,
+  PaymentHistoryListResponse,
+  PaymentHistoryItem,
   PaymentRequestPayload,
   PendingVerificationListResponse,
   PendingVerificationPaymentRecord,
@@ -264,6 +266,30 @@ export class SaasAccountService {
     return this.http
       .get<ApiResponse<PaymentContextResponse>>(`${this.saasPaymentsUrl}/${accountId}/context`, { headers: this.platformHeaders })
       .pipe(map((res) => res.data));
+  }
+
+  getPaymentHistory(accountId: string, params?: { page?: number; limit?: number }): Observable<PaymentHistoryListResponse> {
+    let httpParams = new ngHttp.HttpParams();
+    if (params?.page) {
+      httpParams = httpParams.set('page', String(params.page));
+    }
+    if (params?.limit) {
+      httpParams = httpParams.set('limit', String(params.limit));
+    }
+
+    return this.http
+      .get<{ success: boolean; data: PaymentHistoryItem[]; meta: { page: number; limit: number; total: number } }>(
+        `${this.saasPaymentsUrl}/${accountId}/history`,
+        { headers: this.platformHeaders, params: httpParams },
+      )
+      .pipe(
+        map((res) => ({
+          items: res.data || [],
+          page: Number(res.meta?.page || 1),
+          limit: Number(res.meta?.limit || (res.data || []).length || 1),
+          total: Number(res.meta?.total || 0),
+        })),
+      );
   }
 
   verifyPayment(paymentId: string, payload: VerifyPaymentPayload = {}): Observable<VerifyPaymentResult> {

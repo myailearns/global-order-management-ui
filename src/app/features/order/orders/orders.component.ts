@@ -24,7 +24,7 @@ import {
   GomTableQuery,
   GomTableRow,
 } from '@gomlibs/ui';
-import { forkJoin } from 'rxjs';
+import { firstValueFrom, forkJoin } from 'rxjs';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { PageHeadingComponent } from '../../../shared/components/page-heading/page-heading.component';
 import { DisableIfNoFeatureDirective } from '../../../shared/directives/disable-if-no-feature.directive';
@@ -87,6 +87,7 @@ export class OrdersComponent implements OnInit {
   @ViewChild(GomTableComponent) private readonly orderTable!: GomTableComponent<OrderRow>;
 
   readonly loading = signal(false);
+  readonly exporting = signal(false);
   readonly canListOrders = computed(() => this.authSession.hasFeature('order.list'));
   readonly canViewOrder = computed(() => this.authSession.hasFeature('order.view'));
   readonly canCreateOrder = computed(() => this.authSession.hasFeature('order.create'));
@@ -1285,7 +1286,183 @@ export class OrdersComponent implements OnInit {
   }
 
   onExportOrders(): void {
-    this.toast.info('Export feature coming soon.');
+    if (!this.canListOrders()) {
+      this.toast.warning('You do not have permission to export orders.');
+      return;
+    }
+
+    if (this.exporting()) {
+      return;
+    }
+
+    this.exporting.set(true);
+    void this.exportOrders();
+  }
+
+  private async exportOrders(): Promise<void> {
+    try {
+      const query = this.cloneTableQuery(this.lastOrdersQuery);
+      const orders = await this.fetchAllOrdersForExport(query);
+
+      if (!orders.length) {
+        this.toast.warning('No orders found for current filters.');
+        return;
+      }
+
+      const header = [
+        'Order No',
+        'Created At',
+        'Status',
+        'Payment Status',
+        'Order Source',
+        'Delivery Type',
+        'Order Type',
+        'Customer Name',
+        'Customer Phone',
+        'Delivery Contact',
+        'Delivery Pincode',
+        'Delivery Address',
+        'Assigned Rider',
+        'Courier Partner',
+        'Tracking Number',
+        'Items Count',
+        'Coupons Used',
+        'Subtotal',
+        'Discount',
+        'Tax',
+        'Delivery Charge',
+        'Grand Total',
+        'Gross Profit',
+        'Gross Margin %',
+      ];
+
+      const rows = orders.map((order) => {
+        const customerName = typeof order.customerId === 'object' ? String(order.customerId?.name || '') : '';
+        const customerPhone = typeof order.customerId === 'object' ? String(order.customerId?.phone || '') : '';
+        const deliveryAddress = [
+          String(order.addressSnapshot?.line1 || '').trim(),
+          String(order.addressSnapshot?.line2 || '').trim(),
+          String(order.addressSnapshot?.city || '').trim(),
+          String(order.addressSnapshot?.state || '').trim(),
+          String(order.addressSnapshot?.postalCode || '').trim(),
+        ].filter(Boolean).join(', ');
+
+        const grossMargin = Number(order.profitabilitySnapshot?.grossMarginPct);
+        const grossMarginLabel = Number.isFinite(grossMargin) ? grossMargin.toFixed(2) : '';
+
+        return [
+          String(order.orderNo || ''),
+          this.formatExportDate(order.createdAt),
+          String(this.getStatusDisplayLabel(order.status, order.deliveryType) || ''),
+          String(order.paymentStatus || ''),
+          String(order.orderSource || ''),
+          String(order.deliveryType || ''),
+          String(order.orderType || ''),
+          customerName,
+          customerPhone,
+          String(order.deliveryDetails?.deliveryContactPhone || order.addressSnapshot?.phone || ''),
+          String(order.deliveryDetails?.postalCode || order.addressSnapshot?.postalCode || ''),
+          deliveryAddress,
+          String(order.assignedRider?.name || ''),
+          String(order.courierDetails?.courierPartnerName || order.courierDetails?.courierCompany || ''),
+          String(order.courierDetails?.trackingNumber || order.courierDetails?.awbNumber || ''),
+          String(order.items?.length || 0),
+          this.getCouponsUsedLabel(order) === '-' ? '' : this.getCouponsUsedLabel(order),
+          String(Number(order.pricingSnapshot?.subTotal || 0)),
+          String(Number(order.pricingSnapshot?.discount || 0)),
+          String(Number(order.pricingSnapshot?.tax || 0)),
+          String(Number(order.pricingSnapshot?.deliveryCharge || 0)),
+          String(Number(order.pricingSnapshot?.grandTotal || 0)),
+          String(Number(order.profitabilitySnapshot?.grossProfit || 0)),
+          grossMarginLabel,
+        ];
+      });
+
+      const content = this.buildExcelCompatibleHtml(header, rows);
+      const blob = new Blob([content], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+      const timestamp = new Date().toISOString().slice(0, 10);
+      this.triggerFileDownload(blob, `orders-export-${timestamp}.xls`);
+      this.toast.success(`Exported ${orders.length} order${orders.length === 1 ? '' : 's'}.`);
+    } catch (error: unknown) {
+      const message = String((error as { error?: { message?: string } })?.error?.message || 'Failed to export orders.');
+      this.toast.error(message);
+    } finally {
+      this.exporting.set(false);
+    }
+  }
+
+  private async fetchAllOrdersForExport(query: GomTableQuery): Promise<Order[]> {
+    const pageLimit = 200;
+    const baseParams = this.buildOrdersRequestParams(query, 0);
+    const fetchPage = async (page: number, guard: number): Promise<Order[]> => {
+      if (guard >= 500) {
+        return [];
+      }
+
+      const response = await firstValueFrom(this.service.listOrders({
+        ...baseParams,
+        page,
+        limit: pageLimit,
+      }));
+
+      const current = response.data || [];
+      if (!response.pagination?.hasMore) {
+        return current;
+      }
+
+      const next = await fetchPage(page + 1, guard + 1);
+      return [...current, ...next];
+    };
+
+    return fetchPage(1, 0);
+  }
+
+  private buildExcelCompatibleHtml(header: string[], rows: string[][]): string {
+    const escapeHtml = (value: string): string => String(value || '')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;');
+
+    const headerRow = '<tr>' + header.map((cell) => '<th>' + escapeHtml(cell) + '</th>').join('') + '</tr>';
+    const bodyRows = rows
+      .map((row) => '<tr>' + row.map((cell) => '<td>' + escapeHtml(cell) + '</td>').join('') + '</tr>')
+      .join('');
+
+    return `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office"
+            xmlns:x="urn:schemas-microsoft-com:office:excel"
+            xmlns="http://www.w3.org/TR/REC-html40">
+        <head>
+          <meta charset="UTF-8" />
+          <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        </head>
+        <body>
+          <table border="1">
+            <thead>${headerRow}</thead>
+            <tbody>${bodyRows}</tbody>
+          </table>
+        </body>
+      </html>
+    `;
+  }
+
+  private formatExportDate(value: string): string {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return '';
+    }
+
+    return date.toLocaleString();
+  }
+
+  private triggerFileDownload(blob: Blob, filename: string): void {
+    const url = window.URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = filename;
+    anchor.click();
+    window.URL.revokeObjectURL(url);
   }
 
   onRowAction(event: { actionKey: string; row: GomTableRow }): void {

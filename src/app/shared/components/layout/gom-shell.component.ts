@@ -15,6 +15,7 @@ import {
   GomModalComponent,
 } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
+import { FeatureConfigValue } from '../../../core/auth/auth-session.model';
 import { AppLanguage, I18nService } from '../../../core/i18n/i18n.service';
 import { environment } from '../../../../environments/environment';
 import { AdminNotification, AdminNotificationService } from './admin-notification.service';
@@ -22,6 +23,20 @@ import { HeaderSearchService } from './header-search.service';
 import { NAV_ITEMS, NavItem } from './nav.config';
 import { OrdersService } from '../../../features/order/orders/orders.service';
 import { CreateOrderCatalogCacheService } from '../../../features/order/new-care-order/create-order-catalog-cache.service';
+import { TenantAccessService } from '../../../features/saas-tenant-admin/services/tenant-access.service';
+import { TenantAdminSummary } from '../../../features/saas-tenant-admin/models/tenant-access.model';
+
+interface SubscriptionFeatureRow {
+  featureKey: string;
+  featureName: string;
+  limitText: string;
+}
+
+interface SubscriptionFeatureModule {
+  moduleKey: string;
+  moduleLabel: string;
+  rows: SubscriptionFeatureRow[];
+}
 
 @Component({
   selector: 'gom-lib-shell',
@@ -51,6 +66,7 @@ export class GomShellComponent implements OnInit, OnDestroy {
   private readonly headerSearch = inject(HeaderSearchService);
   private readonly ordersService = inject(OrdersService);
   private readonly catalogCache = inject(CreateOrderCatalogCacheService);
+  private readonly tenantAccessService = inject(TenantAccessService);
   private readonly toast = inject(GomAlertToastService);
 
   readonly menuOpen = signal(false);
@@ -62,6 +78,52 @@ export class GomShellComponent implements OnInit, OnDestroy {
   readonly clearLocalCatalogConfirmOpen = signal(false);
   readonly clearingLocalCatalog = signal(false);
   readonly catalogSyncModalOpen = signal(false);
+  readonly subscriptionDetailsModalOpen = signal(false);
+  readonly subscriptionDetailsLoading = signal(false);
+  readonly subscriptionDetailsError = signal<string | null>(null);
+  readonly subscriptionSummary = signal<TenantAdminSummary | null>(null);
+  readonly subscriptionFeatureModules = computed<SubscriptionFeatureModule[]>(() => {
+    const summary = this.subscriptionSummary();
+    if (!summary) {
+      return [];
+    }
+
+    const permissionRows = Array.isArray(summary.availablePermissions) ? summary.availablePermissions : [];
+    const uniqueByKey = new Map<string, { module: string; displayName: string }>();
+
+    for (const permission of permissionRows) {
+      const key = String(permission.key || '').trim().toLowerCase();
+      if (!key || uniqueByKey.has(key)) {
+        continue;
+      }
+
+      const displayName = String(permission.displayName || permission.action || key).trim() || key;
+      const module = String(permission.module || 'general').trim().toLowerCase() || 'general';
+      uniqueByKey.set(key, { module, displayName });
+    }
+
+    const grouped = new Map<string, SubscriptionFeatureRow[]>();
+    for (const [key, value] of uniqueByKey.entries()) {
+      const rows = grouped.get(value.module) || [];
+      rows.push({
+        featureKey: key,
+        featureName: value.displayName,
+        limitText: this.getFeatureLimitText(key, summary),
+      });
+      grouped.set(value.module, rows);
+    }
+
+    return [...grouped.entries()]
+      .map(([moduleKey, rows]) => {
+        const sortedRows = [...rows].sort((left, right) => left.featureName.localeCompare(right.featureName));
+        return {
+          moduleKey,
+          moduleLabel: this.toTitleLabel(moduleKey),
+          rows: sortedRows,
+        };
+      })
+      .sort((left, right) => left.moduleLabel.localeCompare(right.moduleLabel));
+  });
   readonly catalogStorageEnabled = this.catalogCache.activeEnabled;
   readonly catalogLastUpdated = this.catalogCache.activeLastUpdated;
   readonly catalogRefreshing = this.catalogCache.activeRefreshing;
@@ -479,6 +541,149 @@ export class GomShellComponent implements OnInit, OnDestroy {
     this.closeProfileMenu();
     const route = this.currentSession()?.actorType === 'platform' ? '/settings/platform-users' : '/saas-admin/users';
     void this.router.navigateByUrl(route);
+  }
+
+  openSubscriptionDetailsModal(): void {
+    this.closeProfileMenu();
+    this.subscriptionDetailsModalOpen.set(true);
+    this.loadSubscriptionDetails();
+  }
+
+  closeSubscriptionDetailsModal(): void {
+    this.subscriptionDetailsModalOpen.set(false);
+  }
+
+  loadSubscriptionDetails(): void {
+    const session = this.currentSession();
+    if (session?.actorType !== 'tenant') {
+      this.subscriptionSummary.set(null);
+      this.subscriptionDetailsError.set('Subscription details are available for tenant accounts only.');
+      return;
+    }
+
+    this.subscriptionDetailsLoading.set(true);
+    this.subscriptionDetailsError.set(null);
+    this.tenantAccessService.getTenantAdminSummary(session.tenantId).subscribe({
+      next: (summary) => {
+        this.subscriptionSummary.set(summary);
+      },
+      error: () => {
+        this.subscriptionSummary.set(null);
+        this.subscriptionDetailsError.set('Unable to load subscription details right now. Please try again shortly.');
+        this.subscriptionDetailsLoading.set(false);
+      },
+      complete: () => {
+        this.subscriptionDetailsLoading.set(false);
+      },
+    });
+  }
+
+  formatSubscriptionDate(value?: string | null): string {
+    if (!value) {
+      return 'N/A';
+    }
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return 'N/A';
+    }
+
+    return date.toLocaleDateString();
+  }
+
+  daysUntil(dateValue?: string | null): string {
+    if (!dateValue) {
+      return 'N/A';
+    }
+
+    const date = new Date(dateValue);
+    if (Number.isNaN(date.getTime())) {
+      return 'N/A';
+    }
+
+    const now = new Date();
+    const msDiff = date.getTime() - now.getTime();
+    const days = Math.ceil(msDiff / (1000 * 60 * 60 * 24));
+    if (days < 0) {
+      return 'Expired';
+    }
+
+    return `${days} day${days === 1 ? '' : 's'} left`;
+  }
+
+  formatLimit(max: number | null): string {
+    if (max === null || max === undefined) {
+      return 'Unlimited';
+    }
+
+    return String(max);
+  }
+
+  toUsagePercent(current: number, max: number | null): number {
+    if (!max || max <= 0) {
+      return 0;
+    }
+
+    return Math.max(0, Math.min(100, Math.round((current / max) * 100)));
+  }
+
+  private getFeatureLimitText(featureKey: string, summary: TenantAdminSummary): string {
+    const session = this.currentSession();
+    const configs = session?.effectiveFeatureConfigs?.[featureKey] || {};
+    const entries = Object.entries(configs)
+      .filter(([, value]) => value !== null && value !== undefined)
+      .map(([configKey, value]) => `${this.toLimitLabel(configKey)}: ${this.toConfigValueLabel(value)}`);
+
+    if (entries.length) {
+      return entries.join(' | ');
+    }
+
+    if (featureKey.startsWith('users.') && summary.limits.maxUsers !== null) {
+      return `Max users: ${summary.limits.maxUsers}`;
+    }
+
+    if (featureKey.startsWith('employees.') && summary.limits.maxEmployees !== null) {
+      return `Max employees: ${summary.limits.maxEmployees}`;
+    }
+
+    if (featureKey.startsWith('roles.') && summary.limits.maxRoles !== null) {
+      return `Max roles: ${summary.limits.maxRoles}`;
+    }
+
+    return 'Included in current plan';
+  }
+
+  private toTitleLabel(value: string): string {
+    return String(value || '')
+      .split(/[_\s.-]+/)
+      .filter(Boolean)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ');
+  }
+
+  private toLimitLabel(value: string): string {
+    const normalized = String(value || '').trim().toLowerCase();
+    if (normalized === 'max_count') {
+      return 'Max count';
+    }
+
+    if (normalized === 'max_images') {
+      return 'Max images';
+    }
+
+    if (normalized === 'max_videos') {
+      return 'Max videos';
+    }
+
+    return this.toTitleLabel(normalized);
+  }
+
+  private toConfigValueLabel(value: FeatureConfigValue): string {
+    if (typeof value === 'boolean') {
+      return value ? 'Yes' : 'No';
+    }
+
+    return String(value);
   }
 
   openClearLocalCatalogConfirmation(): void {

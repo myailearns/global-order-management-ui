@@ -28,6 +28,7 @@ import {
   BillingDurationCode,
   CreateAccountRequest,
   PaymentContextResponse,
+  PaymentHistoryItem,
   PaymentMethod,
   PendingVerificationPaymentRecord,
   TenantAccount,
@@ -46,6 +47,8 @@ interface AccountRow extends GomTableRow {
   planId: string;
   status: AccountStatus;
   mediaUsage: string;
+  subscriptionStartAt: string;
+  subscriptionEndAt: string;
   trialEndAt: string;
   updatedAt: string;
 }
@@ -139,6 +142,10 @@ export class SaasAccountsComponent implements OnInit {
   readonly paymentTierOptions = signal<GomSelectOption[]>([]);
   readonly paymentTierMaps = signal<TierFeatureMap[]>([]);
   readonly paymentContext = signal<PaymentContextResponse | null>(null);
+  readonly paymentHistoryModalOpen = signal(false);
+  readonly paymentHistoryLoading = signal(false);
+  readonly paymentHistoryAccount = signal<TenantAccount | null>(null);
+  readonly paymentHistoryItems = signal<PaymentHistoryItem[]>([]);
   readonly paymentDurationOptions = computed<GomSelectOption[]>(() => {
     const selectedTierId = String(this.paymentRequestForm.controls.tierId.value || '').trim();
     const tier = this.paymentTierMaps().find((item) => item._id === selectedTierId) || null;
@@ -370,6 +377,8 @@ export class SaasAccountsComponent implements OnInit {
         planId: item.planId,
         status: item.accountStatus,
         mediaUsage: s ? `${s.count} images · ${this.formatBytes(s.size)}` : '—',
+        subscriptionStartAt: item.subscriptionStartAt ? new Date(item.subscriptionStartAt).toLocaleDateString() : '-',
+        subscriptionEndAt: item.subscriptionEndAt ? new Date(item.subscriptionEndAt).toLocaleDateString() : '-',
         trialEndAt: item.trialEndAt ? new Date(item.trialEndAt).toLocaleDateString() : '-',
         updatedAt: new Date(item.updatedAt).toLocaleDateString(),
       };
@@ -431,6 +440,8 @@ export class SaasAccountsComponent implements OnInit {
     { key: 'tenantUrl', header: 'Tenant URL', width: '20rem' },
     { key: 'planId', header: 'Plan', sortable: true, width: '10rem' },
     { key: 'status', header: 'Status', width: '10rem' },
+    { key: 'subscriptionStartAt', header: 'Subscription Start', width: '12rem' },
+    { key: 'subscriptionEndAt', header: 'Subscription End', width: '12rem' },
     { key: 'mediaUsage', header: 'Media Storage', width: '14rem' },
     { key: 'trialEndAt', header: 'Trial End', width: '10rem' },
     { key: 'updatedAt', header: 'Updated', width: '10rem' },
@@ -441,6 +452,7 @@ export class SaasAccountsComponent implements OnInit {
       actionButtons: [
         { label: 'View/Edit', icon: 'ri-pencil-line', actionKey: 'edit', variant: 'secondary' },
         { label: 'Record Payment', icon: 'ri-bank-card-line', actionKey: 'record-payment', variant: 'secondary' },
+        { label: 'Payment History', icon: 'ri-file-list-3-line', actionKey: 'payment-history', variant: 'secondary' },
         { label: 'Change Status', icon: 'ri-refresh-line', actionKey: 'status', variant: 'secondary' },
         { label: 'Extend Trial', icon: 'ri-calendar-event-line', actionKey: 'extend-trial', variant: 'secondary' },
         { label: 'View Audit Log', icon: 'ri-history-line', actionKey: 'audit', variant: 'secondary' },
@@ -802,6 +814,11 @@ export class SaasAccountsComponent implements OnInit {
 
     if (event.actionKey === 'record-payment') {
       this.openPaymentRequest(account);
+      return;
+    }
+
+    if (event.actionKey === 'payment-history') {
+      this.openPaymentHistory(account);
       return;
     }
 
@@ -1996,42 +2013,16 @@ export class SaasAccountsComponent implements OnInit {
     this.loading.set(true);
     this.service.requestPayment(account._id, requestPayload).subscribe({
       next: () => {
-        const paymentProof = String(raw.paymentProof || '').trim();
-        if (!paymentProof) {
-          this.loading.set(false);
-          this.paymentModalOpen.set(false);
-          this.selectedPaymentAccount.set(null);
-          this.paymentRequestedAt.set(null);
-          this.paymentTierMaps.set([]);
-          this.paymentTierOptions.set([]);
-          this.paymentContext.set(null);
-          this.toast.success('Payment request created');
-          this.loadPendingVerification();
-          return;
-        }
-
-        this.service.uploadPaymentProof(account._id, {
-          paymentId: requestPayload.paymentId,
-          paymentProof,
-          referenceNumber: requestPayload.referenceNumber,
-        }).subscribe({
-          next: () => {
-            this.loading.set(false);
-            this.paymentModalOpen.set(false);
-            this.selectedPaymentAccount.set(null);
-            this.paymentRequestedAt.set(null);
-            this.paymentTierMaps.set([]);
-            this.paymentTierOptions.set([]);
-            this.paymentContext.set(null);
-            this.toast.success('Payment request and proof submitted');
-            this.loadPendingVerification();
-          },
-          error: (error) => {
-            this.loading.set(false);
-            this.toast.error(String(error?.error?.message || 'Payment request created but proof upload failed'));
-            this.loadPendingVerification();
-          },
-        });
+        this.loading.set(false);
+        this.paymentModalOpen.set(false);
+        this.selectedPaymentAccount.set(null);
+        this.paymentRequestedAt.set(null);
+        this.paymentTierMaps.set([]);
+        this.paymentTierOptions.set([]);
+        this.paymentContext.set(null);
+        this.toast.success('Payment recorded successfully');
+        this.loadPendingVerification();
+        this.loadAccounts();
       },
       error: (error) => {
         this.loading.set(false);
@@ -2226,8 +2217,67 @@ export class SaasAccountsComponent implements OnInit {
     return Math.abs(pricing.difference);
   }
 
+  getProjectedSubscriptionStartDateLabel(): string {
+    const window = this.resolveProjectedSubscriptionWindow();
+    return window ? window.periodStart.toLocaleDateString() : '-';
+  }
+
+  getProjectedSubscriptionEndDateLabel(): string {
+    const window = this.resolveProjectedSubscriptionWindow();
+    return window ? window.periodEnd.toLocaleDateString() : '-';
+  }
+
   private roundCurrency(value: number): number {
     return Math.round((Number(value || 0) + Number.EPSILON) * 100) / 100;
+  }
+
+  private getDurationDays(durationCode: BillingDurationCode): number {
+    const durationDaysMap: Record<BillingDurationCode, number> = {
+      '1_MONTH': 30,
+      '3_MONTHS': 90,
+      '6_MONTHS': 180,
+      '1_YEAR': 365,
+    };
+
+    return durationDaysMap[durationCode] || 0;
+  }
+
+  private resolveProjectedSubscriptionWindow(): { periodStart: Date; periodEnd: Date } | null {
+    const raw = this.paymentRequestForm.getRawValue();
+    const durationCode = String(raw.durationCode || '').trim().toUpperCase() as BillingDurationCode;
+    const durationDays = this.getDurationDays(durationCode);
+    if (durationDays <= 0) {
+      return null;
+    }
+
+    const now = this.paymentRequestedAt() || new Date();
+    let periodStart = new Date(now);
+
+    const currentEndValue = this.paymentContext()?.currentSubscription?.subscriptionEndAt;
+    if (currentEndValue) {
+      const currentEndDate = new Date(currentEndValue);
+      if (!Number.isNaN(currentEndDate.getTime()) && currentEndDate.getTime() > periodStart.getTime()) {
+        periodStart = currentEndDate;
+      }
+    }
+
+    const currentAccountStatus = String(this.paymentContext()?.currentSubscription?.accountStatus || '').trim().toUpperCase();
+    const trialEndValue = this.selectedPaymentAccount()?.trialEndAt;
+    if (currentAccountStatus === 'TRIAL' && trialEndValue) {
+      const trialEndDate = new Date(trialEndValue);
+      if (!Number.isNaN(trialEndDate.getTime()) && periodStart.getTime() <= trialEndDate.getTime()) {
+        periodStart = this.addDays(trialEndDate, 1);
+      }
+    }
+
+    const periodEnd = this.addDays(periodStart, durationDays);
+    return { periodStart, periodEnd };
+  }
+
+  private addDays(dateSeed: Date | string, days: number): Date {
+    const next = new Date(dateSeed || new Date());
+    next.setDate(next.getDate() + Number(days || 0));
+    return next;
   }
 
   getCurrentSubscriptionStatusLabel(): string {
@@ -2380,6 +2430,87 @@ export class SaasAccountsComponent implements OnInit {
       error: (error) => {
         this.loading.set(false);
         this.toast.error(String(error?.error?.message || 'Failed to extend trial'));
+      },
+    });
+  }
+
+  openPaymentHistory(account: TenantAccount): void {
+    this.paymentHistoryAccount.set(account);
+    this.paymentHistoryModalOpen.set(true);
+    this.loadPaymentHistory(account._id);
+  }
+
+  closePaymentHistoryModal(): void {
+    if (this.paymentHistoryLoading()) {
+      return;
+    }
+
+    this.paymentHistoryModalOpen.set(false);
+    this.paymentHistoryAccount.set(null);
+    this.paymentHistoryItems.set([]);
+  }
+
+  formatPaymentHistoryDate(value?: string | null): string {
+    if (!value) {
+      return '-';
+    }
+
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? '-' : parsed.toLocaleString();
+  }
+
+  getPaymentHistoryRecordStatusChipClass(status: string | null | undefined): string {
+    const normalized = String(status || '').trim().toUpperCase();
+    if (normalized === 'VERIFIED') {
+      return 'saas-accounts__status-chip saas-accounts__status-chip--ok';
+    }
+    if (normalized === 'REJECTED') {
+      return 'saas-accounts__status-chip saas-accounts__status-chip--danger';
+    }
+    return 'saas-accounts__status-chip saas-accounts__status-chip--warn';
+  }
+
+  getPaymentHistoryAccountStatusChipClass(status: string | null | undefined): string {
+    const normalized = String(status || '').trim().toUpperCase();
+    if (normalized === 'ACTIVE') {
+      return 'saas-accounts__status-chip saas-accounts__status-chip--ok';
+    }
+    if (normalized === 'TRIAL') {
+      return 'saas-accounts__status-chip saas-accounts__status-chip--info';
+    }
+    if (normalized === 'TRIAL_ENDED' || normalized === 'SUSPENDED' || normalized === 'CANCELLED') {
+      return 'saas-accounts__status-chip saas-accounts__status-chip--danger';
+    }
+    return 'saas-accounts__status-chip saas-accounts__status-chip--neutral';
+  }
+
+  getPaymentHistoryTierLabel(item: PaymentHistoryItem | null | undefined): string {
+    if (!item) {
+      return '-';
+    }
+
+    return item.tierInfo?.displayName || item.tierInfo?.tierKey || (item.tierId ? String(item.tierId) : '-');
+  }
+
+  getPaymentHistoryPreviousTierLabel(item: PaymentHistoryItem | null | undefined): string {
+    if (!item?.previousTierInfo) {
+      return '-';
+    }
+
+    return item.previousTierInfo.displayName || item.previousTierInfo.tierKey || item.previousTierInfo.id || '-';
+  }
+
+  private loadPaymentHistory(accountId: string): void {
+    this.paymentHistoryLoading.set(true);
+    this.service.getPaymentHistory(accountId, { page: 1, limit: 100 }).subscribe({
+      next: (result) => {
+        this.paymentHistoryLoading.set(false);
+        this.paymentHistoryItems.set(result.items || []);
+      },
+      error: (error) => {
+        this.paymentHistoryLoading.set(false);
+        this.paymentHistoryItems.set([]);
+        this.toast.error(String(error?.error?.message || 'Failed to load payment history'));
       },
     });
   }

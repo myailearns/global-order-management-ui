@@ -144,6 +144,11 @@ export class CreateGroupWizardComponent implements OnInit {
   readonly taxProfiles = signal<TaxProfile[]>([]);
   readonly dataLoading = signal(false);
   readonly dataLoaded = signal(false);
+  readonly canUseTaxProfile = computed(() =>
+    this.authSession.hasFeature('taxProfile.list')
+    || this.authSession.hasFeature('taxProfile.create')
+    || this.authSession.hasFeature('taxProfile.edit')
+  );
 
   // --- Wizard state ---
   readonly wizardOpen = signal(false);
@@ -1151,7 +1156,9 @@ export class CreateGroupWizardComponent implements OnInit {
     const baseUnitId = String(this.unitsForm.controls.baseUnitId.value || '');
     const allowedUnitIds = new Set(this.allowedUnitIds());
     if (baseUnitId) allowedUnitIds.add(baseUnitId);
-    const taxProfileId = String(this.basicForm.controls.taxProfileId.value || '').trim();
+    const taxProfileId = this.canUseTaxProfile()
+      ? String(this.basicForm.controls.taxProfileId.value || '').trim()
+      : '';
 
     const payload: GroupPayload = {
       name: String(this.basicForm.controls.name.value || '').trim(),
