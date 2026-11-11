@@ -114,6 +114,7 @@ export interface Variant {
   price: {
     sellingPrice: number;
     anchorPrice: number;
+    actualPrice?: number;
   };
   pricingMode: 'FORMULA' | 'OVERRIDE';
   override?: {
@@ -126,6 +127,7 @@ export interface Variant {
   effectivePrice?: {
     sellingPrice: number;
     anchorPrice: number;
+    actualPrice?: number;
   };
   status: 'ACTIVE' | 'INACTIVE';
   updatedAt: string;
@@ -197,56 +199,6 @@ export interface TargetMarginPreview {
     convertedQuantity: number;
     estimatedUnitCost: number;
   };
-}
-
-export interface PricingSnapshot {
-  name: string;
-  convertedQuantity: number;
-  price: {
-    sellingPrice: number;
-    anchorPrice: number;
-    actualPrice: number;
-  };
-  effectivePrice: {
-    sellingPrice: number;
-    anchorPrice: number;
-    actualPrice: number;
-  };
-  additionalPrice?: number;
-  pricingBreakdown?: {
-    baseSellingPrice: number;
-    additionalPrice: number;
-    finalSellingPrice: number;
-  };
-}
-
-export interface PricingRefreshSuggestion {
-  _id: string;
-  tenantId: string;
-  groupId: string;
-  variantId: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUPERSEDED';
-  triggerSource: 'GROUP_UPDATE' | 'STOCK_EVENT' | 'MANUAL_REFRESH';
-  previousSnapshot: PricingSnapshot;
-  suggestedSnapshot: PricingSnapshot;
-  marginImpact?: {
-    oldMarginPercent: number;
-    newMarginPercent: number;
-    blendedMarginPercent: number;
-    thresholdPercent: number;
-    changePercent: number;
-    isBelowThreshold: boolean;
-  };
-  targetMarginPreview?: TargetMarginPreview | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface PricingRefreshDecisionPayload {
-  suggestionIds?: string[];
-  reason: string;
-  targetMarginPercent?: number;
-  useTargetMarginPricing?: boolean;
 }
 
 export interface ManualPriceUpdatePayload {
@@ -387,26 +339,5 @@ export class VariantsService {
 
   listUnits(): Observable<ApiPaginated<Unit>> {
     return this.http.get<ApiPaginated<Unit>>(`${this.unitsUrl}?status=ACTIVE`, { headers: this.tenantHeaders });
-  }
-
-  listPricingRefreshSuggestions(groupId: string, status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUPERSEDED' = 'PENDING'): Observable<ApiPaginated<PricingRefreshSuggestion>> {
-    const params = new URLSearchParams();
-    params.set('status', status);
-    return this.http.get<ApiPaginated<PricingRefreshSuggestion>>(`${this.groupsUrl}/${groupId}/pricing-refresh-suggestions?${params.toString()}`, { headers: this.tenantHeaders });
-  }
-
-  listPricingRefreshSuggestionsWithTargetMargin(groupId: string, targetMarginPercent: number): Observable<ApiPaginated<PricingRefreshSuggestion>> {
-    const params = new URLSearchParams();
-    params.set('status', 'PENDING');
-    params.set('targetMarginPercent', String(targetMarginPercent));
-    return this.http.get<ApiPaginated<PricingRefreshSuggestion>>(`${this.groupsUrl}/${groupId}/pricing-refresh-suggestions?${params.toString()}`, { headers: this.tenantHeaders });
-  }
-
-  approvePricingRefreshSuggestions(groupId: string, payload: PricingRefreshDecisionPayload): Observable<ApiSuccess<{ approvedCount: number; appliedCount: number }>> {
-    return this.http.post<ApiSuccess<{ approvedCount: number; appliedCount: number }>>(`${this.groupsUrl}/${groupId}/pricing-refresh-suggestions/approve`, payload, { headers: this.tenantHeaders });
-  }
-
-  rejectPricingRefreshSuggestions(groupId: string, payload: PricingRefreshDecisionPayload): Observable<ApiSuccess<{ rejectedCount: number }>> {
-    return this.http.post<ApiSuccess<{ rejectedCount: number }>>(`${this.groupsUrl}/${groupId}/pricing-refresh-suggestions/reject`, payload, { headers: this.tenantHeaders });
   }
 }

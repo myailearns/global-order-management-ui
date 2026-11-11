@@ -29,7 +29,6 @@ import {
   FieldGroup,
   Group,
   GroupsService,
-  PricingRefreshMode,
   TaxProfile,
   Unit,
 } from '../groups.service';
@@ -45,7 +44,6 @@ export interface QuickCreatePreview {
     baseUnitId: string | null;
     taxProfileId: string | null;
     groupType: string;
-    pricingRefreshMode: string;
   };
   previews: {
     fieldGroup: { id: string; name: string; version: number } | null;
@@ -86,6 +84,7 @@ interface QuickCreateResponseData {
   styleUrl: './quick-create-group.component.scss',
 })
 export class QuickCreateGroupComponent implements OnInit {
+  private readonly emptyTaxProfileValue = '__NONE__';
   private readonly destroyRef = inject(DestroyRef);
   private readonly groupsService = inject(GroupsService);
   private readonly attributesService = inject(AttributesService);
@@ -153,13 +152,6 @@ export class QuickCreateGroupComponent implements OnInit {
     { label: 'Hybrid (Measured + Attribute)', value: 'HYBRID' },
   ];
 
-  readonly pricingRefreshModeOptions: GomSelectOption[] = [
-    { label: 'Auto (Default)', value: '' },
-    { label: 'Fixed Price', value: 'FIXED' },
-    { label: 'Manual Refresh', value: 'MANUAL_REFRESH' },
-    { label: 'Auto Refresh', value: 'AUTO_REFRESH' },
-  ];
-
   readonly quickCreateForm = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
     description: [''],
@@ -171,7 +163,6 @@ export class QuickCreateGroupComponent implements OnInit {
     baseUnitId: [''],
     allowedUnitIds: [[] as string[]],
     taxProfileId: [''],
-    pricingRefreshMode: [''],
     status: ['ACTIVE' as 'ACTIVE' | 'INACTIVE'],
     createDefaultVariant: [false],
   });
@@ -309,9 +300,6 @@ export class QuickCreateGroupComponent implements OnInit {
   }
 
   private setupAdvancedOptionValidators(): void {
-    this.quickCreateForm.controls.taxProfileId.setValidators([Validators.required]);
-    this.quickCreateForm.controls.pricingRefreshMode.setValidators([Validators.required]);
-
     this.quickCreateForm.controls.groupType.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((groupType) => {
@@ -348,8 +336,6 @@ export class QuickCreateGroupComponent implements OnInit {
     if (requiresAttributesInitially) {
       this.quickCreateForm.controls.attributeIds.setValidators([this.minArrayLengthValidator(1)]);
     }
-    this.quickCreateForm.controls.taxProfileId.updateValueAndValidity({ emitEvent: false });
-    this.quickCreateForm.controls.pricingRefreshMode.updateValueAndValidity({ emitEvent: false });
     this.quickCreateForm.controls.baseUnitId.updateValueAndValidity({ emitEvent: false });
     this.quickCreateForm.controls.allowedUnitIds.updateValueAndValidity({ emitEvent: false });
     this.quickCreateForm.controls.attributeIds.updateValueAndValidity({ emitEvent: false });
@@ -533,7 +519,6 @@ export class QuickCreateGroupComponent implements OnInit {
       baseUnitId: existing.baseUnitId || '',
       allowedUnitIds: resolvedAllowedUnitIds,
       taxProfileId: existing.taxProfileId || '',
-      pricingRefreshMode: existing.pricingRefreshMode || '',
       status: existing.status || 'ACTIVE',
       createDefaultVariant: false,
     });
@@ -586,7 +571,6 @@ export class QuickCreateGroupComponent implements OnInit {
       baseUnitId: existing.baseUnitId || '',
       allowedUnitIds: resolvedAllowedUnitIds,
       taxProfileId: existing.taxProfileId || '',
-      pricingRefreshMode: existing.pricingRefreshMode || '',
       status: 'ACTIVE',
       createDefaultVariant: false,
     });
@@ -744,7 +728,6 @@ export class QuickCreateGroupComponent implements OnInit {
       baseUnitId: '',
       allowedUnitIds: [],
       taxProfileId: '',
-      pricingRefreshMode: '',
       createDefaultVariant: false,
     });
     this.closed.emit();
@@ -1057,11 +1040,11 @@ export class QuickCreateGroupComponent implements OnInit {
       pricingTemplateId: this.trimmedOrUndefined(this.quickCreateForm.controls.pricingTemplateId.value),
       baseUnitId: this.trimmedOrUndefined(this.quickCreateForm.controls.baseUnitId.value),
       allowedUnitIds: this.quickCreateForm.controls.allowedUnitIds.value.filter(Boolean),
-      taxProfileId: this.trimmedOrUndefined(this.quickCreateForm.controls.taxProfileId.value),
-      pricingRefreshMode: this.toPricingRefreshMode(this.quickCreateForm.controls.pricingRefreshMode.value),
+      taxProfileId: this.getTaxProfilePayloadValue(),
       status: this.quickCreateForm.controls.status.value || 'ACTIVE',
       createDefaultVariant: this.quickCreateForm.controls.createDefaultVariant.value,
       excludedFieldKeys: [...this.excludedFieldKeys()],
+      costingMethod: 'WAC',
       optionAxes: this.selectedAttributes()
         .map((attr) => ({
           key: attr.key,
@@ -1107,15 +1090,12 @@ export class QuickCreateGroupComponent implements OnInit {
           anchorPrice: sourceGroup.formula?.anchorPrice || '',
           actualPrice: sourceGroup.formula?.actualPrice || '',
         },
-        pricingRefreshMode: this.toPricingRefreshMode(this.quickCreateForm.controls.pricingRefreshMode.value)
-          || sourceGroup.pricingRefreshMode
-          || 'AUTO_REFRESH',
         baseUnitId: this.trimmedOrFallback(this.quickCreateForm.controls.baseUnitId.value, sourceGroup.baseUnitId),
         allowedUnitIds: this.ensureBaseUnitInAllowedUnits(
           this.trimmedOrFallback(this.quickCreateForm.controls.baseUnitId.value, sourceGroup.baseUnitId),
           this.quickCreateForm.controls.allowedUnitIds.value.filter(Boolean),
         ),
-        taxProfileId: this.trimmedOrUndefined(this.quickCreateForm.controls.taxProfileId.value) || null,
+        taxProfileId: this.getTaxProfilePayloadValue() || null,
         status: this.quickCreateForm.controls.status.value || sourceGroup.status || 'ACTIVE',
         optionAxes: this.selectedAttributes()
           .map((attr) => ({
@@ -1270,9 +1250,8 @@ export class QuickCreateGroupComponent implements OnInit {
       attributeIds: this.quickCreateForm.controls.attributeIds.value.filter(Boolean),
       pricingTemplateId: this.trimmedOrUndefined(this.quickCreateForm.controls.pricingTemplateId.value),
       baseUnitId: this.trimmedOrUndefined(this.quickCreateForm.controls.baseUnitId.value),
-      taxProfileId: this.trimmedOrUndefined(this.quickCreateForm.controls.taxProfileId.value),
+      taxProfileId: this.getTaxProfilePreviewValue(),
       groupType: this.trimmedOrUndefined(this.quickCreateForm.controls.groupType.value),
-      pricingRefreshMode: this.toPricingRefreshMode(this.quickCreateForm.controls.pricingRefreshMode.value),
     };
 
     this.groupsService.previewQuickCreate(payload).subscribe({
@@ -1300,7 +1279,6 @@ export class QuickCreateGroupComponent implements OnInit {
             baseUnitId: string;
             taxProfileId: string;
             groupType: 'MEASURED' | 'ATTRIBUTE' | 'HYBRID';
-            pricingRefreshMode: string;
             attributeIds: string[];
           }> = {};
 
@@ -1326,9 +1304,6 @@ export class QuickCreateGroupComponent implements OnInit {
               nextPatch.groupType = type;
             }
           }
-          if (!String(this.quickCreateForm.controls.pricingRefreshMode.value || '').trim() && resolved.pricingRefreshMode) {
-            nextPatch.pricingRefreshMode = String(resolved.pricingRefreshMode);
-          }
 
           if (Object.keys(nextPatch).length > 0) {
             this.quickCreateForm.patchValue(nextPatch, { emitEvent: false });
@@ -1353,7 +1328,6 @@ export class QuickCreateGroupComponent implements OnInit {
       this.quickCreateForm.controls.baseUnitId.valueChanges,
       this.quickCreateForm.controls.taxProfileId.valueChanges,
       this.quickCreateForm.controls.groupType.valueChanges,
-      this.quickCreateForm.controls.pricingRefreshMode.valueChanges,
     )
       .pipe(debounceTime(150), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
@@ -1436,7 +1410,10 @@ export class QuickCreateGroupComponent implements OnInit {
 
     this.groupsService.getTaxProfiles().subscribe({
       next: (profiles: TaxProfile[]) => {
-        this.taxProfiles.set(profiles.map((profile) => ({ value: profile._id, label: profile.name })));
+        this.taxProfiles.set([
+          { value: this.emptyTaxProfileValue, label: 'None' },
+          ...profiles.map((profile) => ({ value: profile._id, label: profile.name })),
+        ]);
       },
       error: (err) => {
         this.toast.error('Failed to load tax profiles');
@@ -1479,6 +1456,22 @@ export class QuickCreateGroupComponent implements OnInit {
     }
 
     return String(fallback || '').trim();
+  }
+
+  private normalizeTaxProfileSelection(value: string): string | undefined {
+    if (value === this.emptyTaxProfileValue) {
+      return '';
+    }
+
+    return this.trimmedOrUndefined(value);
+  }
+
+  private getTaxProfilePayloadValue(): string | undefined {
+    return this.normalizeTaxProfileSelection(this.quickCreateForm.controls.taxProfileId.value);
+  }
+
+  private getTaxProfilePreviewValue(): string | undefined {
+    return this.normalizeTaxProfileSelection(this.quickCreateForm.controls.taxProfileId.value);
   }
 
   private ensureBaseUnitInAllowedUnits(baseUnitId: string, allowedUnitIds: string[]): string[] {
@@ -1537,14 +1530,5 @@ export class QuickCreateGroupComponent implements OnInit {
       .toLowerCase()
       .replace(/[\s_-]+/g, ' ')
       .replace(/\s+/g, ' ');
-  }
-
-  private toPricingRefreshMode(value: string): PricingRefreshMode | undefined {
-    const normalized = String(value || '').trim();
-    if (normalized === 'FIXED' || normalized === 'MANUAL_REFRESH' || normalized === 'AUTO_REFRESH') {
-      return normalized;
-    }
-
-    return undefined;
   }
 }

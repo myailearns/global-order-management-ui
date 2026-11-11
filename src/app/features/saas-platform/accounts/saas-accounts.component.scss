@@ -161,6 +161,43 @@
   gap: 0.75rem;
 }
 
+.saas-accounts__history-list {
+  display: grid;
+  gap: 0.75rem;
+  max-height: 520px;
+  overflow: auto;
+}
+
+.saas-accounts__history-item {
+  border: 1px solid var(--gom-color-border);
+  border-radius: 0.6rem;
+  padding: 0.75rem;
+  display: grid;
+  gap: 0.65rem;
+  background: #fff;
+}
+
+.saas-accounts__history-item-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.saas-accounts__history-item-head h4 {
+  margin: 0;
+}
+
+.saas-accounts__history-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem 0.75rem;
+}
+
+.saas-accounts__history-grid p {
+  margin: 0;
+}
+
 .saas-accounts__pending-header h2 {
   margin: 0;
   font-size: 1.1rem;
@@ -308,6 +345,10 @@
 
 @media (max-width: 900px) {
   .saas-accounts__filters {
+    grid-template-columns: 1fr;
+  }
+
+  .saas-accounts__history-grid {
     grid-template-columns: 1fr;
   }
 }

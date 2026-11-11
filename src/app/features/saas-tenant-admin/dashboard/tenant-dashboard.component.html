@@ -53,12 +53,16 @@
         <span class="tenant-dashboard__trial-alert-badge">Trial Billing</span>
         <h2>{{ trialAlert.title }}</h2>
         <p>
-          {{ trialAlert.accountName }} has {{ trialAlert.daysRemaining }} day{{ trialAlert.daysRemaining === 1 ? '' : 's' }} remaining in trial.
-          Activate now to avoid service interruption.
+          @if (trialAlert.isEnded) {
+            {{ trialAlert.accountName }} trial has ended.
+          } @else {
+            {{ trialAlert.accountName }} has {{ trialAlert.daysRemaining }} day{{ trialAlert.daysRemaining === 1 ? '' : 's' }} remaining in trial.
+          }
+          {{ trialAlert.message }}
         </p>
       </div>
       <div class="tenant-dashboard__trial-alert-actions">
-        <gom-lib-button variant="primary" (buttonClick)="openSupportActivationModal()">Activate Account</gom-lib-button>
+        <gom-lib-button variant="primary" (buttonClick)="openSupportActivationModal()">{{ trialAlert.ctaLabel }}</gom-lib-button>
       </div>
     </gom-lib-card>
   }
@@ -810,6 +814,7 @@
   </gom-lib-modal>
 
   <gom-lib-modal
+    class="tenant-dashboard__support-modal"
     [show]="supportModalOpen()"
     title="Activate Account - Contact Billing Support"
     size="medium"

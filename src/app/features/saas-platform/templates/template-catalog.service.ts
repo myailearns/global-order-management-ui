@@ -28,7 +28,7 @@ export interface TemplateField {
   key: string;
   type: string;
   valueFormat?: 'NUMBER' | 'CURRENCY';
-  currencyCode?: 'INR' | null;
+  currencyCode?: 'INR' | 'USD' | null;
   fieldKind: string;
   defaultValue: number | string;
   isRequired: boolean;

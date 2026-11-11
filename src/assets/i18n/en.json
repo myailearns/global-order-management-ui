@@ -14,17 +14,17 @@
                                    "masterSetup":  "Master Setup",
                                    "productSetup":  "Product Setup",
                                    "categories":  "Categories",
-                                   "fields":  "Fields",
+                                   "fields":  "Cast Fields",
                                    "attributes":  "Attributes",
                                    "attributeSets":  "Attribute Sets",
                                    "pricingTemplates":  "Pricing Templates",
-                                   "fieldGroups":  "Field Groups",
+                                   "fieldGroups":  "Cost Field Groups",
                                    "units":  "Units",
                                    "taxProfiles":  "Tax Profiles",
                                    "groupCreation":  "Group Creation",
                                    "stock":  "Stock",
                                    "variants":  "Variants",
-                                   "simplePricing":  "Simple Pricing",
+                                   "simplePricing":  "Pricing",
                                    "packs":  "Packs",
                                    "mediaLibrary":  "Media Library",
                                    "productCollections":  "Product Collections",
@@ -46,6 +46,7 @@
                                    "checkoutPayments":  "Checkout & Payments",
                                    "deliveryManagement":  "Delivery Management",
                                    "returnPolicy":  "Return \u0026 Exchange Policy",
+                                   "pinSecurityPolicy":  "PIN Security Policy",
                                    "pushNotifications":  "Push Notifications",
                                    "tenantAdmin":  "Tenant Admin",
                                    "tenantDashboard":  "Tenant Dashboard",
@@ -74,7 +75,9 @@
                                    "createOrderSettings":  "Create Order Settings",
                                    "billing":  "Billing",
                                    "businessDetails":  "Business Details",
-                                   "paymentOptions":  "Payment Options"
+                                   "paymentOptions":  "Payment Options",
+                                   "reports":  "Reports",
+                                   "salesReport":  "Sales Report"
                                },
                 "actions":  {
                                 "notifications":  "Notifications",
@@ -306,7 +309,8 @@
                                                "item":  "Item",
                                                "sellingPrice":  "Selling Price",
                                                "definedProfit":  "Defined Profit %",
-                                               "affectedProfit":  "Affected Profit %",
+                                               "currentProfit":  "Current Profit %",
+                                               "currentMargin":  "Current Margin %",
                                                "priceSummary":  "Price Summary"
                                            },
                                    "state":  {
@@ -446,17 +450,17 @@
                                                          "units":  "Units",
                                                          "groups":  "Groups"
                                                      },
-                                            "linkedFieldGroups":  "Linked Field Groups",
+                                            "linkedFieldGroups":  "Linked Cost Field Groups",
                                             "linkedUnits":  "Linked Units",
                                             "linkedGroups":  "Linked Groups",
                                             "addFieldGroup":  "Add",
                                             "addUnit":  "Add",
-                                            "availableFieldGroups":  "Available field groups to add:",
+                                            "availableFieldGroups":  "Available cost field groups to add:",
                                             "availableUnits":  "Available units to add:",
                                             "noFieldGroups":  "No field groups linked to this category.",
                                             "noUnits":  "No units linked to this category.",
                                             "noGroups":  "No product groups using this category.",
-                                            "noAvailableFieldGroups":  "All field groups are already linked.",
+                                            "noAvailableFieldGroups":  "All cost field groups are already linked.",
                                             "noAvailableUnits":  "All units are already linked.",
                                             "groupsHint":  "Groups are managed from the Product Groups page. This view is read-only.",
                                             "removeAria":  "Remove {{name}}",
@@ -466,10 +470,10 @@
                                         }
                    },
     "fields":  {
-                   "title":  "Fields",
-                   "add":  "Add Field",
-                   "search":  "Search fields",
-                   "empty":  "No fields found.",
+                   "title":  "Cast Fields",
+                   "add":  "Add Cast Field",
+                   "search":  "Search cast fields",
+                   "empty":  "No cast fields found.",
                    "labels":  {
                                   "name":  "Field Name",
                                   "nameRequired":  "Field Name *",
@@ -503,10 +507,8 @@
                                        "currency":  "Currency (₹)"
                                    },
                    "currencies":  {
-                                      "inr":  "INR - Indian Rupee"
-                                  },
-                   "hints":  {
-                                 "currencyCodeFixed":  "Currency is fixed to INR and cannot be changed."
+                                      "inr":  "INR - Indian Rupee",
+                                      "usd":  "USD - US Dollar"
                              },
                    "types":  {
                                  "number":  "Number",
@@ -519,14 +521,14 @@
                                     "optional":  "Optional"
                                 },
                    "details":  {
-                                   "titleFallback":  "Field Details",
+                                   "titleFallback":  "Cast Field Details",
                                    "closeAria":  "Close field details",
                                    "editAria":  "Edit field",
                                    "deleteAria":  "Delete field"
                                },
                    "form":  {
-                                "titleCreate":  "Add Field",
-                                "titleEdit":  "Edit Field",
+                                "titleCreate":  "Add Cast Field",
+                                "titleEdit":  "Edit Cast Field",
                                 "cancelAria":  "Cancel field form",
                                 "createAria":  "Create field",
                                 "updateAria":  "Update field"
@@ -549,18 +551,18 @@
                                  "errorSaveMissingId":  "Unable to update field: missing id."
                              },
                    "deleteConfirm":  {
-                                         "title":  "Delete Field",
+                                         "title":  "Delete Cast Field",
                                          "message":  "Are you sure you want to delete field: {{name}}?"
                                      }
                },
     "fieldGroups":  {
-                        "title":  "Field Groups",
-                        "add":  "Add Field Group",
-                        "search":  "Search field groups",
-                        "empty":  "No field groups found.",
+                        "title":  "Cost Field Groups",
+                        "add":  "Add Cost Field Group",
+                        "search":  "Search cost field groups",
+                        "empty":  "No cost field groups found.",
                         "labels":  {
-                                       "name":  "Field Group Name",
-                                       "nameRequired":  "Field Group Name *",
+                                       "name":  "Cost Field Group Name",
+                                       "nameRequired":  "Cost Field Group Name *",
                                        "fields":  "Fields",
                                        "mappedCategories":  "Mapped Categories",
                                        "version":  "Version",
@@ -578,8 +580,8 @@
                                          "optional":  "Optional"
                                      },
                         "placeholders":  {
-                                             "name":  "Enter field group name",
-                                             "status":  "Select field group status",
+                                             "name":  "Enter cost field group name",
+                                             "status":  "Select cost field group status",
                                              "mappedCategories":  "Select mapped categories",
                                              "addField":  "Select a field to include",
                                              "defaultValue":  "Leave blank to use field master default"
@@ -592,26 +594,26 @@
                                      "defaultValueHint":  "Optional. Leave blank to inherit the field master default value."
                                  },
                         "form":  {
-                                     "titleCreate":  "Add Field Group",
-                                     "titleEdit":  "Edit Field Group"
+                                     "titleCreate":  "Add Cost Field Group",
+                                     "titleEdit":  "Edit Cost Field Group"
                                  },
                         "validation":  {
-                                           "nameRequired":  "Field group name is required",
-                                           "nameDuplicate":  "Field group name already exists. Please use a different name.",
-                                           "fieldsRequired":  "Add at least one pricing field to this field group.",
+                                           "nameRequired":  "Cost field group name is required",
+                                           "nameDuplicate":  "Cost field group name already exists. Please use a different name.",
+                                           "fieldsRequired":  "Add at least one pricing field to this cost field group.",
                                            "defaultValueInvalid":  "Template default values must be valid numbers."
                                        },
                         "toast":  {
-                                      "successCreate":  "Field group created successfully.",
-                                      "successUpdate":  "Field group updated successfully.",
-                                      "successDelete":  "Field group deleted successfully.",
-                                      "errorLoad":  "Failed to load field groups. Please try again.",
-                                      "errorSave":  "Failed to save field group. Please try again.",
-                                      "errorDelete":  "Failed to delete field group. Please try again."
+                                      "successCreate":  "Cost field group created successfully.",
+                                      "successUpdate":  "Cost field group updated successfully.",
+                                      "successDelete":  "Cost field group deleted successfully.",
+                                      "errorLoad":  "Failed to load cost field groups. Please try again.",
+                                      "errorSave":  "Failed to save cost field group. Please try again.",
+                                      "errorDelete":  "Failed to delete cost field group. Please try again."
                                   },
                         "deleteConfirm":  {
-                                              "title":  "Delete Field Group",
-                                              "message":  "Are you sure you want to delete field group: {{name}}?"
+                                              "title":  "Delete Cost Field Group",
+                                              "message":  "Are you sure you want to delete cost field group: {{name}}?"
                                           }
                     },
     "units":  {
@@ -1385,7 +1387,7 @@
                               "noBusinessTemplates":  "No business templates available yet.",
                               "businessHint":  "Pick a business type to subscribe to all its categories, fields, units, and tax profiles in one click.",
                               "categories":  "Categories",
-                              "fieldGroups":  "Field Groups",
+                              "fieldGroups":  "Cost Field Groups",
                               "units":  "Units",
                               "taxProfiles":  "Tax Profiles",
                               "includedCategories":  "Included Categories",
@@ -1396,10 +1398,10 @@
                                               "title":  "Template Preview",
                                               "loading":  "Loading template detailsï¿½",
                                               "fields":  "Fields",
-                                              "fieldGroups":  "Field Groups",
+                                              "fieldGroups":  "Cost Field Groups",
                                               "units":  "Units",
                                               "fieldsTitle":  "Fields",
-                                              "fieldGroupsTitle":  "Field Groups",
+                                              "fieldGroupsTitle":  "Cost Field Groups",
                                               "unitsTitle":  "Units",
                                               "fieldName":  "Name",
                                               "fieldKey":  "Key",
@@ -1447,11 +1449,11 @@
                                        },
                               "preview":  {
                                               "categories":  "Categories",
-                                              "fieldGroups":  "Field Groups",
+                                              "fieldGroups":  "Cost Field Groups",
                                               "units":  "Units",
                                               "taxProfiles":  "Tax Profiles",
                                               "categoriesTitle":  "Included Categories",
-                                              "fieldGroupsTitle":  "Field Groups",
+                                              "fieldGroupsTitle":  "Cost Field Groups",
                                               "unitsTitle":  "Units",
                                               "taxProfilesTitle":  "Tax Profiles"
                                           }

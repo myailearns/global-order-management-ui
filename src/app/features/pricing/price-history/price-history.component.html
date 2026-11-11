@@ -35,10 +35,6 @@
         <small>{{ rangeHint() }}</small>
         <span>Current selling price</span>
         <strong>{{ currentPrice() | currency: 'INR' : 'symbol' : '1.2-2' : 'en-IN' }}</strong>
-        <p [class.is-positive]="netChange() >= 0" [class.is-negative]="netChange() < 0">
-          {{ netChange() >= 0 ? '+' : '-' }}{{ (netChange() < 0 ? -netChange() : netChange()) | currency: 'INR' : 'symbol' : '1.2-2' : 'en-IN' }}
-          ({{ netChangePercent() | number: '1.1-1' }}% total)
-        </p>
         <small class="price-history__summary-note">{{ dateRangeHint() }}</small>
       </div>
 
@@ -93,7 +89,7 @@
       [enableColumnSearch]="false"
       [enableColumnVisibility]="true"
       [mobileCardView]="true"
-      [mobileCardFields]="['previousPrice', 'newPrice', 'change', 'actorId', 'source', 'reason']"
+      [mobileCardFields]="['previousPrice', 'newPrice', 'change', 'profitPercent', 'marginPercent', 'actorName', 'source', 'reason']"
       emptyMessage="No price history found for this scope."
       selectionItemLabel="entry">
     </gom-lib-table>

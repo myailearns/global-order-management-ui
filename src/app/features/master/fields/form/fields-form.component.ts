@@ -1,23 +1,19 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, inject } from '@angular/core';
-import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, inject } from '@angular/core';
+import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import {
   GomButtonContentMode,
+  GomButtonComponent,
+  GomInputComponent,
+  GomModalComponent,
+  GomSelectComponent,
+  GomSelectOption,
   getButtonContentMode,
   showButtonIcon,
   showButtonText,
 } from '@gomlibs/ui';
-import {
-  GomDynamicFormComponent,
-  GomDynamicFormConfig,
-  GomDynamicFormFieldConfig,
-  GomDynamicFormLoaderService,
-} from '@gomlibs/ui';
-import { GomButtonComponent, GomInputComponent, GomSelectComponent, GomSelectOption } from '@gomlibs/ui';
-import { GomModalComponent } from '@gomlibs/ui';
 import {
   FIELD_CURRENCY_OPTIONS,
   FIELD_DEFAULT_STATUS,
@@ -26,10 +22,8 @@ import {
   FIELD_STATUS_OPTIONS,
   FIELD_TYPE_OPTIONS,
   FIELD_UI_TEXT,
-  FIELD_VALUE_FORMAT_OPTIONS,
 } from '../fields.constants';
 import { FieldCurrencyCode, FieldPayload, FieldStatus, FieldType, FieldValueFormat } from '../fields.service';
-import { DEFAULT_FIELDS_FORM_CONFIG } from './fields-form-config.model';
 
 export interface FieldGroupAssignOption {
   id: string;
@@ -63,7 +57,6 @@ export interface FieldFormSubmitData {
     GomButtonComponent,
     GomInputComponent,
     GomSelectComponent,
-    GomDynamicFormComponent,
   ],
   templateUrl: './fields-form.component.html',
   styleUrl: './fields-form.component.scss'
@@ -77,10 +70,6 @@ export class FieldsFormComponent implements OnInit, OnChanges {
   @Output() formCancel = new EventEmitter<void>();
 
   form!: FormGroup;
-  readonly currencyCodePreviewControl = new FormControl({ value: 'INR', disabled: true });
-  private allFields: GomDynamicFormFieldConfig[] = [];
-  primaryFields: GomDynamicFormFieldConfig[] = [];
-  secondaryFields: GomDynamicFormFieldConfig[] = [];
   readonly text = FIELD_UI_TEXT;
   readonly submitMode: GomButtonContentMode = getButtonContentMode('primary-action');
   readonly cancelMode: GomButtonContentMode = getButtonContentMode('dismiss');
@@ -89,25 +78,10 @@ export class FieldsFormComponent implements OnInit, OnChanges {
   readonly statusOptions: GomSelectOption[] = [];
   readonly typeOptions: GomSelectOption[] = [];
   readonly requiredOptions: GomSelectOption[] = [];
-  readonly valueFormatOptions: GomSelectOption[] = [];
   readonly currencyOptions: GomSelectOption[] = [];
-  readonly selectOptionsBySource: Record<string, GomSelectOption[]> = {
-    fieldStatusOptions: this.statusOptions,
-    fieldTypeOptions: this.typeOptions,
-    fieldRequiredOptions: this.requiredOptions,
-    fieldValueFormatOptions: this.valueFormatOptions,
-    fieldCurrencyOptions: this.currencyOptions,
-  };
-  readonly configPath = 'assets/form-config/master/fields-form.json';
 
   private readonly fb = inject(FormBuilder);
-  private readonly dynamicFormLoader = inject(GomDynamicFormLoaderService);
   private readonly translate = inject(TranslateService);
-  private readonly destroyRef = inject(DestroyRef);
-  private readonly valueFormatFieldKey = 'valueFormat';
-
-  private keyAutoSyncEnabled = true;
-  private keySyncInitialized = false;
   selectedFieldGroupIds: string[] = [];
 
   constructor() {
@@ -124,7 +98,7 @@ export class FieldsFormComponent implements OnInit, OnChanges {
   }
 
   ngOnInit(): void {
-    this.loadFormConfig();
+    this.buildForm();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -143,6 +117,7 @@ export class FieldsFormComponent implements OnInit, OnChanges {
 
   onSubmit(): void {
     if (!this.form.valid) {
+      this.form.markAllAsTouched();
       return;
     }
 
@@ -155,15 +130,16 @@ export class FieldsFormComponent implements OnInit, OnChanges {
       ? this.getStringValue(raw, 'defaultValue')
       : this.getNumberValue(raw, 'defaultValue');
 
-    const rawValueFormat = this.getValueFormatValue(raw['valueFormat']);
-    const valueFormat: FieldValueFormat = selectedType === 'NUMBER' && rawValueFormat === 'CURRENCY'
-      ? 'CURRENCY'
-      : 'NUMBER';
-    const currencyCode: FieldCurrencyCode | null = valueFormat === 'CURRENCY' ? 'INR' : null;
+    const valueFormat: FieldValueFormat = selectedType === 'NUMBER' ? 'CURRENCY' : 'NUMBER';
+    const currencyCode: FieldCurrencyCode | null = selectedType === 'NUMBER'
+      ? this.getCurrencyCodeValue(raw['currencyCode'])
+      : null;
+    const generatedKey = this.generateFieldKey(this.getStringValue(raw, 'name'));
+    const key = this.initialData?.key?.trim() || generatedKey;
 
     const payload: FieldPayload = {
       name: this.getStringValue(raw, 'name').trim(),
-      key: this.getStringValue(raw, 'key').trim(),
+      key,
       type: selectedType,
       valueFormat,
       currencyCode,
@@ -180,15 +156,7 @@ export class FieldsFormComponent implements OnInit, OnChanges {
   }
 
   onCancel(): void {
-    this.form.reset({
-      name: '',
-      key: '',
-      type: this.defaultType,
-      valueFormat: 'CURRENCY',
-      defaultValue: '',
-      isRequired: 'false',
-      status: this.defaultStatus,
-    });
+    this.resetFormToDefaults();
     this.formCancel.emit();
   }
 
@@ -203,74 +171,53 @@ export class FieldsFormComponent implements OnInit, OnChanges {
     this.selectedFieldGroupIds = [...values];
   }
 
-  private loadFormConfig(): void {
-    this.dynamicFormLoader
-      .loadConfig({ type: 'asset', path: this.configPath }, DEFAULT_FIELDS_FORM_CONFIG)
-      .subscribe((config) => {
-        this.allFields = [...config.fields];
-        this.buildFormFromConfig(config);
-      });
+  get nameControl(): FormControl {
+    return this.form.get('name') as FormControl;
   }
 
-  private buildFormFromConfig(config: GomDynamicFormConfig): void {
-    const initialValues = this.initialData
-      ? {
-          name: this.initialData.name ?? '',
-          key: this.initialData.key ?? '',
-          type: this.initialData.type ?? this.defaultType,
-          valueFormat: this.initialData.valueFormat ?? (this.initialData.type === 'NUMBER' ? 'CURRENCY' : 'NUMBER'),
-          defaultValue: this.initialData.defaultValue ?? 0,
-          isRequired: this.initialData.isRequired ? 'true' : 'false',
-          status: this.initialData.status ?? this.defaultStatus,
-        }
-      : {};
+  get typeControl(): FormControl {
+    return this.form.get('type') as FormControl;
+  }
 
-    this.form = this.dynamicFormLoader.createFormGroup(
-      this.fb,
-      config.fields,
-      {
-        type: this.defaultType,
-        valueFormat: 'CURRENCY',
-        defaultValue: '',
-        isRequired: 'false',
-        status: this.defaultStatus,
-      },
-      initialValues
-    );
+  get currencyCodeControl(): FormControl {
+    return this.form.get('currencyCode') as FormControl;
+  }
 
-    this.setupKeyAutoGeneration();
-    this.setupTypeChangeReaction();
-    this.updateFormFieldVisibility(this.form.get('type')?.value);
-    this.syncKeyGenerationMode();
+  get defaultValueControl(): FormControl {
+    return this.form.get('defaultValue') as FormControl;
+  }
+
+  get isRequiredControl(): FormControl {
+    return this.form.get('isRequired') as FormControl;
+  }
+
+  get statusControl(): FormControl {
+    return this.form.get('status') as FormControl;
+  }
+
+  get defaultValueInputType(): 'number' | 'text' {
+    return this.isMetadataType(this.typeControl.value) ? 'text' : 'number';
+  }
+
+  get showCurrencyCode(): boolean {
+    return this.typeControl.value === 'NUMBER';
   }
 
   private patchFormFromInitialData(): void {
     if (this.initialData) {
       this.form.patchValue({
         name: this.initialData.name ?? '',
-        key: this.initialData.key ?? '',
         type: this.initialData.type ?? this.defaultType,
-        valueFormat: this.initialData.valueFormat ?? (this.initialData.type === 'NUMBER' ? 'CURRENCY' : 'NUMBER'),
+        currencyCode: this.initialData.currencyCode ?? 'INR',
         defaultValue: this.initialData.defaultValue ?? '',
         isRequired: this.initialData.isRequired ? 'true' : 'false',
         status: this.initialData.status ?? this.defaultStatus,
       });
-      this.updateFormFieldVisibility(this.form.get('type')?.value);
-      this.syncKeyGenerationMode();
+      this.syncFieldVisibility();
       return;
     }
 
-    this.form.reset({
-      name: '',
-      key: '',
-      type: this.defaultType,
-      valueFormat: 'CURRENCY',
-      defaultValue: '',
-      isRequired: 'false',
-      status: this.defaultStatus,
-    });
-    this.updateFormFieldVisibility(this.defaultType);
-    this.syncKeyGenerationMode();
+    this.resetFormToDefaults();
   }
 
   /**
@@ -278,17 +225,8 @@ export class FieldsFormComponent implements OnInit, OnChanges {
    * Scrolls to top and focuses on the first input field.
    */
   resetForNewEntry(): void {
-    this.form.reset({
-      name: '',
-      key: '',
-      type: this.defaultType,
-      valueFormat: 'CURRENCY',
-      defaultValue: '',
-      isRequired: 'false',
-      status: this.defaultStatus,
-    });
+    this.resetFormToDefaults();
     this.selectedFieldGroupIds = [];
-    this.updateFormFieldVisibility(this.defaultType);
     this.form.markAsPristine();
     this.form.markAsUntouched();
     
@@ -299,8 +237,7 @@ export class FieldsFormComponent implements OnInit, OnChanges {
         modalElement.scrollTop = 0;
       }
       
-      // Focus on first input (Field Name)
-      const firstInput = document.querySelector('.fields-form input[name="name"]') as HTMLInputElement;
+      const firstInput = document.querySelector('.fields-form input') as HTMLInputElement | null;
       if (firstInput) {
         firstInput.focus();
       }
@@ -339,14 +276,6 @@ export class FieldsFormComponent implements OnInit, OnChanges {
       }))
     );
 
-    this.valueFormatOptions.length = 0;
-    this.valueFormatOptions.push(
-      ...FIELD_VALUE_FORMAT_OPTIONS.map((option) => ({
-        value: option.value,
-        label: this.translate.instant(option.label),
-      }))
-    );
-
     this.currencyOptions.length = 0;
     this.currencyOptions.push(
       ...FIELD_CURRENCY_OPTIONS.map((option) => ({
@@ -354,6 +283,38 @@ export class FieldsFormComponent implements OnInit, OnChanges {
         label: this.translate.instant(option.label),
       }))
     );
+  }
+
+  fieldError(control: FormControl, type: 'name' | 'type' | 'currencyCode' | 'isRequired' | 'status'): string {
+    if (!control.touched || control.valid) {
+      return '';
+    }
+
+    if (type === 'name') {
+      if (control.hasError('required')) {
+        return this.translate.instant('fields.validation.nameRequired');
+      }
+      if (control.hasError('minlength')) {
+        return this.translate.instant('fields.validation.nameMin');
+      }
+    }
+
+    if (control.hasError('required')) {
+      switch (type) {
+        case 'type':
+          return this.translate.instant('fields.placeholders.type');
+        case 'currencyCode':
+          return this.translate.instant('fields.placeholders.currencyCode');
+        case 'isRequired':
+          return this.translate.instant('fields.placeholders.isRequired');
+        case 'status':
+          return this.translate.instant('fields.placeholders.status');
+        default:
+          return '';
+      }
+    }
+
+    return '';
   }
 
   private getStringValue(raw: Record<string, unknown>, key: string): string {
@@ -367,118 +328,45 @@ export class FieldsFormComponent implements OnInit, OnChanges {
     return Number.isFinite(parsed) ? parsed : 0;
   }
 
-  private getValueFormatValue(rawValue: unknown): FieldValueFormat {
-    const extract = (candidate: unknown): string => {
-      if (typeof candidate === 'string') {
-        return candidate.trim().toUpperCase();
-      }
-      if (candidate && typeof candidate === 'object') {
-        const nestedValue = (candidate as { value?: unknown }).value;
-        return typeof nestedValue === 'string' ? nestedValue.trim().toUpperCase() : '';
-      }
-      return '';
-    };
-
-    const normalized = extract(rawValue);
-    if (!normalized) {
-      return 'NUMBER';
-    }
-
-    // This select has only NUMBER/CURRENCY; treat any non-NUMBER selection as CURRENCY.
-    return normalized === 'NUMBER' ? 'NUMBER' : 'CURRENCY';
+  private getCurrencyCodeValue(rawValue: unknown): FieldCurrencyCode {
+    return rawValue === 'USD' ? 'USD' : 'INR';
   }
 
-  private setupKeyAutoGeneration(): void {
-    if (this.keySyncInitialized) {
-      return;
-    }
+  private buildForm(): void {
+    this.form = this.fb.group({
+      name: ['', [Validators.required, Validators.minLength(2)]],
+      type: [this.defaultType, [Validators.required]],
+      currencyCode: ['INR', [Validators.required]],
+      defaultValue: [''],
+      isRequired: ['false', [Validators.required]],
+      status: [this.defaultStatus, [Validators.required]],
+    });
 
-    const nameControl = this.form.get('name');
-    const keyControl = this.form.get('key');
-    if (!nameControl || !keyControl) {
-      return;
-    }
-
-    nameControl.valueChanges
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((value) => {
-        if (!this.keyAutoSyncEnabled) {
-          return;
-        }
-
-        const generatedKey = this.generateFieldKey(typeof value === 'string' ? value : '');
-        keyControl.setValue(generatedKey, { emitEvent: false });
-      });
-
-    keyControl.valueChanges
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((value) => {
-        const currentKey = typeof value === 'string' ? value.trim() : '';
-        const generatedKey = this.generateFieldKey(this.getControlStringValue('name'));
-
-        this.keyAutoSyncEnabled = currentKey.length === 0 || currentKey === generatedKey;
-      });
-
-    this.keySyncInitialized = true;
+    this.typeControl.valueChanges.subscribe(() => this.syncFieldVisibility());
+    this.resetFormState();
   }
 
-  private setupTypeChangeReaction(): void {
-    const typeControl = this.form.get('type');
-    const valueFormatControl = this.form.get('valueFormat');
-    if (!typeControl || !valueFormatControl) {
-      return;
+  private syncFieldVisibility(): void {
+    const selectedType = this.typeControl.value as string;
+    if (selectedType !== 'NUMBER') {
+      this.currencyCodeControl.setValue('INR', { emitEvent: false });
     }
-
-    typeControl.valueChanges
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((type) => {
-        if (type === 'NUMBER') {
-          valueFormatControl.setValue('CURRENCY', { emitEvent: false });
-        } else {
-          valueFormatControl.setValue('NUMBER', { emitEvent: false });
-        }
-
-        this.updateFormFieldVisibility(type);
-      });
   }
 
-  private updateFormFieldVisibility(typeValue: unknown): void {
-    const selectedType = typeof typeValue === 'string' ? typeValue : this.defaultType;
-    const shouldShowValueFormat = selectedType === 'NUMBER';
-    const visibleFields = shouldShowValueFormat
-      ? [...this.allFields]
-      : this.allFields.filter((field) => field.key !== this.valueFormatFieldKey);
-
-    const valueFormatIndex = visibleFields.findIndex((field) => field.key === this.valueFormatFieldKey);
-    if (valueFormatIndex < 0) {
-      this.primaryFields = visibleFields;
-      this.secondaryFields = [];
-      return;
-    }
-
-    this.primaryFields = visibleFields.slice(0, valueFormatIndex + 1);
-    this.secondaryFields = visibleFields.slice(valueFormatIndex + 1);
+  private resetFormToDefaults(): void {
+    this.form.reset({
+      name: '',
+      type: this.defaultType,
+      currencyCode: 'INR',
+      defaultValue: '',
+      isRequired: 'false',
+      status: this.defaultStatus,
+    });
+    this.syncFieldVisibility();
   }
 
-  private syncKeyGenerationMode(): void {
-    const keyControl = this.form.get('key');
-    if (!keyControl) {
-      return;
-    }
-
-    if (this.initialData) {
-      this.keyAutoSyncEnabled = false;
-      return;
-    }
-
-    this.keyAutoSyncEnabled = true;
-    const generatedKey = this.generateFieldKey(this.getControlStringValue('name'));
-    keyControl.setValue(generatedKey, { emitEvent: false });
-  }
-
-  private getControlStringValue(controlName: string): string {
-    const value = this.form.get(controlName)?.value;
-    return typeof value === 'string' ? value : '';
+  private isMetadataType(value: unknown): boolean {
+    return value === 'TEXT' || value === 'LONG_TEXT';
   }
 
   private generateFieldKey(rawName: string): string {

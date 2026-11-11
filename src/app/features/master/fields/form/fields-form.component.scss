@@ -3,22 +3,25 @@
 .fields-form {
   display: grid;
   gap: theme.get-gap(sm);
+}
 
-  // 2-column grid for form fields
-  ::ng-deep gom-lib-dynamic-form {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: theme.get-gap(sm);
-  }
+.fields-form__grid {
+  display: grid;
+  gap: theme.get-gap(sm);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
 
-  // Currency code field (conditional) - full width
-  > gom-lib-input {
-    grid-column: 1 / -1;
+.fields-form__grid > * {
+  min-width: 0;
+}
+
+@media (max-width: 767px) {
+  .fields-form__grid {
+    grid-template-columns: 1fr;
   }
 }
 
 .fields-form__group-assignment {
-  grid-column: 1 / -1; // Full width
   padding: theme.get-spacing(sm);
   border: theme.get-border-size(hairline) solid theme.get-border(standard);
   border-radius: theme.get-radius(sm);
@@ -36,8 +39,8 @@
 }
 
 .fields-form__actions {
-  grid-column: 1 / -1; // Full width at bottom
   width: 100%;
+  margin-top: theme.get-gap(sm);
 }
 
 .fields-form__action {

@@ -68,6 +68,9 @@ export const tenantHeadersInterceptor: HttpInterceptorFn = (request, next) => {
   if (!request.headers.has('x-actor-id') && tenantHeaders['x-actor-id']) {
     setHeaders['x-actor-id'] = tenantHeaders['x-actor-id'];
   }
+  if (!request.headers.has('x-user-name') && tenantHeaders['x-user-name']) {
+    setHeaders['x-user-name'] = tenantHeaders['x-user-name'];
+  }
 
   if (Object.keys(setHeaders).length === 0) {
     return next(request);

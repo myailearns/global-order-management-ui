@@ -1,5 +1,4 @@
 export type GroupType = 'MEASURED' | 'ATTRIBUTE' | 'HYBRID';
-export type PricingRefreshMode = 'FIXED' | 'MANUAL_REFRESH' | 'AUTO_REFRESH';
 export type ActiveStatus = 'ACTIVE' | 'INACTIVE';
 
 export interface NamedRef {
@@ -16,7 +15,6 @@ export interface CategoryDefaults {
   fieldGroupId?: string | NamedRef | null;
   taxProfileId?: string | NamedRef | null;
   groupType?: GroupType | null;
-  pricingRefreshMode?: PricingRefreshMode | null;
   status: ActiveStatus;
   createdAt: string;
   updatedAt: string;
@@ -29,7 +27,6 @@ export interface CategoryDefaultsUpsertPayload {
   fieldGroupId?: string | null;
   taxProfileId?: string | null;
   groupType?: GroupType | null;
-  pricingRefreshMode?: PricingRefreshMode | null;
   status?: ActiveStatus;
 }
 

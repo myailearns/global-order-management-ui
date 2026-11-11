@@ -95,7 +95,7 @@ interface GroupWizardField {
   isRequired: boolean;
   defaultValue: number;
   valueFormat?: 'NUMBER' | 'CURRENCY';
-  currencyCode?: 'INR' | null;
+  currencyCode?: 'INR' | 'USD' | null;
 }
 
 type FormulaTarget = 'sellingPrice' | 'anchorPrice' | 'actualPrice';
@@ -144,6 +144,11 @@ export class CreateGroupWizardComponent implements OnInit {
   readonly taxProfiles = signal<TaxProfile[]>([]);
   readonly dataLoading = signal(false);
   readonly dataLoaded = signal(false);
+  readonly canUseTaxProfile = computed(() =>
+    this.authSession.hasFeature('taxProfile.list')
+    || this.authSession.hasFeature('taxProfile.create')
+    || this.authSession.hasFeature('taxProfile.edit')
+  );
 
   // --- Wizard state ---
   readonly wizardOpen = signal(false);
@@ -730,9 +735,12 @@ export class CreateGroupWizardComponent implements OnInit {
       return `Enter percentage value (without % sign). Example amount = ${((baseValue * percentage) / 100).toFixed(2)}`;
     }
 
-    return field.valueFormat === 'CURRENCY'
-      ? 'Amount in ₹ (INR). Example: 49.99'
-      : 'Enter numeric value.';
+    if (field.valueFormat === 'CURRENCY') {
+      const currencyHint = field.currencyCode === 'USD' ? '$ (USD)' : '₹ (INR)';
+      return `Amount in ${currencyHint}. Example: 49.99`;
+    }
+
+    return 'Enter numeric value.';
   }
 
   getFieldPlaceholder(field: GroupWizardField): string {
@@ -741,7 +749,9 @@ export class CreateGroupWizardComponent implements OnInit {
     }
 
     if (field.valueFormat === 'CURRENCY') {
-      return `Enter ${field.name} (₹)`;
+      return field.currencyCode === 'USD'
+        ? `Enter ${field.name} ($)`
+        : `Enter ${field.name} (₹)`;
     }
 
     return `Enter ${field.name}`;
@@ -1146,7 +1156,9 @@ export class CreateGroupWizardComponent implements OnInit {
     const baseUnitId = String(this.unitsForm.controls.baseUnitId.value || '');
     const allowedUnitIds = new Set(this.allowedUnitIds());
     if (baseUnitId) allowedUnitIds.add(baseUnitId);
-    const taxProfileId = String(this.basicForm.controls.taxProfileId.value || '').trim();
+    const taxProfileId = this.canUseTaxProfile()
+      ? String(this.basicForm.controls.taxProfileId.value || '').trim()
+      : '';
 
     const payload: GroupPayload = {
       name: String(this.basicForm.controls.name.value || '').trim(),
@@ -1161,7 +1173,6 @@ export class CreateGroupWizardComponent implements OnInit {
         anchorPrice: String(this.formulaForm.controls.anchorPrice.value || '').trim(),
         actualPrice: String(this.formulaForm.controls.actualPrice.value || '').trim(),
       },
-      pricingRefreshMode: 'AUTO_REFRESH',
       baseUnitId,
       allowedUnitIds: [...allowedUnitIds],
       taxProfileId,

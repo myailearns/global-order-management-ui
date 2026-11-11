@@ -306,6 +306,8 @@
             <p><strong>Price After Tier Discount:</strong> {{ getPaymentPricingPreview()?.currency }} {{ getPaymentPricingPreview()?.tierFinalAmount | number:'1.2-2' }}</p>
             <p><strong>Additional Discount:</strong> {{ getPaymentPricingPreview()?.manualDiscountPercent | number:'1.2-2' }}% ({{ getPaymentPricingPreview()?.currency }} {{ getPaymentPricingPreview()?.manualDiscountAmount | number:'1.2-2' }})</p>
             <p><strong>Final Expected Price:</strong> {{ getPaymentPricingPreview()?.currency }} {{ getPaymentPricingPreview()?.expectedAmount | number:'1.2-2' }}</p>
+            <p><strong>Projected Subscription Start:</strong> {{ getProjectedSubscriptionStartDateLabel() }}</p>
+            <p><strong>Projected Subscription End:</strong> {{ getProjectedSubscriptionEndDateLabel() }}</p>
             @if (paymentContext()?.previousPayment) {
               <p><strong>Delta vs Previous Expected:</strong> {{ getPaymentPricingPreview()?.currency }} {{ getPriceDeltaAgainstPrevious() | number:'1.2-2' }}</p>
             }
@@ -393,6 +395,73 @@
     <div class="gom-modal__action-layout-end">
       <gom-lib-button type="button" variant="secondary" (buttonClick)="cancelPaymentRequest()">Cancel</gom-lib-button>
       <gom-lib-button type="button" (buttonClick)="savePaymentRequest()" [disabled]="loading()">Submit Payment Request</gom-lib-button>
+    </div>
+  </footer>
+</gom-lib-modal>
+
+<gom-lib-modal [title]="'Payment History'" [show]="paymentHistoryModalOpen()" (showChange)="closePaymentHistoryModal()" size="large">
+  <section class="saas-accounts__dialog-form">
+    <p>
+      Account:
+      <strong>{{ paymentHistoryAccount()?.accountName || '-' }}</strong>
+      @if (paymentHistoryAccount()?.tenantCode) {
+        <span> · {{ paymentHistoryAccount()?.tenantCode }}</span>
+      }
+    </p>
+
+    @if (paymentHistoryLoading()) {
+      <p class="saas-accounts__plan-help">Loading payment history...</p>
+    } @else if (!paymentHistoryItems().length) {
+      <p class="saas-accounts__plan-help">No payment history found for this account.</p>
+    } @else {
+      <section class="saas-accounts__history-list">
+        @for (item of paymentHistoryItems(); track item._id) {
+          <article class="saas-accounts__history-item">
+            <div class="saas-accounts__history-item-head">
+              <h4>{{ item.paymentId }}</h4>
+              <span [class]="getPaymentHistoryRecordStatusChipClass(item.status)">{{ item.status }}</span>
+            </div>
+
+            <div class="saas-accounts__history-grid">
+              <p><strong>Requested At:</strong> {{ formatPaymentHistoryDate(item.requestedAt) }}</p>
+              <p><strong>Verified At:</strong> {{ formatPaymentHistoryDate(item.verifiedAt) }}</p>
+              <p><strong>Duration:</strong> {{ item.durationCode }}</p>
+              <p><strong>Payment Method:</strong> {{ item.paymentMethod }}</p>
+              @if (item.packageInfo) {
+                <p><strong>Package:</strong> {{ item.packageInfo.name || '-' }} @if (item.packageInfo.planId) {<span>({{ item.packageInfo.planId }})</span>}</p>
+              } @else {
+                <p><strong>Package:</strong> -</p>
+              }
+              <p><strong>Tier:</strong> {{ getPaymentHistoryTierLabel(item) }}</p>
+              <p><strong>Previous Tier:</strong> {{ getPaymentHistoryPreviousTierLabel(item) }}</p>
+              <p><strong>Expected:</strong> {{ item.currency }} {{ item.expectedAmountAtRequest | number:'1.2-2' }}</p>
+              <p><strong>Paid:</strong> {{ item.currency }} {{ item.paidAmountAtRequest | number:'1.2-2' }}</p>
+              <p><strong>Match:</strong> {{ item.amountMatchStatus }}</p>
+            </div>
+
+            <section class="saas-accounts__summary-card">
+              <h4>Account Timeline</h4>
+              <p>
+                <strong>Status:</strong>
+                <span [class]="getPaymentHistoryAccountStatusChipClass(item.timeline?.previousAccountStatus)">{{ item.timeline?.previousAccountStatus || '-' }}</span>
+                <span>→</span>
+                <span [class]="getPaymentHistoryAccountStatusChipClass(item.timeline?.nextAccountStatus)">{{ item.timeline?.nextAccountStatus || '-' }}</span>
+              </p>
+              <p><strong>Previous Subscription End:</strong> {{ formatPaymentHistoryDate(item.timeline?.previousSubscriptionEndAt) }}</p>
+              <p><strong>New Subscription Start:</strong> {{ formatPaymentHistoryDate(item.timeline?.nextSubscriptionStartAt) }}</p>
+              <p><strong>New Subscription End:</strong> {{ formatPaymentHistoryDate(item.timeline?.nextSubscriptionEndAt) }}</p>
+              <p><strong>Trial End At Payment:</strong> {{ formatPaymentHistoryDate(item.timeline?.trialEndAtAtPayment) }}</p>
+            </section>
+          </article>
+        }
+      </section>
+    }
+  </section>
+
+  <footer class="gom-modal__action-layout" gom-modal-actions>
+    <div class="gom-modal__action-layout-start"></div>
+    <div class="gom-modal__action-layout-end">
+      <gom-lib-button type="button" variant="secondary" (buttonClick)="closePaymentHistoryModal()">Close</gom-lib-button>
     </div>
   </footer>
 </gom-lib-modal>

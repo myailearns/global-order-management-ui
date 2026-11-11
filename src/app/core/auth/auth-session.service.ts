@@ -349,6 +349,7 @@ export class AuthSessionService {
       'x-tenant-id': session.tenantId,
       'x-user-id': session.userId,
       'x-actor-id': session.userId,
+      'x-user-name': session.displayName,
     };
   }
 

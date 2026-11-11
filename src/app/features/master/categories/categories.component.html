@@ -5,9 +5,9 @@
         <i class="ri-alert-circle-fill" aria-hidden="true"></i>
         <p>{{ errorMessage() }}</p>
       </div>
-      <button class="error-banner__close" (click)="errorMessage.set(null)" [attr.aria-label]="text.closeErrorBanner | translate">
+      <gom-lib-button class="error-banner__close" type="button" variant="secondary" size="icon" (buttonClick)="errorMessage.set(null)" [attr.aria-label]="text.closeErrorBanner | translate">
         <i class="ri-close-line" aria-hidden="true"></i>
-      </button>
+      </gom-lib-button>
     </div>
   }
 
@@ -42,9 +42,9 @@
           </button>
         }
         @if (job.isTerminal) {
-          <button class="job-notification-banner__close" (click)="dismissBulkUploadNotification(job.jobId)" aria-label="Close notification">
+          <gom-lib-button class="job-notification-banner__close" type="button" variant="secondary" size="icon" (buttonClick)="dismissBulkUploadNotification(job.jobId)" aria-label="Close notification">
             <i class="ri-close-line" aria-hidden="true"></i>
-          </button>
+          </gom-lib-button>
         }
       </div>
     </div>

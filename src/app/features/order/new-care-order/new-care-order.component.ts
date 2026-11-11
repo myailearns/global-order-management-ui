@@ -3,7 +3,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, ElementRef, HostListener, ViewChild, computed, effect, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { EMPTY, Observable, catchError, debounceTime, distinctUntilChanged, expand, firstValueFrom, forkJoin, map, of, reduce, switchMap } from 'rxjs';
+import { EMPTY, Observable, Subscription, catchError, debounceTime, distinctUntilChanged, expand, firstValueFrom, forkJoin, map, of, reduce, switchMap, throttleTime } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import jsPDF from 'jspdf';
 
@@ -1252,6 +1252,7 @@ export class NewCareOrderComponent implements OnInit, OnDestroy {
       .pipe(
         debounceTime(300),
         distinctUntilChanged(),
+        throttleTime(500, undefined, { leading: true, trailing: true }),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe((value) => {
@@ -1376,6 +1377,9 @@ export class NewCareOrderComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.storefrontSearchRequest?.unsubscribe();
+    this.storefrontSearchRequest = null;
+
     if (this.offerRefreshTimeout) {
       clearTimeout(this.offerRefreshTimeout);
       this.offerRefreshTimeout = null;
@@ -3105,6 +3109,7 @@ export class NewCareOrderComponent implements OnInit, OnDestroy {
   }
 
   private activeProductsRequestToken = 0;
+  private storefrontSearchRequest: Subscription | null = null;
 
   private loadStorefrontCategoryProducts(categoryId: string): void {
     this.products.set([]);
@@ -3293,7 +3298,7 @@ export class NewCareOrderComponent implements OnInit, OnDestroy {
     this.productsLoading.set(false);
     this.productsLoadingMore.set(false);
     this.productsHasMore.set(false);
-    if (normalizedSearch.length < 2) {
+    if (!normalizedSearch) {
       this.products.set([]);
       this.productsTotal.set(0);
       return;
@@ -3351,6 +3356,44 @@ export class NewCareOrderComponent implements OnInit, OnDestroy {
     this.productsTotal.set(products.reduce((total, product) => total + (product.variants?.length || 0), 0));
     this.selectedGroupId.set('ALL');
     this.selectFirstSearchResult();
+  }
+
+  private filterProductsByTerm(sourceProducts: PosProductGroup[], rawSearch: string): PosProductGroup[] {
+    const normalizedSearch = String(rawSearch || '').trim().toLowerCase();
+    if (!normalizedSearch) {
+      return sourceProducts;
+    }
+
+    const filteredProducts: PosProductGroup[] = [];
+    for (const group of sourceProducts || []) {
+      const groupName = String(group?.name || '').toLowerCase();
+      const groupMatches = groupName.includes(normalizedSearch);
+      const variants = Array.isArray(group?.variants) ? group.variants : [];
+
+      const matchingVariants = groupMatches
+        ? variants
+        : variants.filter((variant) => {
+          const searchableText = [
+            String(variant?.name || ''),
+            String(variant?.displayName || ''),
+            String(variant?.groupName || ''),
+            String(variant?.variantLabel || ''),
+            String(variant?.unitSymbol || ''),
+          ].join(' ').toLowerCase();
+          return searchableText.includes(normalizedSearch);
+        });
+
+      if (!matchingVariants.length) {
+        continue;
+      }
+
+      filteredProducts.push({
+        ...group,
+        variants: matchingVariants,
+      });
+    }
+
+    return filteredProducts;
   }
 
   private getCatalogScope(): CreateOrderCatalogScope | null {
@@ -3436,22 +3479,31 @@ export class NewCareOrderComponent implements OnInit, OnDestroy {
   }
 
   private loadStorefrontSearchProducts(search: string): void {
-    this.products.set([]);
+    const normalizedSearch = String(search || '').trim();
+    const sourceProducts = this.products();
+
     this.productsTotal.set(0);
     this.productsHasMore.set(false);
     this.productsLoadingMore.set(false);
     this.productsError.set(null);
 
-    if (search.length < 2) {
+    if (normalizedSearch.length < 2) {
+      const filtered = this.filterProductsByTerm(sourceProducts, normalizedSearch);
+      this.products.set(filtered);
+      this.productsTotal.set(filtered.reduce((total, product) => total + (product.variants?.length || 0), 0));
       this.productsLoading.set(false);
+      this.selectedGroupId.set('ALL');
+      this.selectFirstSearchResult();
       return;
     }
 
+    this.products.set([]);
     this.productsLoading.set(true);
     const requestToken = Date.now();
     this.activeProductsRequestToken = requestToken;
 
-    this.ordersService.searchStorefrontProducts(this.storeSlug, search)
+    this.storefrontSearchRequest?.unsubscribe();
+    this.storefrontSearchRequest = this.ordersService.searchStorefrontProducts(this.storeSlug, normalizedSearch)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (results) => {

@@ -11,8 +11,7 @@ export const FIELD_STATUS_OPTIONS: GomSelectOption[] = [
 export const FIELD_TYPE_OPTIONS: GomSelectOption[] = [
   { label: 'fields.types.number', value: 'NUMBER' },
   { label: 'fields.types.percentage', value: 'PERCENTAGE' },
-  { label: 'fields.types.text', value: 'TEXT' },
-  { label: 'fields.types.longText', value: 'LONG_TEXT' },
+  
 ];
 
 export const FIELD_REQUIRED_OPTIONS: GomSelectOption[] = [
@@ -27,6 +26,7 @@ export const FIELD_VALUE_FORMAT_OPTIONS: GomSelectOption[] = [
 
 export const FIELD_CURRENCY_OPTIONS: GomSelectOption[] = [
   { label: 'fields.currencies.inr', value: 'INR' },
+  { label: 'fields.currencies.usd', value: 'USD' },
 ];
 
 export const FIELD_UI_TEXT = {

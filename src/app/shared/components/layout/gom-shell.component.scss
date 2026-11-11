@@ -3,7 +3,7 @@
 
 .gom-shell {
   min-height: 100vh;
-  background: #f4f7fb;
+  background: theme.get-background(secondary);
 }
 
 .gom-shell__topbar {
@@ -16,9 +16,9 @@
   gap: theme.get-gap(md);
   min-height: 3.75rem;
   padding: 0.625rem 1rem;
-  border-bottom: 1px solid #d9e2ec;
+  border-bottom: theme.get-border-size(thin) solid theme.get-border(light);
   backdrop-filter: blur(8px);
-  background-color: rgba(255, 255, 255, 0.96);
+  background-color: rgba(theme.get-background(white), 0.96);
 }
 
 .gom-shell__topbar-center {
@@ -59,7 +59,7 @@
   border: 0;
   padding: 0;
   background: transparent;
-  color: #1f3c55;
+  color: theme.get-text(primary);
   transition: background-color 0.15s ease, border-color 0.15s ease;
 
   i {
@@ -67,14 +67,14 @@
   }
 
   &:hover {
-    background: #eef4fa;
+    background: theme.get-background(secondary);
   }
 }
 
 .gom-shell__brand {
   min-width: 0;
   padding-left: 0.875rem;
-  border-left: 1px solid #d9e2ec;
+  border-left: theme.get-border-size(thin) solid theme.get-border(light);
 }
 
 .gom-shell__eyebrow {
@@ -82,7 +82,7 @@
   font-size: 0.95rem;
   line-height: 1.2;
   font-weight: 500;
-  color: #5f6f82;
+  color: theme.get-text(default-light);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -98,7 +98,7 @@
 .gom-shell__profile-chip {
   border: 0;
   background: transparent;
-  color: #41556d;
+  color: theme.get-text(default-light);
   border-radius: 0.375rem;
   display: inline-flex;
   align-items: center;
@@ -113,23 +113,23 @@
   }
 
   &:hover {
-    background: #eef4fa;
+    background: theme.get-background(secondary);
   }
 }
 
 .gom-shell__profile-chip {
   width: 2rem;
   font-weight: theme.get-font-weight(semibold);
-  border: 1px solid #d9e2ec;
+  border: theme.get-border-size(thin) solid theme.get-border(light);
   border-radius: 999px;
-  background: #fff;
+  background: theme.get-background(standard);
 
   i {
     font-size: 1rem;
   }
 
   &:hover {
-    background: #eef4fa;
+    background: theme.get-background(secondary);
   }
 }
 
@@ -144,33 +144,33 @@
   z-index: 30;
   width: min(20.5rem, 88vw);
   border-radius: 0.9rem;
-  border: 1px solid #d9e2ec;
-  background: #ffffff;
-  box-shadow: 0 18px 36px rgba(15, 23, 42, 0.18);
+  border: theme.get-border-size(thin) solid theme.get-border(standard);
+  background: theme.get-background(standard);
+  box-shadow: 0 18px 36px theme.get-shadow(overlay-hover);
   overflow: hidden;
 }
 
 .gom-shell__profile-panel-head {
   padding: 1.2rem 1.2rem 1rem;
-  border-bottom: 1px solid #e5edf5;
+  border-bottom: theme.get-border-size(thin) solid theme.get-border(standard);
 
   h2 {
     margin: 0;
     font-size: 1rem;
     line-height: 1.2;
     font-weight: 700;
-    color: #101828;
+    color: theme.get-text(default);
   }
 
   p {
     margin: 0.7rem 0 0;
     font-size: 0.8rem;
     line-height: 1.35;
-    color: #344054;
+    color: theme.get-text(default-light);
   }
 
   strong {
-    color: #101828;
+    color: theme.get-text(default);
   }
 }
 
@@ -182,8 +182,8 @@
   gap: 0.75rem;
   padding: 1rem 1.2rem;
   border: 0;
-  background: #ffffff;
-  color: #176b9d;
+  background: theme.get-background(standard);
+  color: theme.get-text(primary);
   text-align: left;
   font-size: 0.82rem;
   font-weight: 500;
@@ -193,27 +193,27 @@
   }
 
   &:hover {
-    background: #f7fafc;
+    background: theme.get-background(secondary);
   }
 }
 
 .gom-shell__profile-section {
   padding: 0.95rem 1.2rem 1.2rem;
-  border-top: 1px solid #e5edf5;
+  border-top: theme.get-border-size(thin) solid theme.get-border(standard);
 
   h3 {
     margin: 0 0 0.8rem;
     font-size: 0.8rem;
     line-height: 1.2;
     font-weight: 700;
-    color: #101828;
+    color: theme.get-text(default);
   }
 }
 
 .gom-shell__profile-language-list {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  border: 1px solid #d9e2ec;
+  border: theme.get-border-size(thin) solid theme.get-border(light);
   border-radius: 0.5rem;
   overflow: hidden;
 }
@@ -221,9 +221,9 @@
 .gom-shell__profile-language-option {
   padding: 0.7rem 0.45rem;
   border: 0;
-  border-right: 1px solid #d9e2ec;
-  background: #ffffff;
-  color: #667085;
+  border-right: theme.get-border-size(thin) solid theme.get-border(light);
+  background: theme.get-background(standard);
+  color: theme.get-text(default-light);
   font-size: 0.8rem;
   font-weight: 500;
   text-align: center;
@@ -233,18 +233,18 @@
   }
 
   &:hover {
-    background: #f7fafc;
+    background: theme.get-background(secondary);
   }
 }
 
 .gom-shell__profile-language-option--active {
-  background: #176b9d;
-  color: #ffffff;
+  background: theme.get-background(primary);
+  color: theme.get-text(on-primary);
 }
 
 .gom-shell__profile-logout {
-  border-top: 1px solid #e5edf5;
-  color: #ff3b30;
+  border-top: theme.get-border-size(thin) solid theme.get-border(standard);
+  color: theme.get-text(danger);
 }
 
 .gom-shell__profile-backdrop {
@@ -308,6 +308,191 @@
   gap: theme.get-gap(xs);
 }
 
+.gom-shell__subscription-modal {
+  display: grid;
+  gap: theme.get-gap(md);
+}
+
+.gom-shell__subscription-hero {
+  display: grid;
+  gap: theme.get-gap(sm);
+  grid-template-columns: minmax(0, 1fr) minmax(12rem, 16rem);
+  padding: theme.get-spacing(md);
+  border: theme.get-border-size(thin) solid theme.get-border(standard);
+  border-radius: theme.get-radius(md);
+  background: theme.get-background(secondary);
+}
+
+.gom-shell__subscription-kicker {
+  margin: 0 0 theme.get-gap(xxs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.72rem;
+  color: theme.get-text(hint);
+}
+
+.gom-shell__subscription-hero h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: theme.get-text(primary);
+}
+
+.gom-shell__subscription-subtext {
+  margin: theme.get-gap(xxs) 0 0;
+  font-size: 0.82rem;
+  color: theme.get-text(default-light);
+}
+
+.gom-shell__subscription-meta {
+  display: grid;
+  gap: theme.get-gap(xs);
+}
+
+.gom-shell__subscription-meta p {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: theme.get-gap(xs);
+  font-size: 0.82rem;
+  color: theme.get-text(default-light);
+}
+
+.gom-shell__subscription-meta strong {
+  color: theme.get-text(primary);
+}
+
+.gom-shell__subscription-section {
+  display: grid;
+  gap: theme.get-gap(xs);
+}
+
+.gom-shell__subscription-section h4 {
+  margin: 0;
+  font-size: 0.9rem;
+  color: theme.get-text(primary);
+}
+
+.gom-shell__subscription-grid {
+  display: grid;
+  gap: theme.get-gap(xs);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.gom-shell__subscription-card {
+  display: grid;
+  gap: theme.get-gap(xxs);
+  padding: theme.get-spacing(sm);
+  border: theme.get-border-size(thin) solid theme.get-border(standard);
+  border-radius: theme.get-radius(sm);
+  background: theme.get-background(standard);
+}
+
+.gom-shell__subscription-card p {
+  margin: 0;
+  font-size: 0.78rem;
+  color: theme.get-text(hint);
+}
+
+.gom-shell__subscription-card strong {
+  font-size: 0.95rem;
+  color: theme.get-text(primary);
+}
+
+.gom-shell__subscription-progress {
+  height: 0.3rem;
+  border-radius: 999px;
+  background: theme.get-background(secondary);
+  overflow: hidden;
+}
+
+.gom-shell__subscription-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: theme.get-background(primary);
+}
+
+.gom-shell__subscription-feature-table-wrap {
+  display: grid;
+  gap: theme.get-gap(sm);
+}
+
+.gom-shell__subscription-feature-module {
+  border: theme.get-border-size(thin) solid theme.get-border(standard);
+  border-radius: theme.get-radius(sm);
+  overflow: hidden;
+  background: theme.get-background(standard);
+}
+
+.gom-shell__subscription-feature-module h5 {
+  margin: 0;
+  padding: theme.get-spacing(xs) theme.get-spacing(sm);
+  border-bottom: theme.get-border-size(thin) solid theme.get-border(standard);
+  background: theme.get-background(secondary);
+  color: theme.get-text(primary);
+  font-size: 0.82rem;
+  font-weight: theme.get-font-weight(semibold);
+}
+
+.gom-shell__subscription-feature-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.gom-shell__subscription-feature-table th,
+.gom-shell__subscription-feature-table td {
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+  vertical-align: top;
+  font-size: 0.8rem;
+}
+
+.gom-shell__subscription-feature-table thead th {
+  color: theme.get-text(primary);
+  font-weight: theme.get-font-weight(semibold);
+  border-bottom: theme.get-border-size(thin) solid theme.get-border(standard);
+}
+
+.gom-shell__subscription-feature-table tbody td {
+  color: theme.get-text(default-light);
+  border-bottom: theme.get-border-size(hairline) solid theme.get-border(standard);
+}
+
+.gom-shell__subscription-feature-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.gom-shell__subscription-feature-table td:first-child {
+  color: theme.get-text(primary);
+  width: 38%;
+}
+
+.gom-shell__subscription-empty {
+  margin: 0;
+  font-size: 0.82rem;
+  color: theme.get-text(default-light);
+}
+
+.gom-shell__subscription-state {
+  display: inline-flex;
+  align-items: center;
+  gap: theme.get-gap(xs);
+  padding: theme.get-spacing(sm);
+  border-radius: theme.get-radius(sm);
+  background: theme.get-background(secondary);
+  color: theme.get-text(primary);
+}
+
+.gom-shell__subscription-state i {
+  font-size: 1rem;
+}
+
+.gom-shell__subscription-state--error {
+  background: rgba(theme.get-border(danger), 0.08);
+  color: theme.get-text(danger);
+}
+
 .gom-shell__layout {
   display: grid;
   grid-template-columns: 1fr;
@@ -345,8 +530,8 @@
   overflow-y: auto;
   padding: 0.75rem 0.6rem 1rem;
   border-right: 0;
-  background: linear-gradient(180deg, #0f3551 0%, #0b2f49 100%);
-  box-shadow: 8px 0 24px rgba(7, 24, 39, 0.18);
+  background: linear-gradient(180deg, theme.get-background(primary-dark) 0%, theme.get-background(dark) 100%);
+  box-shadow: 8px 0 24px theme.get-shadow(overlay-hover);
 
   &.gom-shell__sidenav--open {
     transform: translateX(0);
@@ -367,19 +552,19 @@
     border: 0;
     border-radius: 0.375rem;
     background: transparent;
-    color: rgba(204, 220, 234, 0.82);
+    color: rgba(theme.get-text(on-dark), 0.82);
     @include typography.get-fonts("tmna-interface-label-01");
     line-height: 1.25;
     letter-spacing: 0.08em;
 
     i {
       font-size: 0.9rem;
-      color: rgba(204, 220, 234, 0.72);
+      color: rgba(theme.get-text(on-dark), 0.72);
     }
 
     &:hover {
-      background: #174866;
-      color: #ffffff;
+      background: theme.get-background(primary-active);
+      color: theme.get-text(on-primary);
     }
   }
 
@@ -404,22 +589,22 @@
     padding: 0.4rem 0.55rem;
     border: 1px solid transparent;
     border-radius: 0.45rem;
-    color: rgba(224, 235, 244, 0.86);
+    color: rgba(theme.get-text(on-dark), 0.86);
     @include typography.get-fonts("tmna-body-02");
     line-height: 1.25;
     transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 
     &:hover {
-      background: #174866;
-      color: #ffffff;
+      background: theme.get-background(primary-active);
+      color: theme.get-text(on-primary);
     }
 
     &.is-active {
-      color: #ffffff;
-      border-color: rgba(61, 157, 216, 0.7);
-      background: #0f5f8f;
+      color: theme.get-text(on-primary);
+      border-color: rgba(theme.get-border(primary), 0.7);
+      background: theme.get-background(primary);
       font-weight: theme.get-font-weight(semibold);
-      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+      box-shadow: inset 0 0 0 1px rgba(theme.get-background(white), 0.04);
     }
   }
 }
@@ -448,8 +633,8 @@
   height: 1.2rem;
   padding: 0 0.3rem;
   border-radius: 0.6rem;
-  background-color: #c62828;
-  color: #fff;
+  background-color: theme.get-background(danger);
+  color: theme.get-text(on-primary);
   font-size: 0.65rem;
   font-weight: 700;
   line-height: 1;
@@ -458,7 +643,7 @@
 }
 
 .gom-shell__nav-trail {
-  color: rgba(226, 237, 246, 0.8);
+  color: rgba(theme.get-text(on-dark), 0.8);
 
   i {
     font-size: 0.8rem;
@@ -645,6 +830,24 @@
     right: -0.25rem;
     width: min(19rem, calc(100vw - 1rem));
   }
+
+  .gom-shell__subscription-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .gom-shell__subscription-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .gom-shell__subscription-feature-table th,
+  .gom-shell__subscription-feature-table td {
+    padding: 0.55rem;
+    font-size: 0.78rem;
+  }
+
+  .gom-shell__subscription-feature-table td:first-child {
+    width: 45%;
+  }
 }
 
 // ─── Admin Notification Bell & Panel ─────────────────────────────────────────
@@ -666,7 +869,7 @@
   padding: 0 0.25rem;
   border-radius: 0.55rem;
   background-color: var(--color-danger);
-  color: #fff;
+  color: theme.get-text(on-primary);
   font-size: 0.6rem;
   font-weight: 700;
   line-height: 1;
@@ -688,7 +891,7 @@
   border-radius: theme.get-radius(md);
   border: theme.get-border-size(thin) solid theme.get-border(standard);
   background: theme.get-background(standard);
-  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.14);
+  box-shadow: 0 8px 32px theme.get-shadow(overlay);
   overflow: hidden;
 }
 

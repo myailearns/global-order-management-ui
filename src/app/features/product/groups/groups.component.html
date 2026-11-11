@@ -269,16 +269,6 @@
             [formControl]="basicForm.controls.taxProfileId"
             [searchable]="true"
           ></gom-lib-select>
-
-          <gom-lib-select
-            label="Pricing Update Mode"
-            placeholder="Select pricing update mode"
-            [required]="true"
-            [options]="pricingRefreshModeOptions"
-            [formControl]="basicForm.controls.pricingRefreshMode"
-            [hint]="getPricingRefreshModeHint()"
-            [error]="basicForm.controls.pricingRefreshMode.touched && basicForm.controls.pricingRefreshMode.invalid ? 'Pricing update mode is required' : ''"
-          ></gom-lib-select>
         </div>
 
         @if (!editingGroupId()) {

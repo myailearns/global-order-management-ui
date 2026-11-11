@@ -34,11 +34,13 @@ import {
 
 type PricingManagementRow = GomTableRow & {
   _id: string;
-  productDetails: string;
+  productName: string;
+  productType: string;
   category: string;
   sellingPrice: number;
   totalCost: string;
   profit: string;
+  profitPercentage: string;
   margin: string;
   priceEditable: boolean;
 };
@@ -231,19 +233,27 @@ export class PricingComponent extends SimplePricingComponent {
   ));
 
   @HostListener('window:resize')
-  onWindowResize(): void {
+  override onWindowResize(): void {
     this.viewportWidth.set(window.innerWidth);
   }
 
   readonly pricingColumns: GomTableColumn<PricingManagementRow>[] = [
     {
-      key: 'productDetails',
-      header: 'Product Details & SKU',
+      key: 'productName',
+      header: 'Product Name',
       sortable: true,
       filterable: true,
       cellClass: (_value, row) => this.dirtyCellClass(row),
-      width: '30%',
+      width: '22%',
       textMode: 'wrap',
+    },
+    {
+      key: 'productType',
+      header: 'Product Type',
+      sortable: true,
+      filterable: true,
+      cellClass: (_value, row) => this.dirtyCellClass(row),
+      width: '12%',
     },
     {
       key: 'category',
@@ -285,8 +295,17 @@ export class PricingComponent extends SimplePricingComponent {
       sortable: true,
       filterable: true,
       cellClass: (_value, row) => this.dirtyCellClass(row),
-      width: '10%',
+      width: '9%',
       sortValue: (row) => row['profitValue'],
+    },
+    {
+      key: 'profitPercentage',
+      header: 'Profit %',
+      sortable: true,
+      filterable: true,
+      cellClass: (_value, row) => this.dirtyCellClass(row),
+      width: '9%',
+      sortValue: (row) => row['profitPercentageValue'],
     },
     {
       key: 'margin',
@@ -294,13 +313,13 @@ export class PricingComponent extends SimplePricingComponent {
       sortable: true,
       filterable: true,
       cellClass: (_value, row) => this.dirtyCellClass(row),
-      width: '9%',
+      width: '8%',
       sortValue: (row) => row['marginValue'],
     },
     {
       key: 'actions',
       header: 'Actions',
-      width: '150px',
+      width: '140px',
       cellClass: (_value, row) => this.dirtyCellClass(row),
       actionButtons: [
         {
@@ -311,12 +330,7 @@ export class PricingComponent extends SimplePricingComponent {
           disabled: () => !this.canEdit(),
           disabledTooltip: 'You do not have permission to edit pricing',
         },
-        {
-          actionKey: 'info',
-          label: 'View pricing details',
-          icon: 'ri-information-line',
-          variant: 'secondary',
-        },
+      
         {
           actionKey: 'history',
           label: 'View price history',
@@ -330,10 +344,10 @@ export class PricingComponent extends SimplePricingComponent {
   readonly bulkPreviewColumns: GomTableColumn<BulkPreviewRow>[] = [
     {
       key: 'productName',
-      header: 'Product Name & SKU',
+      header: 'Product Name',
       width: '28%',
       textMode: 'wrap',
-      format: (_value, row) => `${row.productName} · ${row.sku}`,
+      format: (_value, row) => row.productName,
       cellClass: (_value, row) => this.bulkPreviewToneClass(row),
     },
     {
@@ -655,24 +669,29 @@ export class PricingComponent extends SimplePricingComponent {
     sellingPrice = Number(sellingPrice || 0);
     const totalCost = entity.actualPrice;
     const profit = totalCost === null ? null : sellingPrice - totalCost;
+    const profitPercentage = profit === null || totalCost === null || totalCost <= 0
+      ? null
+      : (profit / totalCost) * 100;
     const margin = profit === null || sellingPrice <= 0
       ? null
       : (profit / sellingPrice) * 100;
-    const sku = String(entity.variant?.sku || '').trim() || 'Not assigned';
     const typeLabel = entity.groupType.charAt(0) + entity.groupType.slice(1).toLowerCase();
 
     return {
       _id: entity.trackId,
-      productDetails: `${entity.displayName} · SKU: ${sku} · ${typeLabel}`,
+      productName: entity.displayName,
+      productType: typeLabel,
       category: entity.categoryName || '—',
       sellingPrice,
       totalCost: totalCost === null ? '—' : this.formatCurrency(totalCost),
       profit: profit === null ? '—' : this.formatCurrency(profit),
+      profitPercentage: profitPercentage === null ? '—' : `${profitPercentage.toFixed(1)}%`,
       margin: margin === null ? '—' : `${margin.toFixed(1)}%`,
       priceEditable: this.canEdit() && totalCost !== null && totalCost > 0,
       sellingPriceValue: sellingPrice,
       totalCostValue: totalCost,
       profitValue: profit,
+      profitPercentageValue: profitPercentage,
       marginValue: margin,
     };
   }

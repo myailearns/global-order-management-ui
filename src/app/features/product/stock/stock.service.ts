@@ -43,7 +43,6 @@ export interface Group {
   baseUnitId: string;
   allowedUnitIds: string[];
   groupType?: 'MEASURED' | 'ATTRIBUTE' | 'HYBRID';
-  pricingRefreshMode?: 'FIXED' | 'MANUAL_REFRESH' | 'AUTO_REFRESH';
   formula?: GroupFormula;
   resolvedFields: GroupResolvedField[];
   status: 'ACTIVE' | 'INACTIVE';
@@ -126,47 +125,6 @@ export interface StockHistoryEntry {
     costPerBaseUnit: number;
     componentCount: number;
   };
-  pricingImpact?: {
-    mode: 'FIXED' | 'MANUAL_REFRESH' | 'AUTO_REFRESH';
-    triggerSource: string;
-    planCount: number;
-    appliedCount: number;
-    suggestionCount: number;
-    historyCount: number;
-    totals: {
-      sellingPrice: number;
-      anchorPrice: number;
-      actualPrice: number;
-      marginPercent: number;
-      profitValue: number;
-    };
-    variantChanges: Array<{
-      variantId: string;
-      variantName: string;
-      triggerSource: string;
-      before: {
-        sellingPrice: number;
-        anchorPrice: number;
-        actualPrice: number;
-        marginPercent: number;
-        profitValue: number;
-      };
-      after: {
-        sellingPrice: number;
-        anchorPrice: number;
-        actualPrice: number;
-        marginPercent: number;
-        profitValue: number;
-      };
-      delta: {
-        sellingPrice: number;
-        anchorPrice: number;
-        actualPrice: number;
-        marginPercent: number;
-        profitValue: number;
-      };
-    }>;
-  } | null;
   variantAllocations?: Array<{
     variantId: string;
     quantity: number;
@@ -320,13 +278,6 @@ export class StockService {
     return this.http.patch<ApiSuccess<unknown>>(`${this.stockUrl}/${groupId}/reorder-level`, { reorderLevel });
   }
 
-  updateGroupResolvedFields(groupId: string, fields: Array<{ fieldId: string; value: number }>): Observable<ApiSuccess<unknown>> {
-    const payload = {
-      customFields: fields,
-    };
-    return this.http.put<ApiSuccess<unknown>>(`${this.groupsUrl}/${groupId}`, payload);
-  }
-
   listVariantsByGroup(groupId: string): Observable<ApiPaginated<StockVariantItem>> {
     return this.http.get<ApiPaginated<StockVariantItem>>(
       `${environment.apiBaseUrl}/variants?groupId=${groupId}&status=ACTIVE&limit=200`
@@ -349,26 +300,6 @@ export class StockService {
       groupId,
       costingMethod,
     });
-  }
-
-  listPricingRefreshSuggestions(groupId: string): Observable<ApiPaginated<{ _id: string; variantId: string; status: string; previousSnapshot: { name: string; effectivePrice: { sellingPrice: number }; additionalPrice?: number }; suggestedSnapshot: { name: string; effectivePrice: { sellingPrice: number }; additionalPrice?: number }; marginImpact?: { oldMarginPercent: number; newMarginPercent: number; changePercent: number; isBelowThreshold: boolean } }>> {
-    return this.http.get<ApiPaginated<never>>(`${this.groupsUrl}/${groupId}/pricing-refresh-suggestions?status=PENDING`);
-  }
-
-  approvePricingRefreshSuggestions(groupId: string, payload: { reason: string; suggestionIds?: string[] }): Observable<ApiSuccess<{ approvedCount: number; appliedCount: number }>> {
-    return this.http.post<ApiSuccess<{ approvedCount: number; appliedCount: number }>>(`${this.groupsUrl}/${groupId}/pricing-refresh-suggestions/approve`, payload);
-  }
-
-  rejectPricingRefreshSuggestions(groupId: string, payload: { reason: string; suggestionIds?: string[] }): Observable<ApiSuccess<{ rejectedCount: number }>> {
-    return this.http.post<ApiSuccess<{ rejectedCount: number }>>(`${this.groupsUrl}/${groupId}/pricing-refresh-suggestions/reject`, payload);
-  }
-
-  getPendingPricingSuggestionsCount(): Observable<ApiSuccess<{ count: number }>> {
-    return this.http.get<ApiSuccess<{ count: number }>>(`${this.groupsUrl}/pricing-refresh-suggestions/pending-count`);
-  }
-
-  getPendingGroupsSummary(): Observable<ApiSuccess<{ totalPending: number; groups: Array<{ groupId: string; groupName: string; pendingCount: number; lastCreatedAt: string }> }>> {
-    return this.http.get<ApiSuccess<{ totalPending: number; groups: Array<{ groupId: string; groupName: string; pendingCount: number; lastCreatedAt: string }> }>>(`${this.groupsUrl}/pricing-refresh-suggestions/pending-groups`);
   }
 
   listGroupPricingHistory(groupId: string, limit = 25): Observable<ApiPaginated<GroupPricingHistoryEntry>> {

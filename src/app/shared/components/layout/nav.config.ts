@@ -5,7 +5,7 @@ export interface NavItem {
   route: string;
   icon: string;
   translationKey: string;
-  section: 'Master Setup' | 'Marketplace' | 'Product Setup' | 'Order Management' | 'Account Management' | 'Admin App' | 'Web App' | 'Settings' | 'Notifications';
+  section: 'Master Setup' | 'Marketplace' | 'Product Setup' | 'Order Management' | 'Reports' | 'Account Management' | 'Admin App' | 'Web App' | 'Settings' | 'Notifications';
   actor: UserActor;
   capability?: AppCapability;
   featureKeys?: string[];
@@ -13,8 +13,8 @@ export interface NavItem {
 
 export const NAV_ICONS = {
   categories: 'ri-price-tag-3-line',
-  fields: 'ri-layout-grid-line',
-  fieldGroups: 'ri-folders-line',
+  fields: 'ri-coins-line',
+  fieldGroups: 'ri-stack-line',
   attributes: 'ri-price-tag-3-line',
   attributeSets: 'ri-shape-line',
   pricingTemplates: 'ri-money-dollar-circle-line',
@@ -62,14 +62,14 @@ export const NAV_ICONS = {
   billing: 'ri-bill-line',
   businessDetails: 'ri-store-2-line',
   paymentOptions: 'ri-bank-card-line',
+  salesReport: 'ri-line-chart-line',
 } as const;
 
 export const NAV_ITEMS: NavItem[] = [
   { label: 'Categories', route: '/masters/categories', icon: NAV_ICONS.categories, translationKey: 'app.navigation.categories', section: 'Master Setup', actor: 'tenant', capability: 'masters', featureKeys: ['category.list', 'category.create', 'category.edit', 'category.delete'] },
-  { label: 'Fields', route: '/masters/fields', icon: NAV_ICONS.fields, translationKey: 'app.navigation.fields', section: 'Master Setup', actor: 'tenant', capability: 'masters', featureKeys: ['field.list', 'field.create', 'field.edit', 'field.delete'] },
-  { label: 'Field Groups', route: '/masters/field-groups', icon: NAV_ICONS.fieldGroups, translationKey: 'app.navigation.fieldGroups', section: 'Master Setup', actor: 'tenant', capability: 'masters', featureKeys: ['fieldGroup.list', 'fieldGroup.create', 'fieldGroup.edit', 'fieldGroup.delete'] },
+  { label: 'Cast Fields', route: '/masters/fields', icon: NAV_ICONS.fields, translationKey: 'app.navigation.fields', section: 'Master Setup', actor: 'tenant', capability: 'masters', featureKeys: ['field.list', 'field.create', 'field.edit', 'field.delete'] },
+  { label: 'Cost Field Groups', route: '/masters/field-groups', icon: NAV_ICONS.fieldGroups, translationKey: 'app.navigation.fieldGroups', section: 'Master Setup', actor: 'tenant', capability: 'masters', featureKeys: ['fieldGroup.list', 'fieldGroup.create', 'fieldGroup.edit', 'fieldGroup.delete'] },
   { label: 'Attributes', route: '/masters/attributes', icon: NAV_ICONS.attributes, translationKey: 'app.navigation.attributes', section: 'Master Setup', actor: 'tenant', capability: 'masters', featureKeys: ['attribute.list', 'attribute.create', 'attribute.edit', 'attribute.delete'] },
-  { label: 'Attribute Sets', route: '/masters/attribute-sets', icon: NAV_ICONS.attributeSets, translationKey: 'app.navigation.attributeSets', section: 'Master Setup', actor: 'tenant', capability: 'masters', featureKeys: ['attributeSet.list', 'attributeSet.create', 'attributeSet.edit', 'attributeSet.delete'] },
   { label: 'Pricing Templates', route: '/masters/pricing-templates', icon: NAV_ICONS.pricingTemplates, translationKey: 'app.navigation.pricingTemplates', section: 'Master Setup', actor: 'tenant', capability: 'masters', featureKeys: ['pricingTemplate.list', 'pricingTemplate.create', 'pricingTemplate.edit', 'pricingTemplate.delete'] },
   { label: 'Units', route: '/masters/units', icon: NAV_ICONS.units, translationKey: 'app.navigation.units', section: 'Master Setup', actor: 'tenant', capability: 'masters', featureKeys: ['unit.list', 'unit.create', 'unit.edit', 'unit.delete'] },
   { label: 'Tax Profiles', route: '/masters/tax-profiles', icon: NAV_ICONS.taxProfiles, translationKey: 'app.navigation.taxProfiles', section: 'Master Setup', actor: 'tenant', capability: 'masters', featureKeys: ['taxProfile.list', 'taxProfile.create', 'taxProfile.edit'] },
@@ -79,7 +79,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: 'Stock', route: '/product/stock', icon: NAV_ICONS.stock, translationKey: 'app.navigation.stock', section: 'Product Setup', actor: 'tenant', capability: 'product', featureKeys: ['stock.list'] },
   { label: 'Variants', route: '/product/variants', icon: NAV_ICONS.variants, translationKey: 'app.navigation.variants', section: 'Product Setup', actor: 'tenant', capability: 'product', featureKeys: ['variant.list'] },
   { label: 'Packs', route: '/product/packs', icon: NAV_ICONS.packs, translationKey: 'app.navigation.packs', section: 'Product Setup', actor: 'tenant', capability: 'product', featureKeys: ['pack.list'] },
-  { label: 'Simple Pricing', route: '/pricing/simple', icon: NAV_ICONS.simplePricing, translationKey: 'app.navigation.simplePricing', section: 'Product Setup', actor: 'tenant', capability: 'product', featureKeys: ['variant.list'] },
+  { label: 'Pricing', route: '/pricing/simple', icon: NAV_ICONS.simplePricing, translationKey: 'app.navigation.simplePricing', section: 'Product Setup', actor: 'tenant', capability: 'product', featureKeys: ['variant.list'] },
   { label: 'Media Library', route: '/product/media', icon: NAV_ICONS.mediaLibrary, translationKey: 'app.navigation.mediaLibrary', section: 'Product Setup', actor: 'tenant', capability: 'product', featureKeys: ['media.list'] },
   { label: 'Orders', route: '/orders/list', icon: NAV_ICONS.orders, translationKey: 'app.navigation.orders', section: 'Order Management', actor: 'tenant', capability: 'orders', featureKeys: ['order.list'] },
   { label: 'Customers', route: '/customers/list', icon: NAV_ICONS.customers, translationKey: 'app.navigation.customers', section: 'Order Management', actor: 'tenant', capability: 'customers', featureKeys: ['customer.list'] },
@@ -115,6 +115,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: 'Billing', route: '/admin-app/billing', icon: NAV_ICONS.billing, translationKey: 'app.navigation.billing', section: 'Admin App', actor: 'tenant', capability: 'orders' },
   { label: 'Business Details', route: '/admin-app/business-details', icon: NAV_ICONS.businessDetails, translationKey: 'app.navigation.businessDetails', section: 'Admin App', actor: 'tenant', capability: 'tenant-admin', featureKeys: ['roles.view', 'roles.edit'] },
   { label: 'Payment Options', route: '/admin-app/payment-options', icon: NAV_ICONS.paymentOptions, translationKey: 'app.navigation.paymentOptions', section: 'Admin App', actor: 'tenant', capability: 'orders' },
+  { label: 'Sales Report', route: '/reports/sales', icon: NAV_ICONS.salesReport, translationKey: 'app.navigation.salesReport', section: 'Reports', actor: 'tenant', capability: 'reports', featureKeys: ['reports.sales.view'] },
 ];
 
 export function getNavIcon(route: string, fallback = 'ri-apps-line'): string {

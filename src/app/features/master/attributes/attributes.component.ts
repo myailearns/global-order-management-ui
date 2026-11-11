@@ -6,7 +6,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { GomAlertToastService, GomButtonComponent, GomConfirmationModalComponent, GomInputComponent, GomModalComponent, GomSelectComponent, GomTableColumn, GomTableComponent, GomTableQuery, GomTableRow, GomTextareaComponent } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { DisableIfNoFeatureDirective } from '../../../shared/directives/disable-if-no-feature.directive';
-import { ATTRIBUTE_DEFAULT_STATUS, ATTRIBUTE_STATUS_OPTIONS, ATTRIBUTE_UI_TEXT } from './attributes.constants';
+import { ATTRIBUTE_DEFAULT_STATUS, ATTRIBUTE_UI_TEXT } from './attributes.constants';
 import { AttributeDefinition, AttributeDefinitionPayload, AttributesService } from './attributes.service';
 import { getNavIcon } from '../../../shared/components/layout/nav.config';
 import { PageHeadingComponent } from '../../../shared/components/page-heading/page-heading.component';
@@ -35,7 +35,7 @@ export class AttributesComponent implements OnInit {
 
   readonly text = ATTRIBUTE_UI_TEXT;
   readonly headingIcon = getNavIcon('/masters/attributes');
-  readonly statusOptions = ATTRIBUTE_STATUS_OPTIONS;
+  readonly statusOptions: { label: string; value: string }[] = [];
   readonly viewportWidth = signal<number>(window.innerWidth);
   readonly isMobileHeader = computed<boolean>(() => this.viewportWidth() <= 768);
   readonly loading = signal(false);
@@ -58,7 +58,6 @@ export class AttributesComponent implements OnInit {
 
   readonly form = this.fb.nonNullable.group({
     name: ['', [Validators.required, Validators.minLength(2)]],
-    key: ['', [Validators.required, Validators.pattern(/^[a-z0-9._-]{2,80}$/)]],
     allowedValues: ['', []],
     status: [ATTRIBUTE_DEFAULT_STATUS as string, [Validators.required]],
   });
@@ -82,7 +81,9 @@ export class AttributesComponent implements OnInit {
 
   constructor() {
     this.rebuildText();
+    this.rebuildStatusOptions();
     this.translate.onLangChange.subscribe(() => this.rebuildText());
+    this.translate.onLangChange.subscribe(() => this.rebuildStatusOptions());
   }
 
   @HostListener('window:resize')
@@ -99,7 +100,6 @@ export class AttributesComponent implements OnInit {
     this.selected.set(null);
     this.form.reset({
       name: '',
-      key: '',
       allowedValues: '',
       status: ATTRIBUTE_DEFAULT_STATUS,
     });
@@ -128,7 +128,8 @@ export class AttributesComponent implements OnInit {
   }
 
   onAction(event: { actionKey: string; row: GomTableRow }): void {
-    const id = String(event.row['_id'] || '');
+    const rawId = event.row['_id'];
+    const id = typeof rawId === 'string' ? rawId : '';
     const item = this.items().find((row) => row._id === id);
     if (!item) return;
 
@@ -137,7 +138,6 @@ export class AttributesComponent implements OnInit {
       this.selected.set(item);
       this.form.patchValue({
         name: item.name,
-        key: item.key,
         allowedValues: item.allowedValues?.join(', ') || '',
         status: item.status,
       });
@@ -159,9 +159,10 @@ export class AttributesComponent implements OnInit {
     }
 
     const raw = this.form.getRawValue();
+    const generatedKey = this.generateAttributeKey(raw.name);
     const payload: AttributeDefinitionPayload = {
       name: raw.name.trim(),
-      key: raw.key.trim().toLowerCase(),
+      key: this.selected()?.key?.trim().toLowerCase() || generatedKey,
       allowedValues: raw.allowedValues.trim().split(',').map((item) => item.trim()).filter(Boolean),
       status: raw.status as any,
     };
@@ -251,5 +252,32 @@ export class AttributesComponent implements OnInit {
       { label: this.translate.instant(this.text.editAction), icon: 'ri-pencil-line', actionKey: 'edit', variant: 'secondary' },
       { label: this.translate.instant(this.text.deleteAction), icon: 'ri-delete-bin-line', actionKey: 'delete', variant: 'secondary' },
     ];
+  }
+
+  private rebuildStatusOptions(): void {
+    this.statusOptions.length = 0;
+    this.statusOptions.push(
+      { label: this.translate.instant('common.status.active'), value: 'ACTIVE' },
+      { label: this.translate.instant('common.status.inactive'), value: 'INACTIVE' },
+    );
+  }
+
+  private generateAttributeKey(rawName: string): string {
+    const tokens = rawName
+      .trim()
+      .toLowerCase()
+      .split(/[^a-zA-Z0-9]+/)
+      .filter((token) => token.length > 0);
+
+    if (tokens.length === 0) {
+      return '';
+    }
+
+    const [first, ...rest] = tokens;
+    const suffix = rest
+      .map((token) => token.charAt(0).toUpperCase() + token.slice(1))
+      .join('');
+
+    return `${first}${suffix}`;
   }
 }

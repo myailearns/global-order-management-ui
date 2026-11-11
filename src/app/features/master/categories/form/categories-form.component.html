@@ -57,8 +57,9 @@
         }
       </section>
 
-      <div gom-modal-actions class="category-form__actions gom-modal__action-layout">
-        <div class="gom-modal__action-layout-start">
+      <footer gom-modal-actions class="category-form__actions gom-modal__action-layout">
+        <div class="gom-modal__action-layout-start"></div>
+        <div class="gom-modal__action-layout-end">
           <gom-lib-button
             class="category-form__action"
             type="button"
@@ -75,9 +76,7 @@
               {{ text.cancel | translate }}
             }
           </gom-lib-button>
-        </div>
 
-        <div class="gom-modal__action-layout-end">
           <gom-lib-button
             class="category-form__action"
             type="submit"
@@ -95,7 +94,7 @@
             }
           </gom-lib-button>
         </div>
-      </div>
+      </footer>
     </form>
   }
 </gom-lib-modal>

@@ -1,0 +1,177 @@
+<section class="sales-report">
+  <header class="sales-report__header">
+    <div class="sales-report__heading">
+      <gom-page-heading navRoute="/reports/sales"></gom-page-heading>
+      <p>Review sales performance and profitability.</p>
+    </div>
+    <gom-lib-button
+      type="button"
+      variant="secondary"
+      [disabled]="exporting() || loading() || !report()"
+      (buttonClick)="exportToExcel()"
+    >
+      <i class="ri-file-excel-2-line" aria-hidden="true"></i>
+      {{ exporting() ? 'Exporting...' : 'Export to Excel' }}
+    </gom-lib-button>
+  </header>
+
+  <gom-lib-card class="sales-report__filters">
+    <div class="sales-report__quick-ranges" role="group" aria-label="Date range">
+      @for (option of quickRanges; track option.key) {
+        <gom-lib-chip
+          [interactive]="true"
+          [selected]="activeRange() === option.key"
+          tone="info"
+          (chipClick)="selectQuickRange(option.key)"
+        >
+          {{ option.label }}
+        </gom-lib-chip>
+      }
+    </div>
+
+    <form class="sales-report__filter-grid" [formGroup]="form">
+      @if (customRangeOpen()) {
+        <gom-lib-input label="From" type="date" formControlName="from" (valueChange)="onDateChange()"></gom-lib-input>
+        <gom-lib-input label="To" type="date" formControlName="to" (valueChange)="onDateChange()"></gom-lib-input>
+      }
+      <gom-lib-select
+        label="Product category"
+        [options]="categoryOptions()"
+        formControlName="categoryId"
+      ></gom-lib-select>
+      <gom-lib-input
+        label="Product search"
+        placeholder="Search by product name"
+        [clearable]="true"
+        formControlName="search"
+      ></gom-lib-input>
+    </form>
+  </gom-lib-card>
+
+  @if (errorMessage()) {
+    <div class="sales-report__state sales-report__state--error" role="alert">
+      <i class="ri-error-warning-line" aria-hidden="true"></i>
+      <p>{{ errorMessage() }}</p>
+      <gom-lib-button type="button" variant="ghost" (buttonClick)="retry()">Retry</gom-lib-button>
+    </div>
+  }
+
+  @if (summary(); as data) {
+    <div class="sales-report__kpis">
+      <gom-lib-card class="sales-report__kpi">
+        <span class="sales-report__kpi-label">Total revenue</span>
+        <strong class="sales-report__kpi-value">{{ money(data.profitability.revenueExTax) }}</strong>
+        <span class="sales-report__kpi-hint">{{ data.orderCount }} orders</span>
+      </gom-lib-card>
+      <gom-lib-card class="sales-report__kpi">
+        <span class="sales-report__kpi-label">Total cost</span>
+        <strong class="sales-report__kpi-value">{{ money(data.profitability.cost) }}</strong>
+        <span class="sales-report__kpi-hint">Cost of goods sold</span>
+      </gom-lib-card>
+      <gom-lib-card class="sales-report__kpi sales-report__kpi--highlight">
+        <span class="sales-report__kpi-label">Gross profit</span>
+        <strong class="sales-report__kpi-value">{{ money(data.profitability.profit) }}</strong>
+        <span class="sales-report__kpi-hint">{{ percent(data.profitability.marginPct) }} margin</span>
+      </gom-lib-card>
+    </div>
+
+    <p class="sales-report__note">
+      Quantities stay in their own units. Gross profit = revenue − cost. Amounts exclude GST.
+      @if (data.profitability.linesWithoutCost > 0) {
+        {{ data.profitability.linesWithoutCost }} sold lines have no recorded cost and are left out of profit and margin.
+      }
+    </p>
+
+    @if (data.topProduct || data.topVariants.length) {
+      <div class="sales-report__highlights">
+        @if (data.topProduct; as top) {
+          <div class="sales-report__highlight">
+            <i class="ri-trophy-line" aria-hidden="true"></i>
+            <div>
+              <span>Top product</span>
+              <strong>{{ top.name }}</strong>
+              <small>{{ money(top.revenue) }}</small>
+            </div>
+          </div>
+        }
+        @if (data.topVariants.length) {
+          <div class="sales-report__highlight">
+            <i class="ri-star-line" aria-hidden="true"></i>
+            <div>
+              <span>Top variant</span>
+              <strong>
+                {{ data.topVariants[0].name }}
+                @if (data.topVariants.length > 1) {
+                  <small>+{{ data.topVariants.length - 1 }} more</small>
+                }
+              </strong>
+              <small>{{ data.topVariants[0].groupName }} · {{ money(data.topVariants[0].revenue) }}</small>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  }
+
+  <gom-lib-card class="sales-report__table-card">
+    <div class="sales-report__table-header">
+      <h3>Product performance ({{ summary()?.groupCount ?? 0 }} products)</h3>
+      <div class="sales-report__table-actions">
+        <gom-lib-button type="button" variant="ghost" (buttonClick)="table.expandAll()">Expand all</gom-lib-button>
+        <gom-lib-button type="button" variant="ghost" (buttonClick)="table.collapseAll()">Collapse all</gom-lib-button>
+      </div>
+    </div>
+
+    <gom-lib-table
+      #table
+      [columns]="columns"
+      [rows]="rows()"
+      [loading]="loading()"
+      [expandable]="true"
+      [showToolbar]="false"
+      [showSearch]="false"
+      [showFilterButton]="false"
+      [enableColumnSearch]="false"
+      [enableColumnVisibility]="false"
+      [pageSize]="10"
+      [pageSizeOptions]="[10, 20, 50]"
+      selectionItemLabel="product"
+      emptyMessage="No sales found for the selected filters."
+    >
+      <ng-template gomTableCell="name" let-row="row" let-isChild="isChild">
+        <div class="sales-report__name" [class.sales-report__name--child]="isChild">
+          <strong>{{ row.name }}</strong>
+          @if (row.subtitle) {
+            <small>{{ row.subtitle }}</small>
+          }
+        </div>
+      </ng-template>
+
+      <ng-template gomTableCell="typeLabel" let-row="row" let-isChild="isChild">
+        @if (!isChild && row.typeLabel) {
+          <gom-lib-chip tone="neutral" size="compact">{{ row.typeLabel }}</gom-lib-chip>
+        }
+      </ng-template>
+
+      <ng-template gomTableCell="marginPct" let-row="row">
+        <gom-lib-chip [tone]="row.marginTone" size="compact">{{ percent(row.marginPct) }}</gom-lib-chip>
+      </ng-template>
+
+      @if (summary(); as data) {
+        <tr gomTableFooterRow>
+          <td></td>
+          <td>
+            <strong>Report total</strong>
+            <div class="sales-report__footer-note">Product totals only, variants are not counted twice</div>
+          </td>
+          <td></td>
+          <td class="sales-report__cell--end">{{ quantityText(data.quantityByUnit) }}</td>
+          <td class="sales-report__cell--end">{{ money(data.profitability.revenueExTax) }}</td>
+          <td class="sales-report__cell--end">{{ money(data.profitability.cost) }}</td>
+          <td class="sales-report__cell--end">{{ money(data.profitability.profit) }}</td>
+          <td class="sales-report__cell--end">{{ percent(data.profitability.marginPct) }}</td>
+        </tr>
+      }
+    </gom-lib-table>
+  </gom-lib-card>
+</section>

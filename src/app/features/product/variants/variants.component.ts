@@ -29,12 +29,10 @@ import { GroupImage, GroupImageEntry } from '../../saas-platform/media/media-ass
 import { ImagePickerComponent, PickedImage } from '../../../shared/components/image-picker/image-picker.component';
 import { RichTextEditorComponent } from '../../../shared/components/rich-text-editor/rich-text-editor.component';
 import { DisableIfNoFeatureDirective } from '../../../shared/directives/disable-if-no-feature.directive';
-import { PriceApprovalModalComponent } from '../pricing-approval/price-approval-modal.component';
 import { PageHeadingComponent } from '../../../shared/components/page-heading/page-heading.component';
 import { ProductCollection, ProductCollectionsService } from '../product-collections/product-collections.service';
 import {
   Group,
-  PricingRefreshSuggestion,
   Unit,
   VariantCombinationItem,
   Variant,
@@ -50,9 +48,11 @@ interface VariantRow extends GomTableRow {
   quantity: string;
   convertedQuantity: string;
   pricingMode: string;
+  actualPrice: string;
   basePrice: string;
   additionalPrice: string;
   finalPrice: string;
+  mrp: string;
   discount: string;
   updatedAt: string;
   actions: string;
@@ -109,7 +109,6 @@ interface VariantCollectionMembership {
     GomModalComponent,
     GomConfirmationModalComponent,
     GomAccordionComponent,
-    PriceApprovalModalComponent,
     ImagePickerComponent,
     RichTextEditorComponent,
     PageHeadingComponent,
@@ -166,8 +165,6 @@ export class VariantsComponent implements OnInit {
   readonly units = signal<Unit[]>([]);
   readonly variants = signal<Variant[]>([]);
   readonly selectedGroupId = signal('');
-  readonly pricingSuggestions = signal<PricingRefreshSuggestion[]>([]);
-  readonly loadingPricingSuggestions = signal(false);
   readonly draftRows = signal<VariantDraftRow[]>([]);
   readonly bulkFieldOverrideEntries = signal<Array<{ id: string; key: string; value: string }>>([]);
   readonly bulkSaving = signal(false);
@@ -232,12 +229,6 @@ export class VariantsComponent implements OnInit {
 
   readonly optionSelectionControls = signal<Record<string, string>>({});
 
-  readonly hasPendingPricingSuggestions = computed(() => this.pricingSuggestions().length > 0);
-  readonly suggestionWarningCount = computed(
-    () => this.pricingSuggestions().filter((item) => !!item.marginImpact?.isBelowThreshold).length
-  );
-
-  readonly priceApprovalOpen = signal(false);
   readonly variantCollectionsModalOpen = signal(false);
   readonly loadingVariantCollections = signal(false);
   readonly currentVariantForCollections = signal<Variant | null>(null);
@@ -497,9 +488,11 @@ export class VariantsComponent implements OnInit {
     { key: 'quantity', header: 'Weight', sortable: true, width: '9rem' },
     { key: 'convertedQuantity', header: 'Base Qty', sortable: true, width: '10rem' },
     { key: 'pricingMode', header: 'Pricing Mode', sortable: true, width: '10rem' },
+    { key: 'actualPrice', header: 'Actual Price', sortable: true, width: '10rem' },
     { key: 'basePrice', header: 'Base Price', sortable: true, width: '10rem' },
     { key: 'additionalPrice', header: 'Additional Charge', sortable: true, width: '11rem' },
-    { key: 'finalPrice', header: 'Final Price', sortable: true, width: '10rem' },
+    { key: 'finalPrice', header: 'Selling Price', sortable: true, width: '10rem' },
+    { key: 'mrp', header: 'MRP', sortable: true, width: '10rem' },
     { key: 'discount', header: 'Discount', sortable: true, width: '10rem' },
     { key: 'updatedAt', header: 'Updated', sortable: true, width: '10rem' },
     {
@@ -579,9 +572,11 @@ export class VariantsComponent implements OnInit {
         quantity: `${this.formatNumber(variant.quantity)} ${symbol}`.trim(),
         convertedQuantity: this.formatNumber(variant.convertedQuantity),
         pricingMode: variant.pricingMode || 'FORMULA',
+        actualPrice: this.formatCurrency(variant.effectivePrice?.actualPrice ?? variant.price.actualPrice ?? 0),
         basePrice: this.formatCurrency(variant.price.sellingPrice),
         additionalPrice: this.formatCurrency(Number(variant.additionalPrice || 0)),
         finalPrice: this.formatCurrency(variant.effectivePrice?.sellingPrice ?? variant.price.sellingPrice),
+        mrp: this.formatCurrency(variant.effectivePrice?.anchorPrice ?? variant.price.anchorPrice),
         discount: this.formatDiscount(variant),
         updatedAt: new Date(variant.updatedAt).toLocaleDateString(),
         actions: 'Actions',
@@ -792,7 +787,6 @@ export class VariantsComponent implements OnInit {
 
     if (!groupId) {
       this.variants.set([]);
-      this.pricingSuggestions.set([]);
       this.clearDraftRows();
       return;
     }
@@ -822,7 +816,6 @@ export class VariantsComponent implements OnInit {
         } else {
           this.variants.set(response.data || []);
         }
-        this.loadPricingSuggestions(groupId);
         this.loading.set(false);
       },
       error: () => {
@@ -868,7 +861,6 @@ export class VariantsComponent implements OnInit {
         this.canLoadAllVariants.set(false);
         this.allVariantsLoaded.set(true);
         this.variantTablePageIndex.set(0);
-        this.loadPricingSuggestions(groupId);
         this.loading.set(false);
       },
       error: () => this.loading.set(false),
@@ -2124,7 +2116,6 @@ export class VariantsComponent implements OnInit {
         this.deletingVariantName.set('');
         this.deletingVariantImpactCount.set(null);
         this.loadVariants(this.selectedGroupId());
-        this.loadPricingSuggestions(this.selectedGroupId());
         this.saving.set(false);
       },
       error: (error) => {
@@ -2147,66 +2138,6 @@ export class VariantsComponent implements OnInit {
     }
 
     return `Delete ${name || 'this variant'}?`;
-  }
-
-  loadPricingSuggestions(groupId: string): void {
-    if (!groupId) {
-      this.pricingSuggestions.set([]);
-      return;
-    }
-
-    this.loadingPricingSuggestions.set(true);
-    this.service.listPricingRefreshSuggestions(groupId, 'PENDING').subscribe({
-      next: (response) => {
-        this.pricingSuggestions.set(response.data || []);
-        this.loadingPricingSuggestions.set(false);
-      },
-      error: () => {
-        this.pricingSuggestions.set([]);
-        this.loadingPricingSuggestions.set(false);
-      },
-    });
-  }
-
-  openPriceApproval(): void {
-    const groupId = this.selectedGroupId();
-    if (!groupId) {
-      this.toast.warning('Please select a group first.');
-      return;
-    }
-
-    this.service.listPricingRefreshSuggestions(groupId, 'PENDING').subscribe({
-      next: (res) => {
-        const count = Number(res.pagination?.total || 0);
-        if (count > 0) {
-          this.priceApprovalOpen.set(true);
-          return;
-        }
-
-        this.toast.info('No pending pricing suggestions found.');
-      },
-      error: () => {
-        this.toast.error('Unable to load pending pricing suggestions. Please try again.');
-      },
-    });
-  }
-
-  onPriceApprovalCompleted(): void {
-    this.priceApprovalOpen.set(false);
-    const groupId = this.selectedGroupId();
-    if (groupId) {
-      this.loadPricingSuggestions(groupId);
-      this.loadVariants(groupId);
-    }
-  }
-
-  getPendingPricingSubtitle(): string {
-    const count = this.pricingSuggestions().length;
-    const warningCount = this.suggestionWarningCount();
-    if (warningCount > 0) {
-      return `${count} pending • ${warningCount} below threshold`;
-    }
-    return count === 1 ? '1 pending suggestion' : `${count} pending suggestions`;
   }
 
   formatMarginPercent(value: number | undefined): string {

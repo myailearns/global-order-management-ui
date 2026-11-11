@@ -14,7 +14,7 @@
         @if (hasVisibleTemplates() || loading()) {
           <section class="template-list">
             <div class="template-list__toolbar">
-              <gom-lib-button type="button" variant="primary" [disabled]="loading()" (buttonClick)="openCreateTemplate()">
+              <gom-lib-button type="button" variant="secondary" [disabled]="loading()" (buttonClick)="openCreateTemplate()">
                 + Create Template
               </gom-lib-button>
             </div>

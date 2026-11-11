@@ -29,11 +29,11 @@ export const FEATURE_TEMPLATES: FeatureTemplate[] = [
   { featureKey: 'attribute.create', displayName: 'Create Attribute', module: 'masters', dependencies: [], filters: [{ key: 'max_count', defaultValue: 100 }] },
   { featureKey: 'attribute.edit', displayName: 'Edit Attribute', module: 'masters', dependencies: ['attribute.list'] },
   { featureKey: 'attribute.delete', displayName: 'Delete Attribute', module: 'masters', dependencies: ['attribute.list'] },
-  { featureKey: 'fieldGroup.list', displayName: 'View Field Groups', module: 'masters', dependencies: [] },
-  { featureKey: 'fieldGroup.view', displayName: 'View Field Group', module: 'masters', dependencies: ['fieldGroup.list'] },
-  { featureKey: 'fieldGroup.create', displayName: 'Create Field Group', module: 'masters', dependencies: [] },
-  { featureKey: 'fieldGroup.edit', displayName: 'Edit Field Group', module: 'masters', dependencies: ['fieldGroup.list'] },
-  { featureKey: 'fieldGroup.delete', displayName: 'Delete Field Group', module: 'masters', dependencies: ['fieldGroup.list'] },
+  { featureKey: 'fieldGroup.list', displayName: 'View Cost Field Groups', module: 'masters', dependencies: [] },
+  { featureKey: 'fieldGroup.view', displayName: 'View Cost Field Group', module: 'masters', dependencies: ['fieldGroup.list'] },
+  { featureKey: 'fieldGroup.create', displayName: 'Create Cost Field Group', module: 'masters', dependencies: [] },
+  { featureKey: 'fieldGroup.edit', displayName: 'Edit Cost Field Group', module: 'masters', dependencies: ['fieldGroup.list'] },
+  { featureKey: 'fieldGroup.delete', displayName: 'Delete Cost Field Group', module: 'masters', dependencies: ['fieldGroup.list'] },
   { featureKey: 'attributeSet.list', displayName: 'View Attribute Sets', module: 'masters', dependencies: [] },
   { featureKey: 'attributeSet.view', displayName: 'View Attribute Set', module: 'masters', dependencies: ['attributeSet.list'] },
   { featureKey: 'attributeSet.create', displayName: 'Create Attribute Set', module: 'masters', dependencies: [], filters: [{ key: 'max_count', defaultValue: 100 }] },
@@ -155,6 +155,7 @@ export const FEATURE_TEMPLATES: FeatureTemplate[] = [
   { featureKey: 'media.upload', displayName: 'Upload Media', module: 'product', dependencies: ['media.list'], filters: [{ key: 'max_images', defaultValue: 10 }, { key: 'max_videos', defaultValue: 1 }] },
   { featureKey: 'media.delete', displayName: 'Delete Media', module: 'product', dependencies: ['media.list'] },
   { featureKey: 'pricing.simple.edit', displayName: 'Edit Simple Pricing', module: 'product', dependencies: ['variant.list'] },
+  { featureKey: 'reports.sales.view', displayName: 'Sales Report', module: 'reports', dependencies: [] },
 ];
 
 export function toFeatureTemplateSyncPayload() {
