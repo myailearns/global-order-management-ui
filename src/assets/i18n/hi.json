@@ -82,7 +82,9 @@
       "createOrderSettings": "ऑर्डर बनाने की सेटिंग्स",
       "billing": "बिलिंग",
       "businessDetails": "व्यवसाय विवरण",
-      "paymentOptions": "भुगतान विकल्प"
+      "paymentOptions": "भुगतान विकल्प",
+      "reports": "रिपोर्ट्स",
+      "salesReport": "सेल्स रिपोर्ट"
     },
     "actions": {
       "notifications": "सूचनाएं",

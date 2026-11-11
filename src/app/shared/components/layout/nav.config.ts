@@ -5,7 +5,7 @@ export interface NavItem {
   route: string;
   icon: string;
   translationKey: string;
-  section: 'Master Setup' | 'Marketplace' | 'Product Setup' | 'Order Management' | 'Account Management' | 'Admin App' | 'Web App' | 'Settings' | 'Notifications';
+  section: 'Master Setup' | 'Marketplace' | 'Product Setup' | 'Order Management' | 'Reports' | 'Account Management' | 'Admin App' | 'Web App' | 'Settings' | 'Notifications';
   actor: UserActor;
   capability?: AppCapability;
   featureKeys?: string[];
@@ -62,6 +62,7 @@ export const NAV_ICONS = {
   billing: 'ri-bill-line',
   businessDetails: 'ri-store-2-line',
   paymentOptions: 'ri-bank-card-line',
+  salesReport: 'ri-line-chart-line',
 } as const;
 
 export const NAV_ITEMS: NavItem[] = [
@@ -114,6 +115,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: 'Billing', route: '/admin-app/billing', icon: NAV_ICONS.billing, translationKey: 'app.navigation.billing', section: 'Admin App', actor: 'tenant', capability: 'orders' },
   { label: 'Business Details', route: '/admin-app/business-details', icon: NAV_ICONS.businessDetails, translationKey: 'app.navigation.businessDetails', section: 'Admin App', actor: 'tenant', capability: 'tenant-admin', featureKeys: ['roles.view', 'roles.edit'] },
   { label: 'Payment Options', route: '/admin-app/payment-options', icon: NAV_ICONS.paymentOptions, translationKey: 'app.navigation.paymentOptions', section: 'Admin App', actor: 'tenant', capability: 'orders' },
+  { label: 'Sales Report', route: '/reports/sales', icon: NAV_ICONS.salesReport, translationKey: 'app.navigation.salesReport', section: 'Reports', actor: 'tenant', capability: 'reports', featureKeys: ['reports.sales.view'] },
 ];
 
 export function getNavIcon(route: string, fallback = 'ri-apps-line'): string {

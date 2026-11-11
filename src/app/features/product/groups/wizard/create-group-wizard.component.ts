@@ -1173,7 +1173,6 @@ export class CreateGroupWizardComponent implements OnInit {
         anchorPrice: String(this.formulaForm.controls.anchorPrice.value || '').trim(),
         actualPrice: String(this.formulaForm.controls.actualPrice.value || '').trim(),
       },
-      pricingRefreshMode: 'AUTO_REFRESH',
       baseUnitId,
       allowedUnitIds: [...allowedUnitIds],
       taxProfileId,

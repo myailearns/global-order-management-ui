@@ -74,7 +74,6 @@ export class GomShellComponent implements OnInit, OnDestroy {
   readonly currentLanguage = signal<AppLanguage>(this.i18n.currentLanguage());
   readonly currentSession = this.authSession.session;
   readonly tenantApplicationName = signal('');
-  readonly pendingPricingCount = signal(0);
   readonly clearLocalCatalogConfirmOpen = signal(false);
   readonly clearingLocalCatalog = signal(false);
   readonly catalogSyncModalOpen = signal(false);
@@ -174,6 +173,7 @@ export class GomShellComponent implements OnInit, OnDestroy {
     'Marketplace': true,
     'Product Setup': true,
     'Order Management': true,
+    'Reports': true,
     'Account Management': true,
     'Admin App': true,
     'Web App': true,
@@ -204,7 +204,7 @@ export class GomShellComponent implements OnInit, OnDestroy {
 
   readonly sections = computed<Array<NavItem['section']>>(() => {
     const visibleItems = this.groupedNavItems();
-    const orderedSections: Array<NavItem['section']> = ['Master Setup', 'Marketplace', 'Product Setup', 'Order Management', 'Account Management', 'Admin App', 'Web App', 'Settings', 'Notifications'];
+    const orderedSections: Array<NavItem['section']> = ['Master Setup', 'Marketplace', 'Product Setup', 'Order Management', 'Reports', 'Account Management', 'Admin App', 'Web App', 'Settings', 'Notifications'];
     return orderedSections.filter((section) => visibleItems.some((item) => item.section === section));
   });
 
@@ -280,13 +280,11 @@ export class GomShellComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.loadPendingPricingCount();
     this.loadTenantApplicationName();
 
     this.router.events
       .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
       .subscribe(() => {
-        this.loadPendingPricingCount();
         this.loadTenantApplicationName();
       });
 
@@ -430,21 +428,6 @@ export class GomShellComponent implements OnInit, OnDestroy {
     });
   }
 
-  loadPendingPricingCount(): void {
-    const session = this.authSession.session();
-    if (session?.actorType !== 'tenant') return;
-    const headers = this.authSession.getTenantHeaders();
-    this.http
-      .get<{ success: boolean; data: { totalPending: number; groups: Array<{ groupId: string; pendingCount: number }> } }>(
-        `${environment.apiBaseUrl}/groups/pricing-refresh-suggestions/pending-groups`,
-        { headers }
-      )
-      .subscribe({
-        next: (res) => this.pendingPricingCount.set(Array.isArray(res?.data?.groups) ? res.data.groups.length : 0),
-        error: () => this.pendingPricingCount.set(0),
-      });
-  }
-
   loadTenantApplicationName(): void {
     const session = this.authSession.session();
     if (session?.actorType !== 'tenant') {
@@ -503,6 +486,10 @@ export class GomShellComponent implements OnInit, OnDestroy {
 
     if (section === 'Product Setup') {
       return 'app.navigation.productSetup';
+    }
+
+    if (section === 'Reports') {
+      return 'app.navigation.reports';
     }
 
     if (section === 'Account Management') {

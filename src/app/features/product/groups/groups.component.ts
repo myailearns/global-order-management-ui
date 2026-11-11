@@ -50,7 +50,6 @@ import {
   GroupCompletionStatus,
   GroupVariantGenerationPreview,
   GroupPayload,
-  PricingRefreshMode,
   GroupsService,
   Unit,
   TaxProfile,
@@ -408,7 +407,6 @@ export class GroupsComponent implements OnInit, OnDestroy {
     createDefaultVariant: [false],
     categoryId: ['', [Validators.required]],
     taxProfileId: [''],
-    pricingRefreshMode: ['AUTO_REFRESH' as PricingRefreshMode, [Validators.required]],
   });
 
   readonly selectionForm = this.fb.group({
@@ -938,26 +936,6 @@ export class GroupsComponent implements OnInit, OnDestroy {
   readonly groupCollectionOptions = computed<GomSelectOption[]>(() =>
     this.availableProductCollections().map((item) => ({ value: item._id, label: item.name }))
   );
-
-  readonly pricingRefreshModeOptions: GomSelectOption[] = [
-    { label: 'Auto Refresh (apply automatically)', value: 'AUTO_REFRESH' },
-    { label: 'Manual Refresh (require approval)', value: 'MANUAL_REFRESH' },
-    { label: 'Fixed (no auto updates)', value: 'FIXED' },
-  ];
-
-  getPricingRefreshModeHint(): string {
-    const mode = this.basicForm.controls.pricingRefreshMode.value;
-    switch (mode) {
-      case 'AUTO_REFRESH':
-        return 'Prices will update automatically whenever you add stock. No approval needed.';
-      case 'MANUAL_REFRESH':
-        return 'System will calculate new prices and show suggestions for your approval before applying changes.';
-      case 'FIXED':
-        return 'Prices will never change automatically. You can only edit prices manually on the group page.';
-      default:
-        return 'Select a mode to see how pricing updates will work for this group.';
-    }
-  }
 
   readonly groupTypeOptions: GomSelectOption[] = [
     { label: 'Measured (by Weight/Volume)', value: 'MEASURED' },
@@ -1707,7 +1685,6 @@ export class GroupsComponent implements OnInit, OnDestroy {
       const baseUnitName = String(row.rawPayload?.['baseUnit'] || '').trim().toLowerCase();
       const taxProfileName = String(row.rawPayload?.['taxProfile'] || '').trim().toLowerCase();
       const pricingTemplateName = String(row.rawPayload?.['pricingTemplate'] || '').trim().toLowerCase();
-      const pricingRefreshMode = String(row.rawPayload?.['pricingRefreshMode'] || 'AUTO_REFRESH').trim().toUpperCase();
 
       const categoryId = this.categories().find((item) => item.name.trim().toLowerCase() === categoryName)?._id || '';
       const baseUnit = this.units().find((item) => item.name.trim().toLowerCase() === baseUnitName);
@@ -1800,7 +1777,6 @@ export class GroupsComponent implements OnInit, OnDestroy {
         baseUnitId: baseUnit?._id || '',
         allowedUnitIds: [...new Set([...(allowedUnits || []), ...(baseUnit?._id ? [baseUnit._id] : [])])],
         taxProfileId,
-        pricingRefreshMode: pricingRefreshMode || 'AUTO_REFRESH',
       });
 
       this.quickCreateModal.selectedAttributeValues.set(selectedAttributeValues);
@@ -2685,7 +2661,6 @@ export class GroupsComponent implements OnInit, OnDestroy {
       createDefaultVariant: false,
       categoryId: existing.categoryId,
       taxProfileId: existing.taxProfileId || '',
-      pricingRefreshMode: existing.pricingRefreshMode || 'AUTO_REFRESH',
     });
     this.syncOptionAxesFromExisting(existing);
     this.editingQuantity.set(existing.quantity || 1);
@@ -2873,7 +2848,6 @@ export class GroupsComponent implements OnInit, OnDestroy {
       }),
       advanced: this.groupsService.updateGroupAdvancedSettings(editId, {
         taxProfileId: String(this.basicForm.controls.taxProfileId.value || '').trim() || null,
-        pricingRefreshMode: this.basicForm.controls.pricingRefreshMode.value || 'AUTO_REFRESH',
         groupType: this.basicForm.controls.groupType.value || 'MEASURED',
         optionAxes,
       }),
@@ -3784,7 +3758,6 @@ export class GroupsComponent implements OnInit, OnDestroy {
 
     this.basicForm.reset({ name: '', description: '', createDefaultVariant: false, categoryId: '', taxProfileId: '' });
     this.basicForm.controls.groupType.setValue('MEASURED');
-    this.basicForm.controls.pricingRefreshMode.setValue('AUTO_REFRESH');
     this.descEditor?.clear();
     this.selectionForm.reset({ fieldGroupId: '' });
     this.formulaForm.reset({ sellingPrice: '', anchorPrice: '', actualPrice: '' });
@@ -3849,7 +3822,6 @@ export class GroupsComponent implements OnInit, OnDestroy {
     }
 
     const taxProfileId = String(this.basicForm.controls.taxProfileId.value || '').trim();
-    const pricingRefreshMode = this.basicForm.controls.pricingRefreshMode.value || 'AUTO_REFRESH';
 
     const payload: GroupPayload = {
       name: String(this.basicForm.controls.name.value || '').trim(),
@@ -3864,7 +3836,6 @@ export class GroupsComponent implements OnInit, OnDestroy {
         anchorPrice: String(this.formulaForm.controls.anchorPrice.value || '').trim(),
         actualPrice: String(this.formulaForm.controls.actualPrice.value || '').trim(),
       },
-      pricingRefreshMode,
       baseUnitId,
       allowedUnitIds: [...allowedUnitIds],
       taxProfileId,

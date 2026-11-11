@@ -21,6 +21,7 @@ import { CreateOrderComponent } from './features/order/create-order';
 import { NewCareOrderComponent } from './features/order/new-care-order';
 import { CreateOrderSettingsComponent } from './features/admin-app/create-order-settings/create-order-settings.component';
 import { BillingSettingsComponent } from './features/admin-app/billing-settings/billing-settings.component';
+import { SalesReportComponent } from './features/reports/sales-report';
 import { BusinessDetailsComponent } from './features/admin-app/business-details/business-details.component';
 import { PaymentOptionsComponent } from './features/admin-app/payment-options/payment-options.component';
 import { RidersComponent } from './features/delivery/riders';
@@ -317,6 +318,17 @@ export const routes: Routes = [
 					capability: 'orders',				featureKeys: ['order.create'],					title: 'Create Order (Legacy)',
 					description: 'Legacy billing style order entry kept for reference.',
 					ctaLabel: 'Place Order',
+				},
+			},
+			{
+				path: 'reports/sales',
+				component: SalesReportComponent,
+				data: {
+					actor: 'tenant',
+					capability: 'reports',
+					featureKeys: ['reports.sales.view'],
+					title: 'Sales Report',
+					description: 'Review sales performance and profitability.',
 				},
 			},
 			{

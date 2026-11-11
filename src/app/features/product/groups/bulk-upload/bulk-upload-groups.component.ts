@@ -1019,7 +1019,6 @@ export class BulkUploadGroupsComponent implements OnInit {
         anchorPrice: anchorFormula,
         actualPrice: actualFormula,
       },
-      pricingRefreshMode: 'AUTO_REFRESH',
       baseUnitId,
       allowedUnitIds: this.resolveAllowedUnitIds(baseUnitId),
       taxProfileId: taxProfileId || null,

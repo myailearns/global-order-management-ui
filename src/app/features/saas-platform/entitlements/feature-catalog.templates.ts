@@ -155,6 +155,7 @@ export const FEATURE_TEMPLATES: FeatureTemplate[] = [
   { featureKey: 'media.upload', displayName: 'Upload Media', module: 'product', dependencies: ['media.list'], filters: [{ key: 'max_images', defaultValue: 10 }, { key: 'max_videos', defaultValue: 1 }] },
   { featureKey: 'media.delete', displayName: 'Delete Media', module: 'product', dependencies: ['media.list'] },
   { featureKey: 'pricing.simple.edit', displayName: 'Edit Simple Pricing', module: 'product', dependencies: ['variant.list'] },
+  { featureKey: 'reports.sales.view', displayName: 'Sales Report', module: 'reports', dependencies: [] },
 ];
 
 export function toFeatureTemplateSyncPayload() {

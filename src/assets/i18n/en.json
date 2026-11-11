@@ -75,7 +75,9 @@
                                    "createOrderSettings":  "Create Order Settings",
                                    "billing":  "Billing",
                                    "businessDetails":  "Business Details",
-                                   "paymentOptions":  "Payment Options"
+                                   "paymentOptions":  "Payment Options",
+                                   "reports":  "Reports",
+                                   "salesReport":  "Sales Report"
                                },
                 "actions":  {
                                 "notifications":  "Notifications",

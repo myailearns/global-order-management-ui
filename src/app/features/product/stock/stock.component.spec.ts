@@ -8,30 +8,9 @@ import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { StockComponent } from './stock.component';
 import { Group, StockService } from './stock.service';
 
-describe('StockComponent price approval flow', () => {
+describe('StockComponent', () => {
   let component: StockComponent;
   let stockService: jasmine.SpyObj<StockService>;
-
-  const pendingResponse = (total: number) => ({
-    success: true,
-    data: [],
-    pagination: {
-      page: 1,
-      limit: total,
-      total,
-      hasMore: false,
-      totalPages: 1,
-      canLoadAll: true,
-    },
-  });
-
-  const pendingGroupsResponse = (totalPending: number, groups: Array<{ groupId: string; groupName: string; pendingCount: number; lastCreatedAt: string }>) => ({
-    success: true,
-    data: {
-      totalPending,
-      groups,
-    },
-  });
 
   const activeGroup = (
     id: string,
@@ -45,15 +24,11 @@ describe('StockComponent price approval flow', () => {
     resolvedFields: [],
     status: 'ACTIVE',
     groupType: 'MEASURED',
-    pricingRefreshMode: 'MANUAL_REFRESH',
     ...overrides,
   });
 
   beforeEach(() => {
     stockService = jasmine.createSpyObj<StockService>('StockService', [
-      'listPricingRefreshSuggestions',
-      'getPendingGroupsSummary',
-      'updateGroupResolvedFields',
       'getSummary',
       'getCostingMethodConfig',
       'getHistory',
@@ -62,9 +37,6 @@ describe('StockComponent price approval flow', () => {
       'getVariantStockSummary',
     ]);
 
-    stockService.listPricingRefreshSuggestions.and.returnValue(of(pendingResponse(0) as any));
-    stockService.getPendingGroupsSummary.and.returnValue(of(pendingGroupsResponse(0, []) as any));
-    stockService.updateGroupResolvedFields.and.returnValue(of({ success: true } as any));
     stockService.getSummary.and.returnValue(of({ data: { onHand: 0, reserved: 0, available: 0, baseUnit: { _id: 'unit-1', name: 'Unit', symbol: 'U' }, reorderLevel: 0, avgCostPerBaseUnit: 0, inventoryCostBasisTotal: 0, lastLandedCostPerBaseUnit: 0, isLowStock: false } } as any));
     stockService.getCostingMethodConfig.and.returnValue(of({ data: { groupId: 'group-a', groupName: 'Group A', supportedMethods: ['WAC'], tenantDefaultMethod: 'WAC', groupCostingMethod: 'WAC', effectiveMethod: 'WAC', effectiveScope: 'GROUP' } } as any));
     stockService.getHistory.and.returnValue(of({ data: [], pagination: { page: 1, limit: 50, total: 0, hasMore: false, totalPages: 1, canLoadAll: true } } as any));
@@ -110,78 +82,21 @@ describe('StockComponent price approval flow', () => {
     ]);
   });
 
-  it('opens price approval for the clicked group instead of stale selected group', () => {
-    spyOn(component, 'loadStockData').and.stub();
-    spyOn(component, 'loadPendingCount').and.stub();
-    component.selectedGroupId.set('group-a');
-
-    stockService.listPricingRefreshSuggestions.and.callFake((groupId: string) =>
-      of(pendingResponse(groupId === 'group-b' ? 2 : 0) as any)
-    );
-
-    component.openPriceApprovalForGroup('group-b', 'Group B');
-
-    expect(component.selectedGroupId()).toBe('group-b');
-    expect(stockService.listPricingRefreshSuggestions).toHaveBeenCalledWith('group-b');
-    expect(component.priceApprovalOpen()).toBeTrue();
-  });
-
-  it('refreshes selected group state after approval completion instead of force-clearing everything', () => {
-    const loadPendingCountSpy = spyOn(component, 'loadPendingCount').and.stub();
-    const loadStockDataSpy = spyOn(component, 'loadStockData').and.stub();
-
-    component.selectedGroupId.set('group-a');
-    component.totalPendingPricingSuggestionsCount.set(2);
-    component.priceApprovalOpen.set(true);
-
-    component.onPriceApprovalCompleted();
-
-    expect(component.priceApprovalOpen()).toBeFalse();
-    expect(loadPendingCountSpy).toHaveBeenCalledWith('group-a');
-    expect(loadStockDataSpy).toHaveBeenCalledWith('group-a');
-    expect(component.totalPendingPricingSuggestionsCount()).toBe(2);
-  });
-
-  it('uses tenant-wide pending total to drive grouped inbox visibility', () => {
-    component.pendingInboxExpanded.set(false);
-    stockService.getPendingGroupsSummary.and.returnValues(
-      of(pendingGroupsResponse(3, [
-        { groupId: 'group-a', groupName: 'Group A', pendingCount: 1, lastCreatedAt: '2026-06-27T00:00:00.000Z' },
-        { groupId: 'group-b', groupName: 'Group B', pendingCount: 2, lastCreatedAt: '2026-06-27T01:00:00.000Z' },
-      ]) as any),
-      of(pendingGroupsResponse(0, []) as any)
-    );
-
-    component.loadPendingGroupsSummary();
-    expect(component.totalPendingPricingSuggestionsCount()).toBe(3);
-    expect(component.pendingGroupSummaries().length).toBe(2);
-    expect(component.pendingInboxExpanded()).toBeTrue();
-
-    component.loadPendingGroupsSummary();
-    expect(component.totalPendingPricingSuggestionsCount()).toBe(0);
-    expect(component.pendingGroupSummaries()).toEqual([]);
-    expect(component.pendingInboxExpanded()).toBeFalse();
-  });
-
-  it('keeps stock-save polling pinned to the source group even if selection changes before completion', () => {
+  it('keeps stock-save reload pinned to the source group even if selection changes before completion', () => {
     const stockRequest$ = new Subject<unknown>();
     const loadStockDataSpy = spyOn(component, 'loadStockData').and.stub();
     const closeAddStockSpy = spyOn(component, 'closeAddStock').and.stub();
-    const scheduleRefreshSpy = spyOn<any>(component, 'schedulePendingSuggestionsModalRefresh').and.stub();
 
     component.selectedGroupId.set('group-a');
-    component.pendingPricingSuggestionsCount.set(0);
 
-    (component as any).executeStockSaveRequest(stockRequest$.asObservable(), [{ fieldId: 'field-1', value: 10 }]);
+    (component as any).executeStockSaveRequest(stockRequest$.asObservable());
 
     component.selectedGroupId.set('group-b');
     stockRequest$.next({ success: true });
     stockRequest$.complete();
 
-    expect(stockService.updateGroupResolvedFields).toHaveBeenCalledWith('group-a', [{ fieldId: 'field-1', value: 10 }]);
     expect(loadStockDataSpy).toHaveBeenCalledWith('group-a');
     expect(closeAddStockSpy).toHaveBeenCalled();
-    expect(scheduleRefreshSpy).toHaveBeenCalledWith('group-a', true);
   });
 
   it('loads per-variant stock inputs for HYBRID groups', () => {
@@ -200,7 +115,6 @@ describe('StockComponent price approval flow', () => {
 
   it('converts HYBRID pack counts to the variant measured quantity when saving', () => {
     spyOn(component, 'loadStockData').and.stub();
-    spyOn(component, 'loadPendingCount').and.stub();
     component.groups.set([
       activeGroup('hybrid-group', 'Sunflower Oil', {
         groupType: 'HYBRID',

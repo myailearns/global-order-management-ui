@@ -274,45 +274,6 @@
     </section>
   }
 
-  @if (selectedGroupId() && hasPendingPricingSuggestions()) {
-    <gom-lib-accordion
-      class="pricing-notification"
-      [title]="'Pending Price Approvals'"
-      [subtitle]="getPendingPricingSubtitle()"
-      [expanded]="false"
-    >
-      <div class="pricing-notification__body">
-        <p class="pricing-notification__message">
-          <i class="ri-price-tag-3-line" aria-hidden="true"></i>
-          {{ pricingSuggestions().length }} pricing suggestion(s) require review for this group.
-          @if (suggestionWarningCount() > 0) {
-            <span class="pricing-notification__warning">
-              <i class="ri-alert-fill" aria-hidden="true"></i>
-              {{ suggestionWarningCount() }} below margin threshold
-            </span>
-          }
-        </p>
-        <div class="pricing-notification__actions">
-          <gom-lib-button
-            type="button"
-            variant="secondary"
-            [disabled]="loadingPricingSuggestions()"
-            (buttonClick)="loadPricingSuggestions(selectedGroupId())"
-          >
-            <i class="ri-refresh-line" aria-hidden="true"></i> Refresh
-          </gom-lib-button>
-          <gom-lib-button
-            type="button"
-            variant="primary"
-            (buttonClick)="openPriceApproval()"
-          >
-            Review Approvals
-          </gom-lib-button>
-        </div>
-      </div>
-    </gom-lib-accordion>
-  }
-
   <article class="master-page__table-shell">
     <gom-lib-table
       [columns]="columns"
@@ -626,15 +587,6 @@
   (confirmed)="confirmDelete()"
   (cancelled)="cancelDelete()"
 ></gom-lib-confirmation-modal>
-
-<gom-price-approval-modal
-  [show]="priceApprovalOpen()"
-  (showChange)="priceApprovalOpen.set($event)"
-  [groupId]="selectedGroupId()"
-  [groupType]="selectedGroup()?.groupType || 'MEASURED'"
-  [groupName]="selectedGroup()?.name || ''"
-  (decisionsCompleted)="onPriceApprovalCompleted()"
-></gom-price-approval-modal>
 
 <gom-lib-modal
   [title]="'Variant Collections'"

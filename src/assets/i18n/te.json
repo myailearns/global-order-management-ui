@@ -82,7 +82,9 @@
       "createOrderSettings": "ఆర్డర్ సృష్టి సెట్టింగ్‌లు",
       "billing": "బిల్లింగ్",
       "businessDetails": "వ్యాపార వివరాలు",
-      "paymentOptions": "చెల్లింపు ఎంపికలు"
+      "paymentOptions": "చెల్లింపు ఎంపికలు",
+      "reports": "రిపోర్టులు",
+      "salesReport": "సేల్స్ రిపోర్ట్"
     },
     "actions": {
       "notifications": "నోటిఫికేషన్స్",

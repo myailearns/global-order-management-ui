@@ -5,7 +5,7 @@ import { GomAlertToastService } from '@gomlibs/ui';
 import { HttpClient } from '@angular/common/http';
 import { forkJoin } from 'rxjs';
 import { CategoryDefaultsService } from './services/category-defaults.service';
-import { ActiveStatus, CategoryDefaults, GroupType, PricingRefreshMode } from './models/category-defaults.model';
+import { ActiveStatus, CategoryDefaults, GroupType } from './models/category-defaults.model';
 import { AuthSessionService } from '../../../../core/auth/auth-session.service';
 import { environment } from '../../../../../environments/environment';
 
@@ -72,13 +72,6 @@ export class CategoryDefaultsComponent implements OnInit {
     { label: 'Hybrid', value: 'HYBRID' },
   ];
 
-  readonly pricingRefreshModeOptions: Array<{ label: string; value: PricingRefreshMode | '' }> = [
-    { label: 'Auto / Not Set', value: '' },
-    { label: 'Fixed', value: 'FIXED' },
-    { label: 'Manual Refresh', value: 'MANUAL_REFRESH' },
-    { label: 'Auto Refresh', value: 'AUTO_REFRESH' },
-  ];
-
   readonly statusOptions: Array<{ label: string; value: ActiveStatus }> = [
     { label: 'Active', value: 'ACTIVE' },
     { label: 'Inactive', value: 'INACTIVE' },
@@ -92,7 +85,6 @@ export class CategoryDefaultsComponent implements OnInit {
     fieldGroupId: [''],
     taxProfileId: [''],
     groupType: [''],
-    pricingRefreshMode: [''],
     status: ['ACTIVE', Validators.required],
   });
 
@@ -170,7 +162,6 @@ export class CategoryDefaultsComponent implements OnInit {
         fieldGroupId: '',
         taxProfileId: '',
         groupType: '',
-        pricingRefreshMode: '',
         status: 'ACTIVE',
       });
     }
@@ -187,7 +178,6 @@ export class CategoryDefaultsComponent implements OnInit {
     const formValue = this.defaultsForm.getRawValue();
     const categoryId = String(formValue.categoryId || '').trim();
     const groupTypeRaw = String(formValue.groupType || '').trim();
-    const pricingRefreshModeRaw = String(formValue.pricingRefreshMode || '').trim();
     const payload = {
       pricingTemplateId: String(formValue.pricingTemplateId || '').trim() || null,
       attributeSetId: String(formValue.attributeSetId || '').trim() || null,
@@ -195,7 +185,6 @@ export class CategoryDefaultsComponent implements OnInit {
       fieldGroupId: String(formValue.fieldGroupId || '').trim() || null,
       taxProfileId: String(formValue.taxProfileId || '').trim() || null,
       groupType: (groupTypeRaw ? (groupTypeRaw as GroupType) : null),
-      pricingRefreshMode: (pricingRefreshModeRaw ? (pricingRefreshModeRaw as PricingRefreshMode) : null),
       status: (String(formValue.status || 'ACTIVE').trim().toUpperCase() as ActiveStatus),
     };
 
@@ -245,7 +234,6 @@ export class CategoryDefaultsComponent implements OnInit {
       fieldGroupId,
       taxProfileId,
       groupType: defaults.groupType || '',
-      pricingRefreshMode: defaults.pricingRefreshMode || '',
       status: defaults.status || 'ACTIVE',
     });
   }
