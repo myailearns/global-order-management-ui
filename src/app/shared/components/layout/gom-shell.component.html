@@ -1,4 +1,8 @@
-<div class="gom-shell" [class.gom-shell--desktop-collapsed]="desktopNavCollapsed()">
+<div
+  class="gom-shell"
+  [class.gom-shell--desktop-collapsed]="desktopNavCollapsed()"
+  [class.gom-shell--fullpage]="isCreateOrderRoute()"
+>
   <gom-lib-alert-toast></gom-lib-alert-toast>
 
   @if (isAuthRoute()) {
@@ -287,7 +291,7 @@
           <span>Last updated: {{ formatCatalogLastUpdated() }}</span>
         </div>
       </div>
-      <p>Resync downloads all available categories, groups, and every variant page. Your current cart will not be changed.</p>
+      <p>Resync downloads all available categories, products, and every sellable item page. Your current cart will not be changed.</p>
       <div class="gom-shell__catalog-sync-actions">
         <gom-lib-button
           type="button"

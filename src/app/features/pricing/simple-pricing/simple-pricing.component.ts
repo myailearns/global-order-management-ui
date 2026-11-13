@@ -136,11 +136,7 @@ export class SimplePricingComponent implements OnInit, OnDestroy {
 
   // ── Entitlements ────────────────────────────
 
-  readonly canEdit = computed(
-    () =>
-      this.authSession.hasFeature('pricing.simple.edit') ||
-      this.authSession.hasFeature('variant.edit')
-  );
+  readonly canEdit = computed(() => this.authSession.hasFeature('product.pricing.update'));
 
   // ── Filters ─────────────────────────────────
 
@@ -345,7 +341,7 @@ export class SimplePricingComponent implements OnInit, OnDestroy {
 
   readonly dirtyRowCount = computed(() => Object.keys(this.inlinePriceEdits()).length);
   readonly canSaveAll = computed(
-    () => this.dirtyRowCount() > 0 && !this.bulkSaving() && !this.loading()
+    () => this.canEdit() && this.dirtyRowCount() > 0 && !this.bulkSaving() && !this.loading()
   );
 
   // ── Modals ───────────────────────────────────
@@ -1147,7 +1143,7 @@ export class SimplePricingComponent implements OnInit, OnDestroy {
   onUploadTemplateSelected(event: Event): void {
     const input = event.target as HTMLInputElement | null;
     const file = input?.files?.[0];
-    if (!file || this.uploadingTemplate()) {
+    if (!this.canEdit() || !file || this.uploadingTemplate()) {
       if (input) input.value = '';
       return;
     }
@@ -1237,7 +1233,7 @@ export class SimplePricingComponent implements OnInit, OnDestroy {
 
   dismissUploadRow(rowId: string): void {
     const job = this.currentUploadJob();
-    if (!job || !rowId) {
+    if (!this.canEdit() || !job || !rowId) {
       return;
     }
 
@@ -1253,7 +1249,7 @@ export class SimplePricingComponent implements OnInit, OnDestroy {
 
   acknowledgeUploadFeedback(): void {
     const job = this.currentUploadJob();
-    if (!job) {
+    if (!this.canEdit() || !job) {
       return;
     }
 
@@ -1273,6 +1269,10 @@ export class SimplePricingComponent implements OnInit, OnDestroy {
   }
 
   cancelCurrentUploadJob(jobId?: string): void {
+    if (!this.canEdit()) {
+      return;
+    }
+
     const selectedJobId = String(jobId || this.currentUploadJob()?.jobId || '').trim();
     if (!selectedJobId) {
       return;

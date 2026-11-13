@@ -56,7 +56,7 @@ export class NotificationOpsComponent implements OnInit {
 
   readonly loading = signal(false);
   readonly retryingId = signal<string | null>(null);
-  readonly canEdit = computed(() => this.authSession.hasFeature('notification.manage'));
+  readonly canEdit = computed(() => this.authSession.hasFeature('notification.operations'));
 
   readonly selectedChannel = signal<string>('');
   readonly selectedStatus = signal<string>('');

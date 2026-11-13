@@ -357,7 +357,7 @@ export class SalesReportComponent implements OnInit {
       };
     };
 
-    const variantLabel = variants.length === 1 ? '1 variant' : `${variants.length} variants`;
+    const variantLabel = variants.length === 1 ? '1 sellable item' : `${variants.length} sellable items`;
     const subtitle = [variants.length ? variantLabel : '', group.categoryName ?? ''].filter(Boolean).join(' · ');
 
     return {

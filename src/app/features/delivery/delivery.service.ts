@@ -387,7 +387,41 @@ export class DeliveryService {
   }
 
   updateStorefrontConfig(cfg: Partial<StorefrontConfig>): Observable<ApiSuccess<TenantConfig>> {
-    return this.http.patch<ApiSuccess<TenantConfig>>(this.tenantConfigUrl, { storefrontConfig: cfg });
+    return this.http.patch<ApiSuccess<TenantConfig>>(`${this.tenantConfigUrl}/web-app/storefront`, { storefrontConfig: cfg });
+  }
+
+  updateStorefrontBranding(cfg: Partial<StorefrontConfig>): Observable<ApiSuccess<TenantConfig>> {
+    return this.http.patch<ApiSuccess<TenantConfig>>(`${this.tenantConfigUrl}/web-app/branding`, { storefrontConfig: cfg });
+  }
+
+  updateStorefrontHomePage(cfg: Partial<StorefrontConfig>): Observable<ApiSuccess<TenantConfig>> {
+    return this.http.patch<ApiSuccess<TenantConfig>>(`${this.tenantConfigUrl}/web-app/home-page`, { storefrontConfig: cfg });
+  }
+
+  updateStorefrontCatalog(cfg: Partial<StorefrontConfig>): Observable<ApiSuccess<TenantConfig>> {
+    return this.http.patch<ApiSuccess<TenantConfig>>(`${this.tenantConfigUrl}/web-app/catalog`, { storefrontConfig: cfg });
+  }
+
+  updateStorefrontCheckoutPayments(cfg: Partial<StorefrontConfig>): Observable<ApiSuccess<TenantConfig>> {
+    return this.http.patch<ApiSuccess<TenantConfig>>(`${this.tenantConfigUrl}/web-app/checkout-payments`, { storefrontConfig: cfg });
+  }
+
+  updateStorefrontConfigSection(
+    tab: 'basic' | 'branding' | 'catalog' | 'payments' | 'productSet',
+    cfg: Partial<StorefrontConfig>
+  ): Observable<ApiSuccess<TenantConfig>> {
+    switch (tab) {
+      case 'branding':
+        return this.updateStorefrontBranding(cfg);
+      case 'catalog':
+        return this.updateStorefrontHomePage(cfg);
+      case 'productSet':
+        return this.updateStorefrontCatalog(cfg);
+      case 'payments':
+        return this.updateStorefrontCheckoutPayments(cfg);
+      default:
+        return this.updateStorefrontConfig(cfg);
+    }
   }
 
   trackStorefrontShareEvent(payload: StorefrontShareEventPayload): Observable<ApiSuccess<{ success?: boolean; ignored?: boolean }>> {

@@ -93,18 +93,18 @@ export class PricingComponent extends SimplePricingComponent {
   readonly bulkAction = signal<BulkUpdateAction>('increase-percent');
   readonly bulkUpdateError = signal('');
   readonly bulkValueControl = new FormControl<string>('5', { nonNullable: true });
-  readonly headerMenuList: MenuList = {
+  readonly headerMenuList = computed<MenuList>(() => ({
     mainMenu: [
       {
         title: 'Update Template',
         icon: 'ri-refresh-line',
         clickEvent: () => this.triggerRefreshTemplateInput(),
       },
-      {
+      ...(this.canEdit() ? [{
         title: 'Import Excel',
         icon: 'ri-upload-2-line',
         clickEvent: () => this.triggerUploadTemplateInput(),
-      },
+      }] : []),
       {
         title: 'Temporary History',
         icon: 'ri-history-line',
@@ -117,7 +117,7 @@ export class PricingComponent extends SimplePricingComponent {
       },
     ],
     portalMenu: [],
-  };
+  }));
 
   readonly pricingCategoryOptions = computed(() =>
     this.categoryOptions().map((option, index) =>
@@ -164,7 +164,7 @@ export class PricingComponent extends SimplePricingComponent {
       return [] as PricingEntity[];
     }
 
-    const candidates = this.filteredEntities().filter((entity) => entity.actualPrice !== null && entity.actualPrice > 0);
+    const candidates = this.filteredEntities();
     const selectedGroupIds = new Set(
       candidates
         .filter((entity) => entity.entityType === 'GROUP')
@@ -425,7 +425,7 @@ export class PricingComponent extends SimplePricingComponent {
   }
 
   triggerUploadTemplateInput(): void {
-    if (this.uploadingTemplate()) {
+    if (!this.canEdit() || this.uploadingTemplate()) {
       return;
     }
 
@@ -433,7 +433,7 @@ export class PricingComponent extends SimplePricingComponent {
   }
 
   onPricingCellEdit(event: GomTableCellEditEvent<PricingManagementRow>): void {
-    if (event.columnKey !== 'sellingPrice') {
+    if (!this.canEdit() || event.columnKey !== 'sellingPrice') {
       return;
     }
 
@@ -469,6 +469,10 @@ export class PricingComponent extends SimplePricingComponent {
   }
 
   openBulkUpdate(): void {
+    if (!this.canEdit()) {
+      return;
+    }
+
     this.bulkUpdateError.set('');
     this.bulkPreviewOpen.set(false);
     this.bulkAction.set('increase-percent');
@@ -687,7 +691,7 @@ export class PricingComponent extends SimplePricingComponent {
       profit: profit === null ? '—' : this.formatCurrency(profit),
       profitPercentage: profitPercentage === null ? '—' : `${profitPercentage.toFixed(1)}%`,
       margin: margin === null ? '—' : `${margin.toFixed(1)}%`,
-      priceEditable: this.canEdit() && totalCost !== null && totalCost > 0,
+      priceEditable: this.canEdit(),
       sellingPriceValue: sellingPrice,
       totalCostValue: totalCost,
       profitValue: profit,

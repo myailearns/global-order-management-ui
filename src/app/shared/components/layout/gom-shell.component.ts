@@ -173,6 +173,8 @@ export class GomShellComponent implements OnInit, OnDestroy {
     'Marketplace': true,
     'Product Setup': true,
     'Order Management': true,
+    'Customers': true,
+    'Delivery Partners': true,
     'Reports': true,
     'Account Management': true,
     'Admin App': true,
@@ -204,7 +206,7 @@ export class GomShellComponent implements OnInit, OnDestroy {
 
   readonly sections = computed<Array<NavItem['section']>>(() => {
     const visibleItems = this.groupedNavItems();
-    const orderedSections: Array<NavItem['section']> = ['Master Setup', 'Marketplace', 'Product Setup', 'Order Management', 'Reports', 'Account Management', 'Admin App', 'Web App', 'Settings', 'Notifications'];
+    const orderedSections: Array<NavItem['section']> = ['Master Setup', 'Marketplace', 'Product Setup', 'Order Management', 'Customers', 'Delivery Partners', 'Reports', 'Account Management', 'Admin App', 'Web App', 'Settings', 'Notifications'];
     return orderedSections.filter((section) => visibleItems.some((item) => item.section === section));
   });
 
@@ -259,7 +261,7 @@ export class GomShellComponent implements OnInit, OnDestroy {
     }
 
     const session = this.currentSession();
-    if (session?.actorType !== 'tenant' || !session.capabilities.includes('orders')) {
+    if (session?.actorType !== 'tenant' || !session.capabilities.includes('orders') || !this.authSession.hasFeature('order.create')) {
       return;
     }
 
@@ -486,6 +488,14 @@ export class GomShellComponent implements OnInit, OnDestroy {
 
     if (section === 'Product Setup') {
       return 'app.navigation.productSetup';
+    }
+
+    if (section === 'Customers') {
+      return 'app.navigation.customerManagement';
+    }
+
+    if (section === 'Delivery Partners') {
+      return 'app.navigation.deliveryPartners';
     }
 
     if (section === 'Reports') {

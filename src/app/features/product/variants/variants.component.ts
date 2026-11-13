@@ -358,7 +358,7 @@ export class VariantsComponent implements OnInit {
   readonly pricingModeDescription = computed<string>(() => {
     const mode = this.variantFormValue().pricingMode || 'FORMULA';
     return mode === 'OVERRIDE'
-      ? 'Set a fixed override selling price or use discount-based override for this variant.'
+      ? 'Set a fixed override selling price or use discount-based override for this sellable item.'
       : 'Price is automatically calculated from the group formula based on weight and unit conversion.';
   });
 
@@ -483,7 +483,7 @@ export class VariantsComponent implements OnInit {
   });
 
   readonly columns: GomTableColumn<VariantRow>[] = [
-    { key: 'name', header: 'Variant', sortable: true, filterable: true, width: '16rem' },
+    { key: 'name', header: 'Sellable Item', sortable: true, filterable: true, width: '16rem' },
     { key: 'itemType', header: 'Item Type', sortable: true, width: '10rem' },
     { key: 'quantity', header: 'Weight', sortable: true, width: '9rem' },
     { key: 'convertedQuantity', header: 'Base Qty', sortable: true, width: '10rem' },
@@ -501,7 +501,7 @@ export class VariantsComponent implements OnInit {
       width: '10rem',
       actionButtons: [
         {
-          label: () => this.canUpdateVariant() ? 'Edit' : 'No permission to edit variants',
+          label: () => this.canUpdateVariant() ? 'Edit' : 'No permission to edit sellable items',
           icon: 'ri-pencil-line',
           actionKey: 'edit',
           variant: 'secondary',
@@ -515,7 +515,7 @@ export class VariantsComponent implements OnInit {
           disabled: () => !this.canManageProductCollections(),
         },
         {
-          label: () => this.canDeleteVariant() ? 'Delete' : 'No permission to delete variants',
+          label: () => this.canDeleteVariant() ? 'Delete' : 'No permission to delete sellable items',
           icon: 'ri-delete-bin-line',
           actionKey: 'delete',
           variant: 'danger',
@@ -603,7 +603,7 @@ export class VariantsComponent implements OnInit {
 
   readonly defaultVariantName = computed<string>(() => {
     const group = this.selectedGroup();
-    const groupName = group?.name || 'Variant';
+    const groupName = group?.name || 'Sellable Item';
     const groupType = group?.groupType || 'MEASURED';
     
     if (groupType === 'ATTRIBUTE' || groupType === 'HYBRID') {
@@ -775,7 +775,7 @@ export class VariantsComponent implements OnInit {
         this.loading.set(false);
       },
       error: () => {
-        this.errorMessage.set('Failed to load variant setup data.');
+        this.errorMessage.set('Failed to load sellable item setup data.');
         this.loading.set(false);
       },
     });
@@ -819,7 +819,7 @@ export class VariantsComponent implements OnInit {
         this.loading.set(false);
       },
       error: () => {
-        this.errorMessage.set('Failed to load variants.');
+        this.errorMessage.set('Failed to load sellable items.');
         this.loading.set(false);
       },
     });
@@ -876,7 +876,7 @@ export class VariantsComponent implements OnInit {
     const remaining = this.variantCreateRemaining();
     if (remaining !== null && remaining <= 0) {
       const limit = this.variantCreateLimit();
-      this.toast.error(`Variant creation limit reached. You have used ${this.variantCreateUsed()} of ${limit} allowed variants.`);
+      this.toast.error(`Sellable item creation limit reached. You have used ${this.variantCreateUsed()} of ${limit} allowed sellable items.`);
       return;
     }
 
@@ -1571,7 +1571,7 @@ export class VariantsComponent implements OnInit {
 
     const existingConflicts = this.findConflictingCombinationKeysWithExistingVariants(selectedRows);
     if (existingConflicts.size > 0) {
-      this.toast.error('Duplicate variants found. Same quantity, unit, and options already exist.');
+      this.toast.error('Duplicate sellable items found. The same quantity, unit, and options already exist.');
       this.draftRows.set(rows.map((row) => {
         if (!row.selected) {
           return row;
@@ -1581,7 +1581,7 @@ export class VariantsComponent implements OnInit {
         if (existingConflicts.has(key)) {
           return {
             ...row,
-            error: 'This combination already exists in saved variants.',
+            error: 'This combination already exists in saved sellable items.',
           };
         }
 
@@ -1949,13 +1949,13 @@ export class VariantsComponent implements OnInit {
         ...payloadPricing,
       }).subscribe({
         next: () => {
-          this.toast.success('Variant updated successfully.');
+          this.toast.success('Sellable item updated successfully.');
           this.closeForm();
           this.loadVariants(this.selectedGroupId());
           this.saving.set(false);
         },
         error: (error) => {
-          this.toast.error(this.extractApiMessage(error) || 'Failed to update variant.');
+          this.toast.error(this.extractApiMessage(error) || 'Failed to update sellable item.');
           this.saving.set(false);
         },
       });
@@ -1994,11 +1994,11 @@ export class VariantsComponent implements OnInit {
           }));
 
           this.mediaService.attachVariantImages(createdVariantId, entries).subscribe({
-            next: () => this.toast.success('Variant created with media.'),
-            error: () => this.toast.warning('Variant created, but media attachment failed. You can add media from Edit Variant.'),
+            next: () => this.toast.success('Sellable item created with media.'),
+            error: () => this.toast.warning('Sellable item created, but media attachment failed. You can add media from Edit Sellable Item.'),
           });
         } else {
-          this.toast.success('Variant created successfully.');
+          this.toast.success('Sellable item created successfully.');
         }
 
         this.closeForm();
@@ -2006,7 +2006,7 @@ export class VariantsComponent implements OnInit {
         this.saving.set(false);
       },
       error: (error) => {
-        this.toast.error(this.extractApiMessage(error) || 'Failed to create variant.');
+        this.toast.error(this.extractApiMessage(error) || 'Failed to create sellable item.');
         this.saving.set(false);
       },
     });
@@ -2017,13 +2017,13 @@ export class VariantsComponent implements OnInit {
     const id = typeof rawId === 'string' ? rawId : '';
     const variant = this.variants().find((item) => item._id === id);
     if (!variant) {
-      this.toast.warning('Unable to find the selected variant. Please refresh and try again.');
+      this.toast.warning('Unable to find the selected sellable item. Please refresh and try again.');
       return;
     }
 
     if (event.actionKey === 'edit') {
       if (!this.canUpdateVariant()) {
-        this.toast.warning('Your current package does not allow editing variants.');
+        this.toast.warning('Your current package does not allow editing sellable items.');
         return;
       }
       this.openEditVariant(variant);
@@ -2078,12 +2078,12 @@ export class VariantsComponent implements OnInit {
     }).subscribe({
       next: () => {
         this.variantCollectionForm.reset({ collectionId: '' });
-        this.toast.success('Variant added to collection.');
+        this.toast.success('Sellable item added to collection.');
         this.reloadVariantCollections(variant);
       },
       error: (error) => {
         this.loadingVariantCollections.set(false);
-        this.toast.error(String(error?.error?.message || 'Failed to add variant to collection.'));
+        this.toast.error(String(error?.error?.message || 'Failed to add sellable item to collection.'));
       },
     });
   }
@@ -2108,9 +2108,9 @@ export class VariantsComponent implements OnInit {
       next: (response) => {
         const unmapped = Number(response.data?.unmappedFromCollections || 0);
         if (unmapped > 0) {
-          this.toast.success(`Variant deleted successfully. Removed from ${unmapped} collections.`);
+          this.toast.success(`Sellable item deleted successfully. Removed from ${unmapped} collections.`);
         } else {
-          this.toast.success('Variant deleted successfully.');
+          this.toast.success('Sellable item deleted successfully.');
         }
         this.deletingVariantId.set(null);
         this.deletingVariantName.set('');
@@ -2119,7 +2119,7 @@ export class VariantsComponent implements OnInit {
         this.saving.set(false);
       },
       error: (error) => {
-        this.toast.error(this.extractApiMessage(error) || 'Failed to delete variant.');
+        this.toast.error(this.extractApiMessage(error) || 'Failed to delete sellable item.');
         this.saving.set(false);
       },
     });
@@ -2130,14 +2130,14 @@ export class VariantsComponent implements OnInit {
     const impactCount = this.deletingVariantImpactCount();
 
     if ((impactCount || 0) > 0) {
-      return `Delete ${name || 'this variant'}? It is used in ${impactCount} collections and will be removed where applicable.`;
+      return `Delete ${name || 'this sellable item'}? It is used in ${impactCount} collections and will be removed where applicable.`;
     }
 
     if (impactCount === null) {
-      return `Delete ${name || 'this variant'}? Checking collection impact...`;
+      return `Delete ${name || 'this sellable item'}? Checking collection impact...`;
     }
 
-    return `Delete ${name || 'this variant'}?`;
+    return `Delete ${name || 'this sellable item'}?`;
   }
 
   formatMarginPercent(value: number | undefined): string {
@@ -2206,7 +2206,7 @@ export class VariantsComponent implements OnInit {
         }
       });
       this.pendingVariantImages.set(merged);
-      this.toast.success('Media selected. It will be attached when you save the variant.');
+      this.toast.success('Media selected. It will be attached when you save the sellable item.');
       return;
     }
 
@@ -2227,7 +2227,7 @@ export class VariantsComponent implements OnInit {
         this.mediaService.getVariantImages(variantId).subscribe({
           next: (imgs) => this.variantImages.set(imgs || []),
         });
-        this.toast.success('Media added to variant');
+        this.toast.success('Media added to sellable item');
       },
       error: () => this.toast.error('Failed to attach media'),
     });
@@ -2867,7 +2867,7 @@ export class VariantsComponent implements OnInit {
     selections: Array<{ key: string; label: string; value: string }>
   ): string {
     const group = this.selectedGroup();
-    const groupName = group?.name || 'Variant';
+    const groupName = group?.name || 'Sellable Item';
     const optionPart = (selections || [])
       .map((item) => String(item?.value || '').trim())
       .filter((value) => !!value)

@@ -98,7 +98,7 @@
           <div class="sales-report__highlight">
             <i class="ri-star-line" aria-hidden="true"></i>
             <div>
-              <span>Top variant</span>
+              <span>Top sellable item</span>
               <strong>
                 {{ data.topVariants[0].name }}
                 @if (data.topVariants.length > 1) {
@@ -162,7 +162,7 @@
           <td></td>
           <td>
             <strong>Report total</strong>
-            <div class="sales-report__footer-note">Product totals only, variants are not counted twice</div>
+            <div class="sales-report__footer-note">Product totals only; sellable items are not counted twice</div>
           </td>
           <td></td>
           <td class="sales-report__cell--end">{{ quantityText(data.quantityByUnit) }}</td>

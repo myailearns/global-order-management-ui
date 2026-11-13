@@ -62,13 +62,23 @@ export class StorefrontConfigComponent implements OnInit {
   readonly errorMessage = signal<string | null>(null);
   readonly tenantCode = signal('');
   readonly useCustomColors = signal(false);
-  readonly canEdit = computed(() => this.authSession.hasFeature('storefront.config'));
+  readonly canEdit = computed(() => this.authSession.hasFeature(this.activeFeatureKey()));
   readonly storefrontShare = signal<StorefrontShare | null>(null);
   readonly shareBusy = signal<'copy' | 'whatsapp' | 'download' | null>(null);
   readonly hasStorefrontShareAccess = computed(() => this.authSession.hasFeature('storefront.share'));
   readonly hasProductSetSettingsAccess = computed(() => this.authSession.hasFeature('productCollection.create'));
 
   readonly activeTab = signal<'basic' | 'branding' | 'catalog' | 'payments' | 'productSet'>('basic');
+  readonly activeFeatureKey = computed(() => {
+    const featureKeys = {
+      basic: 'storefront.config',
+      branding: 'branding.config',
+      catalog: 'homepage.config',
+      productSet: 'catalog.config',
+      payments: 'checkoutpayments.config',
+    } as const;
+    return featureKeys[this.activeTab()];
+  });
   readonly pageTitle = computed(() => {
     const tab = this.activeTab();
     if (tab === 'branding') {
@@ -666,6 +676,7 @@ export class StorefrontConfigComponent implements OnInit {
     }
 
     if (
+      this.activeTab() === 'productSet' &&
       this.hasProductSetSettingsAccess() &&
       this.hasProductsTabLayoutChanged() &&
       !this.bypassProductsLayoutConfirm
@@ -717,14 +728,17 @@ export class StorefrontConfigComponent implements OnInit {
         facebook: raw.facebookSocial || '',
       },
       showPacks: this.normalizeBoolean(raw.showPacks, true),
+      fulfillmentMode: (raw.fulfillmentMode as FulfillmentMode) || 'DELIVERY',
       paymentMethods,
     };
+
+    const sectionPayload = this.buildActiveSectionPayload(payload);
 
     this.saving.set(true);
     this.errorMessage.set(null);
 
     this.service
-      .updateStorefrontConfig(payload)
+      .updateStorefrontConfigSection(this.activeTab(), sectionPayload)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (res) => {
@@ -747,6 +761,48 @@ export class StorefrontConfigComponent implements OnInit {
           this.saving.set(false);
         },
       });
+  }
+
+  private buildActiveSectionPayload(payload: Partial<StorefrontConfig>): Partial<StorefrontConfig> {
+    switch (this.activeTab()) {
+      case 'branding':
+        return {
+          logoUrl: payload.logoUrl,
+          storeDisplayName: payload.storeDisplayName,
+          primaryColor: payload.primaryColor,
+          secondaryColor: payload.secondaryColor,
+          accentColor: payload.accentColor,
+          welcomeMessage: payload.welcomeMessage,
+          footerText: payload.footerText,
+          socialLinks: payload.socialLinks,
+        };
+      case 'catalog':
+        return {
+          bannerImages: payload.bannerImages,
+          showPacks: payload.showPacks,
+          b1g1HomeCardsPerRow: payload.b1g1HomeCardsPerRow,
+        };
+      case 'productSet':
+        return {
+          productsTabEnabled: payload.productsTabEnabled,
+          layoutMode: payload.layoutMode,
+          productsTabLayout: payload.productsTabLayout,
+          catalogInitialCategoryCount: payload.catalogInitialCategoryCount,
+          catalogGroupsPerCategoryPage: payload.catalogGroupsPerCategoryPage,
+        };
+      case 'payments':
+        return {
+          fulfillmentMode: payload.fulfillmentMode,
+          paymentMethods: payload.paymentMethods,
+        };
+      default:
+        return {
+          enabled: payload.enabled,
+          logoUrl: payload.logoUrl,
+          storeDisplayName: payload.storeDisplayName,
+          storeSlug: payload.storeSlug,
+        };
+    }
   }
 
   hasProductsTabLayoutChanged(): boolean {

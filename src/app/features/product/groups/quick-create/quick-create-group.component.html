@@ -5,17 +5,17 @@
   (buttonClick)="openModal()"
   [gomDisableIfNoFeature]="'group.create'"
   [disabled]="!canCreateGroup()"
-  [attr.aria-label]="'Create Group'"
-  [buttonTitle]="'Create Group'"
+  [attr.aria-label]="'Create Product'"
+  [buttonTitle]="'Create Product'"
 >
   <i class="ri-add-line" aria-hidden="true"></i>
   @if (!isMobileHeader()) {
-    <span class="quick-create-trigger__label">Create Group</span>
+    <span class="quick-create-trigger__label">Create Product</span>
   }
 </gom-lib-button>
 
 <gom-lib-modal
-  [title]="isEditMode() ? 'Edit Group' : (isCloneMode() ? 'Clone Group' : 'Create Group')"
+  [title]="isEditMode() ? 'Edit Product' : (isCloneMode() ? 'Clone Product' : 'Create Product')"
   [show]="showModal()"
   (showChange)="showModal.set($event)"
   (closed)="cancel()"
@@ -61,10 +61,10 @@
       <div class="quick-create-form__grid quick-create-form__grid--two">
         <div>
           <gom-lib-input
-            label="Group Name *"
+            label="Product Name *"
             placeholder="e.g. Gold Ring, Bracelet"
             [formControl]="quickCreateForm.controls.name"
-            [error]="quickCreateForm.controls.name.touched && quickCreateForm.controls.name.invalid ? 'Group name is required' : ''"
+            [error]="quickCreateForm.controls.name.touched && quickCreateForm.controls.name.invalid ? 'Product name is required' : ''"
           ></gom-lib-input>
         </div>
 
@@ -87,11 +87,11 @@
 
         <div>
           <gom-lib-select
-            label="Group Type *"
-            placeholder="Select group type"
+            label="Product Type *"
+            placeholder="Select product type"
             [options]="groupTypeOptions"
             [formControl]="quickCreateForm.controls.groupType"
-            [error]="quickCreateForm.controls.groupType.touched && quickCreateForm.controls.groupType.invalid ? 'Group type is required' : ''"
+            [error]="quickCreateForm.controls.groupType.touched && quickCreateForm.controls.groupType.invalid ? 'Product type is required' : ''"
           ></gom-lib-select>
           @if (editingGroupHasVariants() && quickCreateForm.controls.groupType.disabled) {
             <small class="field-help-text text-muted" style="display: block; margin-top: 0.25rem;">
@@ -245,7 +245,7 @@
       </div>
 
       <app-rich-text-editor
-        label="Group Description"
+        label="Product Description"
         placeholder="Add description, highlights, and care instructions"
         [value]="quickCreateForm.controls.description.value || ''"
         (valueChange)="onDescriptionChanged($event)"
@@ -312,7 +312,7 @@
         (buttonClick)="submit()"
         [disabled]="!quickCreateForm.valid || submitting() || !preview()?.canCreate"
       >
-        {{ submitting() ? (isEditMode() ? 'Updating...' : 'Creating...') : (isEditMode() ? 'Update Group' : 'Create Group') }}
+        {{ submitting() ? (isEditMode() ? 'Updating...' : 'Creating...') : (isEditMode() ? 'Update Product' : 'Create Product') }}
       </gom-lib-button>
     </div>
   </footer>

@@ -6,6 +6,36 @@
   background: theme.get-background(secondary);
 }
 
+.gom-shell.gom-shell--fullpage {
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  .gom-shell__topbar {
+    flex: 0 0 auto;
+  }
+
+  .gom-shell__layout {
+    flex: 1 1 auto;
+    min-height: 0;
+    grid-template-rows: minmax(0, 1fr);
+  }
+
+  .gom-shell__content {
+    min-height: 0;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .gom-shell__sidenav {
+    height: 100%;
+    top: 0;
+  }
+}
+
 .gom-shell__topbar {
   position: sticky;
   top: 0;

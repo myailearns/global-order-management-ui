@@ -13,11 +13,11 @@
           (buttonClick)="openCreateWizard()"
           gomDisableIfNoFeature="tap.create_group"
           [disabled]="saving() || !canCreateTabbedGroup()"
-          [attr.aria-label]="'Create Group'"
-          [buttonTitle]="'Create Group'"
+          [attr.aria-label]="'Create Product'"
+          [buttonTitle]="'Create Product'"
         >
           <i class="ri-add-line" aria-hidden="true"></i>
-          <span class="master-page__create-label">Create Group</span>
+          <span class="master-page__create-label">Create Product</span>
         </gom-lib-button>
       }
 
@@ -89,8 +89,8 @@
       [pageIndex]="groupTablePageIndex()"
       [pageSize]="groupTablePageSize()"
       [pageSizeOptions]="serverSidePagination() ? [50] : [10, 20, 50]"
-      searchPlaceholder="Search groups"
-      emptyMessage="No groups found."
+      searchPlaceholder="Search products"
+      emptyMessage="No products found."
       [mobileCardView]="true"
       mobilePaginationMode="load-more"
       [mobileAutoLoadMore]="true"
@@ -103,7 +103,7 @@
     @if (serverSidePagination() && canLoadAllGroups() && !allGroupsLoaded()) {
       <div class="pagination-controls">
         <div class="pagination-controls__info">
-          {{ totalGroups() }} groups total. Use table pager for page navigation.
+          {{ totalGroups() }} products total. Use table pager for page navigation.
         </div>
         <div class="pagination-controls__actions">
           <gom-lib-button
@@ -137,7 +137,7 @@
         [loading]="variantDetailsLoading()"
         dataMode="client"
         searchPlaceholder="Search variants"
-        emptyMessage="No variants found for this group."
+        emptyMessage="No variants found for this product."
       ></gom-lib-table>
     }
   </section>
@@ -151,7 +151,7 @@
 </gom-lib-modal>
 
 <gom-lib-modal
-  [title]="editingGroupId() ? 'Edit Group' : 'Create Group'"
+  [title]="editingGroupId() ? 'Edit Product' : 'Create Product'"
   [show]="wizardOpen()"
   (showChange)="wizardOpen.set($event)"
   (closed)="closeWizard()"
@@ -162,7 +162,7 @@
       <div class="completion-panel__header">
         <div>
           <h3>Post-Create Completion</h3>
-          <p>Finish the remaining setup steps for this group.</p>
+          <p>Finish the remaining setup steps for this product.</p>
         </div>
         @if (completionStatus()) {
           <span class="completion-panel__state">{{ completionStatus()?.completionState }}</span>
@@ -235,20 +235,20 @@
       <section class="wizard__body">
         <div class="form-grid form-grid--two">
           <gom-lib-input
-            label="Group Name"
-            placeholder="Enter group name"
+            label="Product Name"
+            placeholder="Enter product name"
             [required]="true"
-            [error]="basicForm.controls.name.touched && basicForm.controls.name.invalid ? 'Group name is required' : ''"
+            [error]="basicForm.controls.name.touched && basicForm.controls.name.invalid ? 'Product name is required' : ''"
             [formControl]="basicForm.controls.name"
           ></gom-lib-input>
 
           <gom-lib-select
-            label="Group Type"
-            placeholder="Select group type"
+            label="Product Type"
+            placeholder="Select product type"
             [required]="true"
             [options]="groupTypeOptions"
             [formControl]="basicForm.controls.groupType"
-            [error]="basicForm.controls.groupType.touched && basicForm.controls.groupType.invalid ? 'Group type is required' : ''"
+            [error]="basicForm.controls.groupType.touched && basicForm.controls.groupType.invalid ? 'Product type is required' : ''"
           ></gom-lib-select>
 
           <gom-lib-select
@@ -277,7 +277,7 @@
               label="Create Default Variant (quick setup)"
               [formControl]="basicForm.controls.createDefaultVariant"
             ></gom-lib-checkbox>
-            <p class="field-hint">If enabled, one default variant is auto-created using group quantity and base unit.</p>
+            <p class="field-hint">If enabled, one default variant is auto-created using product quantity and base unit.</p>
           </div>
         }
 
@@ -294,7 +294,7 @@
             @if (optionAxesForm.controls.length === 0) {
               <div class="info-message">
                 <i class="ri-information-line" aria-hidden="true"></i>
-                <p><strong>Attribute groups require at least one attribute.</strong> Add attributes like Color, Size, Material, etc. Each attribute must have comma-separated values (e.g., "Red, Blue, Green").</p>
+                <p><strong>Attribute-based products require at least one attribute.</strong> Add attributes like Color, Size, Material, etc. Each attribute must have comma-separated values (e.g., "Red, Blue, Green").</p>
               </div>
             }
 
@@ -638,7 +638,7 @@
       <section class="wizard__body">
         <div class="images-section">
           <div class="images-section__header">
-            <h4>Group Images/Videos ({{ imageCount() }}/{{ groupImageLimit() }})</h4>
+            <h4>Product Images/Videos ({{ imageCount() }}/{{ groupImageLimit() }})</h4>
             <div class="images-section__actions">
               <gom-lib-button type="button" variant="secondary" (buttonClick)="openPicker()" [disabled]="imageCount() >= groupImageLimit()">
                 <i class="ri-folder-video-line" aria-hidden="true"></i> Add Media
@@ -731,8 +731,8 @@
           type="button"
           variant="primary"
           [size]="submitMode === 'icon-only' ? 'icon' : 'default'"
-          aria-label="Save Group"
-          title="Save Group"
+          aria-label="Save Product"
+          title="Save Product"
           (buttonClick)="saveGroup()"
           [disabled]="saving() || !canSaveGroup()"
         >
@@ -740,7 +740,7 @@
             <i class="ri-check-double-line" aria-hidden="true"></i>
           }
           @if (shouldShowText(submitMode)) {
-            {{ saving() ? 'Saving...' : 'Save Group' }}
+            {{ saving() ? 'Saving...' : 'Save Product' }}
           }
         </gom-lib-button>
       }

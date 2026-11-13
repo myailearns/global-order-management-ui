@@ -73,7 +73,7 @@ export class PaymentOptionsComponent implements OnInit {
   readonly bankModalOpen = signal(false);
   readonly editingUpiId = signal<string | null>(null);
   readonly editingBankId = signal<string | null>(null);
-  readonly canEdit = computed(() => this.authSession.hasCapability('orders'));
+  readonly canEdit = computed(() => this.authSession.hasFeature('paymentoptions.config'));
 
   readonly methods: PaymentMethod[] = ['UPI', 'CASH', 'BANK_TRANSFER'];
   readonly orderTypes: PaymentOrderType[] = ['inStore', 'pickup', 'delivery'];

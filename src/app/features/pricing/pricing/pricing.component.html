@@ -10,7 +10,7 @@
           class="master-page__more-menu"
           [menuType]="'submenu'"
           [outsideClickBoundary]="headerMenuBoundary"
-          [menuList]="headerMenuList"
+          [menuList]="headerMenuList()"
           [showMenuListArrow]="false"
           [showMobileBackArrow]="false"
           [backButtonText]="'Actions'">
@@ -21,7 +21,7 @@
         type="button"
         variant="secondary"
         [size]="isMobileHeader() ? 'compact-icon' : 'default'"
-        [disabled]="!canEdit() || loading() || bulkTargetEntities().length === 0 || dirtyRowCount() > 0"
+        [disabled]="!canEdit() || loading() || dirtyRowCount() > 0"
         [attr.aria-label]="'Bulk Update'"
         buttonTitle="Apply bulk update to products under current filters"
         (buttonClick)="openBulkUpdate()">
@@ -30,9 +30,11 @@
           Bulk Update
         }
       </gom-lib-button>
+        @if (canEdit()) {
           <button type="button" coreLibButton variant="outline" aria-label="Open pricing actions" (click)="headerActionsMenu.toggle()">
             <i class="ri-more-2-fill" coreLibButtonIcon iconPosition="left"></i>
           </button>
+        }
         </div>
       </div>
     </div>
@@ -105,7 +107,7 @@
           </span>
         </div>
         <div class="pricing__upload-actions">
-          @if (!job.isTerminal) {
+          @if (canEdit() && !job.isTerminal) {
             <gom-lib-button
               type="button"
               variant="secondary"
@@ -405,8 +407,8 @@
   <gom-simple-pricing-upload-feedback-modal
     [loading]="loadingUploadFeedback()"
     [results]="uploadResults()"
-    [showRowActions]="!uploadFeedbackReadOnly()"
-    [showAcknowledge]="!uploadFeedbackReadOnly() && !!uploadResults()?.job?.isTerminal"
+    [showRowActions]="canEdit() && !uploadFeedbackReadOnly()"
+    [showAcknowledge]="canEdit() && !uploadFeedbackReadOnly() && !!uploadResults()?.job?.isTerminal"
     (closed)="closeUploadFeedback()"
     (closeRow)="dismissUploadRow($event)"
     (acknowledgeAll)="acknowledgeUploadFeedback()">

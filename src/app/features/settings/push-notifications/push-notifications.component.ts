@@ -46,7 +46,7 @@ export class PushNotificationsComponent implements OnInit {
     };
   });
 
-  readonly canBroadcast = computed(() => this.authSession.hasFeature('notification.broadcast'));
+  readonly canCreate = computed(() => this.authSession.hasFeature('notification.create'));
   readonly tabs: Array<{ id: NotificationTab; label: string; count: number }> = [
     { id: 'all', label: 'All', count: 0 },
     { id: 'drafts', label: 'Drafts', count: 0 },
@@ -89,7 +89,7 @@ export class PushNotificationsComponent implements OnInit {
   }
 
   openCreateNotification(): void {
-    if (!this.canBroadcast()) {
+    if (!this.canCreate()) {
       this.toast.error('You do not have permission to create notifications.');
       return;
     }

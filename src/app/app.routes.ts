@@ -171,7 +171,7 @@ export const routes: Routes = [
 					capability: 'masters',
 					featureKeys: ['attribute.list', 'attribute.create', 'attribute.edit', 'attribute.delete'],
 					title: 'Attributes',
-					description: 'Create reusable product option definitions used by groups and variants.',
+					description: 'Create reusable product option definitions used by products and sellable items.',
 					ctaLabel: 'Add Attribute',
 				},
 			},
@@ -207,7 +207,7 @@ export const routes: Routes = [
 					capability: 'masters',
 					featureKeys: ['pricingTemplate.list', 'pricingTemplate.create', 'pricingTemplate.edit', 'pricingTemplate.delete'],
 					title: 'Pricing Templates',
-					description: 'Define reusable price rules for groups and variants.',
+					description: 'Define reusable price rules for products and sellable items.',
 					ctaLabel: 'Add Pricing Template',
 				},
 			},
@@ -254,7 +254,7 @@ export const routes: Routes = [
 				data: {
 					actor: 'tenant',
 					capability: 'product',
-					featureKeys: ['variant.list'],
+					featureKeys: ['product.pricing.view'],
 					title: 'Pricing',
 					description: 'Manage product prices, costs, and profit margins.',
 				},
@@ -265,7 +265,7 @@ export const routes: Routes = [
 				data: {
 					actor: 'tenant',
 					capability: 'product',
-					featureKeys: ['variant.list'],
+					featureKeys: ['product.pricing.view'],
 					title: 'Price History',
 					description: 'View product and group price history with trend analytics.',
 				},
@@ -336,7 +336,8 @@ export const routes: Routes = [
 				component: CreateOrderSettingsComponent,
 				data: {
 					actor: 'tenant',
-					capability: 'orders',
+					capability: 'tenant-admin',
+					featureKeys: ['createordersettings.config'],
 					title: 'Create Order Settings',
 					description: 'Configure the create order experience.',
 				},
@@ -346,7 +347,8 @@ export const routes: Routes = [
 				component: BillingSettingsComponent,
 				data: {
 					actor: 'tenant',
-					capability: 'orders',
+					capability: 'tenant-admin',
+					featureKeys: ['billing.config'],
 					title: 'Billing',
 					description: 'Configure billing settings for order processing.',
 				},
@@ -357,7 +359,7 @@ export const routes: Routes = [
 				data: {
 					actor: 'tenant',
 					capability: 'tenant-admin',
-					featureKeys: ['roles.view', 'roles.edit'],
+					featureKeys: ['businessdetails.config'],
 					title: 'Business Details',
 					description: 'Configure tenant business information.',
 				},
@@ -367,7 +369,8 @@ export const routes: Routes = [
 				component: PaymentOptionsComponent,
 				data: {
 					actor: 'tenant',
-					capability: 'orders',
+					capability: 'tenant-admin',
+					featureKeys: ['paymentoptions.config'],
 					title: 'Payment Options',
 					description: 'Configure payment options for order processing.',
 				},
@@ -433,12 +436,12 @@ export const routes: Routes = [
 				path: 'settings/storefront',
 				redirectTo: 'settings/web-app/storefront',
 				pathMatch: 'full',
-			},
+			}, //its not part of settign this is part of web app 
 			{
 				path: 'settings/web-app',
 				redirectTo: 'settings/web-app/storefront',
 				pathMatch: 'full',
-			},
+			},//its not part of settign this is part of web app 
 			{
 				path: 'settings/web-app/storefront',
 				component: StorefrontConfigComponent,
@@ -450,55 +453,55 @@ export const routes: Routes = [
 					title: 'Storefront',
 					description: 'Configure storefront access, slug, display name, logo, and sharing.',
 				},
-			},
+			},//its not part of settign this is part of web app 
 			{
 				path: 'settings/web-app/branding',
 				component: StorefrontConfigComponent,
 				data: {
 					actor: 'tenant',
 					capability: 'tenant-admin',
-					featureKeys: ['storefront.config'],
+					featureKeys: ['branding.config'],
 					tab: 'branding',
 					title: 'Branding',
 					description: 'Configure branding colors, welcome copy, footer text, and social links.',
 				},
-			},
+			},//its not part of settign this is part of web app 
 			{
 				path: 'settings/web-app/home-page',
 				component: StorefrontConfigComponent,
 				data: {
 					actor: 'tenant',
 					capability: 'tenant-admin',
-					featureKeys: ['storefront.config'],
+					featureKeys: ['homepage.config'],
 					tab: 'catalog',
 					title: 'Home Page',
 					description: 'Configure the customer home page layout, banners, and product visibility.',
 				},
-			},
+			},//its not part of settign this is part of web app 
 			{
 				path: 'settings/web-app/catalog',
 				component: StorefrontConfigComponent,
 				data: {
 					actor: 'tenant',
 					capability: 'tenant-admin',
-					featureKeys: ['storefront.config'],
+					featureKeys: ['catalog.config'],
 					tab: 'productSet',
 					title: 'Catalog',
 					description: 'Configure product set visibility and customer catalog layout.',
 				},
-			},
+			},//its not part of settign this is part of web app 
 			{
 				path: 'settings/web-app/checkout-payments',
 				component: StorefrontConfigComponent,
 				data: {
 					actor: 'tenant',
 					capability: 'tenant-admin',
-					featureKeys: ['storefront.config'],
+					featureKeys: ['checkoutpayments.config'],
 					tab: 'payments',
 					title: 'Checkout & Payments',
 					description: 'Configure payment methods available at checkout.',
 				},
-			},
+			},//its not part of settign this is part of web app 
 			{
 				path: 'settings/delivery-management',
 				component: DeliveryManagementComponent,
@@ -542,17 +545,17 @@ export const routes: Routes = [
 					title: 'Notification Center',
 					description: 'Create and manage marketing notifications across push, email, and WhatsApp.',
 				},
-			},
+			},// this is part of push niotification module
 			{
 				path: 'settings/push-notifications/create',
 				component: PushNotificationsCreateComponent,
 				data: {
 					actor: 'tenant',
 					capability: 'tenant-admin',
-					featureKeys: ['notification.broadcast'],
+					featureKeys: ['notification.create'],
 					title: 'Create Notification',
 					description: 'Set up channels, content, audience, and schedule before sending.',
-				},
+				},// this is part of push niotification module
 			},
 			{
 				path: 'settings/notification-settings',
@@ -564,18 +567,18 @@ export const routes: Routes = [
 					title: 'Notification Settings',
 					description: 'Configure admin email notifications for order lifecycle updates.',
 				},
-			},
+			}, // this is part of push niotification module
 			{
 				path: 'settings/notification-ops',
 				component: NotificationOpsComponent,
 				data: {
 					actor: 'tenant',
 					capability: 'tenant-admin',
-					featureKeys: ['notification.manage'],
+					featureKeys: ['notification.operations'],
 					title: 'Notification Operations',
 					description: 'Monitor delivery status, SLA metrics, and manually retry failed notifications across channels.',
 				},
-			},
+			}, // this is part of push niotification module
 			{
 				path: 'settings/saas-accounts',
 				component: SaasAccountsComponent,

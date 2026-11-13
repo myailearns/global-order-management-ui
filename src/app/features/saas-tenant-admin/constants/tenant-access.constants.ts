@@ -27,10 +27,10 @@ export const PERMISSION_KEYS = {
   USERS_EXPORT: 'users.export',
 
   // Employees module
-  EMPLOYEES_VIEW: 'tenantAccount.view',
-  EMPLOYEES_ADD: 'tenantAccount.add',
-  EMPLOYEES_EDIT: 'tenantAccount.edit',
-  EMPLOYEES_DELETE: 'tenantAccount.delete',
+  EMPLOYEES_VIEW: 'employees.view',
+  EMPLOYEES_ADD: 'employees.add',
+  EMPLOYEES_EDIT: 'employees.edit',
+  EMPLOYEES_DELETE: 'employees.delete',
   EMPLOYEES_EXPORT: 'employees.export',
 
   // Roles module
