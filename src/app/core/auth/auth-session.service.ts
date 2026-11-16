@@ -206,51 +206,31 @@ export class AuthSessionService {
       return '/settings/saas-accounts';
     }
 
-    // For tenant users, try to find the first accessible route based on their features
-    // Priority order: Dashboard -> Users -> Employees -> Categories -> Orders -> Settings
-    if (this.hasFeature('dashboard.view')) {
-      return '/saas-admin/dashboard';
-    }
+    const featureRoutes: Array<{ featureKey: string; route: string }> = [
+      { featureKey: 'dashboard.view', route: '/saas-admin/dashboard' },
+      { featureKey: 'user.list', route: '/saas-admin/users' },
+      { featureKey: 'employees.view', route: '/saas-admin/employees' },
+      { featureKey: 'category.list', route: '/masters/categories' },
+      { featureKey: 'order.list', route: '/orders' },
+      { featureKey: 'group.list', route: '/product/groups' },
+      { featureKey: 'offer.list', route: '/saas-admin/offers' },
+      { featureKey: 'template.browse', route: '/templates/browse' },
+      { featureKey: 'storefront.config', route: '/settings/web-app/storefront' },
+      { featureKey: 'branding.config', route: '/settings/web-app/branding' },
+      { featureKey: 'homepage.config', route: '/settings/web-app/home-page' },
+      { featureKey: 'catalog.config', route: '/settings/web-app/catalog' },
+      { featureKey: 'checkoutpayments.config', route: '/settings/web-app/checkout-payments' },
+      { featureKey: 'delivery.management', route: '/settings/delivery-management' },
+      { featureKey: 'notification.broadcast', route: '/settings/push-notifications' },
+      { featureKey: 'notification.create', route: '/settings/push-notifications/create' },
+      { featureKey: 'notification.manage', route: '/settings/notification-settings' },
+      { featureKey: 'notification.operations', route: '/settings/notification-ops' },
+      { featureKey: 'employeeCode.config', route: '/settings/employee-code' },
+    ];
+    const landingRoute = featureRoutes.find(({ featureKey }) => this.hasFeature(featureKey));
 
-    if (this.hasFeature('user.list')) {
-      return '/saas-admin/users';
-    }
-
-    if (this.hasFeature('tenantAccount.view')) {
-      return '/saas-admin/employees';
-    }
-
-    if (this.hasFeature('category.list')) {
-      return '/masters/categories';
-    }
-
-    if (this.hasFeature('order.list')) {
-      return '/orders';
-    }
-
-    if (this.hasFeature('group.list')) {
-      return '/product/groups';
-    }
-
-    if (this.hasFeature('offer.list')) {
-      return '/saas-admin/offers';
-    }
-
-    // Check settings pages
-    if (this.hasFeature('storefront.config')) {
-      return '/settings/web-app/storefront';
-    }
-
-    if (this.hasFeature('delivery.management')) {
-      return '/settings/delivery-management';
-    }
-
-    if (this.hasFeature('notification.manage')) {
-      return '/settings/notification-settings';
-    }
-
-    if (this.hasFeature('employeeCode.config')) {
-      return '/settings/employee-code';
+    if (landingRoute) {
+      return landingRoute.route;
     }
 
     // If user has no accessible features, redirect to access-denied

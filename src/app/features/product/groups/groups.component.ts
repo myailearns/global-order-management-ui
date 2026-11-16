@@ -478,7 +478,7 @@ export class GroupsComponent implements OnInit, OnDestroy {
   readonly groupVideoLimit = computed(() => this.authSession.getFeatureConfigNumber('group.create', 'max_videos') ?? this.DEFAULT_MAX_VIDEOS);
 
   readonly columns: GomTableColumn<GroupRow>[] = [
-    { key: 'name', header: 'Group Name', sortable: true, filterable: true, width: '16rem' },
+    { key: 'name', header: 'Product Name', sortable: true, filterable: true, width: '16rem' },
     { key: 'categoryName', header: 'Category', sortable: true, filterable: true, width: '12rem' },
     {
       key: 'stock',
@@ -496,8 +496,8 @@ export class GroupsComponent implements OnInit, OnDestroy {
         return 'group-stock--normal';
       },
     },
-    { key: 'groupType', header: 'Group Type', sortable: true, filterable: true, width: '10rem' },
-    { key: 'pricingTemplate', header: 'Pricing Template', sortable: true, filterable: true, width: '14rem' },
+    { key: 'groupType', header: 'Product Type', sortable: true, filterable: true, width: '10rem' },
+    { key: 'pricingTemplate', header: 'Pricing Formula', sortable: true, filterable: true, width: '14rem' },
     { key: 'baseUnit', header: 'Base Unit', sortable: true, filterable: true, width: '10rem' },
     {
       key: 'allowedUnits',
@@ -531,20 +531,20 @@ export class GroupsComponent implements OnInit, OnDestroy {
       actionOverflowMenu: {
         actionKeys: ['add-stock', 'add-variant', 'collections', 'delete'],
         triggerIcon: 'ri-more-2-fill',
-        triggerAriaLabel: 'More group actions',
-        triggerButtonTitle: 'More group actions',
-        backButtonText: 'Group actions',
+        triggerAriaLabel: 'More product actions',
+        triggerButtonTitle: 'More product actions',
+        backButtonText: 'Product actions',
       },
       actionButtons: [
         {
-          label: () => this.canUpdateGroup() ? 'Edit' : 'No permission to edit groups',
+          label: () => this.canUpdateGroup() ? 'Edit' : 'No permission to edit products',
           icon: 'ri-pencil-line',
           actionKey: 'edit',
           variant: 'secondary',
           disabled: () => !this.canUpdateGroup(),
         },
         {
-          label: () => this.canCreateGroup() ? 'Clone Group' : 'No permission to clone groups',
+          label: () => this.canCreateGroup() ? 'Clone Product' : 'No permission to clone products',
           icon: 'ri-file-copy-line',
           actionKey: 'clone',
           variant: 'secondary',
@@ -572,7 +572,7 @@ export class GroupsComponent implements OnInit, OnDestroy {
           disabled: () => !this.canManageProductCollections(),
         },
         {
-          label: () => this.canDeleteGroup() ? 'Delete' : 'No permission to delete groups',
+          label: () => this.canDeleteGroup() ? 'Delete' : 'No permission to delete products',
           icon: 'ri-delete-bin-line',
           actionKey: 'delete',
           variant: 'danger',
@@ -625,7 +625,7 @@ export class GroupsComponent implements OnInit, OnDestroy {
     { key: 'rowNumber', header: 'Row', sortable: true, width: '6rem' },
     {
       key: 'groupName',
-      header: 'Group Name',
+      header: 'Product Name',
       sortable: true,
       filterable: true,
       width: '14rem',
@@ -641,7 +641,7 @@ export class GroupsComponent implements OnInit, OnDestroy {
     },
     {
       key: 'inferredGroupType',
-      header: 'Group Type',
+      header: 'Product Type',
       sortable: true,
       filterable: true,
       width: '10rem',
@@ -708,9 +708,9 @@ export class GroupsComponent implements OnInit, OnDestroy {
 
   readonly bulkSuccessColumns: GomTableColumn<BulkSuccessResultRow>[] = [
     { key: 'rowNumber', header: 'Row', sortable: true, width: '6rem' },
-    { key: 'groupName', header: 'Group Name', sortable: true, filterable: true, width: '14rem' },
+    { key: 'groupName', header: 'Product Name', sortable: true, filterable: true, width: '14rem' },
     { key: 'category', header: 'Category', sortable: true, filterable: true, width: '12rem' },
-    { key: 'inferredGroupType', header: 'Group Type', sortable: true, filterable: true, width: '10rem' },
+    { key: 'inferredGroupType', header: 'Product Type', sortable: true, filterable: true, width: '10rem' },
     { key: 'baseUnit', header: 'Base Unit', sortable: true, filterable: true, width: '10rem' },
     { key: 'allowedUnits', header: 'Allowed Units', sortable: false, filterable: true, width: '12rem' },
     {
@@ -878,7 +878,7 @@ export class GroupsComponent implements OnInit, OnDestroy {
 
   readonly bulkVariantFailureColumns: GomTableColumn<BulkVariantFailureRow>[] = [
     { key: 'rowNumber', header: 'Row', sortable: true, width: '6rem' },
-    { key: 'groupName', header: 'Group Name', sortable: true, filterable: true, width: '14rem' },
+    { key: 'groupName', header: 'Product Name', sortable: true, filterable: true, width: '14rem' },
     { key: 'attemptedVariantLabel', header: 'Attempted Variant', sortable: false, width: '20rem' },
     { key: 'measuredInput', header: 'Measured Input', sortable: false, width: '10rem' },
     { key: 'failureCode', header: 'Failure Code', sortable: true, filterable: true, width: '14rem' },

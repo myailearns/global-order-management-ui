@@ -42,16 +42,30 @@
     <!-- Inline Upload Panel -->
     @if (uploadPanelOpen()) {
       <div class="picker__upload-panel">
-        <gom-image-upload
-          [accept]="uploadAccept()"
-          [maxSizeMb]="uploadMaxSizeMb()"
-          [maxFiles]="maxUploadFiles()"
-          [disabled]="uploading()"
-          [dragOrClickLabel]="dragOrClickLabel()"
-          [hintLabel]="hintLabel()"
-          (fileSelected)="onFileUploaded($event)"
-          (filesSelected)="onFilesUploaded($event)"
-        ></gom-image-upload>
+        @if (activeMediaType() === 'IMAGE') {
+          <gom-media-prepare [purpose]="purpose()" [maxFiles]="maxUploadFiles()" [disabled]="uploading()"></gom-media-prepare>
+          <div class="picker__upload-actions">
+            <gom-lib-button type="button" variant="primary" [disabled]="!canUploadPrepared()" (buttonClick)="uploadPrepared()">
+              @if (uploading()) {
+                <i class="ri-loader-4-line ri-spin" aria-hidden="true"></i>
+              } @else {
+                <i class="ri-upload-2-line" aria-hidden="true"></i>
+              }
+              {{ 'media.imagePicker.uploadNew' | translate }}
+            </gom-lib-button>
+          </div>
+        } @else {
+          <gom-image-upload
+            [accept]="uploadAccept()"
+            [maxSizeMb]="uploadMaxSizeMb()"
+            [maxFiles]="maxUploadFiles()"
+            [disabled]="uploading()"
+            [dragOrClickLabel]="dragOrClickLabel()"
+            [hintLabel]="hintLabel()"
+            (fileSelected)="onFileUploaded($event)"
+            (filesSelected)="onFilesUploaded($event)"
+          ></gom-image-upload>
+        }
         @if (uploading()) {
           <p class="picker__uploading">
             <i class="ri-loader-4-line ri-spin" aria-hidden="true"></i>

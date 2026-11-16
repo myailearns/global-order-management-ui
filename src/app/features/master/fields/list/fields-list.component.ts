@@ -22,6 +22,7 @@ interface FieldTableRow extends GomTableRow {
   defaultValue: string;
   isRequired: string;
   usedInFieldGroups: string;
+  origin: string;
   status: string;
 }
 
@@ -70,6 +71,7 @@ export class FieldsListComponent implements OnChanges {
     { key: 'defaultValue', header: FIELD_UI_TEXT.defaultValueLabel, sortable: true, width: '11rem' },
     { key: 'isRequired', header: FIELD_UI_TEXT.isRequiredLabel, sortable: true, filterable: true, width: '11rem' },
     { key: 'usedInFieldGroups', header: FIELD_UI_TEXT.usedInFieldGroupsLabel, sortable: true, filterable: true, width: '18rem', textMode: 'wrap' },
+    { key: 'origin', header: FIELD_UI_TEXT.originLabel, sortable: true, filterable: true, width: '9rem' },
     { key: 'status', header: FIELD_UI_TEXT.statusLabel, sortable: true, filterable: true, width: '11rem' },
     {
       key: 'actions',
@@ -109,6 +111,7 @@ export class FieldsListComponent implements OnChanges {
       defaultValue: String(field.defaultValue ?? 0),
       isRequired: field.isRequired ? 'true' : 'false',
       usedInFieldGroups: this.getUsageText(field._id),
+      origin: field.templateRef ? 'PLATFORM' : 'OWN',
       status: field.status || FIELD_DEFAULT_STATUS,
     }));
   }
@@ -176,13 +179,18 @@ export class FieldsListComponent implements OnChanges {
         ? this.translate.instant(this.text.yes)
         : this.translate.instant(this.text.no);
     this.columns[4].header = this.translate.instant(this.text.usedInFieldGroupsLabel);
-    this.columns[5].header = this.translate.instant(this.text.statusLabel);
+    this.columns[5].header = this.translate.instant(this.text.originLabel);
     this.columns[5].format = (value) =>
+      value === 'PLATFORM'
+        ? this.translate.instant(this.text.originPlatform)
+        : this.translate.instant(this.text.originOwn);
+    this.columns[6].header = this.translate.instant(this.text.statusLabel);
+    this.columns[6].format = (value) =>
       value === 'INACTIVE'
         ? this.translate.instant('common.status.inactive')
         : this.translate.instant('common.status.active');
-    this.columns[6].header = this.translate.instant(this.text.actionsLabel);
-    this.columns[6].actionButtons = [
+    this.columns[7].header = this.translate.instant(this.text.actionsLabel);
+    this.columns[7].actionButtons = [
       { label: this.translate.instant(this.text.viewAction), icon: 'ri-eye-line', actionKey: 'view', variant: 'secondary' },
       ...(this.canEdit ? [
         { label: this.translate.instant(this.text.editAction), icon: 'ri-pencil-line', actionKey: 'edit', variant: 'secondary' as const },

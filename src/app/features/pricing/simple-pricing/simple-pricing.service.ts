@@ -315,8 +315,8 @@ export class SimplePricingService {
   }
 
   updateVariantFieldInputs(id: string, payload: FieldInputUpdatePayload): Observable<ApiSuccess<SimplePricingVariant>> {
-    return this.http.put<ApiSuccess<SimplePricingVariant>>(
-      `${this.apiBase}/variants/${id}`,
+    return this.http.patch<ApiSuccess<SimplePricingVariant>>(
+      `${this.apiBase}/variants/${id}/pricing-fields`,
       payload,
       { headers: this.headers }
     );
@@ -332,7 +332,7 @@ export class SimplePricingService {
 
   updateGroup(id: string, payload: GroupUpdatePayload): Observable<ApiSuccess<SimplePricingGroup>> {
     return this.http.put<ApiSuccess<SimplePricingGroup>>(
-      `${this.apiBase}/groups/${id}`,
+      `${this.apiBase}/groups/${id}/pricing`,
       payload,
       { headers: this.headers }
     );

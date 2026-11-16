@@ -99,7 +99,7 @@
   }
 </gom-lib-modal>
 
-<gom-image-picker
+<gom-image-picker [purpose]="'CATEGORY'"
   [(show)]="pickerOpen"
   [existingImageIds]="emptyImageIds"
   [canUpload]="canUploadOwn()"

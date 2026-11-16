@@ -301,7 +301,7 @@ export class BulkUploadGroupsComponent implements OnInit {
       { key: 'group_name', label: 'Group Name', type: 'text', required: true, width: '16rem', placeholder: '' },
       { key: 'margin_percent_override', label: 'Margin %', type: 'number', width: '8rem', min: 0, placeholder: String(this.simpleMarginPercent()) },
       ...fieldCols,
-      { key: 'variant_count', label: 'Variants', type: 'text', width: '7rem', readonly: true },
+      { key: 'variant_count', label: 'Sellable Items', type: 'text', width: '9rem', readonly: true },
       { key: 'price_preview', label: 'Price Preview (A / S / An)', type: 'text', width: '14rem', readonly: true },
       { key: 'description', label: 'Description', type: 'text', width: '18rem', placeholder: 'Premium aged rice', visibility: 'optional' },
       { key: 'category_id', label: 'Category Override', type: 'select', width: '14rem', options: this.categoryOptions(), visibility: 'optional' },

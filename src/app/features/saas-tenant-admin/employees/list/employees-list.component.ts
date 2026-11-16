@@ -56,6 +56,9 @@ export class EmployeesListComponent implements OnInit {
 
   readonly loading = signal(false);
   readonly canWrite = computed(() => this.authSession.canWrite('tenant-admin'));
+  readonly canCreate = computed(() => this.canWrite() && this.authSession.hasFeature('employees.add'));
+  readonly canEdit = computed(() => this.canWrite() && this.authSession.hasFeature('employees.edit'));
+  readonly canDelete = computed(() => this.canWrite() && this.authSession.hasFeature('employees.delete'));
   readonly errorMessage = signal<string | null>(null);
 
   readonly employees = signal<EmployeeProfile[]>([]);
@@ -96,7 +99,7 @@ export class EmployeesListComponent implements OnInit {
       { key: 'status', header: this.translate.instant('saas.admin.employees.lbl_status'), width: '10rem' },
     ];
 
-    if (!this.canWrite()) {
+    if (!this.canEdit() && !this.canDelete()) {
       return baseColumns;
     }
 
@@ -107,8 +110,12 @@ export class EmployeesListComponent implements OnInit {
         header: this.translate.instant('common.labels.actions'),
         width: '8rem',
         actionButtons: [
-          { label: this.translate.instant('common.actions.edit'), actionKey: 'edit', variant: 'secondary', icon: 'ri-pencil-line' },
-          { label: this.translate.instant('common.actions.delete'), actionKey: 'delete', variant: 'danger', icon: 'ri-delete-bin-line' },
+          ...(this.canEdit()
+            ? [{ label: this.translate.instant('common.actions.edit'), actionKey: 'edit', variant: 'secondary' as const, icon: 'ri-pencil-line' }]
+            : []),
+          ...(this.canDelete()
+            ? [{ label: this.translate.instant('common.actions.delete'), actionKey: 'delete', variant: 'danger' as const, icon: 'ri-delete-bin-line' }]
+            : []),
         ],
       },
     ];
@@ -151,7 +158,7 @@ export class EmployeesListComponent implements OnInit {
   }
 
   onCreateEmployee(): void {
-    if (!this.canWrite()) {
+    if (!this.canCreate()) {
       return;
     }
     if (this.atQuota()) {
@@ -162,13 +169,10 @@ export class EmployeesListComponent implements OnInit {
   }
 
   onTableAction(event: { actionKey: string; row: EmployeeRow }): void {
-    if (!this.canWrite()) {
-      return;
-    }
     const { actionKey, row } = event;
-    if (actionKey === 'edit') {
+    if (actionKey === 'edit' && this.canEdit()) {
       this.openEmployeeForm(row.employeeId);
-    } else if (actionKey === 'delete') {
+    } else if (actionKey === 'delete' && this.canDelete()) {
       this.onDeleteEmployee(row.employeeId, row.name);
     }
   }

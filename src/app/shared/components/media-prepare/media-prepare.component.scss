@@ -1,0 +1,230 @@
+@use "theme" as theme;
+
+.prepare {
+  display: flex;
+  flex-direction: column;
+  gap: theme.get-gap(sm);
+  width: 100%;
+
+  &--disabled {
+    opacity: 0.7;
+  }
+
+  &__input {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+    opacity: 0;
+  }
+
+  &__target {
+    display: flex;
+    align-items: center;
+    gap: theme.get-gap(xxs);
+    margin: 0;
+    color: theme.get-text(primary);
+    font-size: theme.get-font-size(sm);
+    font-weight: theme.get-font-weight(semibold);
+  }
+
+  &__dropzone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: theme.get-gap(xxs);
+    padding: theme.get-spacing(md);
+    border: theme.get-border-size(thin) dashed theme.get-border(standard);
+    border-radius: theme.get-radius(sm);
+    background: theme.get-background(secondary);
+    cursor: pointer;
+
+    &:hover:not(:disabled),
+    &--dragging {
+      border-color: theme.get-border(primary);
+      background: theme.get-background(primary-light);
+    }
+
+    &:focus-visible {
+      outline: theme.get-border-size(thin) solid theme.get-border(primary);
+      outline-offset: theme.get-border-size(thin);
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+    }
+  }
+
+  &__dropzone-icon {
+    font-size: theme.get-font-size(heading-lg);
+    color: theme.get-text(hint);
+  }
+
+  &__dropzone-text {
+    color: theme.get-text(default);
+    font-size: theme.get-font-size(sm);
+    font-weight: theme.get-font-weight(semibold);
+  }
+
+  &__dropzone-hint {
+    color: theme.get-text(hint);
+    font-size: theme.get-font-size(xs);
+    text-align: center;
+  }
+
+  &__bulk {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: theme.get-gap(xs);
+  }
+
+  &__bulk-label {
+    color: theme.get-text(default-light);
+    font-size: theme.get-font-size(sm);
+  }
+
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: theme.get-gap(xs);
+  }
+
+  &__row {
+    display: flex;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: theme.get-gap(sm);
+    padding: theme.get-spacing(xs);
+    border: theme.get-border-size(hairline) solid theme.get-border(standard);
+    border-radius: theme.get-radius(sm);
+    background: theme.get-background(standard);
+
+    &--error {
+      border-color: theme.get-border(danger);
+      background: theme.get-background(danger-light);
+    }
+  }
+
+  &__previews {
+    display: flex;
+    align-items: center;
+    gap: theme.get-gap(xs);
+  }
+
+  &__figure {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: theme.get-gap(xxs);
+    margin: 0;
+  }
+
+  &__thumb {
+    width: theme.get-size(xs);
+    height: theme.get-size(xs);
+    object-fit: contain;
+    border: theme.get-border-size(hairline) solid theme.get-border(light);
+    border-radius: theme.get-radius(xs);
+    background: theme.get-background(secondary);
+
+    &--empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: theme.get-text(hint);
+    }
+  }
+
+  &__arrow {
+    color: theme.get-text(hint);
+  }
+
+  &__caption {
+    color: theme.get-text(hint);
+    font-size: theme.get-font-size(xs);
+    text-align: center;
+  }
+
+  &__details {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: theme.get-gap(xs);
+    min-width: theme.get-size(sm);
+  }
+
+  &__chips,
+  &__modes {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: theme.get-gap(xs);
+  }
+
+  &__warning {
+    display: flex;
+    align-items: flex-start;
+    gap: theme.get-gap(xxs);
+    margin: 0;
+    color: theme.get-text(warning);
+    font-size: theme.get-font-size(xs);
+  }
+
+  &__error {
+    margin: 0;
+    color: theme.get-text(danger);
+    font-size: theme.get-font-size(xs);
+  }
+
+  &__note {
+    margin: 0;
+    color: theme.get-text(hint);
+    font-size: theme.get-font-size(xs);
+  }
+
+  &__crop {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: theme.get-gap(xs);
+    padding: theme.get-spacing(xs);
+    border: theme.get-border-size(hairline) solid theme.get-border(primary);
+    border-radius: theme.get-radius(sm);
+    background: theme.get-background(primary-light);
+  }
+
+  &__crop-viewport {
+    position: relative;
+    overflow: hidden;
+    cursor: grab;
+    touch-action: none;
+    border-radius: theme.get-radius(xs);
+    background: theme.get-background(secondary);
+
+    &:active {
+      cursor: grabbing;
+    }
+
+    &:focus-visible {
+      outline: theme.get-border-size(thin) solid theme.get-border(primary);
+    }
+  }
+
+  &__crop-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    max-width: none;
+    user-select: none;
+    pointer-events: none;
+  }
+
+  &__crop-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: theme.get-gap(xs);
+  }
+}

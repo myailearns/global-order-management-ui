@@ -505,6 +505,7 @@ export class NewCareOrderComponent implements OnInit, OnDestroy {
   readonly selectedPaymentMode = signal<PaymentMode>('CASH');
   readonly selectedCreateOrderSubMenu = signal<CreateOrderSubMenuItem>('ORDERS_HISTORY');
   readonly createOrderSubMenuOpen = signal(false);
+  readonly isFullscreen = signal(false);
   readonly paymentOptions = signal<PaymentOptionsConfig | null>(null);
   readonly paymentUpiModalOpen = signal(false);
   readonly paymentCompleteModalOpen = signal(false);
@@ -1179,6 +1180,19 @@ export class NewCareOrderComponent implements OnInit, OnDestroy {
     void this.router.navigate(['/orders/list']);
   }
 
+  toggleFullscreen(): void {
+    if (document.fullscreenElement) {
+      void document.exitFullscreen();
+      return;
+    }
+    void document.documentElement.requestFullscreen?.();
+  }
+
+  @HostListener('document:fullscreenchange')
+  onFullscreenChange(): void {
+    this.isFullscreen.set(!!document.fullscreenElement);
+  }
+
   toggleCreateOrderSubMenu(event?: Event): void {
     event?.stopPropagation();
     this.createOrderSubMenuOpen.set(!this.createOrderSubMenuOpen());
@@ -1377,6 +1391,9 @@ export class NewCareOrderComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    if (document.fullscreenElement) {
+      void document.exitFullscreen();
+    }
     this.storefrontSearchRequest?.unsubscribe();
     this.storefrontSearchRequest = null;
 

@@ -64,10 +64,11 @@
 
   <section class="stock-controls">
     <div class="stock-controls__layout">
-      <!-- Row 1: Group Selection -->
+      <!-- Row 1: Product Selection -->
       <gom-lib-select
-        label="Group"
-        placeholder="Select group"
+        label="Products"
+        placeholder="Select product"
+        [searchable]="true"
         [options]="groupOptions()"
         [formControl]="filtersForm.controls.groupId"
         (valueChange)="onGroupSelectionChange($event)"
@@ -92,7 +93,7 @@
         </gom-lib-button>
       </div>
 
-      <!-- Row 3: Costing Method Input + Save Button -->
+      <!-- Row 3: Costing Method Input + Save Button (hidden for now)
       <div class="stock-controls__action-row">
         <gom-lib-select
           label="Costing Method"
@@ -109,6 +110,7 @@
           Save Costing Method
         </gom-lib-button>
       </div>
+      -->
     </div>
   </section>
 
@@ -369,20 +371,13 @@
           </div>
         }
 
-        <div style="margin-top: 0.5rem; padding: 0.75rem; background-color: #e3f2fd; border-left: 4px solid #1976d2; border-radius: 4px;">
-          <p style="margin: 0; font-size: 0.875rem; color: #1565c0;">
-            <strong>{{ getAllocatedVariants().length }}</strong> selected variants •
-            <strong>Total base quantity:</strong>
-            {{ allocationBaseTotal() | number: '1.4-4' }} {{ getBaseUnitSymbol() }}
-          </p>
-        </div>
         @if (allocationValidationError()) {
           <p style="color: #d32f2f; font-size: 0.8rem; margin: 0.5rem 0 0; padding-left: 0.25rem;">
             {{ allocationValidationError() }}
           </p>
         }
 
-        <!-- Step 2: Pricing strategy -->
+        <!-- Step 2: Pricing strategy
         @if (currentGroupPricingFields().length > 0) {
           <div style="margin-top: 1rem; padding: 0.75rem; border: 1px solid #e5e7eb; border-radius: 4px; background: #fff;">
             <h4 style="margin: 0 0 0.5rem 0; font-size: 0.9rem; color: #1f2937;">Step 2: Pricing Update (Optional)</h4>
@@ -484,6 +479,7 @@
             }
           </div>
         }
+        -->
       </div>
     }
 
@@ -546,7 +542,11 @@
         [disabled]="isAddStockSaveDisabled()"
       >
         @if (shouldShowIcon(submitMode)) {
-          <i class="ri-check-line" aria-hidden="true"></i>
+          @if (saving()) {
+            <i class="ri-loader-4-line ri-spin" aria-hidden="true"></i>
+          } @else {
+            <i class="ri-check-line" aria-hidden="true"></i>
+          }
         }
         @if (shouldShowText(submitMode)) {
           @if (saving()) {

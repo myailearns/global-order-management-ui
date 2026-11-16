@@ -1100,28 +1100,7 @@ export class TierManagementComponent implements OnInit {
 
   loadPackageFeatures(): void {
     const pkgId = this.packageId();
-    if (!pkgId) {
-      return;
-    }
-
-    this.entitlementsService.listPackageFeatures(pkgId).subscribe({
-      next: (result) => {
-        const items = Array.isArray(result.items) ? result.items : [];
-        if (items.length > 0) {
-          this.features.set(items);
-          return;
-        }
-
-        this.seedFeatureCatalogFromTemplates();
-      },
-      error: (error) => {
-        this.toast.error(String(error?.error?.message || 'Failed to load package feature catalog'));
-      },
-    });
-  }
-
-  private seedFeatureCatalogFromTemplates(): void {
-    if (this.seedingFeatureCatalog()) {
+    if (!pkgId || this.seedingFeatureCatalog()) {
       return;
     }
 
@@ -1129,21 +1108,24 @@ export class TierManagementComponent implements OnInit {
     this.entitlementsService.syncFeatureTemplates(toFeatureTemplateSyncPayload()).subscribe({
       next: () => {
         this.seedingFeatureCatalog.set(false);
-        this.toast.info('Feature catalog was empty, so the built-in module and feature templates were synced automatically.');
-        this.entitlementsService.listPackageFeatures(this.packageId()).subscribe({
-          next: (result) => {
-            const items = Array.isArray(result.items) ? result.items : [];
-            this.features.set(items.length > 0 ? items : toFallbackFeatureCatalogItems());
-          },
-          error: () => {
-            this.features.set(toFallbackFeatureCatalogItems());
-          },
-        });
+        this.fetchPackageFeatures(pkgId);
       },
       error: () => {
         this.seedingFeatureCatalog.set(false);
+        this.fetchPackageFeatures(pkgId);
+      },
+    });
+  }
+
+  private fetchPackageFeatures(pkgId: string): void {
+    this.entitlementsService.listPackageFeatures(pkgId).subscribe({
+      next: (result) => {
+        const items = Array.isArray(result.items) ? result.items : [];
+        this.features.set(items.length > 0 ? items : toFallbackFeatureCatalogItems());
+      },
+      error: (error) => {
         this.features.set(toFallbackFeatureCatalogItems());
-        this.toast.info('Backend feature catalog is empty. Showing the built-in module and feature template list locally until the catalog is synced.');
+        this.toast.error(String(error?.error?.message || 'Failed to load package feature catalog'));
       },
     });
   }

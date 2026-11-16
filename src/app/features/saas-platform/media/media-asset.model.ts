@@ -1,3 +1,5 @@
+import type { MediaPurpose } from '../../../shared/components/media-prepare/media-purpose.config';
+
 export interface MediaAsset {
   _id: string;
   tenantId: string;
@@ -11,6 +13,7 @@ export interface MediaAsset {
   duration: number;
   format: string;
   mediaType: 'IMAGE' | 'VIDEO';
+  purpose?: MediaPurpose;
   visibility: 'PUBLIC' | 'PRIVATE';
   uploadedBy: string;
   status: 'ACTIVE' | 'INACTIVE';

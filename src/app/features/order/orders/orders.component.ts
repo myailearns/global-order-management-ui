@@ -1665,7 +1665,7 @@ export class OrdersComponent implements OnInit {
     const variantId = String(this.addItemForm.controls.variantId.value || '').trim();
     const quantity = Number(this.addItemForm.controls.quantity.value || 0);
     if (!variantId) {
-      this.toast.warning('Select a variant to add.');
+      this.toast.warning('Select a sellable item to add.');
       return;
     }
     if (!Number.isFinite(quantity) || quantity <= 0) {

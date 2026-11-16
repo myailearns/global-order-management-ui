@@ -9,6 +9,7 @@ export interface Category {
   name: string;
   description?: string;
   groupCount?: number;
+  templateRef?: string | null;
   imageAssetId?: string | null;
   imageUrl?: string;
   status?: 'ACTIVE' | 'INACTIVE';

@@ -15,6 +15,7 @@ interface UnitTableRow extends GomTableRow {
   symbol: string;
   baseUnit: string;
   conversionFactor: string;
+  origin: string;
   status: string;
 }
 
@@ -50,7 +51,7 @@ export class UnitsListComponent implements OnChanges {
   readonly isMobileHeader = computed<boolean>(() => this.viewportWidth() <= 768);
 
   readonly text = UNIT_UI_TEXT;
-  readonly mobileCardFields: string[] = ['name', 'symbol', 'baseUnit', 'status'];
+  readonly mobileCardFields: string[] = ['name', 'symbol', 'baseUnit', 'origin', 'status'];
   private readonly translate = inject(TranslateService);
 
   @HostListener('window:resize')
@@ -63,6 +64,7 @@ export class UnitsListComponent implements OnChanges {
     { key: 'symbol', header: UNIT_UI_TEXT.symbolLabel, sortable: true, filterable: true, width: '10rem' },
     { key: 'baseUnit', header: UNIT_UI_TEXT.baseUnitLabel, sortable: true, filterable: true, width: '14rem' },
     { key: 'conversionFactor', header: UNIT_UI_TEXT.conversionFactorLabel, sortable: true, width: '12rem' },
+    { key: 'origin', header: UNIT_UI_TEXT.originLabel, sortable: true, filterable: true, width: '9rem' },
     { key: 'status', header: UNIT_UI_TEXT.statusLabel, sortable: true, filterable: true, width: '10rem' },
     {
       key: 'actions',
@@ -94,6 +96,7 @@ export class UnitsListComponent implements OnChanges {
       symbol: unit.symbol,
       baseUnit: unit.baseUnitId ? (this.baseUnitNameById[unit.baseUnitId] || UNIT_UI_TEXT.emptyValue) : this.translate.instant(UNIT_UI_TEXT.noBaseUnit),
       conversionFactor: String(unit.conversionFactor ?? 1),
+      origin: unit.templateRef ? 'PLATFORM' : 'OWN',
       status: unit.status || UNIT_DEFAULT_STATUS,
     }));
   }
@@ -146,13 +149,18 @@ export class UnitsListComponent implements OnChanges {
     this.columns[1].header = this.translate.instant(this.text.symbolLabel);
     this.columns[2].header = this.translate.instant(this.text.baseUnitLabel);
     this.columns[3].header = this.translate.instant(this.text.conversionFactorLabel);
-    this.columns[4].header = this.translate.instant(this.text.statusLabel);
+    this.columns[4].header = this.translate.instant(this.text.originLabel);
     this.columns[4].format = (value) =>
+      value === 'PLATFORM'
+        ? this.translate.instant(this.text.originPlatform)
+        : this.translate.instant(this.text.originOwn);
+    this.columns[5].header = this.translate.instant(this.text.statusLabel);
+    this.columns[5].format = (value) =>
       value === 'INACTIVE'
         ? this.translate.instant('common.status.inactive')
         : this.translate.instant('common.status.active');
-    this.columns[5].header = this.translate.instant(this.text.actionsLabel);
-    this.columns[5].actionButtons = [
+    this.columns[6].header = this.translate.instant(this.text.actionsLabel);
+    this.columns[6].actionButtons = [
       { label: this.translate.instant(this.text.viewAction), icon: 'ri-eye-line', actionKey: 'view', variant: 'secondary' },
       ...(this.canEdit ? [
         { label: this.translate.instant(this.text.editAction), icon: 'ri-pencil-line', actionKey: 'edit', variant: 'secondary' as const },

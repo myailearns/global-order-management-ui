@@ -18,6 +18,7 @@ export interface Field {
   valueFormat?: FieldValueFormat;
   currencyCode?: FieldCurrencyCode | null;
   fieldKind?: FieldKind;
+  templateRef?: string | null;
   defaultValue: number | string;
   isRequired: boolean;
   status: FieldStatus;

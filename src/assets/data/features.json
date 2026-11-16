@@ -352,39 +352,57 @@
   },
   {
     "featureKey": "variant.list",
-    "displayName": "View Product Variants",
+    "displayName": "View Sellable Items",
     "module": "product",
-    "description": "List and view all product variants",
+    "description": "List and view all sellable items",
     "planAvailability": ["STARTER", "GROWTH", "SCALE"],
     "dependencies": [],
     "actions": ["view", "search", "filter"]
   },
   {
     "featureKey": "variant.create",
-    "displayName": "Create Product Variant",
+    "displayName": "Create Sellable Item",
     "module": "product",
-    "description": "Create new product variants",
+    "description": "Create new sellable items",
     "planAvailability": ["STARTER", "GROWTH", "SCALE"],
     "dependencies": [],
     "actions": ["create"]
   },
   {
     "featureKey": "variant.edit",
-    "displayName": "Edit Product Variant",
+    "displayName": "Edit Sellable Item",
     "module": "product",
-    "description": "Edit existing product variants",
+    "description": "Edit existing sellable items",
     "planAvailability": ["STARTER", "GROWTH", "SCALE"],
     "dependencies": ["variant.list"],
     "actions": ["edit", "update"]
   },
   {
     "featureKey": "variant.delete",
-    "displayName": "Delete Product Variant",
+    "displayName": "Delete Sellable Item",
     "module": "product",
-    "description": "Delete product variants",
+    "description": "Delete sellable items",
     "planAvailability": ["GROWTH", "SCALE"],
     "dependencies": ["variant.list"],
     "actions": ["delete"]
+  },
+  {
+    "featureKey": "product.pricing.view",
+    "displayName": "View Pricing",
+    "module": "product",
+    "description": "View product prices, costs, margins, and price history",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["view", "search", "filter", "download"]
+  },
+  {
+    "featureKey": "product.pricing.update",
+    "displayName": "Add/Update Pricing",
+    "module": "product",
+    "description": "Add or update product prices and pricing inputs",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": ["product.pricing.view"],
+    "actions": ["create", "edit", "update", "bulk_update"]
   },
   {
     "featureKey": "pack.list",
@@ -540,12 +558,129 @@
     "actions": ["delete"]
   },
   {
-    "featureKey": "storefront.share",
-    "displayName": "Share Storefront",
-    "module": "tenant-admin",
-    "description": "Copy storefront link, share it on WhatsApp, and download the customer QR code",
+    "featureKey": "createordersettings.config",
+    "displayName": "Create Order Settings",
+    "module": "admin-app",
+    "description": "Configure the tenant create order experience",
     "planAvailability": ["STARTER", "GROWTH", "SCALE"],
     "dependencies": [],
+    "actions": ["view", "configure"]
+  },
+  {
+    "featureKey": "billing.config",
+    "displayName": "Billing Settings",
+    "module": "admin-app",
+    "description": "Configure billing templates and assignments",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["view", "configure"]
+  },
+  {
+    "featureKey": "businessdetails.config",
+    "displayName": "Business Details",
+    "module": "admin-app",
+    "description": "Configure tenant business information",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["view", "configure"]
+  },
+  {
+    "featureKey": "paymentoptions.config",
+    "displayName": "Payment Options",
+    "module": "admin-app",
+    "description": "Configure payment methods used for order processing",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["view", "configure"]
+  },
+  {
+    "featureKey": "notification.broadcast",
+    "displayName": "Notification Center",
+    "module": "push-notification",
+    "description": "View and manage marketing notification campaigns",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["view", "manage"]
+  },
+  {
+    "featureKey": "notification.create",
+    "displayName": "Create Notification",
+    "module": "push-notification",
+    "description": "Create and schedule marketing notifications",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["create", "schedule", "send"]
+  },
+  {
+    "featureKey": "notification.manage",
+    "displayName": "Notification Settings",
+    "module": "push-notification",
+    "description": "Configure notification templates, channels, and recipients",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["view", "configure"]
+  },
+  {
+    "featureKey": "notification.operations",
+    "displayName": "Notification Operations",
+    "module": "push-notification",
+    "description": "Monitor notification delivery, SLA metrics, and retries",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["view", "monitor", "retry"]
+  },
+  {
+    "featureKey": "storefront.config",
+    "displayName": "Storefront",
+    "module": "web-app",
+    "description": "Configure storefront availability, identity, slug, and logo",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["view", "configure"]
+  },
+  {
+    "featureKey": "branding.config",
+    "displayName": "Branding",
+    "module": "web-app",
+    "description": "Configure storefront branding, theme, messages, and social links",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["view", "configure"]
+  },
+  {
+    "featureKey": "homepage.config",
+    "displayName": "Home Page",
+    "module": "web-app",
+    "description": "Configure storefront home page banners and merchandising sections",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["view", "configure"]
+  },
+  {
+    "featureKey": "catalog.config",
+    "displayName": "Catalog",
+    "module": "web-app",
+    "description": "Configure customer catalog visibility, layout, and browsing behavior",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["view", "configure"]
+  },
+  {
+    "featureKey": "checkoutpayments.config",
+    "displayName": "Checkout & Payments",
+    "module": "web-app",
+    "description": "Configure customer checkout fulfillment and payment methods",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": [],
+    "actions": ["view", "configure"]
+  },
+  {
+    "featureKey": "storefront.share",
+    "displayName": "Share Storefront",
+    "module": "web-app",
+    "description": "Copy storefront link, share it on WhatsApp, and download the customer QR code",
+    "planAvailability": ["STARTER", "GROWTH", "SCALE"],
+    "dependencies": ["storefront.config"],
     "actions": ["view", "share", "download"]
   },
   {
@@ -623,7 +758,7 @@
   {
     "featureKey": "rider.list",
     "displayName": "View Riders",
-    "module": "delivery",
+    "module": "delivery-partners",
     "description": "List and view all delivery riders",
     "planAvailability": ["GROWTH", "SCALE"],
     "dependencies": [],
@@ -632,7 +767,7 @@
   {
     "featureKey": "rider.create",
     "displayName": "Create Rider",
-    "module": "delivery",
+    "module": "delivery-partners",
     "description": "Create new delivery riders",
     "planAvailability": ["GROWTH", "SCALE"],
     "dependencies": [],
@@ -641,7 +776,7 @@
   {
     "featureKey": "rider.edit",
     "displayName": "Edit Rider",
-    "module": "delivery",
+    "module": "delivery-partners",
     "description": "Edit existing delivery riders",
     "planAvailability": ["GROWTH", "SCALE"],
     "dependencies": ["rider.list"],
@@ -650,7 +785,7 @@
   {
     "featureKey": "rider.delete",
     "displayName": "Delete Rider",
-    "module": "delivery",
+    "module": "delivery-partners",
     "description": "Delete delivery riders",
     "planAvailability": ["SCALE"],
     "dependencies": ["rider.list"],
@@ -659,7 +794,7 @@
   {
     "featureKey": "courierPartner.list",
     "displayName": "View Courier Partners",
-    "module": "delivery",
+    "module": "delivery-partners",
     "description": "List and view all courier partners",
     "planAvailability": ["GROWTH", "SCALE"],
     "dependencies": [],
@@ -668,7 +803,7 @@
   {
     "featureKey": "courierPartner.create",
     "displayName": "Create Courier Partner",
-    "module": "delivery",
+    "module": "delivery-partners",
     "description": "Create new courier partners",
     "planAvailability": ["GROWTH", "SCALE"],
     "dependencies": [],
@@ -677,7 +812,7 @@
   {
     "featureKey": "courierPartner.edit",
     "displayName": "Edit Courier Partner",
-    "module": "delivery",
+    "module": "delivery-partners",
     "description": "Edit existing courier partners",
     "planAvailability": ["GROWTH", "SCALE"],
     "dependencies": ["courierPartner.list"],
@@ -686,52 +821,52 @@
   {
     "featureKey": "courierPartner.delete",
     "displayName": "Delete Courier Partner",
-    "module": "delivery",
+    "module": "delivery-partners",
     "description": "Delete courier partners",
     "planAvailability": ["SCALE"],
     "dependencies": ["courierPartner.list"],
     "actions": ["delete"]
   },
   {
-    "featureKey": "employee.list",
+    "featureKey": "employees.view",
     "displayName": "View Employees",
-    "module": "tenant-admin",
+    "module": "account-management",
     "description": "List and view all tenant employees",
     "planAvailability": ["STARTER", "GROWTH", "SCALE"],
     "dependencies": [],
     "actions": ["view", "search", "filter", "export"]
   },
   {
-    "featureKey": "employee.create",
+    "featureKey": "employees.add",
     "displayName": "Create Employee",
-    "module": "tenant-admin",
+    "module": "account-management",
     "description": "Create new tenant employees",
     "planAvailability": ["STARTER", "GROWTH", "SCALE"],
     "dependencies": [],
     "actions": ["create"]
   },
   {
-    "featureKey": "employee.edit",
+    "featureKey": "employees.edit",
     "displayName": "Edit Employee",
-    "module": "tenant-admin",
+    "module": "account-management",
     "description": "Edit existing employee details",
     "planAvailability": ["STARTER", "GROWTH", "SCALE"],
-    "dependencies": ["employee.list"],
+    "dependencies": ["employees.view"],
     "actions": ["edit", "update", "assign-role"]
   },
   {
-    "featureKey": "employee.delete",
+    "featureKey": "employees.delete",
     "displayName": "Delete Employee",
-    "module": "tenant-admin",
+    "module": "account-management",
     "description": "Delete tenant employees",
     "planAvailability": ["GROWTH", "SCALE"],
-    "dependencies": ["employee.list"],
+    "dependencies": ["employees.view"],
     "actions": ["delete", "deactivate"]
   },
   {
     "featureKey": "user.list",
     "displayName": "View Access Users",
-    "module": "tenant-admin",
+    "module": "account-management",
     "description": "List and view all tenant login users",
     "planAvailability": ["STARTER", "GROWTH", "SCALE"],
     "dependencies": [],
@@ -740,7 +875,7 @@
   {
     "featureKey": "user.create",
     "displayName": "Create Access User",
-    "module": "tenant-admin",
+    "module": "account-management",
     "description": "Create new tenant login users",
     "planAvailability": ["STARTER", "GROWTH", "SCALE"],
     "dependencies": [],
@@ -749,7 +884,7 @@
   {
     "featureKey": "user.edit",
     "displayName": "Edit Access User",
-    "module": "tenant-admin",
+    "module": "account-management",
     "description": "Edit existing login users and permissions",
     "planAvailability": ["STARTER", "GROWTH", "SCALE"],
     "dependencies": ["user.list"],
@@ -758,7 +893,7 @@
   {
     "featureKey": "user.delete",
     "displayName": "Delete Access User",
-    "module": "tenant-admin",
+    "module": "account-management",
     "description": "Delete tenant login users",
     "planAvailability": ["GROWTH", "SCALE"],
     "dependencies": ["user.list"],

@@ -46,7 +46,7 @@ export class CreateOrderSettingsComponent implements OnInit {
   readonly loading = signal(false);
   readonly saving = signal(false);
   readonly errorMessage = signal<string | null>(null);
-  readonly canEdit = computed(() => this.authSession.hasCapability('orders'));
+  readonly canEdit = computed(() => this.authSession.hasFeature('createordersettings.config'));
   readonly tabs: TabItem[] = [
     { id: 'base', label: this.translate.instant('createOrderSettings.tabs.base') },
   ];

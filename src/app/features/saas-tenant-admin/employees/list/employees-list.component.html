@@ -13,7 +13,7 @@
         variant="primary"
         (buttonClick)="onCreateEmployee()"
         [gomDisableIfNoCapability]="'tenant-admin'"
-        [disabled]="loading() || !canWrite() || atQuota()"
+        [disabled]="loading() || !canCreate() || atQuota()"
         [title]="atQuota() ? ('saas.admin.employees.msg_quota_exceeded' | translate) : ''"
         aria-label="Create new account">
         {{ translationKeys.BTN_CREATE_EMPLOYEE | translate }}

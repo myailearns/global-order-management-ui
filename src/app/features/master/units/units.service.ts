@@ -19,6 +19,7 @@ export interface Unit {
   baseUnitId: string | null;
   conversionFactor: number;
   status: UnitStatus;
+  templateRef?: string | null;
   /** @deprecated Category association removed - units are now global */
   categoryIds?: string[];
   createdAt?: string;
