@@ -711,7 +711,7 @@
   </footer>
 </gom-lib-modal>
 
-<gom-image-picker
+<gom-image-picker [purpose]="'PRODUCT'"
   [(show)]="pickerOpen"
   [existingImageIds]="existingVariantImageIds()"
   [canUpload]="canUploadMedia()"

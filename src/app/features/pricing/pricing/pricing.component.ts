@@ -96,22 +96,22 @@ export class PricingComponent extends SimplePricingComponent {
   readonly headerMenuList = computed<MenuList>(() => ({
     mainMenu: [
       {
-        title: 'Update Template',
+        title: 'Update Existing Pricing Sheet',
         icon: 'ri-refresh-line',
         clickEvent: () => this.triggerRefreshTemplateInput(),
       },
       ...(this.canEdit() ? [{
-        title: 'Import Excel',
+        title: 'Import Pricing Sheet',
         icon: 'ri-upload-2-line',
         clickEvent: () => this.triggerUploadTemplateInput(),
       }] : []),
       {
-        title: 'Temporary History',
+        title: 'Temporary Import Pricing Sheet History',
         icon: 'ri-history-line',
         clickEvent: () => this.openUploadHistory(),
       },
       {
-        title: 'Download Template',
+        title: 'Download Pricing Sheet',
         icon: 'ri-download-2-line',
         clickEvent: () => this.openDownloadTemplateModal(),
       },

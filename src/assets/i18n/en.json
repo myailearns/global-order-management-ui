@@ -55,7 +55,7 @@
                                    "pinSecurityPolicy":  "PIN Security Policy",
                                    "pushNotifications":  "Push Notifications",
                                    "tenantAdmin":  "Tenant Admin",
-                                   "tenantDashboard":  "Tenant Dashboard",
+                                   "tenantDashboard":  "Dashboard",
                                    "tenantUsers":  "Access Users",
                                    "tenantEmployees":  "Employees",
                                    "tenantRoles":  "Tenant Roles",
@@ -403,7 +403,10 @@
                                       "description":  "Description",
                                       "image":  "Category Image",
                                       "availableImages":  "Available Images",
-                                      "status":  "Status"
+                                      "status":  "Status",
+                                      "origin":  "Origin",
+                                      "originPlatform":  "Platform",
+                                      "originOwn":  "Own"
                                   },
                        "placeholders":  {
                                             "name":  "Enter category name",
@@ -495,6 +498,9 @@
                                   "noFieldGroupsAvailable":  "No field groups available.",
                                   "usedInFieldGroups":  "Used In Field Groups",
                                   "notUsedInFieldGroups":  "Not used in any field group",
+                                  "origin":  "Origin",
+                                  "originPlatform":  "Platform",
+                                  "originOwn":  "Own",
                                   "deleteBlockedInUse":  "Cannot delete this field because it is used in: {{groups}}",
                                   "status":  "Status"
                               },
@@ -533,7 +539,7 @@
                                    "deleteAria":  "Delete field"
                                },
                    "form":  {
-                                "titleCreate":  "Add Cast Field",
+                                "titleCreate":  "Add Pricing Field",
                                 "titleEdit":  "Edit Cast Field",
                                 "cancelAria":  "Cancel field form",
                                 "createAria":  "Create field",
@@ -571,6 +577,9 @@
                                        "nameRequired":  "Cost Field Group Name *",
                                        "fields":  "Fields",
                                        "mappedCategories":  "Mapped Categories",
+                                       "origin":  "Origin",
+                                       "originPlatform":  "Platform",
+                                       "originOwn":  "Own",
                                        "version":  "Version",
                                        "status":  "Status",
                                        "addField":  "Add Field",
@@ -637,6 +646,9 @@
                                  "conversionFactor":  "Conversion Factor",
                                  "status":  "Status",
                                  "noBaseUnit":  "No base unit",
+                                 "origin":  "Origin",
+                                 "originPlatform":  "Platform",
+                                 "originOwn":  "Own",
                                  "mappedCategories":  "Mapped Categories"
                              },
                   "placeholders":  {
@@ -929,7 +941,7 @@
                                              "err_role_required":  "Select at least one role."
                                          },
                                "dashboard":  {
-                                                 "title":  "Tenant Dashboard",
+                                                 "title":  "Dashboard",
                                                  "subtitle":  "Operational snapshot of tenant access administration.",
                                                  "lbl_purchased_package":  "Purchased Package",
                                                  "msg_no_package":  "No package is assigned yet.",
@@ -1587,6 +1599,82 @@
                                         },
     "media":  {
                   "title":  "Platform Media Library",
+                  "tabs":  {
+                               "products":  "Products",
+                               "categories":  "Categories",
+                               "packs":  "Packs",
+                               "videos":  "Videos"
+                           },
+                  "purposes":  {
+                                   "PRODUCT":  "Product",
+                                   "CATEGORY":  "Category",
+                                   "PACK":  "Pack"
+                               },
+                  "library":  {
+                                  "uploadTitle":  "Upload {{purpose}} Images",
+                                  "emptyPurpose":  "No {{purpose}} images yet. Upload one to get started.",
+                                  "limitStopped":  "Upload stopped because your plan's media limit was reached.",
+                                  "uploadSummary":  "{{uploaded}} uploaded, {{failed}} failed.",
+                                  "uploadSuccess":  "{{count}} image(s) uploaded.",
+                                  "attachedSummary":  "{{count}} attached to {{target}}.",
+                                  "processingWait":  "Please wait for image processing to finish."
+                              },
+                  "prepare":  {
+                                  "target":  "Target: {{ratio}} ratio, {{width}} × {{height}} px",
+                                  "dropzone":  "Drag & drop images here or click to browse",
+                                  "hint":  "JPEG, PNG or WebP, up to {{maxSize}} MB each. Images are cropped and compressed in your browser before upload.",
+                                  "bulkLabel":  "Images that do not match the ratio:",
+                                  "fitAll":  "Fit all (add padding)",
+                                  "fillAll":  "Fill all (center crop)",
+                                  "original":  "Original",
+                                  "final":  "Will upload",
+                                  "processing":  "Processing...",
+                                  "ratioMatch":  "Matches {{ratio}}",
+                                  "ratioMismatch":  "Not {{ratio}}",
+                                  "status":  {
+                                                 "uploading":  "Uploading",
+                                                 "done":  "Uploaded",
+                                                 "failed":  "Failed"
+                                             },
+                                  "lowResolution":  "This image is {{width}} × {{height}}. Recommended {{recommendedWidth}} × {{recommendedHeight}}. It may look blurry.",
+                                  "adjust":  "Adjust image",
+                                  "fit":  "Fit",
+                                  "fill":  "Fill",
+                                  "crop":  "Crop",
+                                  "cropHint":  "Drag to move the image. Use the zoom buttons to resize the crop.",
+                                  "zoomIn":  "Zoom in",
+                                  "zoomOut":  "Zoom out",
+                                  "applyCrop":  "Apply crop",
+                                  "errors":  {
+                                                 "invalidType":  "{{count}} file(s) skipped. Use JPEG, PNG or WebP.",
+                                                 "tooLarge":  "{{count}} file(s) skipped. Maximum source size is {{maxSize}} MB.",
+                                                 "decode":  "Could not read {{name}}.",
+                                                 "resultTooLarge":  "The processed image is still over 5 MB. Use a smaller image.",
+                                                 "tooManyPixels":  "This image is too large to process. Use a smaller image.",
+                                                 "processFailed":  "Could not process this image. Try another file.",
+                                                 "maxFiles":  "You can add up to {{max}} more image(s)."
+                                             }
+                              },
+                  "attach":  {
+                                 "title":  "Attach after upload (optional)",
+                                 "enable":  "Attach the uploaded images to an item",
+                                 "noPermission":  "You do not have permission to attach images to {{entity}}.",
+                                 "entities":  {
+                                                  "PRODUCT":  "product",
+                                                  "CATEGORY":  "category",
+                                                  "PACK":  "pack"
+                                              },
+                                 "searchPlaceholder":  "Search {{entity}}",
+                                 "select":  "Select {{entity}}",
+                                 "groupGallery":  "Product gallery (all variants)",
+                                 "variants":  "Variants",
+                                 "categoryReplace":  "This replaces the category's current image.",
+                                 "noResults":  "No results.",
+                                 "loadFailed":  "Could not load the options.",
+                                 "attached":  "Attached to {{target}}.",
+                                 "failed":  "Uploaded but not attached to {{target}}: {{reason}}",
+                                 "categorySingle":  "A category has one image; only the first image was attached."
+                             },
                   "description":  "Manage shared platform media available to all tenants.",
                   "loading":  "Loading media...",
                   "empty":  "No media found.",

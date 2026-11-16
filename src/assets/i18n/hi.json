@@ -60,7 +60,7 @@
       "serviceablePincodes": "सेवे योग्य पिनकोड",
       "deliveryManagement": "डिलीवरी प्रबंधन",
       "tenantAdmin": "टेनेंट एडमिन",
-      "tenantDashboard": "टेनेंट डैशबोर्ड",
+      "tenantDashboard": "डैशबोर्ड",
       "tenantUsers": "एक्सेस यूज़र्स",
       "tenantEmployees": "कर्मचारी",
       "storefront": "स्टोरफ्रंट",
@@ -617,7 +617,10 @@
       "name": "कैटेगरी नाम",
       "nameRequired": "कैटेगरी नाम *",
       "description": "विवरण",
-      "image": "कैटेगरी इमेज",      "availableImages": "उपलब्ध छवियां",      "status": "स्थिति"
+      "image": "कैटेगरी इमेज",      "availableImages": "उपलब्ध छवियां",      "status": "स्थिति",
+      "origin": "स्रोत",
+      "originPlatform": "प्लेटफ़ॉर्म",
+      "originOwn": "अपना"
     },
     "placeholders": {
       "name": "कैटेगरी नाम दर्ज करें",
@@ -709,6 +712,9 @@
       "noFieldGroupsAvailable": "कोई फील्ड ग्रुप उपलब्ध नहीं है।",
       "usedInFieldGroups": "इन फील्ड ग्रुप्स में उपयोग",
       "notUsedInFieldGroups": "किसी भी फील्ड ग्रुप में उपयोग नहीं",
+      "origin": "स्रोत",
+      "originPlatform": "प्लेटफ़ॉर्म",
+      "originOwn": "अपना",
       "deleteBlockedInUse": "इस फील्ड को हटाया नहीं जा सकता क्योंकि यह इन फील्ड ग्रुप्स में उपयोग हो रहा है: {{groups}}",
       "status": "स्थिति"
     },
@@ -785,6 +791,9 @@
       "nameRequired": "कास्ट फील्ड ग्रुप नाम *",
       "fields": "कास्ट फील्ड्स",
       "mappedCategories": "मैप की गई कैटेगरी",
+      "origin": "स्रोत",
+      "originPlatform": "प्लेटफ़ॉर्म",
+      "originOwn": "अपना",
       "version": "वर्ज़न",
       "status": "स्थिति",
       "addField": "कास्ट फील्ड जोड़ें",
@@ -851,6 +860,9 @@
       "conversionFactor": "कन्वर्ज़न फ़ैक्टर",
       "status": "स्थिति",
       "noBaseUnit": "कोई बेस यूनिट नहीं",
+      "origin": "स्रोत",
+      "originPlatform": "प्लेटफ़ॉर्म",
+      "originOwn": "अपना",
       "mappedCategories": "मैप की गई श्रेणियाँ"
     },
     "placeholders": {
@@ -1388,6 +1400,82 @@
   },
   "media": {
     "title": "प्लेटफॉर्म मीडिया लाइब्रेरी",
+    "tabs": {
+      "products": "उत्पाद",
+      "categories": "श्रेणियाँ",
+      "packs": "पैक",
+      "videos": "वीडियो"
+    },
+    "purposes": {
+      "PRODUCT": "उत्पाद",
+      "CATEGORY": "श्रेणी",
+      "PACK": "पैक"
+    },
+    "library": {
+      "uploadTitle": "{{purpose}} छवियाँ अपलोड करें",
+      "emptyPurpose": "अभी तक कोई {{purpose}} छवि नहीं है। शुरू करने के लिए अपलोड करें।",
+      "limitStopped": "आपके प्लान की मीडिया सीमा पूरी होने के कारण अपलोड रोक दिया गया।",
+      "uploadSummary": "{{uploaded}} अपलोड हुईं, {{failed}} विफल।",
+      "uploadSuccess": "{{count}} छवि(याँ) अपलोड हुईं।",
+      "attachedSummary": "{{count}} को {{target}} से जोड़ा गया।",
+      "processingWait": "छवि प्रोसेसिंग पूरी होने तक प्रतीक्षा करें।"
+    },
+    "prepare": {
+      "target": "लक्ष्य: {{ratio}} अनुपात, {{width}} × {{height}} px",
+      "dropzone": "छवियाँ यहाँ खींचकर छोड़ें या ब्राउज़ करने के लिए क्लिक करें",
+      "hint": "JPEG, PNG या WebP, प्रत्येक अधिकतम {{maxSize}} MB। अपलोड से पहले छवियाँ आपके ब्राउज़र में क्रॉप और कंप्रेस की जाती हैं।",
+      "bulkLabel": "अनुपात न मिलने वाली छवियाँ:",
+      "fitAll": "सभी फ़िट करें (पैडिंग जोड़ें)",
+      "fillAll": "सभी फ़िल करें (केंद्र से क्रॉप)",
+      "original": "मूल",
+      "final": "अपलोड होगी",
+      "processing": "प्रोसेस हो रही है...",
+      "ratioMatch": "{{ratio}} से मेल खाती है",
+      "ratioMismatch": "{{ratio}} नहीं है",
+      "status": {
+        "uploading": "अपलोड हो रही है",
+        "done": "अपलोड हुई",
+        "failed": "विफल"
+      },
+      "lowResolution": "यह छवि {{width}} × {{height}} है। अनुशंसित {{recommendedWidth}} × {{recommendedHeight}}। यह धुंधली दिख सकती है।",
+      "adjust": "छवि समायोजित करें",
+      "fit": "फ़िट",
+      "fill": "फ़िल",
+      "crop": "क्रॉप",
+      "cropHint": "छवि को खींचकर हिलाएँ। ज़ूम बटन से क्रॉप का आकार बदलें।",
+      "zoomIn": "ज़ूम इन",
+      "zoomOut": "ज़ूम आउट",
+      "applyCrop": "क्रॉप लागू करें",
+      "errors": {
+        "invalidType": "{{count}} फ़ाइल(ें) छोड़ी गईं। JPEG, PNG या WebP उपयोग करें।",
+        "tooLarge": "{{count}} फ़ाइल(ें) छोड़ी गईं। अधिकतम स्रोत आकार {{maxSize}} MB है।",
+        "decode": "{{name}} पढ़ी नहीं जा सकी।",
+        "resultTooLarge": "प्रोसेस की गई छवि अब भी 5 MB से बड़ी है। छोटी छवि उपयोग करें।",
+        "tooManyPixels": "यह छवि प्रोसेस करने के लिए बहुत बड़ी है। छोटी छवि उपयोग करें।",
+        "processFailed": "यह छवि प्रोसेस नहीं हो सकी। दूसरी फ़ाइल आज़माएँ।",
+        "maxFiles": "आप {{max}} और छवि(याँ) जोड़ सकते हैं।"
+      }
+    },
+    "attach": {
+      "title": "अपलोड के बाद जोड़ें (वैकल्पिक)",
+      "enable": "अपलोड की गई छवियों को किसी आइटम से जोड़ें",
+      "noPermission": "{{entity}} में छवियाँ जोड़ने की आपके पास अनुमति नहीं है।",
+      "entities": {
+        "PRODUCT": "उत्पाद",
+        "CATEGORY": "श्रेणी",
+        "PACK": "पैक"
+      },
+      "searchPlaceholder": "{{entity}} खोजें",
+      "select": "{{entity}} चुनें",
+      "groupGallery": "उत्पाद गैलरी (सभी वैरिएंट)",
+      "variants": "वैरिएंट",
+      "categoryReplace": "इससे श्रेणी की वर्तमान छवि बदल जाएगी।",
+      "noResults": "कोई परिणाम नहीं।",
+      "loadFailed": "विकल्प लोड नहीं हो सके।",
+      "attached": "{{target}} से जोड़ी गई।",
+      "failed": "अपलोड हुई लेकिन {{target}} से नहीं जुड़ी: {{reason}}",
+      "categorySingle": "श्रेणी में एक ही छवि होती है; केवल पहली छवि जोड़ी गई।"
+    },
     "description": "सभी टेनेंट्स को उपलब्ध शेयर्ड प्लेटफॉर्म इमेज प्रबंधित करें।",
     "loading": "इमेज लोड हो रही हैं...",
     "empty": "कोई इमेज नहीं मिली।",

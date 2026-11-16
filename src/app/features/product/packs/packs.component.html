@@ -398,7 +398,7 @@
   (cancelled)="cancelDelete()"
 ></gom-lib-confirmation-modal>
 
-<gom-image-picker
+<gom-image-picker [purpose]="'PACK'"
   [(show)]="pickerOpen"
   [existingImageIds]="existingImageIds()"
   [canUpload]="canUploadOwn()"

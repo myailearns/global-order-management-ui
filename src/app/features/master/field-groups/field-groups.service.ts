@@ -38,6 +38,7 @@ export interface FieldGroup {
   name: string;
   version: number;
   fields: FieldGroupFieldItem[];
+  templateRef?: string | null;
   /** @deprecated Category association removed - field groups are now global */
   categoryIds?: string[];
   status: 'ACTIVE' | 'INACTIVE';

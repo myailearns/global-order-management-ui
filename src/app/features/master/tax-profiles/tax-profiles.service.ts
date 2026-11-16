@@ -38,6 +38,7 @@ export interface TaxProfile {
   inclusive: boolean;
   hsnCode?: string;
   status: TaxStatus;
+  templateRef?: string | null;
   effectiveFrom?: string;
   effectiveTo?: string | null;
   updatedAt: string;

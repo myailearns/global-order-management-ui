@@ -1,0 +1,209 @@
+<div class="prepare" [class.prepare--disabled]="disabled()">
+  <input
+    #fileInput
+    type="file"
+    [accept]="accept"
+    multiple
+    class="prepare__input"
+    (change)="onFileInputChange($event)"
+  />
+
+  <p class="prepare__target">
+    <i class="ri-crop-line" aria-hidden="true"></i>
+    {{ 'media.prepare.target' | translate: { ratio: rule().ratioLabel, width: rule().outputWidth, height: rule().outputHeight } }}
+  </p>
+
+  <button
+    type="button"
+    class="prepare__dropzone"
+    [class.prepare__dropzone--dragging]="dragging()"
+    [disabled]="disabled()"
+    (click)="openFilePicker()"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave($event)"
+    (drop)="onDrop($event)"
+  >
+    <i class="ri-upload-cloud-2-line prepare__dropzone-icon" aria-hidden="true"></i>
+    <span class="prepare__dropzone-text">{{ 'media.prepare.dropzone' | translate }}</span>
+    <span class="prepare__dropzone-hint">{{ 'media.prepare.hint' | translate: { maxSize: sourceMaxMb } }}</span>
+  </button>
+
+  @if (items().length > 0) {
+    @if (hasMismatch() && !disabled()) {
+      <div class="prepare__bulk">
+        <span class="prepare__bulk-label">{{ 'media.prepare.bulkLabel' | translate }}</span>
+        <gom-lib-button type="button" variant="secondary" (buttonClick)="applyModeToMismatched('fit')">
+          {{ 'media.prepare.fitAll' | translate }}
+        </gom-lib-button>
+        <gom-lib-button type="button" variant="secondary" (buttonClick)="applyModeToMismatched('fill')">
+          {{ 'media.prepare.fillAll' | translate }}
+        </gom-lib-button>
+      </div>
+    }
+
+    <div class="prepare__list">
+      @for (item of items(); track item.id) {
+        <div class="prepare__row" [class.prepare__row--error]="item.state === 'error' || item.uploadStatus === 'failed'">
+          <div class="prepare__previews">
+            <figure class="prepare__figure">
+              <img [src]="item.sourceUrl" [alt]="'media.prepare.original' | translate" class="prepare__thumb" />
+              <figcaption class="prepare__caption">
+                {{ 'media.prepare.original' | translate }}<br />
+                {{ item.sourceWidth }} × {{ item.sourceHeight }} · {{ formatSize(item.source.size) }}
+              </figcaption>
+            </figure>
+            <i class="ri-arrow-right-line prepare__arrow" aria-hidden="true"></i>
+            <figure class="prepare__figure">
+              @if (item.state === 'processing' || !item.previewUrl) {
+                <div class="prepare__thumb prepare__thumb--empty">
+                  @if (item.state === 'processing') {
+                    <i class="ri-loader-4-line ri-spin" aria-hidden="true"></i>
+                  } @else {
+                    <i class="ri-error-warning-line" aria-hidden="true"></i>
+                  }
+                </div>
+              } @else {
+                <img [src]="item.previewUrl" [alt]="'media.prepare.final' | translate" class="prepare__thumb" />
+              }
+              <figcaption class="prepare__caption">
+                {{ 'media.prepare.final' | translate }}<br />
+                @if (item.state === 'processing') {
+                  {{ 'media.prepare.processing' | translate }}
+                } @else if (item.result) {
+                  {{ item.result.width }} × {{ item.result.height }} · {{ formatSize(item.result.size) }}
+                }
+              </figcaption>
+            </figure>
+          </div>
+
+          <div class="prepare__details">
+            @if (showNames()) {
+              <gom-lib-input
+                [label]="'media.uploadModal.nameLabel' | translate"
+                [placeholder]="'media.uploadModal.namePlaceholder' | translate"
+                [formControl]="item.nameControl"
+              ></gom-lib-input>
+            }
+
+            <div class="prepare__chips">
+              @if (item.matches) {
+                <gom-lib-chip tone="success" size="compact">
+                  {{ 'media.prepare.ratioMatch' | translate: { ratio: rule().ratioLabel } }}
+                </gom-lib-chip>
+              } @else {
+                <gom-lib-chip tone="warning" size="compact">
+                  {{ 'media.prepare.ratioMismatch' | translate: { ratio: rule().ratioLabel } }}
+                </gom-lib-chip>
+              }
+              @if (item.uploadStatus === 'uploading') {
+                <gom-lib-chip tone="progress" size="compact">{{ 'media.prepare.status.uploading' | translate }}</gom-lib-chip>
+              } @else if (item.uploadStatus === 'done') {
+                <gom-lib-chip tone="success" size="compact">{{ 'media.prepare.status.done' | translate }}</gom-lib-chip>
+              } @else if (item.uploadStatus === 'failed') {
+                <gom-lib-chip tone="danger" size="compact">{{ 'media.prepare.status.failed' | translate }}</gom-lib-chip>
+              }
+            </div>
+
+            @if (item.lowResolution) {
+              <p class="prepare__warning">
+                <i class="ri-error-warning-line" aria-hidden="true"></i>
+                {{ 'media.prepare.lowResolution' | translate: {
+                  width: item.sourceWidth,
+                  height: item.sourceHeight,
+                  recommendedWidth: rule().outputWidth,
+                  recommendedHeight: rule().outputHeight
+                } }}
+              </p>
+            }
+
+            @if (item.errorKey) {
+              <p class="prepare__error">{{ item.errorKey | translate }}</p>
+            }
+            @if (item.uploadMessage) {
+              <p [class]="item.uploadStatus === 'failed' ? 'prepare__error' : 'prepare__note'">{{ item.uploadMessage }}</p>
+            }
+
+            @if (!item.matches && item.uploadStatus !== 'done' && item.uploadStatus !== 'uploading') {
+              <div class="prepare__modes" role="group" [attr.aria-label]="'media.prepare.adjust' | translate">
+                <gom-lib-button
+                  type="button"
+                  [variant]="item.mode === 'fit' ? 'primary' : 'secondary'"
+                  [disabled]="disabled()"
+                  (buttonClick)="setMode(item.id, 'fit')"
+                >{{ 'media.prepare.fit' | translate }}</gom-lib-button>
+                <gom-lib-button
+                  type="button"
+                  [variant]="item.mode === 'fill' ? 'primary' : 'secondary'"
+                  [disabled]="disabled()"
+                  (buttonClick)="setMode(item.id, 'fill')"
+                >{{ 'media.prepare.fill' | translate }}</gom-lib-button>
+                <gom-lib-button
+                  type="button"
+                  [variant]="item.mode === 'crop' ? 'primary' : 'secondary'"
+                  [disabled]="disabled()"
+                  (buttonClick)="setMode(item.id, 'crop')"
+                >{{ 'media.prepare.crop' | translate }}</gom-lib-button>
+              </div>
+            }
+          </div>
+
+          @if (item.uploadStatus !== 'done' && item.uploadStatus !== 'uploading') {
+            <gom-lib-button
+              type="button"
+              variant="secondary"
+              size="icon"
+              [disabled]="disabled()"
+              [attr.aria-label]="'media.upload.clear' | translate"
+              (buttonClick)="removeItem(item.id)"
+            >
+              <i class="ri-close-line" aria-hidden="true"></i>
+            </gom-lib-button>
+          }
+        </div>
+
+        @if (cropEditingId() === item.id) {
+          <div class="prepare__crop">
+            <div
+              class="prepare__crop-viewport"
+              tabindex="0"
+              role="application"
+              [attr.aria-label]="'media.prepare.cropHint' | translate"
+              [style.width.px]="cropViewWidth"
+              [style.height.px]="cropViewHeight()"
+              (pointerdown)="onCropPointerDown($event)"
+              (pointermove)="onCropPointerMove($event)"
+              (pointerup)="onCropPointerUp()"
+              (pointercancel)="onCropPointerUp()"
+              (keydown)="onCropKeydown($event)"
+            >
+              <img
+                class="prepare__crop-image"
+                [src]="item.sourceUrl"
+                alt=""
+                draggable="false"
+                [style.width.px]="item.sourceWidth * cropScale()"
+                [style.height.px]="item.sourceHeight * cropScale()"
+                [style.transform]="'translate(' + cropOffsetX() + 'px, ' + cropOffsetY() + 'px)'"
+              />
+            </div>
+            <p class="prepare__note">{{ 'media.prepare.cropHint' | translate }}</p>
+            <div class="prepare__crop-actions">
+              <gom-lib-button type="button" variant="secondary" size="icon" [attr.aria-label]="'media.prepare.zoomOut' | translate" (buttonClick)="zoomOut()">
+                <i class="ri-zoom-out-line" aria-hidden="true"></i>
+              </gom-lib-button>
+              <gom-lib-button type="button" variant="secondary" size="icon" [attr.aria-label]="'media.prepare.zoomIn' | translate" (buttonClick)="zoomIn()">
+                <i class="ri-zoom-in-line" aria-hidden="true"></i>
+              </gom-lib-button>
+              <gom-lib-button type="button" variant="secondary" (buttonClick)="cancelCrop()">
+                {{ 'media.actions.cancel' | translate }}
+              </gom-lib-button>
+              <gom-lib-button type="button" variant="primary" (buttonClick)="applyCrop()">
+                {{ 'media.prepare.applyCrop' | translate }}
+              </gom-lib-button>
+            </div>
+          </div>
+        }
+      }
+    </div>
+  }
+</div>

@@ -871,7 +871,7 @@
 </gom-lib-modal>
 
 <!-- Image Picker -->
-<gom-image-picker
+<gom-image-picker [purpose]="'PRODUCT'"
   [(show)]="pickerOpen"
   [existingImageIds]="existingImageIds()"
   [canUpload]="canUploadOwn()"

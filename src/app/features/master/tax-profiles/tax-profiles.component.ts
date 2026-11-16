@@ -23,6 +23,7 @@ interface TaxProfileRow extends GomTableRow {
   taxMode: string;
   rate: string;
   inclusive: string;
+  origin: string;
   status: string;
   updatedAt: string;
   actions: string;
@@ -78,6 +79,14 @@ export class TaxProfilesComponent implements OnInit {
     { key: 'taxMode', header: 'Tax Mode', sortable: true, width: '10rem' },
     { key: 'rate', header: 'Rate %', sortable: true, width: '8rem' },
     { key: 'inclusive', header: 'Inclusive', sortable: true, width: '8rem' },
+    {
+      key: 'origin',
+      header: 'Origin',
+      sortable: true,
+      filterable: true,
+      width: '9rem',
+      format: (value) => (value === 'PLATFORM' ? 'Platform' : 'Own'),
+    },
     { key: 'status', header: 'Status', sortable: true, filterable: true, width: '10rem' },
     { key: 'updatedAt', header: 'Updated', sortable: true, width: '10rem' },
     {
@@ -96,6 +105,7 @@ export class TaxProfilesComponent implements OnInit {
       taxMode: item.taxMode,
       rate: Number(item.rate).toLocaleString(undefined, { maximumFractionDigits: 2 }),
       inclusive: item.inclusive ? 'YES' : 'NO',
+      origin: item.templateRef ? 'PLATFORM' : 'OWN',
       status: item.status,
       updatedAt: new Date(item.updatedAt).toLocaleDateString(),
       actions: 'Edit',
