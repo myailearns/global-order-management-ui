@@ -12,6 +12,7 @@ interface CategoryTableRow extends GomTableRow {
   _id?: string;
   name: string;
   groupCount: number;
+  origin: string;
   imageAssetId?: string | null;
   imageUrl?: string;
   status: string;
@@ -85,6 +86,7 @@ export class CategoriesListComponent implements OnChanges {
       clickActionKey: (row) => row.groupCount > 0 ? 'groups-info' : null,
       clickActionIcon: (row) => row.groupCount > 0 ? 'ri-information-line' : null,
     },
+    { key: 'origin', header: CATEGORY_UI_TEXT.originLabel, sortable: true, filterable: true },
     { key: 'status', header: CATEGORY_UI_TEXT.statusLabel, sortable: true, filterable: true },
     {
       key: 'actions',
@@ -106,7 +108,7 @@ export class CategoriesListComponent implements OnChanges {
     },
   ];
 
-  readonly mobileCardFields: string[] = ['name', 'groupCount', 'status'];
+  readonly mobileCardFields: string[] = ['name', 'groupCount', 'origin', 'status'];
 
   constructor() {
     this.translate.onLangChange.subscribe(() => {
@@ -126,6 +128,7 @@ export class CategoriesListComponent implements OnChanges {
       _id: category._id,
       ...category,
       groupCount: Number((category as Category & { groupCount?: number }).groupCount || 0),
+      origin: category.templateRef ? 'PLATFORM' : 'OWN',
       imageAssetId: category.imageAssetId ?? null,
       imageUrl: category.imageUrl || '',
       status: category.status || CATEGORY_DEFAULT_STATUS,
@@ -209,20 +212,25 @@ export class CategoriesListComponent implements OnChanges {
     this.columns[0].header = this.translate.instant(this.text.nameLabel);
     this.columns[1].header = this.translate.instant('categories.associations.tabs.groups');
     this.columns[1].format = (value) => String(Number(value || 0));
-    this.columns[2].header = this.translate.instant(this.text.statusLabel);
+    this.columns[2].header = this.translate.instant(this.text.originLabel);
     this.columns[2].format = (value) =>
+      value === 'PLATFORM'
+        ? this.translate.instant(this.text.originPlatform)
+        : this.translate.instant(this.text.originOwn);
+    this.columns[3].header = this.translate.instant(this.text.statusLabel);
+    this.columns[3].format = (value) =>
       value === 'INACTIVE'
         ? this.translate.instant('common.status.inactive')
         : this.translate.instant('common.status.active');
-    this.columns[3].header = this.translate.instant(this.text.actionsLabel);
-    this.columns[3].actionOverflowMenu = {
+    this.columns[4].header = this.translate.instant(this.text.actionsLabel);
+    this.columns[4].actionOverflowMenu = {
       actionKeys: ['view', 'manage', 'delete'],
       triggerIcon: 'ri-more-2-fill',
       triggerAriaLabel: 'More category actions',
       triggerButtonTitle: 'More category actions',
       backButtonText: 'Category actions',
     };
-    this.columns[3].actionButtons = [
+    this.columns[4].actionButtons = [
       ...(this.canEdit ? [
         { label: this.translate.instant(this.text.editAction), icon: 'ri-pencil-line', actionKey: 'edit', variant: 'secondary' as const },
       ] : []),

@@ -3,7 +3,7 @@
     <gom-page-heading navRoute="/product/packs"></gom-page-heading>
     <gom-lib-button
       type="button"
-      variant="primary"
+      variant="secondary"
       [size]="isMobileHeader() ? 'compact-icon' : 'default'"
       (buttonClick)="openCreatePack()"
       [gomDisableIfNoFeature]="'pack.create'"
@@ -133,8 +133,8 @@
       @for (group of itemControls.controls; track $index) {
         <div class="item-row" [formGroupName]="$index">
           <gom-lib-select
-            label="Variant"
-            placeholder="Select variant"
+            label="Sellable Item"
+            placeholder="Select sellable item"
             [options]="getVariantOptionsForRow($index)"
             [searchable]="true"
             [formControl]="$any(group).controls.variantId"
@@ -249,7 +249,7 @@
     @if (formPricePreview().isBelowActual) {
       <div class="price-warning">
         <i class="ri-error-warning-line" aria-hidden="true"></i>
-        <span>Discounted pack price is below derived actual price from selected variants. Reduce discount.</span>
+        <span>Discounted pack price is below the derived actual price from selected sellable items. Reduce the discount.</span>
       </div>
     }
 
@@ -398,7 +398,7 @@
   (cancelled)="cancelDelete()"
 ></gom-lib-confirmation-modal>
 
-<gom-image-picker
+<gom-image-picker [purpose]="'PACK'"
   [(show)]="pickerOpen"
   [existingImageIds]="existingImageIds()"
   [canUpload]="canUploadOwn()"

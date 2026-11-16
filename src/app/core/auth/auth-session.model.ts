@@ -9,6 +9,7 @@ export type AppCapability =
   | 'customers'
   | 'customer-groups'
   | 'delivery'
+  | 'reports'
   | 'settings-core';
 
 export type FeatureConfigValue = string | number | boolean | null;

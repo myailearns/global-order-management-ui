@@ -28,22 +28,24 @@
         </div>
       </div>
 
-      <div class="sp-upload-feedback__section">
-        <h4>Failed Rows ({{ failedRows().length }})</h4>
-        <gom-lib-table
-          [columns]="failedColumns"
-          [rows]="failedRows()"
-          [loading]="loading"
-          [dataMode]="'client'"
-          [totalItems]="failedRows().length"
-          [pageIndex]="0"
-          [pageSize]="10"
-          [pageSizeOptions]="[10, 20, 50]"
-          emptyMessage="No active failed rows."
-          [mobileCardView]="true"
-          (rowAction)="onFailedRowAction($event)"
-        ></gom-lib-table>
-      </div>
+      @if (failedRows().length > 0) {
+        <div class="sp-upload-feedback__section">
+          <h4>Failed Rows ({{ failedRows().length }})</h4>
+          <gom-lib-table
+            [columns]="failedColumns"
+            [rows]="failedRows()"
+            [loading]="loading"
+            [dataMode]="'client'"
+            [totalItems]="failedRows().length"
+            [pageIndex]="0"
+            [pageSize]="10"
+            [pageSizeOptions]="[10, 20, 50]"
+            emptyMessage="No active failed rows."
+            [mobileCardView]="true"
+            (rowAction)="onFailedRowAction($event)"
+          ></gom-lib-table>
+        </div>
+      }
 
       <div class="sp-upload-feedback__section">
         <h4>Success Rows ({{ successRows().length }})</h4>

@@ -18,6 +18,8 @@ import {
   FirstAdminInfo,
   PaymentRecord,
   PaymentContextResponse,
+  PaymentHistoryListResponse,
+  PaymentHistoryItem,
   PaymentRequestPayload,
   PendingVerificationListResponse,
   PendingVerificationPaymentRecord,
@@ -31,12 +33,39 @@ import {
   VerifyPaymentResult,
 } from './saas-account.model';
 
+export interface PublicBusinessCategory {
+  _id: string;
+  name: string;
+  description?: string;
+  status: 'ACTIVE' | 'INACTIVE';
+}
+
+export interface PublicBusinessType {
+  _id: string;
+  name: string;
+  code: string;
+  description?: string;
+  icon?: string;
+  status: 'ACTIVE' | 'INACTIVE';
+  businessCategories: Array<{
+    _id: string;
+    name: string;
+    status: 'ACTIVE' | 'INACTIVE';
+  }>;
+}
+
+export interface PublicBusinessTypesByCategoryResult {
+  category: PublicBusinessCategory;
+  businessTypes: PublicBusinessType[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class SaasAccountService {
   private readonly http = inject(ngHttp.HttpClient);
   private readonly authSession = inject(AuthSessionService);
   private readonly baseUrl = `${environment.apiBaseUrl}/saas/accounts`;
   private readonly saasPaymentsUrl = `${environment.apiBaseUrl}/saas/payments`;
+  private readonly publicTaxonomyUrl = `${environment.apiBaseUrl}/platform/business-taxonomy/public`;
 
   private get platformHeaders(): ngHttp.HttpHeaders {
     return new ngHttp.HttpHeaders(this.authSession.getPlatformHeaders());
@@ -90,9 +119,30 @@ export class SaasAccountService {
       .pipe(map((res) => res.data));
   }
 
-  createIncompleteAccount(payload: { accountName: string; primaryContactPhone: string; primaryContactEmail: string; countryCode: string }): Observable<TenantAccount> {
+  createIncompleteAccount(payload: {
+    accountName: string;
+    primaryContactName: string;
+    primaryContactPhone: string;
+    primaryContactEmail: string;
+    countryCode: string;
+    businessCategoryId?: string;
+    businessSetupTypeIds?: string[];
+  }): Observable<TenantAccount> {
     return this.http
       .post<ApiResponse<TenantAccount>>(`${this.baseUrl}/incomplete`, payload, { headers: this.platformHeaders })
+      .pipe(map((res) => res.data));
+  }
+
+  listPublicBusinessCategories(): Observable<PublicBusinessCategory[]> {
+    return this.http
+      .get<ApiResponse<PublicBusinessCategory[]>>(`${this.publicTaxonomyUrl}/categories`)
+      .pipe(map((res) => res.data || []));
+  }
+
+  listPublicBusinessTypesByCategory(categoryId: string): Observable<PublicBusinessTypesByCategoryResult> {
+    const params = new ngHttp.HttpParams().set('categoryId', categoryId);
+    return this.http
+      .get<ApiResponse<PublicBusinessTypesByCategoryResult>>(`${this.publicTaxonomyUrl}/types/by-category`, { params })
       .pipe(map((res) => res.data));
   }
 
@@ -216,6 +266,30 @@ export class SaasAccountService {
     return this.http
       .get<ApiResponse<PaymentContextResponse>>(`${this.saasPaymentsUrl}/${accountId}/context`, { headers: this.platformHeaders })
       .pipe(map((res) => res.data));
+  }
+
+  getPaymentHistory(accountId: string, params?: { page?: number; limit?: number }): Observable<PaymentHistoryListResponse> {
+    let httpParams = new ngHttp.HttpParams();
+    if (params?.page) {
+      httpParams = httpParams.set('page', String(params.page));
+    }
+    if (params?.limit) {
+      httpParams = httpParams.set('limit', String(params.limit));
+    }
+
+    return this.http
+      .get<{ success: boolean; data: PaymentHistoryItem[]; meta: { page: number; limit: number; total: number } }>(
+        `${this.saasPaymentsUrl}/${accountId}/history`,
+        { headers: this.platformHeaders, params: httpParams },
+      )
+      .pipe(
+        map((res) => ({
+          items: res.data || [],
+          page: Number(res.meta?.page || 1),
+          limit: Number(res.meta?.limit || (res.data || []).length || 1),
+          total: Number(res.meta?.total || 0),
+        })),
+      );
   }
 
   verifyPayment(paymentId: string, payload: VerifyPaymentPayload = {}): Observable<VerifyPaymentResult> {

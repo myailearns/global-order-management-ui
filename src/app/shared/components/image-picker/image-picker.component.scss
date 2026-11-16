@@ -52,6 +52,12 @@
     background: theme.get-background(secondary);
   }
 
+  &__upload-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: theme.get-spacing(sm);
+  }
+
   &__uploading {
     text-align: center;
     margin-top: theme.get-spacing(xs);

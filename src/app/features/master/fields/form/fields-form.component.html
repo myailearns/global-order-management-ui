@@ -1,52 +1,76 @@
-<gom-lib-modal
-  [show]="isOpen"
-  (showChange)="isOpen = $event"
-  [title]="(initialData ? text.formTitleEdit : text.formTitleCreate) | translate"
-  [closeOnBackdropClick]="true"
-  size="medium"
-  (closed)="onCancel()"
->
+<gom-lib-modal [show]="isOpen" (showChange)="isOpen = $event"
+  [title]="(initialData ? text.formTitleEdit : text.formTitleCreate) | translate" [closeOnBackdropClick]="true"
+  size="medium" (closed)="onCancel()">
   @if (form) {
-    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="fields-form">
-      <gom-lib-dynamic-form
-        [form]="form"
-        [fields]="primaryFields"
-        [selectOptionsBySource]="selectOptionsBySource"
-      ></gom-lib-dynamic-form>
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="fields-form">
+    <section class="fields-form__grid">
+      <gom-lib-input [label]="'fields.labels.nameRequired' | translate"
+        [placeholder]="'fields.placeholders.name' | translate" [formControl]="nameControl"
+        [error]="fieldError(nameControl, 'name')"></gom-lib-input>
 
-      @if (form.get('type')?.value === 'NUMBER' && form.get('valueFormat')?.value === 'CURRENCY') {
-        <gom-lib-input
-          [label]="'fields.labels.currencyCode' | translate"
-          [formControl]="currencyCodePreviewControl"
-          [hint]="'fields.hints.currencyCodeFixed' | translate"
-        ></gom-lib-input>
+      <gom-lib-select [label]="'fields.labels.type' | translate" [placeholder]="'fields.placeholders.type' | translate"
+        [options]="typeOptions" [formControl]="typeControl" [error]="fieldError(typeControl, 'type')"></gom-lib-select>
+
+      @if (showCurrencyCode) {
+      <gom-lib-select [label]="'fields.labels.currencyCode' | translate"
+        [placeholder]="'fields.placeholders.currencyCode' | translate" [options]="currencyOptions"
+        [formControl]="currencyCodeControl" [error]="fieldError(currencyCodeControl, 'currencyCode')"></gom-lib-select>
       }
 
-      @if (secondaryFields.length > 0) {
-        <gom-lib-dynamic-form
-          [form]="form"
-          [fields]="secondaryFields"
-          [selectOptionsBySource]="selectOptionsBySource"
-        ></gom-lib-dynamic-form>
+      <gom-lib-input [label]="'fields.labels.defaultValue' | translate"
+        [placeholder]="'fields.placeholders.defaultValue' | translate" [type]="defaultValueInputType"
+        [formControl]="defaultValueControl"></gom-lib-input>
+
+      <gom-lib-select [label]="'fields.labels.isRequired' | translate"
+        [placeholder]="'fields.placeholders.isRequired' | translate" [options]="requiredOptions"
+        [formControl]="isRequiredControl" [error]="fieldError(isRequiredControl, 'isRequired')"></gom-lib-select>
+
+      <gom-lib-select [label]="'fields.labels.status' | translate"
+        [placeholder]="'fields.placeholders.status' | translate" [options]="statusOptions" [formControl]="statusControl"
+        [error]="fieldError(statusControl, 'status')"></gom-lib-select>
+    </section>
+
+    <section class="fields-form__group-assignment">
+      @if (fieldGroupOptions.length > 0) {
+      <gom-lib-select [label]="('fields.labels.assignToFieldGroups' | translate)"
+        [placeholder]="('fields.labels.selectFieldGroups' | translate)" [multiple]="true"
+        [options]="fieldGroupSelectOptions" [selectedValues]="selectedFieldGroupIds"
+        (selectedValuesChange)="onFieldGroupSelectionChange($event)"></gom-lib-select>
+      } @else {
+      <h4>{{ 'fields.labels.assignToFieldGroups' | translate }}</h4>
+      <p class="fields-form__group-empty">{{ 'fields.labels.noFieldGroupsAvailable' | translate }}</p>
       }
+    </section>
 
-      <section class="fields-form__group-assignment">
-        @if (fieldGroupOptions.length > 0) {
-          <gom-lib-select
-            [label]="('fields.labels.assignToFieldGroups' | translate)"
-            [placeholder]="('fields.labels.selectFieldGroups' | translate)"
-            [multiple]="true"
-            [options]="fieldGroupSelectOptions"
-            [selectedValues]="selectedFieldGroupIds"
-            (selectedValuesChange)="onFieldGroupSelectionChange($event)"
-          ></gom-lib-select>
-        } @else {
-          <h4>{{ 'fields.labels.assignToFieldGroups' | translate }}</h4>
-          <p class="fields-form__group-empty">{{ 'fields.labels.noFieldGroupsAvailable' | translate }}</p>
-        }
-      </section>
+    <footer class="gom-modal__action-layout tax-form__actions" gom-modal-actions>
+      <div class="gom-modal__action-layout-start"></div>
+      <div class="gom-modal__action-layout-end">
+        <gom-lib-button class="fields-form__action" type="button" variant="secondary"
+          [size]="cancelMode === 'icon-only' ? 'icon' : 'default'" [attr.aria-label]="text.formCancelAria | translate"
+          [attr.title]="text.formCancelAria | translate" (buttonClick)="onCancel()">
+          @if (shouldShowIcon(cancelMode)) {
+          <i class="ri-close-line" aria-hidden="true"></i>
+          }
+          @if (shouldShowText(cancelMode)) {
+          {{ text.close | translate }}
+          }
+        </gom-lib-button>
+        <gom-lib-button class="fields-form__action" type="submit" variant="primary"
+          [size]="submitMode === 'icon-only' ? 'icon' : 'default'"
+          [attr.aria-label]="(initialData ? text.formUpdateAria : text.formCreateAria) | translate"
+          [attr.title]="(initialData ? text.formUpdateAria : text.formCreateAria) | translate"
+          [disabled]="form.invalid">
+          @if (shouldShowIcon(submitMode)) {
+          <i class="ri-check-line" aria-hidden="true"></i>
+          }
+          @if (shouldShowText(submitMode)) {
+          {{ (initialData ? text.formSubmitUpdate : text.formSubmitCreate) | translate }}
+          }
+        </gom-lib-button>
+      </div>
+    </footer>
 
-      <div gom-modal-actions class="fields-form__actions gom-modal__action-layout">
+    <!-- <div class="fields-form__actions gom-modal__action-layout">
         <div class="gom-modal__action-layout-start">
           <gom-lib-button
             class="fields-form__action"
@@ -84,7 +108,7 @@
             }
           </gom-lib-button>
         </div>
-      </div>
-    </form>
+      </div> -->
+  </form>
   }
 </gom-lib-modal>

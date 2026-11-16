@@ -29,12 +29,10 @@ import { GroupImage, GroupImageEntry } from '../../saas-platform/media/media-ass
 import { ImagePickerComponent, PickedImage } from '../../../shared/components/image-picker/image-picker.component';
 import { RichTextEditorComponent } from '../../../shared/components/rich-text-editor/rich-text-editor.component';
 import { DisableIfNoFeatureDirective } from '../../../shared/directives/disable-if-no-feature.directive';
-import { PriceApprovalModalComponent } from '../pricing-approval/price-approval-modal.component';
 import { PageHeadingComponent } from '../../../shared/components/page-heading/page-heading.component';
 import { ProductCollection, ProductCollectionsService } from '../product-collections/product-collections.service';
 import {
   Group,
-  PricingRefreshSuggestion,
   Unit,
   VariantCombinationItem,
   Variant,
@@ -50,9 +48,11 @@ interface VariantRow extends GomTableRow {
   quantity: string;
   convertedQuantity: string;
   pricingMode: string;
+  actualPrice: string;
   basePrice: string;
   additionalPrice: string;
   finalPrice: string;
+  mrp: string;
   discount: string;
   updatedAt: string;
   actions: string;
@@ -109,7 +109,6 @@ interface VariantCollectionMembership {
     GomModalComponent,
     GomConfirmationModalComponent,
     GomAccordionComponent,
-    PriceApprovalModalComponent,
     ImagePickerComponent,
     RichTextEditorComponent,
     PageHeadingComponent,
@@ -166,8 +165,6 @@ export class VariantsComponent implements OnInit {
   readonly units = signal<Unit[]>([]);
   readonly variants = signal<Variant[]>([]);
   readonly selectedGroupId = signal('');
-  readonly pricingSuggestions = signal<PricingRefreshSuggestion[]>([]);
-  readonly loadingPricingSuggestions = signal(false);
   readonly draftRows = signal<VariantDraftRow[]>([]);
   readonly bulkFieldOverrideEntries = signal<Array<{ id: string; key: string; value: string }>>([]);
   readonly bulkSaving = signal(false);
@@ -232,12 +229,6 @@ export class VariantsComponent implements OnInit {
 
   readonly optionSelectionControls = signal<Record<string, string>>({});
 
-  readonly hasPendingPricingSuggestions = computed(() => this.pricingSuggestions().length > 0);
-  readonly suggestionWarningCount = computed(
-    () => this.pricingSuggestions().filter((item) => !!item.marginImpact?.isBelowThreshold).length
-  );
-
-  readonly priceApprovalOpen = signal(false);
   readonly variantCollectionsModalOpen = signal(false);
   readonly loadingVariantCollections = signal(false);
   readonly currentVariantForCollections = signal<Variant | null>(null);
@@ -367,7 +358,7 @@ export class VariantsComponent implements OnInit {
   readonly pricingModeDescription = computed<string>(() => {
     const mode = this.variantFormValue().pricingMode || 'FORMULA';
     return mode === 'OVERRIDE'
-      ? 'Set a fixed override selling price or use discount-based override for this variant.'
+      ? 'Set a fixed override selling price or use discount-based override for this sellable item.'
       : 'Price is automatically calculated from the group formula based on weight and unit conversion.';
   });
 
@@ -492,14 +483,16 @@ export class VariantsComponent implements OnInit {
   });
 
   readonly columns: GomTableColumn<VariantRow>[] = [
-    { key: 'name', header: 'Variant', sortable: true, filterable: true, width: '16rem' },
+    { key: 'name', header: 'Sellable Item', sortable: true, filterable: true, width: '16rem' },
     { key: 'itemType', header: 'Item Type', sortable: true, width: '10rem' },
     { key: 'quantity', header: 'Weight', sortable: true, width: '9rem' },
     { key: 'convertedQuantity', header: 'Base Qty', sortable: true, width: '10rem' },
     { key: 'pricingMode', header: 'Pricing Mode', sortable: true, width: '10rem' },
+    { key: 'actualPrice', header: 'Actual Price', sortable: true, width: '10rem' },
     { key: 'basePrice', header: 'Base Price', sortable: true, width: '10rem' },
     { key: 'additionalPrice', header: 'Additional Charge', sortable: true, width: '11rem' },
-    { key: 'finalPrice', header: 'Final Price', sortable: true, width: '10rem' },
+    { key: 'finalPrice', header: 'Selling Price', sortable: true, width: '10rem' },
+    { key: 'mrp', header: 'MRP', sortable: true, width: '10rem' },
     { key: 'discount', header: 'Discount', sortable: true, width: '10rem' },
     { key: 'updatedAt', header: 'Updated', sortable: true, width: '10rem' },
     {
@@ -508,7 +501,7 @@ export class VariantsComponent implements OnInit {
       width: '10rem',
       actionButtons: [
         {
-          label: () => this.canUpdateVariant() ? 'Edit' : 'No permission to edit variants',
+          label: () => this.canUpdateVariant() ? 'Edit' : 'No permission to edit sellable items',
           icon: 'ri-pencil-line',
           actionKey: 'edit',
           variant: 'secondary',
@@ -522,7 +515,7 @@ export class VariantsComponent implements OnInit {
           disabled: () => !this.canManageProductCollections(),
         },
         {
-          label: () => this.canDeleteVariant() ? 'Delete' : 'No permission to delete variants',
+          label: () => this.canDeleteVariant() ? 'Delete' : 'No permission to delete sellable items',
           icon: 'ri-delete-bin-line',
           actionKey: 'delete',
           variant: 'danger',
@@ -579,9 +572,11 @@ export class VariantsComponent implements OnInit {
         quantity: `${this.formatNumber(variant.quantity)} ${symbol}`.trim(),
         convertedQuantity: this.formatNumber(variant.convertedQuantity),
         pricingMode: variant.pricingMode || 'FORMULA',
+        actualPrice: this.formatCurrency(variant.effectivePrice?.actualPrice ?? variant.price.actualPrice ?? 0),
         basePrice: this.formatCurrency(variant.price.sellingPrice),
         additionalPrice: this.formatCurrency(Number(variant.additionalPrice || 0)),
         finalPrice: this.formatCurrency(variant.effectivePrice?.sellingPrice ?? variant.price.sellingPrice),
+        mrp: this.formatCurrency(variant.effectivePrice?.anchorPrice ?? variant.price.anchorPrice),
         discount: this.formatDiscount(variant),
         updatedAt: new Date(variant.updatedAt).toLocaleDateString(),
         actions: 'Actions',
@@ -608,7 +603,7 @@ export class VariantsComponent implements OnInit {
 
   readonly defaultVariantName = computed<string>(() => {
     const group = this.selectedGroup();
-    const groupName = group?.name || 'Variant';
+    const groupName = group?.name || 'Sellable Item';
     const groupType = group?.groupType || 'MEASURED';
     
     if (groupType === 'ATTRIBUTE' || groupType === 'HYBRID') {
@@ -780,7 +775,7 @@ export class VariantsComponent implements OnInit {
         this.loading.set(false);
       },
       error: () => {
-        this.errorMessage.set('Failed to load variant setup data.');
+        this.errorMessage.set('Failed to load sellable item setup data.');
         this.loading.set(false);
       },
     });
@@ -792,7 +787,6 @@ export class VariantsComponent implements OnInit {
 
     if (!groupId) {
       this.variants.set([]);
-      this.pricingSuggestions.set([]);
       this.clearDraftRows();
       return;
     }
@@ -822,11 +816,10 @@ export class VariantsComponent implements OnInit {
         } else {
           this.variants.set(response.data || []);
         }
-        this.loadPricingSuggestions(groupId);
         this.loading.set(false);
       },
       error: () => {
-        this.errorMessage.set('Failed to load variants.');
+        this.errorMessage.set('Failed to load sellable items.');
         this.loading.set(false);
       },
     });
@@ -868,7 +861,6 @@ export class VariantsComponent implements OnInit {
         this.canLoadAllVariants.set(false);
         this.allVariantsLoaded.set(true);
         this.variantTablePageIndex.set(0);
-        this.loadPricingSuggestions(groupId);
         this.loading.set(false);
       },
       error: () => this.loading.set(false),
@@ -884,7 +876,7 @@ export class VariantsComponent implements OnInit {
     const remaining = this.variantCreateRemaining();
     if (remaining !== null && remaining <= 0) {
       const limit = this.variantCreateLimit();
-      this.toast.error(`Variant creation limit reached. You have used ${this.variantCreateUsed()} of ${limit} allowed variants.`);
+      this.toast.error(`Sellable item creation limit reached. You have used ${this.variantCreateUsed()} of ${limit} allowed sellable items.`);
       return;
     }
 
@@ -1579,7 +1571,7 @@ export class VariantsComponent implements OnInit {
 
     const existingConflicts = this.findConflictingCombinationKeysWithExistingVariants(selectedRows);
     if (existingConflicts.size > 0) {
-      this.toast.error('Duplicate variants found. Same quantity, unit, and options already exist.');
+      this.toast.error('Duplicate sellable items found. The same quantity, unit, and options already exist.');
       this.draftRows.set(rows.map((row) => {
         if (!row.selected) {
           return row;
@@ -1589,7 +1581,7 @@ export class VariantsComponent implements OnInit {
         if (existingConflicts.has(key)) {
           return {
             ...row,
-            error: 'This combination already exists in saved variants.',
+            error: 'This combination already exists in saved sellable items.',
           };
         }
 
@@ -1957,13 +1949,13 @@ export class VariantsComponent implements OnInit {
         ...payloadPricing,
       }).subscribe({
         next: () => {
-          this.toast.success('Variant updated successfully.');
+          this.toast.success('Sellable item updated successfully.');
           this.closeForm();
           this.loadVariants(this.selectedGroupId());
           this.saving.set(false);
         },
         error: (error) => {
-          this.toast.error(this.extractApiMessage(error) || 'Failed to update variant.');
+          this.toast.error(this.extractApiMessage(error) || 'Failed to update sellable item.');
           this.saving.set(false);
         },
       });
@@ -2002,11 +1994,11 @@ export class VariantsComponent implements OnInit {
           }));
 
           this.mediaService.attachVariantImages(createdVariantId, entries).subscribe({
-            next: () => this.toast.success('Variant created with media.'),
-            error: () => this.toast.warning('Variant created, but media attachment failed. You can add media from Edit Variant.'),
+            next: () => this.toast.success('Sellable item created with media.'),
+            error: () => this.toast.warning('Sellable item created, but media attachment failed. You can add media from Edit Sellable Item.'),
           });
         } else {
-          this.toast.success('Variant created successfully.');
+          this.toast.success('Sellable item created successfully.');
         }
 
         this.closeForm();
@@ -2014,7 +2006,7 @@ export class VariantsComponent implements OnInit {
         this.saving.set(false);
       },
       error: (error) => {
-        this.toast.error(this.extractApiMessage(error) || 'Failed to create variant.');
+        this.toast.error(this.extractApiMessage(error) || 'Failed to create sellable item.');
         this.saving.set(false);
       },
     });
@@ -2025,13 +2017,13 @@ export class VariantsComponent implements OnInit {
     const id = typeof rawId === 'string' ? rawId : '';
     const variant = this.variants().find((item) => item._id === id);
     if (!variant) {
-      this.toast.warning('Unable to find the selected variant. Please refresh and try again.');
+      this.toast.warning('Unable to find the selected sellable item. Please refresh and try again.');
       return;
     }
 
     if (event.actionKey === 'edit') {
       if (!this.canUpdateVariant()) {
-        this.toast.warning('Your current package does not allow editing variants.');
+        this.toast.warning('Your current package does not allow editing sellable items.');
         return;
       }
       this.openEditVariant(variant);
@@ -2086,12 +2078,12 @@ export class VariantsComponent implements OnInit {
     }).subscribe({
       next: () => {
         this.variantCollectionForm.reset({ collectionId: '' });
-        this.toast.success('Variant added to collection.');
+        this.toast.success('Sellable item added to collection.');
         this.reloadVariantCollections(variant);
       },
       error: (error) => {
         this.loadingVariantCollections.set(false);
-        this.toast.error(String(error?.error?.message || 'Failed to add variant to collection.'));
+        this.toast.error(String(error?.error?.message || 'Failed to add sellable item to collection.'));
       },
     });
   }
@@ -2116,19 +2108,18 @@ export class VariantsComponent implements OnInit {
       next: (response) => {
         const unmapped = Number(response.data?.unmappedFromCollections || 0);
         if (unmapped > 0) {
-          this.toast.success(`Variant deleted successfully. Removed from ${unmapped} collections.`);
+          this.toast.success(`Sellable item deleted successfully. Removed from ${unmapped} collections.`);
         } else {
-          this.toast.success('Variant deleted successfully.');
+          this.toast.success('Sellable item deleted successfully.');
         }
         this.deletingVariantId.set(null);
         this.deletingVariantName.set('');
         this.deletingVariantImpactCount.set(null);
         this.loadVariants(this.selectedGroupId());
-        this.loadPricingSuggestions(this.selectedGroupId());
         this.saving.set(false);
       },
       error: (error) => {
-        this.toast.error(this.extractApiMessage(error) || 'Failed to delete variant.');
+        this.toast.error(this.extractApiMessage(error) || 'Failed to delete sellable item.');
         this.saving.set(false);
       },
     });
@@ -2139,74 +2130,14 @@ export class VariantsComponent implements OnInit {
     const impactCount = this.deletingVariantImpactCount();
 
     if ((impactCount || 0) > 0) {
-      return `Delete ${name || 'this variant'}? It is used in ${impactCount} collections and will be removed where applicable.`;
+      return `Delete ${name || 'this sellable item'}? It is used in ${impactCount} collections and will be removed where applicable.`;
     }
 
     if (impactCount === null) {
-      return `Delete ${name || 'this variant'}? Checking collection impact...`;
+      return `Delete ${name || 'this sellable item'}? Checking collection impact...`;
     }
 
-    return `Delete ${name || 'this variant'}?`;
-  }
-
-  loadPricingSuggestions(groupId: string): void {
-    if (!groupId) {
-      this.pricingSuggestions.set([]);
-      return;
-    }
-
-    this.loadingPricingSuggestions.set(true);
-    this.service.listPricingRefreshSuggestions(groupId, 'PENDING').subscribe({
-      next: (response) => {
-        this.pricingSuggestions.set(response.data || []);
-        this.loadingPricingSuggestions.set(false);
-      },
-      error: () => {
-        this.pricingSuggestions.set([]);
-        this.loadingPricingSuggestions.set(false);
-      },
-    });
-  }
-
-  openPriceApproval(): void {
-    const groupId = this.selectedGroupId();
-    if (!groupId) {
-      this.toast.warning('Please select a group first.');
-      return;
-    }
-
-    this.service.listPricingRefreshSuggestions(groupId, 'PENDING').subscribe({
-      next: (res) => {
-        const count = Number(res.pagination?.total || 0);
-        if (count > 0) {
-          this.priceApprovalOpen.set(true);
-          return;
-        }
-
-        this.toast.info('No pending pricing suggestions found.');
-      },
-      error: () => {
-        this.toast.error('Unable to load pending pricing suggestions. Please try again.');
-      },
-    });
-  }
-
-  onPriceApprovalCompleted(): void {
-    this.priceApprovalOpen.set(false);
-    const groupId = this.selectedGroupId();
-    if (groupId) {
-      this.loadPricingSuggestions(groupId);
-      this.loadVariants(groupId);
-    }
-  }
-
-  getPendingPricingSubtitle(): string {
-    const count = this.pricingSuggestions().length;
-    const warningCount = this.suggestionWarningCount();
-    if (warningCount > 0) {
-      return `${count} pending • ${warningCount} below threshold`;
-    }
-    return count === 1 ? '1 pending suggestion' : `${count} pending suggestions`;
+    return `Delete ${name || 'this sellable item'}?`;
   }
 
   formatMarginPercent(value: number | undefined): string {
@@ -2275,7 +2206,7 @@ export class VariantsComponent implements OnInit {
         }
       });
       this.pendingVariantImages.set(merged);
-      this.toast.success('Media selected. It will be attached when you save the variant.');
+      this.toast.success('Media selected. It will be attached when you save the sellable item.');
       return;
     }
 
@@ -2296,7 +2227,7 @@ export class VariantsComponent implements OnInit {
         this.mediaService.getVariantImages(variantId).subscribe({
           next: (imgs) => this.variantImages.set(imgs || []),
         });
-        this.toast.success('Media added to variant');
+        this.toast.success('Media added to sellable item');
       },
       error: () => this.toast.error('Failed to attach media'),
     });
@@ -2936,7 +2867,7 @@ export class VariantsComponent implements OnInit {
     selections: Array<{ key: string; label: string; value: string }>
   ): string {
     const group = this.selectedGroup();
-    const groupName = group?.name || 'Variant';
+    const groupName = group?.name || 'Sellable Item';
     const optionPart = (selections || [])
       .map((item) => String(item?.value || '').trim())
       .filter((value) => !!value)

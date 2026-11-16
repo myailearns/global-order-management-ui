@@ -7,7 +7,7 @@
     @if (!loading() && savedProfile() && !editing() && canEdit()) {
       <gom-lib-button
         type="button"
-        variant="primary"
+        variant="secondary"
         [size]="isMobileHeader() ? 'compact-icon' : 'default'"
         [attr.aria-label]="('businessDetails.actions.edit' | translate)"
         [buttonTitle]="('businessDetails.actions.edit' | translate)"
@@ -32,7 +32,7 @@
         }
         <gom-lib-button
           type="button"
-          variant="primary"
+          variant="secondary"
           [size]="isMobileHeader() ? 'compact-icon' : 'default'"
           [disabled]="!canEdit() || saving() || uploadingLogo()"
           [attr.aria-label]="('businessDetails.actions.save' | translate)"

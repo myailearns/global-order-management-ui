@@ -40,7 +40,7 @@ export const SAAS_TENANT_ADMIN_ROUTES: Routes = [
         component: EmployeesListComponent,
         data: {
           title: 'saas.admin.employees.title',
-          featureKeys: ['tenantAccount.view', 'tenantAccount.add', 'tenantAccount.edit', 'tenantAccount.delete'],
+          featureKeys: ['employees.view'],
         },
       },
       {
@@ -48,7 +48,7 @@ export const SAAS_TENANT_ADMIN_ROUTES: Routes = [
         component: EmployeeFormComponent,
         data: {
           title: 'saas.admin.employees.btn_create',
-          featureKeys: ['tenantAccount.view', 'tenantAccount.add', 'tenantAccount.edit', 'tenantAccount.delete'],
+          featureKeys: ['employees.add'],
         },
       },
       {

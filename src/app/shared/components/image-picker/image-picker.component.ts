@@ -1,10 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, input, model, output, signal } from '@angular/core';
+import { Component, computed, inject, input, model, output, signal, viewChild } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { GomAlertToastService, GomButtonComponent, GomInputComponent, GomModalComponent } from '@gomlibs/ui';
 import { MediaAssetService } from '../../../features/saas-platform/media/media-asset.service';
 import { MediaAsset, MediaType } from '../../../features/saas-platform/media/media-asset.model';
 import { ImageUploadComponent } from '../image-upload/image-upload.component';
+import { MediaPrepareComponent } from '../media-prepare/media-prepare.component';
+import { MediaPurpose } from '../media-prepare/media-purpose.config';
+import { MediaUploadService } from '../media-prepare/media-upload.service';
 
 export interface PickedImage {
   asset: MediaAsset;
@@ -21,12 +24,14 @@ export interface PickedImage {
     GomInputComponent,
     GomModalComponent,
     ImageUploadComponent,
+    MediaPrepareComponent,
   ],
   templateUrl: './image-picker.component.html',
   styleUrl: './image-picker.component.scss',
 })
 export class ImagePickerComponent {
   readonly show = model<boolean>(false);
+  readonly purpose = input.required<MediaPurpose>();
   readonly existingImageIds = input<Set<string>>(new Set());
   readonly canUpload = input<boolean>(false);
   readonly maxImages = input<number>(10);
@@ -37,6 +42,13 @@ export class ImagePickerComponent {
 
   private readonly mediaService = inject(MediaAssetService);
   private readonly toast = inject(GomAlertToastService);
+  private readonly uploadService = inject(MediaUploadService);
+
+  readonly prepare = viewChild(MediaPrepareComponent);
+  readonly canUploadPrepared = computed(() => {
+    const prepare = this.prepare();
+    return !!prepare && !prepare.isProcessing() && prepare.readyItems().length > 0 && !this.uploading();
+  });
 
   // --- State ---
   readonly loading = signal(false);
@@ -90,6 +102,10 @@ export class ImagePickerComponent {
   // Track source per asset for selection
   private readonly assetSourceMap = new Map<string, 'PLATFORM' | 'TENANT'>();
 
+  private listPurpose(): MediaPurpose | undefined {
+    return this.activeMediaType() === 'IMAGE' ? this.purpose() : undefined;
+  }
+
   loadAll(): void {
     this.loadTenantImages();
     this.loadPlatformImages();
@@ -98,7 +114,7 @@ export class ImagePickerComponent {
   loadTenantImages(): void {
     if (!this.canUpload()) return;
     this.tenantLoading.set(true);
-    this.mediaService.listTenantMedia(this.tenantPage(), 20, this.search(), this.activeMediaType()).subscribe({
+    this.mediaService.listTenantMedia(this.tenantPage(), 20, this.search(), this.activeMediaType(), this.listPurpose()).subscribe({
       next: (result) => {
         this.tenantAssets.set(result.items);
         this.tenantTotalPages.set(result.meta.totalPages);
@@ -111,7 +127,7 @@ export class ImagePickerComponent {
 
   loadPlatformImages(): void {
     this.platformLoading.set(true);
-    this.mediaService.listPlatformImages(this.platformPage(), 20, this.search(), this.activeMediaType()).subscribe({
+    this.mediaService.listPlatformImages(this.platformPage(), 20, this.search(), this.activeMediaType(), this.listPurpose()).subscribe({
       next: (result) => {
         this.platformAssets.set(result.items);
         this.platformTotalPages.set(result.meta.totalPages);
@@ -217,6 +233,18 @@ export class ImagePickerComponent {
         },
       });
     }
+  }
+
+  async uploadPrepared(): Promise<void> {
+    const prepare = this.prepare();
+    if (!prepare || this.uploading()) return;
+
+    this.uploading.set(true);
+    const result = await this.uploadService.uploadReady(prepare, this.purpose(), false);
+    const assets = result.uploaded.map((entry) => entry.asset);
+    assets.forEach((asset) => this.assetSourceMap.set(asset._id, 'TENANT'));
+    prepare.reset();
+    this.onUploadBatchDone(assets, result.failed);
   }
 
   onFileUploaded(file: File): void {

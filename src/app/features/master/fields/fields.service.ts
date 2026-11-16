@@ -8,7 +8,7 @@ export type FieldType = 'NUMBER' | 'PERCENTAGE' | 'TEXT' | 'LONG_TEXT';
 export type FieldKind = 'PRICING' | 'METADATA';
 export type FieldStatus = 'ACTIVE' | 'INACTIVE';
 export type FieldValueFormat = 'NUMBER' | 'CURRENCY';
-export type FieldCurrencyCode = 'INR';
+export type FieldCurrencyCode = 'INR' | 'USD';
 
 export interface Field {
   _id?: string;
@@ -18,6 +18,7 @@ export interface Field {
   valueFormat?: FieldValueFormat;
   currencyCode?: FieldCurrencyCode | null;
   fieldKind?: FieldKind;
+  templateRef?: string | null;
   defaultValue: number | string;
   isRequired: boolean;
   status: FieldStatus;

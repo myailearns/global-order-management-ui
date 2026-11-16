@@ -24,6 +24,7 @@ interface FieldGroupRow extends GomTableRow {
   name: string;
   fieldsCount: string;
   version: string;
+  origin: string;
   status: string;
   actions: string;
 }
@@ -54,6 +55,7 @@ export class FieldGroupsComponent implements OnInit {
     { key: 'name', header: '', sortable: true, filterable: true, width: '20rem' },
     { key: 'fieldsCount', header: '', sortable: true, width: '10rem' },
     { key: 'version', header: '', sortable: true, width: '8rem' },
+    { key: 'origin', header: '', sortable: true, filterable: true, width: '9rem' },
     { key: 'status', header: '', sortable: true, filterable: true, width: '10rem' },
     {
       key: 'actions',
@@ -105,6 +107,7 @@ export class FieldGroupsComponent implements OnInit {
       name: fieldGroup.name,
       fieldsCount: String(fieldGroup.fields.length),
       version: `v${fieldGroup.version}`,
+      origin: fieldGroup.templateRef ? 'PLATFORM' : 'OWN',
       status: fieldGroup.status,
       actions: '',
     }))
@@ -372,12 +375,17 @@ export class FieldGroupsComponent implements OnInit {
     this.columns[0].header = this.translate.instant('fieldGroups.labels.name');
     this.columns[1].header = this.translate.instant('fieldGroups.labels.fields');
     this.columns[2].header = this.translate.instant('fieldGroups.labels.version');
-    this.columns[3].header = this.translate.instant('fieldGroups.labels.status');
+    this.columns[3].header = this.translate.instant('fieldGroups.labels.origin');
     this.columns[3].format = (value) =>
+      value === 'PLATFORM'
+        ? this.translate.instant('fieldGroups.labels.originPlatform')
+        : this.translate.instant('fieldGroups.labels.originOwn');
+    this.columns[4].header = this.translate.instant('fieldGroups.labels.status');
+    this.columns[4].format = (value) =>
       value === 'INACTIVE'
         ? this.translate.instant('common.status.inactive')
         : this.translate.instant('common.status.active');
-    this.columns[4].header = this.translate.instant('common.labels.actions');
+    this.columns[5].header = this.translate.instant('common.labels.actions');
     const actionButtons: Array<{ label: string; actionKey: string; variant: 'secondary'; icon?: string }> = [];
     if (this.canEditFieldGroup()) {
       actionButtons.push({ label: this.translate.instant('common.actions.edit'), icon: 'ri-pencil-line', actionKey: 'edit', variant: 'secondary' });
@@ -385,6 +393,6 @@ export class FieldGroupsComponent implements OnInit {
     if (this.canDeleteFieldGroup()) {
       actionButtons.push({ label: this.translate.instant('common.actions.delete'), icon: 'ri-delete-bin-line', actionKey: 'delete', variant: 'secondary' });
     }
-    this.columns[4].actionButtons = actionButtons;
+    this.columns[5].actionButtons = actionButtons;
   }
 }

@@ -13,6 +13,16 @@
     <nav class="pos-page-header__menu" aria-label="Create order quick menu">
       <button
         type="button"
+        class="pos-page-header__menu-trigger pos-page-header__fullscreen"
+        [attr.aria-pressed]="isFullscreen()"
+        [attr.aria-label]="isFullscreen() ? 'Exit full screen' : 'Enter full screen'"
+        [title]="isFullscreen() ? 'Exit full screen' : 'Full screen'"
+        (click)="toggleFullscreen()"
+      >
+        <i [class]="isFullscreen() ? 'ri-fullscreen-exit-line' : 'ri-fullscreen-line'" aria-hidden="true"></i>
+      </button>
+      <button
+        type="button"
         class="pos-page-header__menu-trigger"
         [class.pos-page-header__menu-trigger--active]="createOrderSubMenuOpen()"
         [attr.aria-expanded]="createOrderSubMenuOpen()"

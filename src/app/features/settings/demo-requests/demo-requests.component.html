@@ -1,0 +1,87 @@
+<section class="settings-page">
+  <header class="settings-page__header">
+    <div>
+      <h2>Request Demos</h2>
+      <p>Platform-admin only request queue for demo leads, status tracking, and follow-up notes.</p>
+    </div>
+    <div class="settings-page__meta">{{ requestCount() }} requests</div>
+  </header>
+
+  <article class="settings-card">
+    <gom-lib-table
+      [columns]="columns"
+      [rows]="rows()"
+      [loading]="loading()"
+      [dataMode]="'server'"
+      [totalItems]="total()"
+      [pageIndex]="tablePageIndex()"
+      [pageSize]="tablePageSize()"
+      [pageSizeOptions]="[10, 20, 50]"
+      searchPlaceholder="Search demo requests"
+      (queryChange)="onTableQueryChange($event)"
+      (rowAction)="onRowAction($event)"
+      [mobileCardView]="true"
+      emptyMessage="No demo requests yet."
+    ></gom-lib-table>
+  </article>
+
+  <gom-lib-modal
+    [(show)]="editOpen"
+    [title]="'Edit Demo Request — ' + (editingRequest()?.name || editingRequest()?.bookingId || '')"
+    size="medium"
+    [closeOnBackdropClick]="true"
+    (closed)="closeEditModal()"
+  >
+    <form class="demo-request-form" [formGroup]="editForm">
+      <gom-lib-checkbox
+        label="Connected"
+        hint="Mark when the request has been contacted"
+        formControlName="connected"
+      ></gom-lib-checkbox>
+
+      <gom-lib-checkbox
+        label="Subscribed"
+        hint="Show package and tier fields when selected"
+        formControlName="subscribed"
+      ></gom-lib-checkbox>
+
+      @if (editForm.controls.subscribed.value) {
+        <div class="demo-request-form__grid">
+          <gom-lib-select
+            label="Package"
+            [required]="true"
+            [options]="packageOptions()"
+            formControlName="packagePlanId"
+            [error]="editForm.controls.packagePlanId.touched && editForm.controls.packagePlanId.invalid ? 'Package is required' : ''"
+          ></gom-lib-select>
+
+          <gom-lib-select
+            label="Tier"
+            [required]="true"
+            [options]="tierOptions()"
+            formControlName="tierId"
+            [disabled]="!editForm.controls.packagePlanId.value"
+            [error]="editForm.controls.tierId.touched && editForm.controls.tierId.invalid ? 'Tier is required' : ''"
+          ></gom-lib-select>
+        </div>
+      }
+
+      <gom-lib-textarea
+        label="Notes"
+        [rows]="4"
+        placeholder="Add follow-up notes"
+        formControlName="notes"
+      ></gom-lib-textarea>
+    </form>
+
+    <footer class="gom-modal__action-layout" gom-modal-actions>
+      <div class="gom-modal__action-layout-start"></div>
+      <div class="gom-modal__action-layout-end">
+        <gom-lib-button type="button" variant="secondary" [disabled]="saving()" (buttonClick)="closeEditModal()">Cancel</gom-lib-button>
+        <gom-lib-button type="button" variant="primary" [disabled]="saving()" (buttonClick)="saveRequest()">
+          {{ saving() ? 'Saving...' : 'Save Changes' }}
+        </gom-lib-button>
+      </div>
+    </footer>
+  </gom-lib-modal>
+</section>

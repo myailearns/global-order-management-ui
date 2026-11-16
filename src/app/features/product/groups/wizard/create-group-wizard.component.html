@@ -43,12 +43,14 @@
             (valueChange)="onCategoryChange($event)"
           ></gom-lib-select>
 
-          <gom-lib-select
-            label="Tax Profile (Optional)"
-            placeholder="Select tax profile"
-            [options]="taxProfileOptions()"
-            [formControl]="basicForm.controls.taxProfileId"
-          ></gom-lib-select>
+          @if (canUseTaxProfile()) {
+            <gom-lib-select
+              label="Tax Profile (Optional)"
+              placeholder="Select tax profile"
+              [options]="taxProfileOptions()"
+              [formControl]="basicForm.controls.taxProfileId"
+            ></gom-lib-select>
+          }
         </div>
 
         <div class="form-grid" style="margin-top: 1rem;">
@@ -448,7 +450,7 @@
 </gom-lib-modal>
 
 <!-- Image Picker -->
-<gom-image-picker
+<gom-image-picker [purpose]="'PRODUCT'"
   [(show)]="pickerOpen"
   [existingImageIds]="existingImageIds()"
   [canUpload]="canUploadOwn()"

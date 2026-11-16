@@ -30,7 +30,6 @@
           <th>Base Unit</th>
           <th>Tax Profile</th>
           <th>Group Type</th>
-          <th>Refresh Mode</th>
           <th>Last Updated</th>
           <th>Actions</th>
         </tr>
@@ -46,7 +45,6 @@
           <td>{{ getRefName(defaults.baseUnitId) }}</td>
           <td>{{ getRefName(defaults.taxProfileId) }}</td>
           <td>{{ defaults.groupType || '-' }}</td>
-          <td>{{ defaults.pricingRefreshMode || '-' }}</td>
           <td>{{ defaults.updatedAt | date: 'medium' }}</td>
           <td class="action-buttons">
             <button
@@ -148,13 +146,6 @@
           <label class="form-label">Group Type</label>
           <select formControlName="groupType" class="form-control">
             <option *ngFor="let option of groupTypeOptions" [value]="option.value">{{ option.label }}</option>
-          </select>
-        </div>
-
-        <div class="form-section">
-          <label class="form-label">Pricing Refresh Mode</label>
-          <select formControlName="pricingRefreshMode" class="form-control">
-            <option *ngFor="let option of pricingRefreshModeOptions" [value]="option.value">{{ option.label }}</option>
           </select>
         </div>
 

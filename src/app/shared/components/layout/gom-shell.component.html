@@ -1,4 +1,8 @@
-<div class="gom-shell" [class.gom-shell--desktop-collapsed]="desktopNavCollapsed()">
+<div
+  class="gom-shell"
+  [class.gom-shell--desktop-collapsed]="desktopNavCollapsed()"
+  [class.gom-shell--fullpage]="isCreateOrderRoute()"
+>
   <gom-lib-alert-toast></gom-lib-alert-toast>
 
   @if (isAuthRoute()) {
@@ -77,7 +81,7 @@
           </button>
 
           @if (notifPanelOpen()) {
-            <div class="gom-shell__notif-panel" role="dialog" aria-label="Notifications">
+            <dialog class="gom-shell__notif-panel" aria-label="Notifications" open>
               <div class="gom-shell__notif-panel-head">
                 <h2>Notifications</h2>
                 @if (unreadNotifCount() > 0) {
@@ -91,23 +95,26 @@
               } @else {
                 <ul class="gom-shell__notif-list">
                   @for (notif of notifications(); track notif._id) {
-                    <li
-                      class="gom-shell__notif-item"
-                      [class.gom-shell__notif-item--unread]="!notif.readAt"
-                      (click)="markNotifRead(notif)"
-                    >
-                      <div class="gom-shell__notif-dot" aria-hidden="true"></div>
-                      <div class="gom-shell__notif-content">
-                        <p class="gom-shell__notif-title">{{ notif.title }}</p>
-                        <p class="gom-shell__notif-body">{{ notif.body }}</p>
-                      </div>
+                    <li>
+                      <button
+                        type="button"
+                        class="gom-shell__notif-item"
+                        [class.gom-shell__notif-item--unread]="!notif.readAt"
+                        (click)="markNotifRead(notif)"
+                      >
+                        <div class="gom-shell__notif-dot" aria-hidden="true"></div>
+                        <div class="gom-shell__notif-content">
+                          <p class="gom-shell__notif-title">{{ notif.title }}</p>
+                          <p class="gom-shell__notif-body">{{ notif.body }}</p>
+                        </div>
+                      </button>
                     </li>
                   }
                 </ul>
               }
-            </div>
+            </dialog>
             <!-- Click-outside backdrop -->
-            <button type="button" class="gom-shell__notif-backdrop" aria-hidden="true" (click)="closeNotifPanel()"></button>
+            <button type="button" class="gom-shell__notif-backdrop" aria-label="Close notifications" (click)="closeNotifPanel()"></button>
           }
         </div>
         <button
@@ -141,6 +148,11 @@
             <button type="button" class="gom-shell__profile-link" (click)="openProfileSettings()">
               <i class="ri-user-settings-line" aria-hidden="true"></i>
               <span>Change Password</span>
+            </button>
+
+            <button type="button" class="gom-shell__profile-link" (click)="openSubscriptionDetailsModal()">
+              <i class="ri-file-list-3-line" aria-hidden="true"></i>
+              <span>Subscription Details</span>
             </button>
 
             <div class="gom-shell__profile-section">
@@ -235,9 +247,6 @@
                     >
                       <span class="gom-shell__nav-icon"><i [class]="item.icon" aria-hidden="true"></i></span>
                       <span class="gom-shell__nav-label">{{ item.translationKey | translate }}</span>
-                      @if (item.route === '/product/stock' && pendingPricingCount() > 0) {
-                        <span class="gom-shell__nav-badge" title="Pending price approvals">{{ pendingPricingCount() }}</span>
-                      }
                       <span class="gom-shell__nav-trail" aria-hidden="true"><i class="ri-arrow-right-s-line"></i></span>
                     </a>
                   </li>
@@ -282,7 +291,7 @@
           <span>Last updated: {{ formatCatalogLastUpdated() }}</span>
         </div>
       </div>
-      <p>Resync downloads all available categories, groups, and every variant page. Your current cart will not be changed.</p>
+      <p>Resync downloads all available categories, products, and every sellable item page. Your current cart will not be changed.</p>
       <div class="gom-shell__catalog-sync-actions">
         <gom-lib-button
           type="button"
@@ -303,6 +312,113 @@
           ></i>
           {{ catalogRefreshing() ? 'Synchronizing...' : 'Resync Catalog' }}
         </gom-lib-button>
+      </div>
+    </div>
+  </gom-lib-modal>
+
+  <gom-lib-modal
+    [show]="subscriptionDetailsModalOpen()"
+    title="Subscription Details"
+    size="large"
+    (closed)="closeSubscriptionDetailsModal()"
+  >
+    <div class="gom-shell__subscription-modal">
+      @if (subscriptionDetailsLoading()) {
+        <div class="gom-shell__subscription-state">
+          <i class="ri-loader-4-line" aria-hidden="true"></i>
+          <span>Loading subscription details...</span>
+        </div>
+      } @else if (subscriptionDetailsError()) {
+        <div class="gom-shell__subscription-state gom-shell__subscription-state--error">
+          <i class="ri-error-warning-line" aria-hidden="true"></i>
+          <span>{{ subscriptionDetailsError() }}</span>
+        </div>
+      } @else if (subscriptionSummary(); as summary) {
+        <section class="gom-shell__subscription-hero">
+          <div>
+            <p class="gom-shell__subscription-kicker">Current plan</p>
+            <h3>{{ summary.package?.name || summary.package?.planId || 'N/A' }}</h3>
+            <p class="gom-shell__subscription-subtext">Tier: {{ summary.package?.tier || 'N/A' }}</p>
+            <p class="gom-shell__subscription-subtext">Status: {{ summary.tenant?.accountStatus || 'N/A' }}</p>
+          </div>
+          <div class="gom-shell__subscription-meta">
+            <p><strong>Trial end</strong><span>{{ formatSubscriptionDate(summary.tenant?.trialEndAt || null) }}</span></p>
+            <p><strong>Remaining</strong><span>{{ daysUntil(summary.tenant?.trialEndAt || null) }}</span></p>
+          </div>
+        </section>
+
+        <section class="gom-shell__subscription-section">
+          <h4>Usage limits</h4>
+          <div class="gom-shell__subscription-grid">
+            <article class="gom-shell__subscription-card">
+              <p>Users</p>
+              <strong>{{ summary.counts.users }} / {{ formatLimit(summary.limits.maxUsers) }}</strong>
+              <div class="gom-shell__subscription-progress"><span [style.width.%]="toUsagePercent(summary.counts.users, summary.limits.maxUsers)"></span></div>
+            </article>
+            <article class="gom-shell__subscription-card">
+              <p>Employees</p>
+              <strong>{{ summary.counts.employees }} / {{ formatLimit(summary.limits.maxEmployees) }}</strong>
+              <div class="gom-shell__subscription-progress"><span [style.width.%]="toUsagePercent(summary.counts.employees, summary.limits.maxEmployees)"></span></div>
+            </article>
+            <article class="gom-shell__subscription-card">
+              <p>Roles</p>
+              <strong>{{ summary.counts.roles }} / {{ formatLimit(summary.limits.maxRoles) }}</strong>
+              <div class="gom-shell__subscription-progress"><span [style.width.%]="toUsagePercent(summary.counts.roles, summary.limits.maxRoles)"></span></div>
+            </article>
+          </div>
+        </section>
+
+        <section class="gom-shell__subscription-section">
+          <h4>Included features</h4>
+          @if (subscriptionFeatureModules().length > 0) {
+            <div class="gom-shell__subscription-feature-table-wrap">
+              @for (moduleBlock of subscriptionFeatureModules(); track moduleBlock.moduleKey) {
+                <article class="gom-shell__subscription-feature-module">
+                  <h5>{{ moduleBlock.moduleLabel }}</h5>
+                  <table class="gom-shell__subscription-feature-table">
+                    <thead>
+                      <tr>
+                        <th>Feature</th>
+                        <th>Limit / Condition</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (feature of moduleBlock.rows; track feature.featureKey) {
+                        <tr>
+                          <td>{{ feature.featureName }}</td>
+                          <td>{{ feature.limitText }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </article>
+              }
+            </div>
+          } @else {
+            <p class="gom-shell__subscription-empty">No feature details found for this account.</p>
+          }
+        </section>
+
+        <section class="gom-shell__subscription-section">
+          <h4>Billing and payment history</h4>
+          <p class="gom-shell__subscription-empty">Coming soon. We will add invoice, payment, and renewal details next.</p>
+        </section>
+      } @else {
+        <p class="gom-shell__subscription-empty">No subscription data is available for this account.</p>
+      }
+
+      <div class="gom-shell__catalog-sync-actions">
+        <gom-lib-button
+          type="button"
+          variant="secondary"
+          (buttonClick)="closeSubscriptionDetailsModal()"
+        >Close</gom-lib-button>
+        <gom-lib-button
+          type="button"
+          variant="primary"
+          [disabled]="subscriptionDetailsLoading()"
+          (buttonClick)="loadSubscriptionDetails()"
+        >Refresh</gom-lib-button>
       </div>
     </div>
   </gom-lib-modal>

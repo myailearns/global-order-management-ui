@@ -83,6 +83,11 @@
 .simple-pricing-edit__current-metrics {
   display: flex;
   gap: 1.4rem;
+  flex-wrap: wrap;
+
+  > div {
+    min-width: 7.5rem;
+  }
 
   span {
     display: block;
@@ -221,8 +226,8 @@
   }
 }
 
-.simple-pricing-edit__metric--negative {
-  color: #dc2626 !important;
+.simple-pricing-edit__result-row strong.simple-pricing-edit__metric--negative {
+  color: #dc2626;
 }
 
 .simple-pricing-edit__recommendation {

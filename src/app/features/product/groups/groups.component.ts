@@ -50,7 +50,6 @@ import {
   GroupCompletionStatus,
   GroupVariantGenerationPreview,
   GroupPayload,
-  PricingRefreshMode,
   GroupsService,
   Unit,
   TaxProfile,
@@ -100,7 +99,7 @@ interface GroupWizardField {
   isRequired: boolean;
   defaultValue: number;
   valueFormat?: 'NUMBER' | 'CURRENCY';
-  currencyCode?: 'INR' | null;
+  currencyCode?: 'INR' | 'USD' | null;
 }
 
 type FormulaTarget = 'sellingPrice' | 'anchorPrice' | 'actualPrice';
@@ -408,7 +407,6 @@ export class GroupsComponent implements OnInit, OnDestroy {
     createDefaultVariant: [false],
     categoryId: ['', [Validators.required]],
     taxProfileId: [''],
-    pricingRefreshMode: ['AUTO_REFRESH' as PricingRefreshMode, [Validators.required]],
   });
 
   readonly selectionForm = this.fb.group({
@@ -480,7 +478,7 @@ export class GroupsComponent implements OnInit, OnDestroy {
   readonly groupVideoLimit = computed(() => this.authSession.getFeatureConfigNumber('group.create', 'max_videos') ?? this.DEFAULT_MAX_VIDEOS);
 
   readonly columns: GomTableColumn<GroupRow>[] = [
-    { key: 'name', header: 'Group Name', sortable: true, filterable: true, width: '16rem' },
+    { key: 'name', header: 'Product Name', sortable: true, filterable: true, width: '16rem' },
     { key: 'categoryName', header: 'Category', sortable: true, filterable: true, width: '12rem' },
     {
       key: 'stock',
@@ -498,8 +496,8 @@ export class GroupsComponent implements OnInit, OnDestroy {
         return 'group-stock--normal';
       },
     },
-    { key: 'groupType', header: 'Group Type', sortable: true, filterable: true, width: '10rem' },
-    { key: 'pricingTemplate', header: 'Pricing Template', sortable: true, filterable: true, width: '14rem' },
+    { key: 'groupType', header: 'Product Type', sortable: true, filterable: true, width: '10rem' },
+    { key: 'pricingTemplate', header: 'Pricing Formula', sortable: true, filterable: true, width: '14rem' },
     { key: 'baseUnit', header: 'Base Unit', sortable: true, filterable: true, width: '10rem' },
     {
       key: 'allowedUnits',
@@ -533,20 +531,20 @@ export class GroupsComponent implements OnInit, OnDestroy {
       actionOverflowMenu: {
         actionKeys: ['add-stock', 'add-variant', 'collections', 'delete'],
         triggerIcon: 'ri-more-2-fill',
-        triggerAriaLabel: 'More group actions',
-        triggerButtonTitle: 'More group actions',
-        backButtonText: 'Group actions',
+        triggerAriaLabel: 'More product actions',
+        triggerButtonTitle: 'More product actions',
+        backButtonText: 'Product actions',
       },
       actionButtons: [
         {
-          label: () => this.canUpdateGroup() ? 'Edit' : 'No permission to edit groups',
+          label: () => this.canUpdateGroup() ? 'Edit' : 'No permission to edit products',
           icon: 'ri-pencil-line',
           actionKey: 'edit',
           variant: 'secondary',
           disabled: () => !this.canUpdateGroup(),
         },
         {
-          label: () => this.canCreateGroup() ? 'Clone Group' : 'No permission to clone groups',
+          label: () => this.canCreateGroup() ? 'Clone Product' : 'No permission to clone products',
           icon: 'ri-file-copy-line',
           actionKey: 'clone',
           variant: 'secondary',
@@ -574,7 +572,7 @@ export class GroupsComponent implements OnInit, OnDestroy {
           disabled: () => !this.canManageProductCollections(),
         },
         {
-          label: () => this.canDeleteGroup() ? 'Delete' : 'No permission to delete groups',
+          label: () => this.canDeleteGroup() ? 'Delete' : 'No permission to delete products',
           icon: 'ri-delete-bin-line',
           actionKey: 'delete',
           variant: 'danger',
@@ -627,7 +625,7 @@ export class GroupsComponent implements OnInit, OnDestroy {
     { key: 'rowNumber', header: 'Row', sortable: true, width: '6rem' },
     {
       key: 'groupName',
-      header: 'Group Name',
+      header: 'Product Name',
       sortable: true,
       filterable: true,
       width: '14rem',
@@ -643,7 +641,7 @@ export class GroupsComponent implements OnInit, OnDestroy {
     },
     {
       key: 'inferredGroupType',
-      header: 'Group Type',
+      header: 'Product Type',
       sortable: true,
       filterable: true,
       width: '10rem',
@@ -710,9 +708,9 @@ export class GroupsComponent implements OnInit, OnDestroy {
 
   readonly bulkSuccessColumns: GomTableColumn<BulkSuccessResultRow>[] = [
     { key: 'rowNumber', header: 'Row', sortable: true, width: '6rem' },
-    { key: 'groupName', header: 'Group Name', sortable: true, filterable: true, width: '14rem' },
+    { key: 'groupName', header: 'Product Name', sortable: true, filterable: true, width: '14rem' },
     { key: 'category', header: 'Category', sortable: true, filterable: true, width: '12rem' },
-    { key: 'inferredGroupType', header: 'Group Type', sortable: true, filterable: true, width: '10rem' },
+    { key: 'inferredGroupType', header: 'Product Type', sortable: true, filterable: true, width: '10rem' },
     { key: 'baseUnit', header: 'Base Unit', sortable: true, filterable: true, width: '10rem' },
     { key: 'allowedUnits', header: 'Allowed Units', sortable: false, filterable: true, width: '12rem' },
     {
@@ -880,7 +878,7 @@ export class GroupsComponent implements OnInit, OnDestroy {
 
   readonly bulkVariantFailureColumns: GomTableColumn<BulkVariantFailureRow>[] = [
     { key: 'rowNumber', header: 'Row', sortable: true, width: '6rem' },
-    { key: 'groupName', header: 'Group Name', sortable: true, filterable: true, width: '14rem' },
+    { key: 'groupName', header: 'Product Name', sortable: true, filterable: true, width: '14rem' },
     { key: 'attemptedVariantLabel', header: 'Attempted Variant', sortable: false, width: '20rem' },
     { key: 'measuredInput', header: 'Measured Input', sortable: false, width: '10rem' },
     { key: 'failureCode', header: 'Failure Code', sortable: true, filterable: true, width: '14rem' },
@@ -938,26 +936,6 @@ export class GroupsComponent implements OnInit, OnDestroy {
   readonly groupCollectionOptions = computed<GomSelectOption[]>(() =>
     this.availableProductCollections().map((item) => ({ value: item._id, label: item.name }))
   );
-
-  readonly pricingRefreshModeOptions: GomSelectOption[] = [
-    { label: 'Auto Refresh (apply automatically)', value: 'AUTO_REFRESH' },
-    { label: 'Manual Refresh (require approval)', value: 'MANUAL_REFRESH' },
-    { label: 'Fixed (no auto updates)', value: 'FIXED' },
-  ];
-
-  getPricingRefreshModeHint(): string {
-    const mode = this.basicForm.controls.pricingRefreshMode.value;
-    switch (mode) {
-      case 'AUTO_REFRESH':
-        return 'Prices will update automatically whenever you add stock. No approval needed.';
-      case 'MANUAL_REFRESH':
-        return 'System will calculate new prices and show suggestions for your approval before applying changes.';
-      case 'FIXED':
-        return 'Prices will never change automatically. You can only edit prices manually on the group page.';
-      default:
-        return 'Select a mode to see how pricing updates will work for this group.';
-    }
-  }
 
   readonly groupTypeOptions: GomSelectOption[] = [
     { label: 'Measured (by Weight/Volume)', value: 'MEASURED' },
@@ -1707,7 +1685,6 @@ export class GroupsComponent implements OnInit, OnDestroy {
       const baseUnitName = String(row.rawPayload?.['baseUnit'] || '').trim().toLowerCase();
       const taxProfileName = String(row.rawPayload?.['taxProfile'] || '').trim().toLowerCase();
       const pricingTemplateName = String(row.rawPayload?.['pricingTemplate'] || '').trim().toLowerCase();
-      const pricingRefreshMode = String(row.rawPayload?.['pricingRefreshMode'] || 'AUTO_REFRESH').trim().toUpperCase();
 
       const categoryId = this.categories().find((item) => item.name.trim().toLowerCase() === categoryName)?._id || '';
       const baseUnit = this.units().find((item) => item.name.trim().toLowerCase() === baseUnitName);
@@ -1800,7 +1777,6 @@ export class GroupsComponent implements OnInit, OnDestroy {
         baseUnitId: baseUnit?._id || '',
         allowedUnitIds: [...new Set([...(allowedUnits || []), ...(baseUnit?._id ? [baseUnit._id] : [])])],
         taxProfileId,
-        pricingRefreshMode: pricingRefreshMode || 'AUTO_REFRESH',
       });
 
       this.quickCreateModal.selectedAttributeValues.set(selectedAttributeValues);
@@ -2685,7 +2661,6 @@ export class GroupsComponent implements OnInit, OnDestroy {
       createDefaultVariant: false,
       categoryId: existing.categoryId,
       taxProfileId: existing.taxProfileId || '',
-      pricingRefreshMode: existing.pricingRefreshMode || 'AUTO_REFRESH',
     });
     this.syncOptionAxesFromExisting(existing);
     this.editingQuantity.set(existing.quantity || 1);
@@ -2873,7 +2848,6 @@ export class GroupsComponent implements OnInit, OnDestroy {
       }),
       advanced: this.groupsService.updateGroupAdvancedSettings(editId, {
         taxProfileId: String(this.basicForm.controls.taxProfileId.value || '').trim() || null,
-        pricingRefreshMode: this.basicForm.controls.pricingRefreshMode.value || 'AUTO_REFRESH',
         groupType: this.basicForm.controls.groupType.value || 'MEASURED',
         optionAxes,
       }),
@@ -3273,9 +3247,12 @@ export class GroupsComponent implements OnInit, OnDestroy {
       return `Enter percentage value (without % sign). Example amount = ${calculated.toFixed(2)}`;
     }
 
-    return field.valueFormat === 'CURRENCY'
-      ? 'Amount in ₹ (INR). Example: 49.99'
-      : 'Enter numeric value.';
+    if (field.valueFormat === 'CURRENCY') {
+      const currencyHint = field.currencyCode === 'USD' ? '$ (USD)' : '₹ (INR)';
+      return `Amount in ${currencyHint}. Example: 49.99`;
+    }
+
+    return 'Enter numeric value.';
   }
 
   getFieldPlaceholder(field: GroupWizardField): string {
@@ -3284,7 +3261,9 @@ export class GroupsComponent implements OnInit, OnDestroy {
     }
 
     if (field.valueFormat === 'CURRENCY') {
-      return `Enter ${field.name} (₹)`;
+      return field.currencyCode === 'USD'
+        ? `Enter ${field.name} ($)`
+        : `Enter ${field.name} (₹)`;
     }
 
     return `Enter ${field.name}`;
@@ -3779,7 +3758,6 @@ export class GroupsComponent implements OnInit, OnDestroy {
 
     this.basicForm.reset({ name: '', description: '', createDefaultVariant: false, categoryId: '', taxProfileId: '' });
     this.basicForm.controls.groupType.setValue('MEASURED');
-    this.basicForm.controls.pricingRefreshMode.setValue('AUTO_REFRESH');
     this.descEditor?.clear();
     this.selectionForm.reset({ fieldGroupId: '' });
     this.formulaForm.reset({ sellingPrice: '', anchorPrice: '', actualPrice: '' });
@@ -3844,7 +3822,6 @@ export class GroupsComponent implements OnInit, OnDestroy {
     }
 
     const taxProfileId = String(this.basicForm.controls.taxProfileId.value || '').trim();
-    const pricingRefreshMode = this.basicForm.controls.pricingRefreshMode.value || 'AUTO_REFRESH';
 
     const payload: GroupPayload = {
       name: String(this.basicForm.controls.name.value || '').trim(),
@@ -3859,7 +3836,6 @@ export class GroupsComponent implements OnInit, OnDestroy {
         anchorPrice: String(this.formulaForm.controls.anchorPrice.value || '').trim(),
         actualPrice: String(this.formulaForm.controls.actualPrice.value || '').trim(),
       },
-      pricingRefreshMode,
       baseUnitId,
       allowedUnitIds: [...allowedUnitIds],
       taxProfileId,

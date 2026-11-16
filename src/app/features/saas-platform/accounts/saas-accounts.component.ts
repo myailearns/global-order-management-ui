@@ -4,19 +4,31 @@ import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angu
 import { TranslateModule } from '@ngx-translate/core';
 import { startWith } from 'rxjs';
 
-import { GomAlertToastService } from '@gomlibs/ui';
-import { GomAccordionComponent, GomButtonComponent, GomConfirmationModalComponent, GomInputComponent, GomSelectComponent, GomSelectOption, GomTextareaComponent } from '@gomlibs/ui';
-import { GomModalComponent } from '@gomlibs/ui';
-import { GomTableColumn, GomTableComponent, GomTableQuery, GomTableRow } from '@gomlibs/ui';
+import {
+  GomAccordionComponent,
+  GomAlertToastService,
+  GomButtonComponent,
+  GomConfirmationModalComponent,
+  GomInputComponent,
+  GomModalComponent,
+  GomSelectComponent,
+  GomSelectOption,
+  GomTableColumn,
+  GomTableComponent,
+  GomTableQuery,
+  GomTableRow,
+  GomTextareaComponent,
+} from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { PASSWORD_POLICY_MESSAGE, PASSWORD_POLICY_REGEX } from '../../../shared/validators/password-policy';
-import { SaasAccountService } from './saas-account.service';
+import { PublicBusinessCategory, PublicBusinessType, SaasAccountService } from './saas-account.service';
 import {
   AccountStatus,
   AuditLogItem,
   BillingDurationCode,
   CreateAccountRequest,
   PaymentContextResponse,
+  PaymentHistoryItem,
   PaymentMethod,
   PendingVerificationPaymentRecord,
   TenantAccount,
@@ -35,6 +47,8 @@ interface AccountRow extends GomTableRow {
   planId: string;
   status: AccountStatus;
   mediaUsage: string;
+  subscriptionStartAt: string;
+  subscriptionEndAt: string;
   trialEndAt: string;
   updatedAt: string;
 }
@@ -99,6 +113,11 @@ export class SaasAccountsComponent implements OnInit {
   readonly statusFilter = signal('');
   readonly tenantCodeAutoMode = signal(true);
   readonly timezoneSearch = signal('');
+  readonly businessCategories = signal<PublicBusinessCategory[]>([]);
+  readonly businessTypes = signal<PublicBusinessType[]>([]);
+  readonly businessCategoryOptions = signal<GomSelectOption[]>([]);
+  readonly businessTypeOptions = signal<GomSelectOption[]>([]);
+  readonly businessTypesLoading = signal(false);
 
   readonly formModalOpen = signal(false);
   readonly createStep = signal<1 | 2>(1);
@@ -123,6 +142,10 @@ export class SaasAccountsComponent implements OnInit {
   readonly paymentTierOptions = signal<GomSelectOption[]>([]);
   readonly paymentTierMaps = signal<TierFeatureMap[]>([]);
   readonly paymentContext = signal<PaymentContextResponse | null>(null);
+  readonly paymentHistoryModalOpen = signal(false);
+  readonly paymentHistoryLoading = signal(false);
+  readonly paymentHistoryAccount = signal<TenantAccount | null>(null);
+  readonly paymentHistoryItems = signal<PaymentHistoryItem[]>([]);
   readonly paymentDurationOptions = computed<GomSelectOption[]>(() => {
     const selectedTierId = String(this.paymentRequestForm.controls.tierId.value || '').trim();
     const tier = this.paymentTierMaps().find((item) => item._id === selectedTierId) || null;
@@ -133,7 +156,7 @@ export class SaasAccountsComponent implements OnInit {
 
     const optionMap = new Map(this.durationCodeOptions.map((item) => [String(item.value), item.label]));
     const enabledDurationCodes = tier.cyclePricing
-      .filter((cycle) => cycle && cycle.isEnabled)
+      .filter((cycle) => cycle?.isEnabled)
       .map((cycle) => String(cycle.durationCode || '').trim().toUpperCase())
       .filter((code) => optionMap.has(code));
 
@@ -283,6 +306,8 @@ export class SaasAccountsComponent implements OnInit {
     primaryContactName: ['', [Validators.required]],
     primaryContactPhone: ['', [Validators.required]],
     primaryContactEmail: ['', [Validators.required, Validators.email]],
+    businessCategoryId: ['', [Validators.required]],
+    businessSetupTypeIds: [[] as string[], [Validators.required]],
     firstTenantAdminName: ['', [Validators.required]],
     firstTenantAdminEmail: ['', [Validators.required, Validators.email]],
     firstTenantAdminPassword: ['', [Validators.required, Validators.minLength(8), Validators.pattern(PASSWORD_POLICY_REGEX)]],
@@ -352,6 +377,8 @@ export class SaasAccountsComponent implements OnInit {
         planId: item.planId,
         status: item.accountStatus,
         mediaUsage: s ? `${s.count} images · ${this.formatBytes(s.size)}` : '—',
+        subscriptionStartAt: item.subscriptionStartAt ? new Date(item.subscriptionStartAt).toLocaleDateString() : '-',
+        subscriptionEndAt: item.subscriptionEndAt ? new Date(item.subscriptionEndAt).toLocaleDateString() : '-',
         trialEndAt: item.trialEndAt ? new Date(item.trialEndAt).toLocaleDateString() : '-',
         updatedAt: new Date(item.updatedAt).toLocaleDateString(),
       };
@@ -364,9 +391,12 @@ export class SaasAccountsComponent implements OnInit {
     return this.pendingPayments().map((item) => {
       const accountName = typeof item.accountId === 'object' ? (item.accountId.accountName || '-') : '-';
       const tenantCode = typeof item.accountId === 'object' ? (item.accountId.tenantCode || item.tenantId) : item.tenantId;
-      const tierLabel = typeof item.tierId === 'object'
-        ? (item.tierId.displayName ? `${item.tierId.displayName} (${item.tierId.tierKey || ''})` : (item.tierId.tierKey || '-'))
-        : '-';
+      let tierLabel = '-';
+      if (typeof item.tierId === 'object') {
+        tierLabel = item.tierId.displayName
+          ? `${item.tierId.displayName} (${item.tierId.tierKey || ''})`
+          : (item.tierId.tierKey || '-');
+      }
 
       return {
         id: item._id,
@@ -410,6 +440,8 @@ export class SaasAccountsComponent implements OnInit {
     { key: 'tenantUrl', header: 'Tenant URL', width: '20rem' },
     { key: 'planId', header: 'Plan', sortable: true, width: '10rem' },
     { key: 'status', header: 'Status', width: '10rem' },
+    { key: 'subscriptionStartAt', header: 'Subscription Start', width: '12rem' },
+    { key: 'subscriptionEndAt', header: 'Subscription End', width: '12rem' },
     { key: 'mediaUsage', header: 'Media Storage', width: '14rem' },
     { key: 'trialEndAt', header: 'Trial End', width: '10rem' },
     { key: 'updatedAt', header: 'Updated', width: '10rem' },
@@ -420,6 +452,7 @@ export class SaasAccountsComponent implements OnInit {
       actionButtons: [
         { label: 'View/Edit', icon: 'ri-pencil-line', actionKey: 'edit', variant: 'secondary' },
         { label: 'Record Payment', icon: 'ri-bank-card-line', actionKey: 'record-payment', variant: 'secondary' },
+        { label: 'Payment History', icon: 'ri-file-list-3-line', actionKey: 'payment-history', variant: 'secondary' },
         { label: 'Change Status', icon: 'ri-refresh-line', actionKey: 'status', variant: 'secondary' },
         { label: 'Extend Trial', icon: 'ri-calendar-event-line', actionKey: 'extend-trial', variant: 'secondary' },
         { label: 'View Audit Log', icon: 'ri-history-line', actionKey: 'audit', variant: 'secondary' },
@@ -455,6 +488,7 @@ export class SaasAccountsComponent implements OnInit {
     this.setupTenantCodeAutoGeneration();
     this.setupPaymentPricingListeners();
     this.loadPlanOptions();
+    this.loadBusinessCategories();
     this.setupCreateFlowListeners();
     this.loadAccounts();
     this.loadTenantStorage();
@@ -716,6 +750,8 @@ export class SaasAccountsComponent implements OnInit {
       primaryContactName: '',
       primaryContactPhone: '',
       primaryContactEmail: '',
+      businessCategoryId: '',
+      businessSetupTypeIds: [],
       firstTenantAdminName: '',
       firstTenantAdminEmail: '',
       firstTenantAdminPassword: '',
@@ -739,6 +775,8 @@ export class SaasAccountsComponent implements OnInit {
     this.accountForm.controls.trialDurationDays.enable({ emitEvent: false });
     this.tierOptions.set([]);
     this.currentTiers.set([]);
+    this.businessTypes.set([]);
+    this.businessTypeOptions.set([]);
     this.selectedTier.set(null);
     this.tierAllowsTrialOverride.set(true);
     this.tierAllowsFullFeatureTrial.set(true);
@@ -776,6 +814,11 @@ export class SaasAccountsComponent implements OnInit {
 
     if (event.actionKey === 'record-payment') {
       this.openPaymentRequest(account);
+      return;
+    }
+
+    if (event.actionKey === 'payment-history') {
+      this.openPaymentHistory(account);
       return;
     }
 
@@ -851,6 +894,9 @@ export class SaasAccountsComponent implements OnInit {
           this.createStep.set(1);
         }
 
+        const businessCategoryId = this.normalizeObjectIdValue(account.businessCategoryId);
+        const businessSetupTypeIds = this.normalizeObjectIdArray(account.businessSetupTypeIds);
+
         this.accountForm.patchValue({
           accountName: account.accountName,
           legalBusinessName: account.legalBusinessName,
@@ -858,6 +904,8 @@ export class SaasAccountsComponent implements OnInit {
           primaryContactName: account.primaryContactName,
           primaryContactPhone: account.primaryContactPhone,
           primaryContactEmail: account.primaryContactEmail,
+          businessCategoryId,
+          businessSetupTypeIds,
           firstTenantAdminName: '',
           firstTenantAdminEmail: '',
           firstTenantAdminPassword: '',
@@ -873,6 +921,14 @@ export class SaasAccountsComponent implements OnInit {
           trialMode: account.trialMode,
           trialDurationDays: account.trialDurationDays,
         });
+
+        if (businessCategoryId) {
+          this.loadBusinessTypesForCategory(businessCategoryId);
+        } else {
+          this.businessTypes.set([]);
+          this.businessTypeOptions.set([]);
+        }
+
         this.accountForm.controls.tenantCode.disable();
 
         // For INCOMPLETE accounts, auto-select planId
@@ -929,88 +985,103 @@ export class SaasAccountsComponent implements OnInit {
     this.loading.set(true);
 
     if (editId && this.isCompletingIncomplete()) {
-      // Completing an INCOMPLETE account — call the dedicated complete endpoint
-      const completePayload = {
-        planId: raw.planId || '',
-        packageId: raw.packageId || '',
-        tierId: raw.tierId || '',
-        tierKey: this.selectedTier()?.tierKey || undefined,
-        trialMode: (raw.trialMode || 'PLAN_BASED_TRIAL') as string,
-        trialDurationDays: Number(raw.trialDurationDays || 14),
-        firstTenantAdminName: String(raw.firstTenantAdminName || '').trim(),
-        firstTenantAdminEmail: String(raw.firstTenantAdminEmail || '').trim(),
-        firstTenantAdminPassword: String(raw.firstTenantAdminPassword || ''),
-      };
-      this.service.completeIncompleteAccount(editId, completePayload).subscribe({
-        next: () => {
-          this.loading.set(false);
-          this.formModalOpen.set(false);
-          this.isCompletingIncomplete.set(false);
-          this.toast.success('Account activated as TRIAL');
-          this.clearDraft();
-          this.loadAccounts();
-        },
-        error: (error) => {
-          this.loading.set(false);
-          this.toast.error(String(error?.error?.message || 'Failed to complete account'));
-        },
-      });
+      this.completeIncompleteAccount(editId, raw);
       return;
     }
 
     if (editId) {
-      const updatePayload: UpdateAccountRequest = {
-        accountName: raw.accountName || undefined,
-        legalBusinessName: raw.legalBusinessName || undefined,
-        primaryContactName: raw.primaryContactName || undefined,
-        primaryContactPhone: raw.primaryContactPhone || undefined,
-        primaryContactEmail: raw.primaryContactEmail || undefined,
-        countryCode: raw.countryCode || undefined,
-        currency: raw.currency || undefined,
-        timezone: raw.timezone || undefined,
-        planId: raw.planId || undefined,
-        packageId: raw.packageId || undefined,
-        tierId: raw.tierId || undefined,
-        tierKey: this.selectedTier()?.tierKey || undefined,
-        billingEmail: raw.billingEmail || undefined,
-        supportPhone: raw.supportPhone || undefined,
-        notes: raw.notes || undefined,
-      };
-
-      // If on Step 2, include admin fields for updating tenant admin
-      if (this.createStep() === 2) {
-        const adminName = String(raw.firstTenantAdminName || '').trim();
-        const adminEmail = String(raw.firstTenantAdminEmail || '').trim();
-        const adminPassword = String(raw.firstTenantAdminPassword || '').trim();
-
-        if (adminName) {
-          updatePayload.firstTenantAdminName = adminName;
-        }
-        if (adminEmail) {
-          updatePayload.firstTenantAdminEmail = adminEmail;
-        }
-        // Only include password if provided (optional for updates)
-        if (adminPassword) {
-          updatePayload.firstTenantAdminPassword = adminPassword;
-        }
-      }
-
-      this.service.updateAccount(editId, updatePayload).subscribe({
-        next: () => {
-          this.loading.set(false);
-          this.formModalOpen.set(false);
-          this.toast.success('SaaS account updated');
-          this.clearDraft();
-          this.loadAccounts();
-        },
-        error: (error) => {
-          this.loading.set(false);
-          this.toast.error(String(error?.error?.message || 'Failed to update account'));
-        },
-      });
+      this.updateExistingAccount(editId, raw);
       return;
     }
 
+    this.createNewAccount(raw);
+  }
+
+  private completeIncompleteAccount(editId: string, raw: ReturnType<typeof this.accountForm.getRawValue>): void {
+    const completePayload = {
+      planId: raw.planId || '',
+      packageId: raw.packageId || '',
+      tierId: raw.tierId || '',
+      billingCycle: '1_MONTH' as BillingDurationCode,
+      tierKey: this.selectedTier()?.tierKey || undefined,
+      businessCategoryId: String(raw.businessCategoryId || '').trim() || undefined,
+      businessSetupTypeIds: this.getSelectedBusinessSetupTypeIds(raw.businessSetupTypeIds),
+      trialMode: (raw.trialMode || 'PLAN_BASED_TRIAL') as string,
+      trialDurationDays: Number(raw.trialDurationDays || 14),
+      firstTenantAdminName: String(raw.firstTenantAdminName || '').trim(),
+      firstTenantAdminEmail: String(raw.firstTenantAdminEmail || '').trim(),
+      firstTenantAdminPassword: String(raw.firstTenantAdminPassword || ''),
+    };
+
+    this.service.completeIncompleteAccount(editId, completePayload).subscribe({
+      next: () => {
+        this.loading.set(false);
+        this.formModalOpen.set(false);
+        this.isCompletingIncomplete.set(false);
+        this.toast.success('Account activated as TRIAL');
+        this.clearDraft();
+        this.loadAccounts();
+      },
+      error: (error) => {
+        this.loading.set(false);
+        this.toast.error(String(error?.error?.message || 'Failed to complete account'));
+      },
+    });
+  }
+
+  private updateExistingAccount(editId: string, raw: ReturnType<typeof this.accountForm.getRawValue>): void {
+    const updatePayload: UpdateAccountRequest = {
+      accountName: raw.accountName || undefined,
+      legalBusinessName: raw.legalBusinessName || undefined,
+      primaryContactName: raw.primaryContactName || undefined,
+      primaryContactPhone: raw.primaryContactPhone || undefined,
+      primaryContactEmail: raw.primaryContactEmail || undefined,
+      businessCategoryId: String(raw.businessCategoryId || '').trim() || undefined,
+      businessSetupTypeIds: this.getSelectedBusinessSetupTypeIds(raw.businessSetupTypeIds),
+      countryCode: raw.countryCode || undefined,
+      currency: raw.currency || undefined,
+      timezone: raw.timezone || undefined,
+      planId: raw.planId || undefined,
+      packageId: raw.packageId || undefined,
+      tierId: raw.tierId || undefined,
+      tierKey: this.selectedTier()?.tierKey || undefined,
+      billingEmail: raw.billingEmail || undefined,
+      supportPhone: raw.supportPhone || undefined,
+      notes: raw.notes || undefined,
+    };
+
+    if (this.createStep() === 2) {
+      const adminName = String(raw.firstTenantAdminName || '').trim();
+      const adminEmail = String(raw.firstTenantAdminEmail || '').trim();
+      const adminPassword = String(raw.firstTenantAdminPassword || '').trim();
+
+      if (adminName) {
+        updatePayload.firstTenantAdminName = adminName;
+      }
+      if (adminEmail) {
+        updatePayload.firstTenantAdminEmail = adminEmail;
+      }
+      if (adminPassword) {
+        updatePayload.firstTenantAdminPassword = adminPassword;
+      }
+    }
+
+    this.service.updateAccount(editId, updatePayload).subscribe({
+      next: () => {
+        this.loading.set(false);
+        this.formModalOpen.set(false);
+        this.toast.success('SaaS account updated');
+        this.clearDraft();
+        this.loadAccounts();
+      },
+      error: (error) => {
+        this.loading.set(false);
+        this.toast.error(String(error?.error?.message || 'Failed to update account'));
+      },
+    });
+  }
+
+  private createNewAccount(raw: ReturnType<typeof this.accountForm.getRawValue>): void {
     const createPayload: CreateAccountRequest = {
       accountName: raw.accountName || '',
       primaryContactPhone: raw.primaryContactPhone || '',
@@ -1021,8 +1092,11 @@ export class SaasAccountsComponent implements OnInit {
       countryCode: raw.countryCode || 'IN',
       packageId: raw.packageId || '',
       tierId: raw.tierId || '',
+      billingCycle: '1_MONTH',
       legalBusinessName: raw.legalBusinessName || raw.accountName || '',
       primaryContactName: raw.primaryContactName || raw.accountName || '',
+      businessCategoryId: String(raw.businessCategoryId || '').trim() || undefined,
+      businessSetupTypeIds: this.getSelectedBusinessSetupTypeIds(raw.businessSetupTypeIds),
       tenantCode: raw.tenantCode || undefined,
       currency: raw.currency || undefined,
       timezone: raw.timezone || undefined,
@@ -1104,6 +1178,8 @@ export class SaasAccountsComponent implements OnInit {
         primaryContactName: this.toStringValue(source['primaryContactName']),
         primaryContactPhone: this.toStringValue(source['primaryContactPhone']),
         primaryContactEmail: this.toStringValue(source['primaryContactEmail']),
+        businessCategoryId: this.toStringValue(source['businessCategoryId']),
+        businessSetupTypeIds: this.toStringArrayValue(source['businessSetupTypeIds']),
         firstTenantAdminName: this.toStringValue(source['firstTenantAdminName']),
         firstTenantAdminEmail: this.toStringValue(source['firstTenantAdminEmail']),
         firstTenantAdminPassword: this.toStringValue(source['firstTenantAdminPassword']),
@@ -1134,12 +1210,14 @@ export class SaasAccountsComponent implements OnInit {
       { key: 'accountName', label: 'Account Name' },
       { key: 'legalBusinessName', label: 'Legal Business Name' },
       { key: 'tenantCode', label: 'Tenant Code' },
-      { key: 'primaryContactName', label: 'Primary Contact Name' },
+      { key: 'primaryContactName', label: 'Full Name' },
       { key: 'primaryContactPhone', label: 'Primary Contact Phone' },
       { key: 'primaryContactEmail', label: 'Primary Contact Email' },
-      { key: 'firstTenantAdminName', label: 'First Tenant Admin Name' },
-      { key: 'firstTenantAdminEmail', label: 'First Tenant Admin Email' },
-      { key: 'firstTenantAdminPassword', label: 'First Tenant Admin Password' },
+      { key: 'businessCategoryId', label: 'Business Category' },
+      { key: 'businessSetupTypeIds', label: 'Business Type' },
+      { key: 'firstTenantAdminName', label: 'Admin Name' },
+      { key: 'firstTenantAdminEmail', label: 'Admin Email' },
+      { key: 'firstTenantAdminPassword', label: 'Create Password' },
       { key: 'countryCode', label: 'Country Code' },
       { key: 'currency', label: 'Currency' },
       { key: 'timezone', label: 'Timezone' },
@@ -1247,6 +1325,62 @@ export class SaasAccountsComponent implements OnInit {
     });
   }
 
+  private loadBusinessCategories(): void {
+    this.service.listPublicBusinessCategories().subscribe({
+      next: (categories) => {
+        const activeCategories = (categories || []).filter((item) => item.status === 'ACTIVE');
+        this.businessCategories.set(activeCategories);
+        this.businessCategoryOptions.set(activeCategories.map((item) => ({
+          value: item._id,
+          label: item.name,
+        })));
+      },
+      error: (error) => {
+        this.businessCategories.set([]);
+        this.businessCategoryOptions.set([]);
+        this.toast.error(String(error?.error?.message || 'Failed to load business categories'));
+      },
+    });
+  }
+
+  private loadBusinessTypesForCategory(categoryId: string): void {
+    const normalizedCategoryId = String(categoryId || '').trim();
+    if (!normalizedCategoryId) {
+      this.businessTypes.set([]);
+      this.businessTypeOptions.set([]);
+      this.accountForm.controls.businessSetupTypeIds.setValue([], { emitEvent: false });
+      return;
+    }
+
+    this.businessTypesLoading.set(true);
+    this.service.listPublicBusinessTypesByCategory(normalizedCategoryId).subscribe({
+      next: (result) => {
+        this.businessTypesLoading.set(false);
+        const businessTypes = (result?.businessTypes || []).filter((item) => item.status === 'ACTIVE');
+        this.businessTypes.set(businessTypes);
+        this.businessTypeOptions.set(businessTypes.map((item) => ({
+          value: item._id,
+          label: item.name,
+        })));
+
+        const currentTypeIds = this.getSelectedBusinessSetupTypeIds(this.accountForm.controls.businessSetupTypeIds.value);
+        const validSelectedTypeIds = currentTypeIds.filter((selectedId) => businessTypes.some((item) => item._id === selectedId));
+        if (validSelectedTypeIds.length === currentTypeIds.length) {
+          return;
+        }
+
+        this.accountForm.controls.businessSetupTypeIds.setValue(validSelectedTypeIds, { emitEvent: false });
+      },
+      error: (error) => {
+        this.businessTypesLoading.set(false);
+        this.businessTypes.set([]);
+        this.businessTypeOptions.set([]);
+        this.accountForm.controls.businessSetupTypeIds.setValue([], { emitEvent: false });
+        this.toast.error(String(error?.error?.message || 'Failed to load business types'));
+      },
+    });
+  }
+
   private configureFirstAdminPasswordValidation(isCreateMode: boolean): void {
     const control = this.accountForm.controls.firstTenantAdminPassword;
     const nameControl = this.accountForm.controls.firstTenantAdminName;
@@ -1271,17 +1405,21 @@ export class SaasAccountsComponent implements OnInit {
   private configureCreateModeValidators(): void {
     this.accountForm.controls.legalBusinessName.clearValidators();
     this.accountForm.controls.tenantCode.clearValidators();
-    this.accountForm.controls.primaryContactName.clearValidators();
     this.accountForm.controls.currency.clearValidators();
     this.accountForm.controls.timezone.clearValidators();
     this.accountForm.controls.planId.clearValidators();
 
+    this.accountForm.controls.primaryContactName.setValidators([Validators.required]);
+    this.accountForm.controls.businessCategoryId.setValidators([Validators.required]);
+    this.accountForm.controls.businessSetupTypeIds.setValidators([Validators.required]);
     this.accountForm.controls.packageId.setValidators([Validators.required]);
     this.accountForm.controls.tierId.setValidators([Validators.required]);
 
     this.accountForm.controls.legalBusinessName.updateValueAndValidity({ emitEvent: false });
     this.accountForm.controls.tenantCode.updateValueAndValidity({ emitEvent: false });
     this.accountForm.controls.primaryContactName.updateValueAndValidity({ emitEvent: false });
+    this.accountForm.controls.businessCategoryId.updateValueAndValidity({ emitEvent: false });
+    this.accountForm.controls.businessSetupTypeIds.updateValueAndValidity({ emitEvent: false });
     this.accountForm.controls.currency.updateValueAndValidity({ emitEvent: false });
     this.accountForm.controls.timezone.updateValueAndValidity({ emitEvent: false });
     this.accountForm.controls.planId.updateValueAndValidity({ emitEvent: false });
@@ -1292,6 +1430,8 @@ export class SaasAccountsComponent implements OnInit {
   private configureEditModeValidators(): void {
     this.accountForm.controls.legalBusinessName.setValidators([Validators.required]);
     this.accountForm.controls.primaryContactName.setValidators([Validators.required]);
+    this.accountForm.controls.businessCategoryId.setValidators([Validators.required]);
+    this.accountForm.controls.businessSetupTypeIds.setValidators([Validators.required]);
     this.accountForm.controls.currency.setValidators([Validators.required]);
     this.accountForm.controls.timezone.setValidators([Validators.required]);
     this.accountForm.controls.planId.setValidators([Validators.required]);
@@ -1303,6 +1443,8 @@ export class SaasAccountsComponent implements OnInit {
     this.accountForm.controls.legalBusinessName.updateValueAndValidity({ emitEvent: false });
     this.accountForm.controls.tenantCode.updateValueAndValidity({ emitEvent: false });
     this.accountForm.controls.primaryContactName.updateValueAndValidity({ emitEvent: false });
+    this.accountForm.controls.businessCategoryId.updateValueAndValidity({ emitEvent: false });
+    this.accountForm.controls.businessSetupTypeIds.updateValueAndValidity({ emitEvent: false });
     this.accountForm.controls.currency.updateValueAndValidity({ emitEvent: false });
     this.accountForm.controls.timezone.updateValueAndValidity({ emitEvent: false });
     this.accountForm.controls.planId.updateValueAndValidity({ emitEvent: false });
@@ -1313,9 +1455,12 @@ export class SaasAccountsComponent implements OnInit {
   saveAndContinueStep1(): void {
     const requiredControls = [
       this.accountForm.controls.accountName,
+      this.accountForm.controls.primaryContactName,
       this.accountForm.controls.primaryContactPhone,
       this.accountForm.controls.primaryContactEmail,
       this.accountForm.controls.countryCode,
+      this.accountForm.controls.businessCategoryId,
+      this.accountForm.controls.businessSetupTypeIds,
     ];
 
     requiredControls.forEach((control) => control.markAsTouched());
@@ -1326,8 +1471,11 @@ export class SaasAccountsComponent implements OnInit {
     }
 
     const accountName = String(this.accountForm.controls.accountName.value || '').trim();
+    const contactName = String(this.accountForm.controls.primaryContactName.value || '').trim();
+    const contactEmail = String(this.accountForm.controls.primaryContactEmail.value || '').trim();
     this.accountForm.controls.legalBusinessName.setValue(accountName, { emitEvent: false });
-    this.accountForm.controls.primaryContactName.setValue(accountName, { emitEvent: false });
+    this.accountForm.controls.firstTenantAdminName.setValue(contactName, { emitEvent: false });
+    this.accountForm.controls.firstTenantAdminEmail.setValue(contactEmail, { emitEvent: false });
 
     if (!this.accountForm.controls.packageId.value && this.packageOptions().length > 0) {
       this.accountForm.controls.packageId.setValue(this.packageOptions()[0].value);
@@ -1343,9 +1491,12 @@ export class SaasAccountsComponent implements OnInit {
     // Save incomplete account to DB so it appears in the list even if modal is closed
     const incompletePayload = {
       accountName,
+      primaryContactName: contactName,
       primaryContactPhone: String(this.accountForm.controls.primaryContactPhone.value || '').trim(),
-      primaryContactEmail: String(this.accountForm.controls.primaryContactEmail.value || '').trim(),
+      primaryContactEmail: contactEmail,
       countryCode: String(this.accountForm.controls.countryCode.value || 'IN').trim(),
+      businessCategoryId: String(this.accountForm.controls.businessCategoryId.value || '').trim(),
+      businessSetupTypeIds: this.getSelectedBusinessSetupTypeIds(this.accountForm.controls.businessSetupTypeIds.value),
     };
 
     this.loading.set(true);
@@ -1373,6 +1524,10 @@ export class SaasAccountsComponent implements OnInit {
   private setupCreateFlowListeners(): void {
     this.accountForm.controls.packageId.valueChanges.subscribe((packageId) => {
       this.loadTiersForPackage(String(packageId || ''));
+    });
+
+    this.accountForm.controls.businessCategoryId.valueChanges.subscribe((categoryId) => {
+      this.loadBusinessTypesForCategory(String(categoryId || ''));
     });
 
     this.accountForm.controls.tierId.valueChanges.subscribe((tierId) => {
@@ -1454,7 +1609,10 @@ export class SaasAccountsComponent implements OnInit {
     );
     const allowFull = tier.allowFullFeatureTrial === true || defaultMode === 'FULL_APP_TRIAL';
     this.tierAllowsFullFeatureTrial.set(allowFull);
-    const normalizedMode: TrialMode = allowFull ? defaultMode : (defaultMode === 'NONE' ? 'NONE' : 'PLAN_BASED_TRIAL');
+    let normalizedMode: TrialMode = defaultMode;
+    if (!allowFull) {
+      normalizedMode = defaultMode === 'NONE' ? 'NONE' : 'PLAN_BASED_TRIAL';
+    }
 
     // Apply tier's trial policy to form
     this.accountForm.controls.trialMode.setValue(normalizedMode, { emitEvent: false });
@@ -1511,6 +1669,44 @@ export class SaasAccountsComponent implements OnInit {
     }
 
     return fallback;
+  }
+
+  private getSelectedBusinessSetupTypeIds(value: unknown): string[] {
+    return this.toStringArrayValue(value);
+  }
+
+  private normalizeObjectIdValue(value: unknown): string {
+    if (typeof value === 'string') {
+      return value.trim();
+    }
+
+    if (value && typeof value === 'object' && '_id' in value) {
+      const idValue = (value as { _id?: unknown })._id;
+      return typeof idValue === 'string' ? idValue.trim() : '';
+    }
+
+    return '';
+  }
+
+  private normalizeObjectIdArray(value: unknown): string[] {
+    if (!Array.isArray(value)) {
+      return [];
+    }
+
+    return value
+      .map((item) => this.normalizeObjectIdValue(item))
+      .filter(Boolean);
+  }
+
+  private toStringArrayValue(value: unknown): string[] {
+    if (!Array.isArray(value)) {
+      return [];
+    }
+
+    return value
+      .filter((item): item is string => typeof item === 'string')
+      .map((item) => item.trim())
+      .filter(Boolean);
   }
 
   private openPendingVerify(payment: PendingVerificationPaymentRecord): void {
@@ -1817,42 +2013,16 @@ export class SaasAccountsComponent implements OnInit {
     this.loading.set(true);
     this.service.requestPayment(account._id, requestPayload).subscribe({
       next: () => {
-        const paymentProof = String(raw.paymentProof || '').trim();
-        if (!paymentProof) {
-          this.loading.set(false);
-          this.paymentModalOpen.set(false);
-          this.selectedPaymentAccount.set(null);
-          this.paymentRequestedAt.set(null);
-          this.paymentTierMaps.set([]);
-          this.paymentTierOptions.set([]);
-          this.paymentContext.set(null);
-          this.toast.success('Payment request created');
-          this.loadPendingVerification();
-          return;
-        }
-
-        this.service.uploadPaymentProof(account._id, {
-          paymentId: requestPayload.paymentId,
-          paymentProof,
-          referenceNumber: requestPayload.referenceNumber,
-        }).subscribe({
-          next: () => {
-            this.loading.set(false);
-            this.paymentModalOpen.set(false);
-            this.selectedPaymentAccount.set(null);
-            this.paymentRequestedAt.set(null);
-            this.paymentTierMaps.set([]);
-            this.paymentTierOptions.set([]);
-            this.paymentContext.set(null);
-            this.toast.success('Payment request and proof submitted');
-            this.loadPendingVerification();
-          },
-          error: (error) => {
-            this.loading.set(false);
-            this.toast.error(String(error?.error?.message || 'Payment request created but proof upload failed'));
-            this.loadPendingVerification();
-          },
-        });
+        this.loading.set(false);
+        this.paymentModalOpen.set(false);
+        this.selectedPaymentAccount.set(null);
+        this.paymentRequestedAt.set(null);
+        this.paymentTierMaps.set([]);
+        this.paymentTierOptions.set([]);
+        this.paymentContext.set(null);
+        this.toast.success('Payment recorded successfully');
+        this.loadPendingVerification();
+        this.loadAccounts();
       },
       error: (error) => {
         this.loading.set(false);
@@ -1894,7 +2064,7 @@ export class SaasAccountsComponent implements OnInit {
 
     controlMap.forEach((entry) => {
       const control = form.controls[entry.key];
-      if (!control || !control.invalid) {
+      if (!control?.invalid) {
         return;
       }
       if (!includeUntouched && !control.touched && !control.dirty) {
@@ -2047,8 +2217,67 @@ export class SaasAccountsComponent implements OnInit {
     return Math.abs(pricing.difference);
   }
 
+  getProjectedSubscriptionStartDateLabel(): string {
+    const window = this.resolveProjectedSubscriptionWindow();
+    return window ? window.periodStart.toLocaleDateString() : '-';
+  }
+
+  getProjectedSubscriptionEndDateLabel(): string {
+    const window = this.resolveProjectedSubscriptionWindow();
+    return window ? window.periodEnd.toLocaleDateString() : '-';
+  }
+
   private roundCurrency(value: number): number {
     return Math.round((Number(value || 0) + Number.EPSILON) * 100) / 100;
+  }
+
+  private getDurationDays(durationCode: BillingDurationCode): number {
+    const durationDaysMap: Record<BillingDurationCode, number> = {
+      '1_MONTH': 30,
+      '3_MONTHS': 90,
+      '6_MONTHS': 180,
+      '1_YEAR': 365,
+    };
+
+    return durationDaysMap[durationCode] || 0;
+  }
+
+  private resolveProjectedSubscriptionWindow(): { periodStart: Date; periodEnd: Date } | null {
+    const raw = this.paymentRequestForm.getRawValue();
+    const durationCode = String(raw.durationCode || '').trim().toUpperCase() as BillingDurationCode;
+    const durationDays = this.getDurationDays(durationCode);
+    if (durationDays <= 0) {
+      return null;
+    }
+
+    const now = this.paymentRequestedAt() || new Date();
+    let periodStart = new Date(now);
+
+    const currentEndValue = this.paymentContext()?.currentSubscription?.subscriptionEndAt;
+    if (currentEndValue) {
+      const currentEndDate = new Date(currentEndValue);
+      if (!Number.isNaN(currentEndDate.getTime()) && currentEndDate.getTime() > periodStart.getTime()) {
+        periodStart = currentEndDate;
+      }
+    }
+
+    const currentAccountStatus = String(this.paymentContext()?.currentSubscription?.accountStatus || '').trim().toUpperCase();
+    const trialEndValue = this.selectedPaymentAccount()?.trialEndAt;
+    if (currentAccountStatus === 'TRIAL' && trialEndValue) {
+      const trialEndDate = new Date(trialEndValue);
+      if (!Number.isNaN(trialEndDate.getTime()) && periodStart.getTime() <= trialEndDate.getTime()) {
+        periodStart = this.addDays(trialEndDate, 1);
+      }
+    }
+
+    const periodEnd = this.addDays(periodStart, durationDays);
+    return { periodStart, periodEnd };
+  }
+
+  private addDays(dateSeed: Date | string, days: number): Date {
+    const next = new Date(dateSeed || new Date());
+    next.setDate(next.getDate() + Number(days || 0));
+    return next;
   }
 
   getCurrentSubscriptionStatusLabel(): string {
@@ -2201,6 +2430,87 @@ export class SaasAccountsComponent implements OnInit {
       error: (error) => {
         this.loading.set(false);
         this.toast.error(String(error?.error?.message || 'Failed to extend trial'));
+      },
+    });
+  }
+
+  openPaymentHistory(account: TenantAccount): void {
+    this.paymentHistoryAccount.set(account);
+    this.paymentHistoryModalOpen.set(true);
+    this.loadPaymentHistory(account._id);
+  }
+
+  closePaymentHistoryModal(): void {
+    if (this.paymentHistoryLoading()) {
+      return;
+    }
+
+    this.paymentHistoryModalOpen.set(false);
+    this.paymentHistoryAccount.set(null);
+    this.paymentHistoryItems.set([]);
+  }
+
+  formatPaymentHistoryDate(value?: string | null): string {
+    if (!value) {
+      return '-';
+    }
+
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? '-' : parsed.toLocaleString();
+  }
+
+  getPaymentHistoryRecordStatusChipClass(status: string | null | undefined): string {
+    const normalized = String(status || '').trim().toUpperCase();
+    if (normalized === 'VERIFIED') {
+      return 'saas-accounts__status-chip saas-accounts__status-chip--ok';
+    }
+    if (normalized === 'REJECTED') {
+      return 'saas-accounts__status-chip saas-accounts__status-chip--danger';
+    }
+    return 'saas-accounts__status-chip saas-accounts__status-chip--warn';
+  }
+
+  getPaymentHistoryAccountStatusChipClass(status: string | null | undefined): string {
+    const normalized = String(status || '').trim().toUpperCase();
+    if (normalized === 'ACTIVE') {
+      return 'saas-accounts__status-chip saas-accounts__status-chip--ok';
+    }
+    if (normalized === 'TRIAL') {
+      return 'saas-accounts__status-chip saas-accounts__status-chip--info';
+    }
+    if (normalized === 'TRIAL_ENDED' || normalized === 'SUSPENDED' || normalized === 'CANCELLED') {
+      return 'saas-accounts__status-chip saas-accounts__status-chip--danger';
+    }
+    return 'saas-accounts__status-chip saas-accounts__status-chip--neutral';
+  }
+
+  getPaymentHistoryTierLabel(item: PaymentHistoryItem | null | undefined): string {
+    if (!item) {
+      return '-';
+    }
+
+    return item.tierInfo?.displayName || item.tierInfo?.tierKey || (item.tierId ? String(item.tierId) : '-');
+  }
+
+  getPaymentHistoryPreviousTierLabel(item: PaymentHistoryItem | null | undefined): string {
+    if (!item?.previousTierInfo) {
+      return '-';
+    }
+
+    return item.previousTierInfo.displayName || item.previousTierInfo.tierKey || item.previousTierInfo.id || '-';
+  }
+
+  private loadPaymentHistory(accountId: string): void {
+    this.paymentHistoryLoading.set(true);
+    this.service.getPaymentHistory(accountId, { page: 1, limit: 100 }).subscribe({
+      next: (result) => {
+        this.paymentHistoryLoading.set(false);
+        this.paymentHistoryItems.set(result.items || []);
+      },
+      error: (error) => {
+        this.paymentHistoryLoading.set(false);
+        this.paymentHistoryItems.set([]);
+        this.toast.error(String(error?.error?.message || 'Failed to load payment history'));
       },
     });
   }

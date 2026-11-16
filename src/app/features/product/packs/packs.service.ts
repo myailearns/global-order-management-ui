@@ -146,6 +146,10 @@ export class PacksService {
     return this.http.put<ApiSuccess<Pack>>(`${this.packsUrl}/${id}`, payload);
   }
 
+  updatePackImages(id: string, images: NonNullable<CreatePackPayload['images']>): Observable<ApiSuccess<Pack>> {
+    return this.http.put<ApiSuccess<Pack>>(`${this.packsUrl}/${id}`, { images });
+  }
+
   deletePack(id: string): Observable<ApiSuccess<{ id: string }>> {
     return this.http.delete<ApiSuccess<{ id: string }>>(`${this.packsUrl}/${id}`);
   }

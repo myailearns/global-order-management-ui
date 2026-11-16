@@ -6,7 +6,6 @@ import { concatMap, forkJoin, from, Observable, switchMap, toArray } from 'rxjs'
 
 import {
   FormControlsModule,
-  GomAccordionComponent,
   GomAlertToastService,
   GomButtonComponent,
   GomButtonContentMode,
@@ -24,7 +23,6 @@ import {
   MenuList,
 } from '@gomlibs/ui';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
-import { PriceApprovalModalComponent } from '../pricing-approval/price-approval-modal.component';
 import {
   AdjustStockPayload,
   Group,
@@ -43,10 +41,6 @@ interface StockHistoryRow extends GomTableRow {
   _id: string;
   movementType: string;
   quantity: string;
-  priceChanged: string;
-  actualPrice: string;
-  sellingPrice: string;
-  profit: string;
   createdAt: string;
   rawEntry: StockHistoryEntry;
   actions: string;
@@ -70,12 +64,10 @@ type PricingRecordForm = FormRecord<FormControl<number | null>>;
     ReactiveFormsModule,
     FormControlsModule,
     DisableIfNoFeatureDirective,
-    GomAccordionComponent,
     GomButtonComponent,
     GomTableComponent,
     GomModalComponent,
     GomConfirmationModalComponent,
-    PriceApprovalModalComponent,
     MenuComponent,
     PageHeadingComponent,
   ],
@@ -151,29 +143,6 @@ export class StockComponent implements OnInit {
   readonly selectedGroupName = computed<string>(() => this.groups().find((g) => g._id === this.selectedGroupId())?.name || '');
   readonly isMobileHeader = computed<boolean>(() => this.viewportWidth() <= 768);
 
-  readonly selectedGroupPricingMode = computed<'FIXED' | 'MANUAL_REFRESH' | 'AUTO_REFRESH' | undefined>(() => {
-    const selectedGroup = this.groups().find((g) => g._id === this.selectedGroupId());
-    return selectedGroup?.pricingRefreshMode;
-  });
-
-  readonly selectedGroupFormulas = computed<{ actualPrice?: string; sellingPrice?: string; anchorPrice?: string } | undefined>(() => {
-    const selectedGroup = this.groups().find((g) => g._id === this.selectedGroupId());
-    if (!selectedGroup?.formula) {
-      return undefined;
-    }
-
-    return {
-      actualPrice: selectedGroup.formula.actualPrice,
-      sellingPrice: selectedGroup.formula.sellingPrice,
-      anchorPrice: selectedGroup.formula.anchorPrice,
-    };
-  });
-
-  readonly selectedGroupFormulaInputs = computed<Array<{ key: string; value: number; type: 'NUMBER' | 'PERCENTAGE' }> | undefined>(() => {
-    const selectedGroup = this.groups().find((g) => g._id === this.selectedGroupId());
-    return selectedGroup?.resolvedFields?.map((f) => ({ key: f.key, value: f.value, type: f.type }));
-  });
-
   readonly allocationBaseTotal = computed<number>(() => {
     const qtys = this.variantAllocationQtys();
     return this.groupVariants().reduce((sum, v) => {
@@ -194,14 +163,8 @@ export class StockComponent implements OnInit {
   readonly correctionOpen = signal(false);
   readonly editStockOpen = signal(false);
   readonly deleteStockConfirmOpen = signal(false);
-  readonly priceApprovalOpen = signal(false);
-  readonly pendingPricingSuggestionsCount = signal(0);
-  readonly totalPendingPricingSuggestionsCount = signal(0);
-  readonly pendingInboxExpanded = signal(false);
-  readonly pendingGroupSummaries = signal<Array<{ groupId: string; groupName: string; pendingCount: number; lastCreatedAt: string }>>([]);
   readonly selectedHistoryEntryId = signal<string | null>(null);
   readonly stockDetailsOpen = signal(false);
-  readonly stockImpactVariantExpanded = signal(false);
   readonly selectedStockDetailsEntry = signal<StockHistoryEntry | null>(null);
   readonly submitMode: GomButtonContentMode = getButtonContentMode('primary-action');
   readonly cancelMode: GomButtonContentMode = getButtonContentMode('dismiss');
@@ -283,16 +246,6 @@ export class StockComponent implements OnInit {
   readonly columns: GomTableColumn<StockHistoryRow>[] = [
     { key: 'movementType', header: 'Type', sortable: true, filterable: true, width: '8rem' },
     { key: 'quantity', header: 'Quantity', sortable: true, width: '12rem' },
-    {
-      key: 'priceChanged',
-      header: 'Price Change',
-      width: '8rem',
-      format: (_, row) => row.priceChanged,
-      chipTone: (_, row) => (row.priceChanged === 'Yes' ? 'warning' : 'success'),
-    },
-    { key: 'actualPrice', header: 'Actual Price', width: '12rem' },
-    { key: 'sellingPrice', header: 'Selling Price', width: '12rem' },
-    { key: 'profit', header: 'Profit', width: '12rem' },
     {
       key: 'createdAt',
       header: 'Date',
@@ -386,16 +339,10 @@ export class StockComponent implements OnInit {
 
   readonly rows = computed<StockHistoryRow[]>(() =>
     this.history().map((item, index, list) => {
-      const pricing = this.getEntryPricingForTable(item);
-      const priceChanged = pricing.changed ? 'Yes' : 'No';
       return {
         _id: item._id,
         movementType: item.movementType,
         quantity: this.formatHistoryQuantity(item),
-        priceChanged,
-        actualPrice: pricing.actual,
-        sellingPrice: pricing.selling,
-        profit: pricing.profit,
         createdAt: this.localDateTimePipe.transform(item.createdAt),
         rawEntry: item,
         actions: 'Actions',
@@ -468,123 +415,10 @@ export class StockComponent implements OnInit {
       this.historyTotal.set(0);
       this.stockCreateUsed.set(0);
       this.variantStockInfo.set([]);
-      this.pendingPricingSuggestionsCount.set(0);
       return;
     }
 
     this.loadStockData(groupId);
-    this.loadPendingCount(groupId);
-  }
-
-  loadPendingCount(groupId: string): void {
-    if (!groupId) return;
-    this.stockService.listPricingRefreshSuggestions(groupId).subscribe({
-      next: (res) => {
-        const count = Number(res.pagination?.total || 0);
-        this.pendingPricingSuggestionsCount.set(count);
-        this.loadPendingGroupsSummary();
-      },
-      error: () => {
-        this.pendingPricingSuggestionsCount.set(0);
-        this.loadPendingGroupsSummary();
-      },
-    });
-  }
-
-  loadPendingGroupsSummary(): void {
-    this.stockService.getPendingGroupsSummary().subscribe({
-      next: (res) => {
-        const data = res.data;
-        const totalPending = Number(data?.totalPending ?? 0);
-        this.totalPendingPricingSuggestionsCount.set(totalPending);
-        this.pendingGroupSummaries.set(data?.groups ?? []);
-        if (totalPending > 0 && !this.pendingInboxExpanded()) {
-          this.pendingInboxExpanded.set(true);
-        } else if (totalPending === 0) {
-          this.pendingInboxExpanded.set(false);
-        }
-      },
-      error: () => {
-        this.totalPendingPricingSuggestionsCount.set(0);
-        this.pendingGroupSummaries.set([]);
-      },
-    });
-  }
-
-  onInboxToggle(expanded: boolean): void {
-    this.pendingInboxExpanded.set(expanded);
-  }
-
-  getPendingInboxSubtitle(): string {
-    const groupCount = this.pendingGroupSummaries().length;
-    if (groupCount > 0) {
-      return `${groupCount} group${groupCount === 1 ? '' : 's'} awaiting review — prices will not change until approved`;
-    }
-
-    const totalPending = this.totalPendingPricingSuggestionsCount();
-    return `${totalPending} update${totalPending === 1 ? '' : 's'} awaiting review — prices will not change until approved`;
-  }
-
-  getPendingGroupBadgeText(groupId: string, pendingCount: number): string {
-    const group = this.groups().find((item) => item._id === groupId);
-    const isGroupLevel = (group?.groupType || 'MEASURED') !== 'ATTRIBUTE';
-
-    if (isGroupLevel) {
-      return `${pendingCount} variant${pendingCount === 1 ? '' : 's'} affected`;
-    }
-
-    return `${pendingCount} pending`;
-  }
-
-  openPriceApprovalForGroup(groupId: string, groupName: string): void {
-    this.openPriceApproval(groupId);
-  }
-
-  openPriceApproval(groupIdOverride?: string): void {
-    const groupId = groupIdOverride || this.selectedGroupId();
-    if (!groupId) {
-      this.toast.warning('Please select a group first.');
-      return;
-    }
-
-    if (this.selectedGroupId() !== groupId) {
-      this.onGroupSelectionChange(groupId);
-    }
-
-    this.stockService.listPricingRefreshSuggestions(groupId).subscribe({
-      next: (res) => {
-        const count = Number(res.pagination?.total || 0);
-        if (this.selectedGroupId() === groupId) {
-          this.pendingPricingSuggestionsCount.set(count);
-        }
-        if (count > 0) {
-          this.priceApprovalOpen.set(true);
-          return;
-        }
-
-        this.priceApprovalOpen.set(false);
-        this.toast.info('No pending pricing suggestions found.');
-      },
-      error: () => {
-        this.toast.error('Unable to load pending pricing suggestions. Please try again.');
-      },
-    });
-  }
-
-  onPriceApprovalCompleted(): void {
-    this.priceApprovalOpen.set(false);
-    const groupId = this.selectedGroupId();
-    if (groupId) {
-        // Close the pricing details modal to ensure fresh data when reopened
-        this.closeStockHistoryDetails();
-      this.loadPendingCount(groupId);
-      this.loadStockData(groupId);
-      return;
-    }
-
-    this.pendingPricingSuggestionsCount.set(0);
-    this.totalPendingPricingSuggestionsCount.set(0);
-    this.loadPendingGroupsSummary();
   }
 
   loadStockData(groupId: string): void {
@@ -1011,7 +845,6 @@ export class StockComponent implements OnInit {
     }
 
     const pricingFieldValues = this.pricingForm.getRawValue();
-    const changedPricingFields = this.buildChangedPricingFields(pricingFieldValues, finalQty);
     const stockRequest = this.stockService.addStock({
       groupId: this.selectedGroupId(),
       quantity: finalQty,
@@ -1021,7 +854,7 @@ export class StockComponent implements OnInit {
     });
 
     this.saving.set(true);
-    this.executeStockSaveRequest(stockRequest, changedPricingFields);
+    this.executeStockSaveRequest(stockRequest);
   }
 
   private saveAddStockForVariantTrackedGroup(): void {
@@ -1122,7 +955,6 @@ export class StockComponent implements OnInit {
         this.toast.success('Stock added successfully.');
         this.closeAddStock();
         this.loadStockData(groupId);
-        this.loadPendingCount(groupId);
         this.saving.set(false);
       },
       error: (error) => {
@@ -1200,40 +1032,7 @@ export class StockComponent implements OnInit {
 
   closeStockHistoryDetails(): void {
     this.stockDetailsOpen.set(false);
-    this.stockImpactVariantExpanded.set(false);
     this.selectedStockDetailsEntry.set(null);
-  }
-
-  getImpactChangeCount(entry: StockHistoryEntry | null): number {
-    if (!entry?.pricingImpact?.variantChanges?.length) {
-      return 0;
-    }
-    return entry.pricingImpact.variantChanges.length;
-  }
-
-  getImpactBeforeTotals(entry: StockHistoryEntry | null): { selling: number; actual: number; profit: number } {
-    const changes = entry?.pricingImpact?.variantChanges || [];
-    return changes.reduce((acc, change) => {
-      acc.selling += Number(change?.before?.sellingPrice || 0);
-      acc.actual += Number(change?.before?.actualPrice || 0);
-      acc.profit += Number(change?.before?.profitValue || 0);
-      return acc;
-    }, { selling: 0, actual: 0, profit: 0 });
-  }
-
-  getImpactAfterTotals(entry: StockHistoryEntry | null): { selling: number; actual: number; profit: number } {
-    const changes = entry?.pricingImpact?.variantChanges || [];
-    return changes.reduce((acc, change) => {
-      acc.selling += Number(change?.after?.sellingPrice || 0);
-      acc.actual += Number(change?.after?.actualPrice || 0);
-      acc.profit += Number(change?.after?.profitValue || 0);
-      return acc;
-    }, { selling: 0, actual: 0, profit: 0 });
-  }
-
-  getImpactTotalMarkupPercent(entry: StockHistoryEntry | null): number {
-    const after = this.getImpactAfterTotals(entry);
-    return this.calculateMarkupPercent(after.actual, after.selling);
   }
 
   getCostFormula(entry: StockHistoryEntry): string {
@@ -1270,59 +1069,6 @@ export class StockComponent implements OnInit {
     }
     const baseUnitSymbol = this.getBaseUnitSymbol();
     return `${main} (${this.formatNumber(base)} ${baseUnitSymbol || 'base'})`;
-  }
-
-  private getEntryPricingForTable(entry: StockHistoryEntry): {
-    changed: boolean;
-    actual: string;
-    selling: string;
-    profit: string;
-  } {
-    const changes = entry.pricingImpact?.variantChanges || [];
-    if (!changes.length) {
-      const same = this.formatCurrency(0);
-      return {
-        changed: false,
-        actual: same,
-        selling: same,
-        profit: same,
-      };
-    }
-
-    const before = changes.reduce((acc, item) => {
-      acc.actual += Number(item?.before?.actualPrice || 0);
-      acc.selling += Number(item?.before?.sellingPrice || 0);
-      acc.profit += Number(item?.before?.profitValue || 0);
-      return acc;
-    }, { actual: 0, selling: 0, profit: 0 });
-
-    const after = changes.reduce((acc, item) => {
-      acc.actual += Number(item?.after?.actualPrice || 0);
-      acc.selling += Number(item?.after?.sellingPrice || 0);
-      acc.profit += Number(item?.after?.profitValue || 0);
-      return acc;
-    }, { actual: 0, selling: 0, profit: 0 });
-
-    const changed = changes.some((item) => {
-      const deltaActual = Number(item?.delta?.actualPrice || 0);
-      const deltaSelling = Number(item?.delta?.sellingPrice || 0);
-      const deltaProfit = Number(item?.delta?.profitValue || 0);
-      return Math.abs(deltaActual) > 0.0001 || Math.abs(deltaSelling) > 0.0001 || Math.abs(deltaProfit) > 0.0001;
-    });
-
-    const formatPair = (oldValue: number, newValue: number) => {
-      if (!changed) {
-        return this.formatCurrency(newValue);
-      }
-      return `${this.formatCurrency(oldValue)} / ${this.formatCurrency(newValue)}`;
-    };
-
-    return {
-      changed,
-      actual: formatPair(before.actual, after.actual),
-      selling: formatPair(before.selling, after.selling),
-      profit: formatPair(before.profit, after.profit),
-    };
   }
 
   getCostComponentLabel(label: string | undefined, key: string): string {
@@ -1556,42 +1302,6 @@ export class StockComponent implements OnInit {
     return Number.isFinite(value) ? value.toLocaleString(undefined, { maximumFractionDigits: 4 }) : '-';
   }
 
-  private buildChangedPricingFields(
-    pricingFieldValues: Record<string, number | null>,
-    baseQuantityForNormalization: number
-  ): Array<{ fieldId: string; value: number }> {
-    const safeBaseQuantity = Number.isFinite(baseQuantityForNormalization) && baseQuantityForNormalization > 0
-      ? baseQuantityForNormalization
-      : 0;
-
-    return this.currentGroupPricingFields()
-      .map((field) => ({
-        fieldId: field.fieldId,
-        previousValue: Number(field.value),
-        value: (
-          pricingFieldValues[field.key] === null
-          || pricingFieldValues[field.key] === undefined
-        )
-          ? Number.NaN
-          : Number(pricingFieldValues[field.key]),
-        type: field.type,
-      }))
-      .filter((field) => Number.isFinite(field.value))
-      .map((field) => {
-        const nextValue = field.type === 'NUMBER' && safeBaseQuantity > 0
-          ? Number((field.value / safeBaseQuantity).toFixed(6))
-          : field.value;
-
-        return {
-          fieldId: field.fieldId,
-          previousValue: field.previousValue,
-          value: nextValue,
-        };
-      })
-      .filter((field) => field.value !== field.previousValue)
-      .map((field) => ({ fieldId: field.fieldId, value: field.value }));
-  }
-
   private buildCostComponentsPayload(pricingFieldValues: Record<string, number | null>): Array<{ key: string; label: string; value: number; isRequired: boolean }> {
     return this.currentGroupPricingFields()
       .map((field) => {
@@ -1604,144 +1314,26 @@ export class StockComponent implements OnInit {
       .filter((item): item is { key: string; label: string; value: number; isRequired: boolean } => !!item);
   }
 
-  private executeStockSaveRequest(
-    stockRequest: Observable<unknown>,
-    changedPricingFields: Array<{ fieldId: string; value: number }>
-  ): void {
+  private executeStockSaveRequest(stockRequest: Observable<unknown>): void {
     const sourceGroupId = this.selectedGroupId();
     if (!sourceGroupId) {
       this.toast.warning('Please select a group first.');
       return;
     }
 
-    const hadPendingBeforeSave = this.pendingPricingSuggestionsCount() > 0;
-    const isManualRefresh = this.selectedGroupPricingMode() === 'MANUAL_REFRESH';
-    const isFixed = this.selectedGroupPricingMode() === 'FIXED';
-    // In MANUAL_REFRESH mode, stock cost changes can generate suggestions even without editing pricing inputs.
-    // AUTO_REFRESH applies prices immediately (no suggestions). FIXED never recalculates and never updates group pricing.
-    const shouldRecheckSuggestions = isManualRefresh;
-
-    // In FIXED mode, group pricing fields should never be updated automatically, even if user provided cost components
-    const shouldUpdateGroupFields = !isFixed && changedPricingFields.length > 0;
-
-    if (!shouldUpdateGroupFields) {
-      stockRequest.subscribe({
-        next: (response) => {
-          this.toast.success('Stock added successfully.');
-          this.closeAddStock();
-          this.loadStockData(sourceGroupId);
-          const suggestionCountFromResponse = this.extractSuggestionCountFromStockResponse(response);
-          this.loadPendingCount(sourceGroupId);
-          if (suggestionCountFromResponse > 0) {
-            this.toast.info('Price suggestions are pending approval.');
-            this.openPriceApproval(sourceGroupId);
-          }
-          // Re-check suggestions for MANUAL_REFRESH stock events, or when there were already pending items.
-          if (shouldRecheckSuggestions || hadPendingBeforeSave) {
-            this.schedulePendingSuggestionsModalRefresh(
-              sourceGroupId,
-              shouldRecheckSuggestions || suggestionCountFromResponse > 0
-            );
-          }
-          this.saving.set(false);
-        },
-        error: () => {
-          this.toast.error('Failed to add stock.');
-          this.saving.set(false);
-        },
-      });
-      return;
-    }
-
-    this.stockService
-      .updateGroupResolvedFields(sourceGroupId, changedPricingFields)
-      .pipe(switchMap(() => stockRequest))
-      .subscribe({
-      next: (response) => {
-        this.toast.success('Stock added and pricing updated successfully.');
+    stockRequest.subscribe({
+      next: () => {
+        this.toast.success('Stock added successfully.');
         this.closeAddStock();
         this.loadStockData(sourceGroupId);
-        const suggestionCountFromResponse = this.extractSuggestionCountFromStockResponse(response);
-        this.loadPendingCount(sourceGroupId);
-        if (suggestionCountFromResponse > 0) {
-          this.toast.info('Price suggestions are pending approval.');
-          this.openPriceApproval(sourceGroupId);
-        }
-        // Re-check suggestions for MANUAL_REFRESH stock events, or when there were already pending items.
-        if (shouldRecheckSuggestions || hadPendingBeforeSave) {
-          this.schedulePendingSuggestionsModalRefresh(
-            sourceGroupId,
-            shouldRecheckSuggestions || suggestionCountFromResponse > 0
-          );
-        }
         this.saving.set(false);
       },
       error: () => {
-        this.toast.error('Failed to add stock. Pricing fields may not have been updated.');
+        this.toast.error('Failed to add stock.');
         this.saving.set(false);
       },
     });
   }
-
-  private schedulePendingSuggestionsModalRefresh(groupId: string, expectPending: boolean): void {
-    // Give add-stock modal close animation time before opening approval modal.
-    // expectPending=true → longer polling window for slow backends.
-    // expectPending=false → short re-check for pre-existing suggestions.
-    setTimeout(() => {
-      this.refreshPendingSuggestionsAndOpenModal(groupId, expectPending ? 30 : 5, expectPending);
-    }, 180);
-  }
-
-  private extractSuggestionCountFromStockResponse(response: unknown): number {
-    const count = Number((response as { data?: { pricingImpact?: { suggestionCount?: number } } })?.data?.pricingImpact?.suggestionCount || 0);
-    return Number.isFinite(count) ? count : 0;
-  }
-
-  private refreshPendingSuggestionsAndOpenModal(groupId: string, attemptsRemaining: number, expectPending: boolean): void {
-    this.stockService.listPricingRefreshSuggestions(groupId).subscribe({
-      next: (res) => {
-        const count = Number(res.pagination?.total || 0);
-        if (this.selectedGroupId() === groupId) {
-          this.pendingPricingSuggestionsCount.set(count);
-        }
-
-        if (count > 0) {
-          if (this.selectedGroupId() !== groupId) {
-            this.onGroupSelectionChange(groupId);
-          }
-          this.loadPendingGroupsSummary();
-          if (!this.priceApprovalOpen()) {
-            this.toast.info('Price suggestions are pending approval.');
-          }
-          this.priceApprovalOpen.set(true);
-          return;
-        }
-
-        if (attemptsRemaining > 1) {
-          setTimeout(() => this.refreshPendingSuggestionsAndOpenModal(groupId, attemptsRemaining - 1, expectPending), 300);
-          return;
-        }
-
-        if (expectPending) {
-          this.loadPendingGroupsSummary();
-        }
-      },
-      error: () => {
-        if (this.selectedGroupId() === groupId) {
-          this.pendingPricingSuggestionsCount.set(0);
-        }
-        if (attemptsRemaining > 1) {
-          setTimeout(() => this.refreshPendingSuggestionsAndOpenModal(groupId, attemptsRemaining - 1, expectPending), 300);
-          return;
-        }
-
-        if (expectPending) {
-          this.loadPendingGroupsSummary();
-        }
-      },
-    });
-  }
-
   private loadGroupVariants(groupId: string): void {
     this.groupVariants.set([]);
     this.variantAllocationQtys.set({});

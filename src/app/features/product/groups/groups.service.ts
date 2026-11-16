@@ -39,7 +39,7 @@ export interface Field {
   key: string;
   type: 'NUMBER' | 'PERCENTAGE' | 'TEXT' | 'LONG_TEXT';
   valueFormat?: 'NUMBER' | 'CURRENCY';
-  currencyCode?: 'INR' | null;
+  currencyCode?: 'INR' | 'USD' | null;
   fieldKind?: 'PRICING' | 'METADATA';
   defaultValue: number | string;
   isRequired: boolean;
@@ -92,8 +92,6 @@ export interface GroupResolvedField {
   value: number;
 }
 
-export type PricingRefreshMode = 'FIXED' | 'MANUAL_REFRESH' | 'AUTO_REFRESH';
-
 export interface Group {
   _id: string;
   name: string;
@@ -115,7 +113,6 @@ export interface Group {
     anchorPrice: string;
     actualPrice: string;
   };
-  pricingRefreshMode?: PricingRefreshMode;
   baseUnitId: string;
   allowedUnitIds: string[];
   taxProfileId?: string | null;
@@ -231,7 +228,6 @@ export interface GroupPayload {
     anchorPrice: string;
     actualPrice: string;
   };
-  pricingRefreshMode: PricingRefreshMode;
   baseUnitId: string;
   allowedUnitIds: string[];
   taxProfileId?: string | null;
@@ -349,7 +345,7 @@ export class GroupsService {
 
   updateGroupAdvancedSettings(
     id: string,
-    payload: { taxProfileId?: string | null; pricingRefreshMode?: PricingRefreshMode; groupType?: 'MEASURED' | 'ATTRIBUTE' | 'HYBRID'; optionAxes?: Array<{ key: string; label: string; values: string[] }> },
+    payload: { taxProfileId?: string | null; groupType?: 'MEASURED' | 'ATTRIBUTE' | 'HYBRID'; optionAxes?: Array<{ key: string; label: string; values: string[] }> },
   ): Observable<ApiSuccess<Group>> {
     return this.http.put<ApiSuccess<Group>>(`${this.groupsUrl}/${id}/advanced`, payload);
   }
@@ -454,7 +450,6 @@ export class GroupsService {
       baseUnitId?: string; 
       taxProfileId?: string;
       groupType?: string;
-      pricingRefreshMode?: PricingRefreshMode;
     }): Observable<any> {
     return this.http.post<any>(`${this.groupsUrl}/quick-create/preview`, payload);
   }
@@ -469,7 +464,6 @@ export class GroupsService {
       baseUnitId?: string; 
       taxProfileId?: string; 
       groupType?: string; 
-      pricingRefreshMode?: PricingRefreshMode; 
       allowedUnitIds?: string[]; 
       createDefaultVariant?: boolean 
     }): Observable<ApiSuccess<Group>> {

@@ -10,7 +10,7 @@
     </div>
     <gom-lib-button
       type="button"
-      variant="primary"
+      variant="secondary"
       [size]="isMobileHeader() ? 'compact-icon' : 'default'"
       (buttonClick)="openUploadModal()"
       [disabled]="!canUploadMedia()"
@@ -55,24 +55,7 @@
   }
 
   <div class="media-page__toolbar">
-    <div class="media-page__type-tabs" role="tablist" aria-label="Media type">
-      <button
-        type="button"
-        class="media-page__type-tab"
-        [class.media-page__type-tab--active]="activeMediaType() === 'IMAGE'"
-        (click)="onMediaTypeChange('IMAGE')"
-      >
-        <i class="ri-image-line" aria-hidden="true"></i> Images
-      </button>
-      <button
-        type="button"
-        class="media-page__type-tab"
-        [class.media-page__type-tab--active]="activeMediaType() === 'VIDEO'"
-        (click)="onMediaTypeChange('VIDEO')"
-      >
-        <i class="ri-video-line" aria-hidden="true"></i> Videos
-      </button>
-    </div>
+    <gom-lib-tabs [tabs]="tabs" [activeTab]="activeTab()" (tabChange)="onTabChange($event)"></gom-lib-tabs>
 
     <div class="media-page__search">
       <i class="ri-search-line media-page__search-icon" aria-hidden="true"></i>
@@ -94,7 +77,7 @@
   } @else if (assets().length === 0) {
     <div class="media-state media-state--empty">
       <i class="ri-image-line" aria-hidden="true"></i>
-      <p>{{ (isPlatform() ? 'media.empty' : 'tenantMedia.empty') | translate }}</p>
+      <p>{{ emptyStateText() }}</p>
     </div>
   } @else {
     <div class="media-grid">
@@ -156,17 +139,49 @@
 
 <!-- Upload Modal -->
 <gom-lib-modal
-  [title]="modalTitle() | translate"
+  [title]="uploadModalTitle()"
   [(show)]="uploadModalOpen"
   (closed)="closeUploadModal()"
   size="large"
 >
+  @if (activePurpose(); as purpose) {
+    <div class="upload-queue">
+      <gom-media-prepare [purpose]="purpose" [showNames]="true" [disabled]="isUploading()"></gom-media-prepare>
+
+      @if (!isPlatform()) {
+        <gom-media-attach-target
+          [purpose]="purpose"
+          [disabled]="isUploading()"
+          (targetsChange)="attachTargets.set($event)"
+        ></gom-media-attach-target>
+      }
+
+      <div class="upload-queue__footer">
+        <gom-lib-button type="button" variant="secondary" [disabled]="isUploading()" (buttonClick)="closeUploadModal()">
+          {{ 'media.actions.cancel' | translate }}
+        </gom-lib-button>
+        <gom-lib-button
+          type="button"
+          variant="primary"
+          [disabled]="isUploading() || !canUploadPrepared()"
+          (buttonClick)="uploadPrepared()"
+        >
+          @if (preparedUploading()) {
+            <i class="ri-loader-4-line ri-spin" aria-hidden="true"></i>
+          } @else {
+            <i class="ri-upload-2-line" aria-hidden="true"></i>
+          }
+          {{ 'media.uploadQueue.uploadCount' | translate: { count: prepare()?.readyItems()?.length ?? 0 } }}
+        </gom-lib-button>
+      </div>
+    </div>
+  } @else {
   <div class="upload-queue">
     @if (!isUploading()) {
       <input
         #queueFileInput
         type="file"
-        [accept]="uploadAccept()"
+        [accept]="uploadAccept"
         multiple
         (change)="onFileInputChange($event)"
         class="upload-queue__file-input"
@@ -183,7 +198,7 @@
       >
         <i class="ri-upload-cloud-2-line upload-queue__drop-icon" aria-hidden="true"></i>
         <p class="upload-queue__drop-text">{{ (dragOrClickLabel() | translate) }}</p>
-        <p class="upload-queue__drop-hint">{{ (hintLabel() | translate: { maxSize: maxSizeMb() }) }}</p>
+        <p class="upload-queue__drop-hint">{{ (hintLabel() | translate: { maxSize: maxSizeMb }) }}</p>
       </button>
     }
 
@@ -253,6 +268,7 @@
       }
     </div>
   </div>
+  }
 </gom-lib-modal>
 
 <!-- Delete Confirmation -->

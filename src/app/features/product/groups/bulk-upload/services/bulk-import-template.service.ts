@@ -72,7 +72,6 @@ export interface BulkUploadSuccessRow {
   allowedUnits: string;
   pricingTemplate: string;
   taxProfile: string;
-  pricingRefreshMode: string;
   inferredGroupType: string | null;
   resultType: 'SUCCESS';
   variantCount?: number;

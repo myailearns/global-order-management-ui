@@ -16,6 +16,7 @@ import {
   GroupImagesResponse,
   MediaType,
 } from './media-asset.model';
+import type { MediaPurpose } from '../../../shared/components/media-prepare/media-purpose.config';
 
 @Injectable({ providedIn: 'root' })
 export class MediaAssetService {
@@ -31,22 +32,28 @@ export class MediaAssetService {
 
   // --- Platform Admin Media ---
 
-  uploadPlatformMedia(file: File, name: string): Observable<MediaAsset> {
+  uploadPlatformMedia(file: File, name: string, purpose?: MediaPurpose): Observable<MediaAsset> {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('name', name);
+    if (purpose) {
+      formData.append('purpose', purpose);
+    }
     return this.http
       .post<MediaAssetResponse>(this.platformBaseUrl + '/upload', formData, { headers: this.platformHeaders })
       .pipe(map((res) => res.data));
   }
 
-  listPlatformMedia(page = 1, limit = 20, search = '', mediaType?: MediaType): Observable<{ items: MediaAsset[]; meta: MediaAssetListResponse['meta'] }> {
+  listPlatformMedia(page = 1, limit = 20, search = '', mediaType?: MediaType, purpose?: MediaPurpose): Observable<{ items: MediaAsset[]; meta: MediaAssetListResponse['meta'] }> {
     let params = new HttpParams().set('page', String(page)).set('limit', String(limit));
     if (search) {
       params = params.set('search', search);
     }
     if (mediaType) {
       params = params.set('mediaType', mediaType);
+    }
+    if (purpose) {
+      params = params.set('purpose', purpose);
     }
     return this.http
       .get<MediaAssetListResponse>(this.platformBaseUrl, { headers: this.platformHeaders, params })
@@ -79,22 +86,28 @@ export class MediaAssetService {
 
   // --- Tenant Media ---
 
-  uploadTenantMedia(file: File, name: string): Observable<MediaAsset> {
+  uploadTenantMedia(file: File, name: string, purpose?: MediaPurpose): Observable<MediaAsset> {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('name', name);
+    if (purpose) {
+      formData.append('purpose', purpose);
+    }
     return this.http
       .post<MediaAssetResponse>(this.tenantMediaUrl + '/upload', formData)
       .pipe(map((res) => res.data));
   }
 
-  listTenantMedia(page = 1, limit = 20, search = '', mediaType?: MediaType): Observable<{ items: MediaAsset[]; meta: MediaAssetListResponse['meta'] }> {
+  listTenantMedia(page = 1, limit = 20, search = '', mediaType?: MediaType, purpose?: MediaPurpose): Observable<{ items: MediaAsset[]; meta: MediaAssetListResponse['meta'] }> {
     let params = new HttpParams().set('page', String(page)).set('limit', String(limit));
     if (search) {
       params = params.set('search', search);
     }
     if (mediaType) {
       params = params.set('mediaType', mediaType);
+    }
+    if (purpose) {
+      params = params.set('purpose', purpose);
     }
     return this.http
       .get<MediaAssetListResponse>(this.tenantMediaUrl, { params })
@@ -109,13 +122,16 @@ export class MediaAssetService {
 
   // --- Tenant: Platform Images Picker ---
 
-  listPlatformImages(page = 1, limit = 20, search = '', mediaType?: MediaType): Observable<{ items: MediaAsset[]; meta: MediaAssetListResponse['meta'] }> {
+  listPlatformImages(page = 1, limit = 20, search = '', mediaType?: MediaType, purpose?: MediaPurpose): Observable<{ items: MediaAsset[]; meta: MediaAssetListResponse['meta'] }> {
     let params = new HttpParams().set('page', String(page)).set('limit', String(limit));
     if (search) {
       params = params.set('search', search);
     }
     if (mediaType) {
       params = params.set('mediaType', mediaType);
+    }
+    if (purpose) {
+      params = params.set('purpose', purpose);
     }
     return this.http
       .get<MediaAssetListResponse>(this.tenantMediaUrl + '/platform', { params })

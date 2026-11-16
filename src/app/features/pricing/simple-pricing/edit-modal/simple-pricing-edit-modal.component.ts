@@ -80,7 +80,7 @@ export class SimplePricingEditModalComponent implements OnChanges, OnDestroy {
 
   readonly formulaFields = signal<FormulaFieldRow[]>([]);
   readonly previewState = signal({ actual: 0, formulaSelling: 0, anchor: 0 });
-  readonly desiredSellingPrice = signal(0);
+  readonly desiredSellingPrice = signal(Number.NaN);
   readonly derivedVariants = signal<SimplePricingVariant[]>([]);
   readonly derivedVariantsLoading = signal(false);
 
@@ -103,8 +103,6 @@ export class SimplePricingEditModalComponent implements OnChanges, OnDestroy {
 
     return groupType.charAt(0).toUpperCase() + groupType.slice(1);
   });
-
-  readonly skuLabel = computed(() => this.entity?.variant?.sku || 'Not assigned');
 
   readonly landedCostRows = computed<LandedCostRow[]>(() => {
     const rows = this.formulaFields();
@@ -143,6 +141,15 @@ export class SimplePricingEditModalComponent implements OnChanges, OnDestroy {
     return Math.max(0, fallback);
   });
 
+  readonly actualPriceFormulaLabel = computed(() => {
+    const formula = String(this.entity?.group?.formula?.actualPrice || '').trim();
+    if (formula) {
+      return `Actual Price Formula: ${formula}`;
+    }
+
+    return 'Actual Price Formula: Landed cost inputs';
+  });
+
   readonly resultingNetProfit = computed<number | null>(() => {
     const totalCost = this.totalCost();
     const desired = this.desiredSellingPrice();
@@ -163,13 +170,41 @@ export class SimplePricingEditModalComponent implements OnChanges, OnDestroy {
     return (netProfit / desired) * 100;
   });
 
-  readonly currentMargin = computed<number | null>(() => {
-    const current = this.entity?.affectedProfitPercent;
-    if (current === null || current === undefined || !Number.isFinite(current)) {
+  readonly resultingProfitPercent = computed<number | null>(() => {
+    const netProfit = this.resultingNetProfit();
+    if (netProfit === null) {
       return null;
     }
 
-    return Number(current);
+    const profitBase = this.totalCost();
+    if (!Number.isFinite(profitBase) || profitBase <= 0) {
+      return null;
+    }
+
+    return (netProfit / profitBase) * 100;
+  });
+
+  readonly currentActualPrice = computed(() => Number(this.entity?.actualPrice || 0));
+  readonly currentSellingPrice = computed(() => Number(this.entity?.sellingPrice || 0));
+
+  readonly currentMargin = computed<number | null>(() => {
+    const selling = this.currentSellingPrice();
+    const actual = this.currentActualPrice();
+    if (!Number.isFinite(selling) || !Number.isFinite(actual) || selling <= 0 || actual <= 0) {
+      return null;
+    }
+
+    return ((selling - actual) / selling) * 100;
+  });
+
+  readonly currentProfitPercent = computed<number | null>(() => {
+    const selling = this.currentSellingPrice();
+    const actual = this.currentActualPrice();
+    if (!Number.isFinite(selling) || !Number.isFinite(actual) || selling <= 0 || actual <= 0) {
+      return null;
+    }
+
+    return ((selling - actual) / actual) * 100;
   });
 
   readonly recommendedSellingPrice = computed<number | null>(() => {
@@ -184,7 +219,9 @@ export class SimplePricingEditModalComponent implements OnChanges, OnDestroy {
       return null;
     }
 
-    const recommended = totalCost * (1 + (targetProfitPercent / 100));
+    const baseCost = this.resolveRecommendationBaseCost();
+    const profitBase = baseCost !== null && baseCost > 0 ? baseCost : totalCost;
+    const recommended = totalCost + (profitBase * (targetProfitPercent / 100));
     if (!Number.isFinite(recommended) || recommended <= 0) {
       return null;
     }
@@ -199,6 +236,31 @@ export class SimplePricingEditModalComponent implements OnChanges, OnDestroy {
       : `Recommended Price Suggestion: ${this.formatCurrency(recommended)}`;
   });
 
+  readonly hasRecommendedSellingPrice = computed(() => this.recommendedSellingPrice() !== null);
+
+  readonly canApplyRecommendedPrice = computed(() => {
+    const recommended = this.recommendedSellingPrice();
+    if (recommended === null) {
+      return false;
+    }
+
+    const currentSellingPrice = this.desiredSellingPrice();
+    const comparisonSellingPrice = Number.isFinite(currentSellingPrice)
+      ? currentSellingPrice
+      : Number(this.entity?.sellingPrice ?? Number.NaN);
+
+    if (!Number.isFinite(comparisonSellingPrice)) {
+      return true;
+    }
+
+    return Math.abs(comparisonSellingPrice - recommended) >= 0.005;
+  });
+
+  readonly hasDesiredSellingPrice = computed(() => {
+    const desired = this.desiredSellingPrice();
+    return Number.isFinite(desired) && desired > 0;
+  });
+
   readonly recommendationDetail = computed(() => {
     const recommended = this.recommendedSellingPrice();
     if (recommended === null) {
@@ -207,8 +269,10 @@ export class SimplePricingEditModalComponent implements OnChanges, OnDestroy {
 
     const totalCost = this.totalCost();
     const targetProfitPercent = Number(this.entity?.definedProfitPercent ?? 20);
+    const baseCost = this.resolveRecommendationBaseCost();
+    const profitBaseLabel = baseCost !== null && baseCost > 0 ? 'buying cost' : 'total cost';
     const targetProfit = recommended - totalCost;
-    return `Achieves target profit of ${targetProfitPercent.toFixed(1)}% on cost (Profit: ${this.formatCurrency(targetProfit)}).`;
+    return `Achieves target profit of ${targetProfitPercent.toFixed(1)}% on ${profitBaseLabel} (Profit: ${this.formatCurrency(targetProfit)}).`;
   });
 
   readonly derivedCostRows = computed<DerivedCostRow[]>(() => {
@@ -273,12 +337,12 @@ export class SimplePricingEditModalComponent implements OnChanges, OnDestroy {
     if (!this.entity) return;
     this.clearFormulaFieldState();
     this.syncDerivedVariantsPreview();
-    const initialSellingPrice = this.formatMoneyInput(this.entity.sellingPrice);
+    const initialSellingPrice = '';
     this.form.patchValue(
       { sellingPrice: initialSellingPrice },
       { emitEvent: false }
     );
-    this.desiredSellingPrice.set(this.parseDecimalInput(initialSellingPrice));
+    this.desiredSellingPrice.set(Number.NaN);
 
     if (this.isGroupEntity()) {
       const rows = (this.entity.resolvedFields || []).map((field) => {
@@ -338,7 +402,8 @@ export class SimplePricingEditModalComponent implements OnChanges, OnDestroy {
       }, {} as Record<string, number>);
 
       this.saved.emit({
-        reason: 'Reset to formula price',
+        reason: 'Update formula and price',
+        sellingPrice,
         fieldPayload: {
           variantId: this.entity.variant._id,
           quantity: Number(this.entity.variant.quantity || 0),
@@ -561,6 +626,24 @@ export class SimplePricingEditModalComponent implements OnChanges, OnDestroy {
       .map((key) => fieldValues[key])
       .find((value) => Number.isFinite(value));
     return Number(fallback || 0);
+  }
+
+  private resolveRecommendationBaseCost(): number | null {
+    const fields = this.formulaFields();
+    if (!fields?.length) {
+      return null;
+    }
+
+    const fieldValues = fields.reduce((acc, field) => {
+      const numericValue = this.parseDecimalInput(field.control.value);
+      if (Number.isFinite(numericValue)) {
+        acc[field.key] = Number(numericValue);
+      }
+      return acc;
+    }, {} as Record<string, number>);
+
+    const baseValue = this.resolveBaseFieldValue(fieldValues);
+    return Number.isFinite(baseValue) && baseValue > 0 ? baseValue : null;
   }
 
   private extractBaseFieldKey(actualPriceFormula: string): string | null {

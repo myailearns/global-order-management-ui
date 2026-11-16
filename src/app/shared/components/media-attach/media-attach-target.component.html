@@ -1,0 +1,53 @@
+<section class="attach">
+  <h4 class="attach__title">
+    <i class="ri-links-line" aria-hidden="true"></i>
+    {{ 'media.attach.title' | translate }}
+  </h4>
+
+  @if (!allowed()) {
+    <p class="attach__note">{{ 'media.attach.noPermission' | translate: { entity: entityLabel() } }}</p>
+  } @else {
+    <gom-lib-checkbox [label]="'media.attach.enable' | translate" [formControl]="enabledControl"></gom-lib-checkbox>
+
+    @if (enabled()) {
+      <div class="attach__fields">
+        @if (loading()) {
+          <p class="attach__note"><i class="ri-loader-4-line ri-spin" aria-hidden="true"></i></p>
+        } @else if (loadError()) {
+          <p class="attach__error">{{ 'media.attach.loadFailed' | translate }}</p>
+        } @else if (selectOptions().length === 0) {
+          <p class="attach__note">{{ 'media.attach.noResults' | translate }}</p>
+        }
+
+        <gom-lib-select
+          [label]="'media.attach.select' | translate: { entity: entityLabel() }"
+          [placeholder]="'media.attach.select' | translate: { entity: entityLabel() }"
+          [options]="selectOptions()"
+          [searchable]="true"
+          [formControl]="targetControl"
+        ></gom-lib-select>
+
+        @if (purpose() === 'PRODUCT' && selectedOption()) {
+          @if (permissions().group) {
+            <gom-lib-checkbox [label]="'media.attach.groupGallery' | translate" [formControl]="galleryControl"></gom-lib-checkbox>
+          }
+          @if (permissions().variant && variantSelectOptions().length > 0) {
+            <gom-lib-select
+              [label]="'media.attach.variants' | translate"
+              [placeholder]="'media.attach.variants' | translate"
+              [options]="variantSelectOptions()"
+              [multiple]="true"
+              [searchable]="true"
+              [selectedValues]="selectedVariantIds()"
+              (selectedValuesChange)="onVariantsChange($event)"
+            ></gom-lib-select>
+          }
+        }
+
+        @if (purpose() === 'CATEGORY' && selectedOption()) {
+          <p class="attach__note">{{ 'media.attach.categoryReplace' | translate }}</p>
+        }
+      </div>
+    }
+  }
+</section>

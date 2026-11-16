@@ -12,7 +12,6 @@
         <div>
           <h3>{{ entity.displayName }}</h3>
           <p>
-            SKU: {{ skuLabel() }}
             @if (groupTypeLabel()) {
               <span class="simple-pricing-edit__badge">{{ groupTypeLabel() }}</span>
             }
@@ -23,7 +22,11 @@
       <div class="simple-pricing-edit__current-metrics">
         <div>
           <span>Current Selling Price</span>
-          <strong>{{ formatCurrency(entity.sellingPrice) }}</strong>
+          <strong>{{ formatCurrency(currentSellingPrice()) }}</strong>
+        </div>
+        <div>
+          <span>Current Profit %</span>
+          <strong>{{ formatPercent(currentProfitPercent()) }}</strong>
         </div>
         <div>
           <span>Current Margin</span>
@@ -34,7 +37,7 @@
 
     <section class="simple-pricing-edit__grid">
       <article class="simple-pricing-edit__panel">
-        <h4>1. Landed Cost Inputs</h4>
+        <h4> Cost Inputs</h4>
         <div class="simple-pricing-edit__panel-fields">
           @if (landedCostRows().length === 0) {
             <p class="simple-pricing-edit__empty">No landed cost inputs available for this row.</p>
@@ -58,18 +61,18 @@
       </article>
 
       <article class="simple-pricing-edit__total-cost" aria-label="Total cost preview">
-        <span>2. Total Cost</span>
+        <span>Actual Price</span>
         <strong>{{ formatCurrency(totalCost()) }}</strong>
-        <small>Auto-summed landed costs</small>
+        <small>{{ actualPriceFormulaLabel() }}</small>
       </article>
 
       <article class="simple-pricing-edit__panel simple-pricing-edit__panel--sell">
-        <h4>3. New Selling Price</h4>
+        <h4>Selling Price</h4>
         <div class="simple-pricing-edit__key-field-wrap">
           <gom-lib-input
             type="text"
             inputmode="decimal"
-            label="Desired Selling Price"
+            label=""
             [formControl]="form.controls.sellingPrice"
             [error]="sellingPriceError()"
           ></gom-lib-input>
@@ -80,6 +83,12 @@
             <span>Resulting Net Profit:</span>
             <strong [class.simple-pricing-edit__metric--negative]="(resultingNetProfit() ?? 0) < 0">
               {{ resultingNetProfit() === null ? '—' : formatCurrency(resultingNetProfit()!) }}
+            </strong>
+          </div>
+          <div class="simple-pricing-edit__result-row">
+            <span>Resulting Profit %:</span>
+            <strong [class.simple-pricing-edit__metric--negative]="(resultingProfitPercent() ?? 0) < 0">
+              {{ formatPercent(resultingProfitPercent()) }}
             </strong>
           </div>
           <div class="simple-pricing-edit__result-row">
@@ -98,12 +107,14 @@
         <h5>{{ recommendationSummary() }}</h5>
         <p>{{ recommendationDetail() }}</p>
       </div>
-      <gom-lib-button
-        type="button"
-        variant="primary"
-        [disabled]="recommendedSellingPrice() === null"
-        (buttonClick)="applyRecommendedPrice()"
-      >Apply {{ recommendedSellingPrice() === null ? '' : formatCurrency(recommendedSellingPrice()!) }}</gom-lib-button>
+      @if (hasRecommendedSellingPrice()) {
+        <gom-lib-button
+          type="button"
+          variant="primary"
+          [disabled]="!canApplyRecommendedPrice()"
+          (buttonClick)="applyRecommendedPrice()"
+        >Apply {{ formatCurrency(recommendedSellingPrice()!) }}</gom-lib-button>
+      }
     </section>
 
     @if (showDerivedCostingSection()) {
@@ -160,7 +171,7 @@
       <gom-lib-button
         type="button"
         variant="primary"
-        [disabled]="saving || !!sellingPriceError()"
+        [disabled]="saving || !hasDesiredSellingPrice() || !!sellingPriceError()"
         (buttonClick)="onSave()"
       >{{ saving ? 'Saving...' : 'Save Changes' }}</gom-lib-button>
     </div>

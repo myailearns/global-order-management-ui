@@ -22,7 +22,6 @@ export const ATTRIBUTE_UI_TEXT = {
   update: 'common.actions.update',
   statusLabel: 'attributes.labels.status',
   nameLabel: 'attributes.labels.name',
-  keyLabel: 'attributes.labels.key',
   allowedValuesLabel: 'attributes.labels.allowedValues',
   deleteTitle: 'attributes.deleteConfirm.title',
   deleteMessage: 'attributes.deleteConfirm.message',
@@ -35,7 +34,6 @@ export const ATTRIBUTE_UI_TEXT = {
   errorSave: 'attributes.toast.errorSave',
   errorDelete: 'attributes.toast.errorDelete',
   validationName: 'attributes.validation.nameRequired',
-  validationKey: 'attributes.validation.keyRequired',
   validationAllowedValues: 'attributes.validation.allowedValuesRequired',
   closeErrorBanner: 'common.messages.closeErrorBanner',
 } as const;

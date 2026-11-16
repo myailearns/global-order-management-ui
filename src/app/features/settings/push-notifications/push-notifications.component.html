@@ -10,7 +10,7 @@
       type="button"
       variant="primary"
       [gomDisableIfNoCapability]="'tenant-admin'"
-      [disabled]="!canBroadcast()"
+      [disabled]="!canCreate()"
       (click)="openCreateNotification()"
       (keydown.enter)="openCreateNotification()"
       (keydown.space)="openCreateNotification(); $event.preventDefault()"

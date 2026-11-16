@@ -1,0 +1,39 @@
+@use "theme" as theme;
+
+.attach {
+  display: flex;
+  flex-direction: column;
+  gap: theme.get-gap(xs);
+  padding: theme.get-spacing(xs);
+  border: theme.get-border-size(hairline) solid theme.get-border(light);
+  border-radius: theme.get-radius(sm);
+  background: theme.get-background(secondary);
+
+  &__title {
+    display: flex;
+    align-items: center;
+    gap: theme.get-gap(xxs);
+    margin: 0;
+    color: theme.get-text(default);
+    font-size: theme.get-font-size(sm);
+    font-weight: theme.get-font-weight(semibold);
+  }
+
+  &__fields {
+    display: flex;
+    flex-direction: column;
+    gap: theme.get-gap(xs);
+  }
+
+  &__note {
+    margin: 0;
+    color: theme.get-text(hint);
+    font-size: theme.get-font-size(xs);
+  }
+
+  &__error {
+    margin: 0;
+    color: theme.get-text(danger);
+    font-size: theme.get-font-size(xs);
+  }
+}

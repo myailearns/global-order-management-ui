@@ -67,13 +67,17 @@ import {
 } from './simple-pricing-bulk-upload.service';
 import { SimplePricingUploadFeedbackModalComponent } from './upload-feedback-modal/simple-pricing-upload-feedback-modal.component';
 
+type PricingTone = 'info' | 'success' | 'danger' | 'neutral';
+
 interface PricingTableRow {
   id: string;
   name: string;
   sellingPrice: string;
   definedProfit: string;
   affectedProfit: string;
-  affectedProfitTone: 'info' | 'success' | 'danger' | 'neutral';
+  affectedProfitTone: PricingTone;
+  currentMargin: string;
+  currentMarginTone: PricingTone;
   priceSummary: string;
   pricingState: string;
   hasNoCostPrice: boolean;
@@ -132,11 +136,7 @@ export class SimplePricingComponent implements OnInit, OnDestroy {
 
   // ── Entitlements ────────────────────────────
 
-  readonly canEdit = computed(
-    () =>
-      this.authSession.hasFeature('pricing.simple.edit') ||
-      this.authSession.hasFeature('variant.edit')
-  );
+  readonly canEdit = computed(() => this.authSession.hasFeature('product.pricing.update'));
 
   // ── Filters ─────────────────────────────────
 
@@ -170,8 +170,10 @@ export class SimplePricingComponent implements OnInit, OnDestroy {
   private readonly groupsPageLimit = 20;
   private readonly variantTrackedPageLimit = 500;
   private readonly variantTrackedConcurrency = 3;
+  private readonly loadMoreViewportThreshold = 240;
   private nextGroupsPage = 1;
   private hasMoreGroups = false;
+  private autoLoadCheckScheduled = false;
   readonly loadingMore = signal(false);
   readonly hasMoreItems = signal(false);
 
@@ -239,10 +241,24 @@ export class SimplePricingComponent implements OnInit, OnDestroy {
       const affectedProfit = e.actualPrice !== null
         ? this.computeProfit(currentSellingPrice, e.actualPrice, e.group)
         : null;
+      const currentMargin = e.actualPrice !== null && currentSellingPrice > 0
+        ? ((currentSellingPrice - e.actualPrice) / currentSellingPrice) * 100
+        : null;
       const affectedProfitTone = this.resolveAffectedProfitTone(
         affectedProfit,
         e.definedProfitPercent
       );
+      let currentMarginTone: PricingTone = 'neutral';
+      if (currentMargin !== null) {
+        if (currentMargin >= 0) {
+          currentMarginTone = 'info';
+        } else {
+          currentMarginTone = 'danger';
+        }
+      }
+      const currentMarginLabel = currentMargin !== null
+        ? `${currentMargin.toFixed(1)}%`
+        : '—';
 
       return {
         id: e.trackId,
@@ -255,6 +271,8 @@ export class SimplePricingComponent implements OnInit, OnDestroy {
           ? `${affectedProfit.toFixed(1)}%`
           : '—',
         affectedProfitTone,
+        currentMargin: currentMarginLabel,
+        currentMarginTone,
         priceSummary: this.buildPriceSummary(e, currentSellingPrice),
         pricingState: e.pricingState,
         hasNoCostPrice: e.actualPrice === null || e.actualPrice === 0,
@@ -323,7 +341,7 @@ export class SimplePricingComponent implements OnInit, OnDestroy {
 
   readonly dirtyRowCount = computed(() => Object.keys(this.inlinePriceEdits()).length);
   readonly canSaveAll = computed(
-    () => this.dirtyRowCount() > 0 && !this.bulkSaving() && !this.loading()
+    () => this.canEdit() && this.dirtyRowCount() > 0 && !this.bulkSaving() && !this.loading()
   );
 
   // ── Modals ───────────────────────────────────
@@ -562,6 +580,16 @@ export class SimplePricingComponent implements OnInit, OnDestroy {
     if (this.headerActionsMenuOpen()) {
       this.closeHeaderActionsMenu();
     }
+  }
+
+  @HostListener('window:scroll')
+  onWindowScroll(): void {
+    this.scheduleAutoLoadCheck();
+  }
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.scheduleAutoLoadCheck();
   }
 
   private loadPinnedEntityGroup(groupId: string): void {
@@ -1115,7 +1143,7 @@ export class SimplePricingComponent implements OnInit, OnDestroy {
   onUploadTemplateSelected(event: Event): void {
     const input = event.target as HTMLInputElement | null;
     const file = input?.files?.[0];
-    if (!file || this.uploadingTemplate()) {
+    if (!this.canEdit() || !file || this.uploadingTemplate()) {
       if (input) input.value = '';
       return;
     }
@@ -1205,7 +1233,7 @@ export class SimplePricingComponent implements OnInit, OnDestroy {
 
   dismissUploadRow(rowId: string): void {
     const job = this.currentUploadJob();
-    if (!job || !rowId) {
+    if (!this.canEdit() || !job || !rowId) {
       return;
     }
 
@@ -1221,7 +1249,7 @@ export class SimplePricingComponent implements OnInit, OnDestroy {
 
   acknowledgeUploadFeedback(): void {
     const job = this.currentUploadJob();
-    if (!job) {
+    if (!this.canEdit() || !job) {
       return;
     }
 
@@ -1241,6 +1269,10 @@ export class SimplePricingComponent implements OnInit, OnDestroy {
   }
 
   cancelCurrentUploadJob(jobId?: string): void {
+    if (!this.canEdit()) {
+      return;
+    }
+
     const selectedJobId = String(jobId || this.currentUploadJob()?.jobId || '').trim();
     if (!selectedJobId) {
       return;
@@ -1323,6 +1355,7 @@ export class SimplePricingComponent implements OnInit, OnDestroy {
       }
       this.loading.set(false);
       this.loadingMore.set(false);
+      this.scheduleAutoLoadCheck();
       return;
     }
 
@@ -1335,6 +1368,7 @@ export class SimplePricingComponent implements OnInit, OnDestroy {
         }
         this.loading.set(false);
         this.loadingMore.set(false);
+        this.scheduleAutoLoadCheck();
       },
       error: () => {
         this.errorMessage.set(this.translate.instant('pricing.simple.error.loadFailed'));
@@ -1369,6 +1403,33 @@ export class SimplePricingComponent implements OnInit, OnDestroy {
       toArray(),
       map((entityBatches) => entityBatches.flat())
     );
+  }
+
+  private scheduleAutoLoadCheck(): void {
+    if (this.autoLoadCheckScheduled) {
+      return;
+    }
+
+    this.autoLoadCheckScheduled = true;
+    window.setTimeout(() => {
+      this.autoLoadCheckScheduled = false;
+      this.maybeAutoLoadMore();
+    }, 0);
+  }
+
+  private maybeAutoLoadMore(): void {
+    if (!this.hasMoreGroups || this.loading() || this.loadingMore()) {
+      return;
+    }
+
+    const documentElement = document.documentElement;
+    const viewportBottom = window.scrollY + window.innerHeight;
+    const contentBottom = documentElement.scrollHeight;
+    const distanceToBottom = contentBottom - viewportBottom;
+
+    if (distanceToBottom <= this.loadMoreViewportThreshold) {
+      this.loadMoreData();
+    }
   }
 
   private fetchAllVariantsForGroup(groupId: string): Observable<SimplePricingVariant[]> {
@@ -1414,9 +1475,9 @@ export class SimplePricingComponent implements OnInit, OnDestroy {
     const representativeSelling = representative ? this.resolveVariantSellingPrice(representative) : null;
     const representativeAnchor = representative ? this.resolveVariantAnchorPrice(representative) : null;
     const representativeActual = representative ? this.resolveVariantActualPrice(representative) : null;
-    const selling = this.resolveDisplayPrice(representativeSelling, derivedPrices.selling);
-    const anchor = this.resolveDisplayPrice(representativeAnchor, derivedPrices.anchor, selling);
-    const actual = this.resolveDisplayActualPrice(representativeActual, derivedPrices.actual, g);
+    const selling = this.resolveDisplayPrice(derivedPrices.selling, representativeSelling);
+    const anchor = this.resolveDisplayPrice(derivedPrices.anchor, representativeAnchor, selling);
+    const actual = this.resolveDisplayActualPrice(derivedPrices.actual, representativeActual, g);
     const definedProfit = this.computeDefinedProfit(g);
     const affectedProfit = actual !== null ? this.computeProfit(selling, actual, g) : null;
 
@@ -1534,10 +1595,21 @@ export class SimplePricingComponent implements OnInit, OnDestroy {
     this.saving.set(true);
 
     if (payload.fieldPayload && entity.variant) {
-      this.service.updateVariantFieldInputs(entity.variant._id, payload.fieldPayload).subscribe({
+      this.service.updateVariantFieldInputs(entity.variant._id, payload.fieldPayload).pipe(
+        switchMap(() => {
+          if (payload.sellingPrice === undefined) {
+            return of(null);
+          }
+
+          return this.saveSellingPrice(entity, payload.sellingPrice, payload.reason);
+        })
+      ).subscribe({
         next: () => {
-          this.saving.set(false);
+          if (payload.sellingPrice !== undefined) {
+            this.applySavedSellingPrices([{ trackId: entity.trackId, sellingPrice: payload.sellingPrice }]);
+          }
           this.closeEdit();
+          this.saving.set(false);
           this.toast.success(this.translate.instant('pricing.simple.toast.updated'));
           this.refreshGroupsInPlace([String(entity.group?._id || '')]);
         },
@@ -1550,6 +1622,7 @@ export class SimplePricingComponent implements OnInit, OnDestroy {
     }
 
     if (payload.groupFieldValues?.length && entity.entityType === 'GROUP') {
+      const targetSellingPrice = payload.sellingPrice;
       this.service.updateGroupFieldValues(entity.entityId, { fieldValues: payload.groupFieldValues }).pipe(
         switchMap(() => this.fetchAllVariantsForGroup(entity.entityId)),
         switchMap((variants) => {
@@ -1568,11 +1641,24 @@ export class SimplePricingComponent implements OnInit, OnDestroy {
           }));
 
           return forkJoin(resetRequests);
+        }),
+        switchMap(() => {
+          if (targetSellingPrice === undefined) {
+            return of(null);
+          }
+
+          return this.service.updateGroup(
+            entity.entityId,
+            this.buildDirectGroupPriceUpdatePayload(entity, targetSellingPrice)
+          );
         })
       ).subscribe({
         next: () => {
-          this.saving.set(false);
+          if (payload.sellingPrice !== undefined) {
+            this.applySavedSellingPrices([{ trackId: entity.trackId, sellingPrice: payload.sellingPrice }]);
+          }
           this.closeEdit();
+          this.saving.set(false);
           this.toast.success(this.translate.instant('pricing.simple.toast.updated'));
           this.refreshGroupsInPlace([entity.entityId]);
         },
@@ -1593,8 +1679,8 @@ export class SimplePricingComponent implements OnInit, OnDestroy {
       this.saveSellingPrice(entity, sellingPrice, payload.reason).subscribe({
         next: () => {
           this.applySavedSellingPrices([{ trackId: entity.trackId, sellingPrice }]);
-          this.saving.set(false);
           this.closeEdit();
+          this.saving.set(false);
           this.toast.success(this.translate.instant('pricing.simple.toast.updated'));
           this.refreshGroupsInPlace([affectedGroupId]);
         },

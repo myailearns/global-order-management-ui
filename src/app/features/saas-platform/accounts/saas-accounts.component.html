@@ -101,7 +101,7 @@
   <form class="saas-accounts__form" [formGroup]="accountForm">
     <div class="saas-accounts__step-indicator">
       <strong>Step {{ createStep() }} of 2</strong>
-      <span>@if (createStep() === 1) { Business Contact } @else { Subscription + Super Admin }</span>
+      <span>@if (createStep() === 1) { Business Contact } @else { Setup Admin + Provisioning }</span>
     </div>
 
     @if (validationErrors().length) {
@@ -117,41 +117,91 @@
 
     @if (createStep() === 1) {
       <h3>Step 1: Business Contact</h3>
-      <gom-lib-input formControlName="accountName" label="Business Name" [required]="true"></gom-lib-input>
-      <gom-lib-input formControlName="primaryContactPhone" label="Mobile Number" [required]="true"></gom-lib-input>
-      <gom-lib-input formControlName="primaryContactEmail" label="Contact Email" [required]="true" type="email"></gom-lib-input>
-      <gom-lib-input formControlName="countryCode" label="Country" [required]="true"></gom-lib-input>
+      <section class="saas-accounts__section">
+        <gom-lib-input formControlName="accountName" label="Business Name" [required]="true"></gom-lib-input>
+
+        <div class="saas-accounts__grid saas-accounts__grid--two-column">
+          <gom-lib-input formControlName="primaryContactName" label="Full Name" [required]="true"></gom-lib-input>
+          <gom-lib-input formControlName="primaryContactEmail" label="Email Address" [required]="true" type="email"></gom-lib-input>
+        </div>
+
+        <div class="saas-accounts__grid saas-accounts__grid--two-column">
+          <gom-lib-input formControlName="primaryContactPhone" label="Phone Number" [required]="true"></gom-lib-input>
+          <gom-lib-input formControlName="countryCode" label="Country" [required]="true"></gom-lib-input>
+        </div>
+
+        <gom-lib-select
+          formControlName="businessCategoryId"
+          label="Select Your Business Category"
+          [required]="true"
+          [options]="businessCategoryOptions()"
+        ></gom-lib-select>
+
+        <gom-lib-select
+          formControlName="businessSetupTypeIds"
+          label="Business Type"
+          [required]="true"
+          [options]="businessTypeOptions()"
+          [multiple]="true"
+          [searchable]="businessTypeOptions().length > 8"
+          [disabled]="!accountForm.controls.businessCategoryId.value || businessTypesLoading()"
+        ></gom-lib-select>
+
+        @if (businessTypesLoading()) {
+          <p class="saas-accounts__field-note">Loading business types for the selected category...</p>
+        } @else if (accountForm.controls.businessCategoryId.value && !businessTypeOptions().length) {
+          <p class="saas-accounts__field-note">No active business types found for the selected category.</p>
+        }
+      </section>
     }
 
     @if (createStep() === 2) {
-      <h3>Step 2: Subscription and Super Admin</h3>
-      <gom-lib-select formControlName="packageId" label="Package" [required]="true" [options]="packageOptions()"></gom-lib-select>
-      <gom-lib-select formControlName="tierId" label="Tier" [required]="true" [options]="tierOptions()"></gom-lib-select>
+      <h3>Step 2: Setup Admin</h3>
 
-      @if (!tierOptions().length) {
-      <p class="saas-accounts__plan-help">No tiers found for selected package. Create tiers before onboarding account.</p>
-      }
+      <section class="saas-accounts__section">
+        <gom-lib-input formControlName="firstTenantAdminEmail" label="Admin Email" type="email" [required]="!editingAccountId() || isCompletingIncomplete()"></gom-lib-input>
+        <p class="saas-accounts__field-note">Pre-filled from the primary contact email. You can change it before creating the account.</p>
 
-      @if (selectedTier()) {
-      <p class="saas-accounts__plan-help">Trial settings below are configured for <strong>{{ selectedTier()?.displayName || selectedTier()?.tierKey }}</strong> tier. Change to override if allowed.</p>
-      }
+        <gom-lib-input
+          formControlName="firstTenantAdminPassword"
+          label="Create Password"
+          type="password"
+          [required]="!editingAccountId() || isCompletingIncomplete()"
+          [placeholder]="editingAccountId() && !isCompletingIncomplete() ? 'Leave empty to keep current password' : ''"
+        ></gom-lib-input>
+        <p class="saas-accounts__field-note">{{ 'Minimum 8 characters with uppercase, lowercase, number, and special character.' }}</p>
+      </section>
 
-      <gom-lib-select formControlName="trialMode" label="Trial Mode" [required]="true" [options]="createTrialModeOptions()"></gom-lib-select>
-      <gom-lib-input formControlName="trialDurationDays" type="number" label="Trial Duration (Days)" [required]="true"></gom-lib-input>
+      <section class="saas-accounts__section">
+        <h4 class="saas-accounts__section-title">Provisioning Setup</h4>
+        <gom-lib-select formControlName="packageId" label="Package" [required]="true" [options]="packageOptions()"></gom-lib-select>
+        <gom-lib-select formControlName="tierId" label="Tier" [required]="true" [options]="tierOptions()"></gom-lib-select>
 
-      <gom-lib-input formControlName="firstTenantAdminName" label="Super Admin Name" [required]="!editingAccountId() || isCompletingIncomplete()"></gom-lib-input>
-      <gom-lib-input formControlName="firstTenantAdminEmail" label="Super Admin Email" type="email" [required]="!editingAccountId() || isCompletingIncomplete()"></gom-lib-input>
-      <gom-lib-input formControlName="firstTenantAdminPassword" label="Super Admin Password" type="password" [required]="!editingAccountId() || isCompletingIncomplete()" [placeholder]="editingAccountId() && !isCompletingIncomplete() ? 'Leave empty to keep current password' : ''"></gom-lib-input>
-
-      <section class="saas-accounts__summary-card">
-        <h4>Provisioning Summary</h4>
-        <p><strong>Package:</strong> {{ accountForm.controls.packageId.value || '-' }}</p>
-        <p><strong>Tier:</strong> {{ selectedTier()?.displayName || selectedTier()?.tierKey || '-' }}</p>
-        <p><strong>Trial Mode:</strong> {{ accountForm.controls.trialMode.value || '-' }}</p>
-        <p><strong>Trial Days:</strong> {{ accountForm.controls.trialDurationDays.value || '-' }}</p>
-        @if (!tierAllowsTrialOverride()) {
-        <p>Trial override is disabled for this tier.</p>
+        @if (!tierOptions().length) {
+        <p class="saas-accounts__plan-help">No tiers found for selected package. Create tiers before onboarding account.</p>
         }
+
+        @if (selectedTier()) {
+        <p class="saas-accounts__plan-help">Trial settings below are configured for <strong>{{ selectedTier()?.displayName || selectedTier()?.tierKey }}</strong> tier. Change to override if allowed.</p>
+        }
+
+        <div class="saas-accounts__grid saas-accounts__grid--two-column">
+          <gom-lib-select formControlName="trialMode" label="Trial Mode" [required]="true" [options]="createTrialModeOptions()"></gom-lib-select>
+          <gom-lib-input formControlName="trialDurationDays" type="number" label="Trial Duration (Days)" [required]="true"></gom-lib-input>
+        </div>
+
+        <section class="saas-accounts__summary-card">
+          <h4>Provisioning Summary</h4>
+          <p><strong>Business Name:</strong> {{ accountForm.controls.accountName.value || '-' }}</p>
+          <p><strong>Admin Email:</strong> {{ accountForm.controls.firstTenantAdminEmail.value || '-' }}</p>
+          <p><strong>Package:</strong> {{ accountForm.controls.packageId.value || '-' }}</p>
+          <p><strong>Tier:</strong> {{ selectedTier()?.displayName || selectedTier()?.tierKey || '-' }}</p>
+          <p><strong>Trial Mode:</strong> {{ accountForm.controls.trialMode.value || '-' }}</p>
+          <p><strong>Trial Days:</strong> {{ accountForm.controls.trialDurationDays.value || '-' }}</p>
+          @if (!tierAllowsTrialOverride()) {
+          <p>Trial override is disabled for this tier.</p>
+          }
+        </section>
       </section>
     }
   </form>
@@ -256,6 +306,8 @@
             <p><strong>Price After Tier Discount:</strong> {{ getPaymentPricingPreview()?.currency }} {{ getPaymentPricingPreview()?.tierFinalAmount | number:'1.2-2' }}</p>
             <p><strong>Additional Discount:</strong> {{ getPaymentPricingPreview()?.manualDiscountPercent | number:'1.2-2' }}% ({{ getPaymentPricingPreview()?.currency }} {{ getPaymentPricingPreview()?.manualDiscountAmount | number:'1.2-2' }})</p>
             <p><strong>Final Expected Price:</strong> {{ getPaymentPricingPreview()?.currency }} {{ getPaymentPricingPreview()?.expectedAmount | number:'1.2-2' }}</p>
+            <p><strong>Projected Subscription Start:</strong> {{ getProjectedSubscriptionStartDateLabel() }}</p>
+            <p><strong>Projected Subscription End:</strong> {{ getProjectedSubscriptionEndDateLabel() }}</p>
             @if (paymentContext()?.previousPayment) {
               <p><strong>Delta vs Previous Expected:</strong> {{ getPaymentPricingPreview()?.currency }} {{ getPriceDeltaAgainstPrevious() | number:'1.2-2' }}</p>
             }
@@ -343,6 +395,73 @@
     <div class="gom-modal__action-layout-end">
       <gom-lib-button type="button" variant="secondary" (buttonClick)="cancelPaymentRequest()">Cancel</gom-lib-button>
       <gom-lib-button type="button" (buttonClick)="savePaymentRequest()" [disabled]="loading()">Submit Payment Request</gom-lib-button>
+    </div>
+  </footer>
+</gom-lib-modal>
+
+<gom-lib-modal [title]="'Payment History'" [show]="paymentHistoryModalOpen()" (showChange)="closePaymentHistoryModal()" size="large">
+  <section class="saas-accounts__dialog-form">
+    <p>
+      Account:
+      <strong>{{ paymentHistoryAccount()?.accountName || '-' }}</strong>
+      @if (paymentHistoryAccount()?.tenantCode) {
+        <span> · {{ paymentHistoryAccount()?.tenantCode }}</span>
+      }
+    </p>
+
+    @if (paymentHistoryLoading()) {
+      <p class="saas-accounts__plan-help">Loading payment history...</p>
+    } @else if (!paymentHistoryItems().length) {
+      <p class="saas-accounts__plan-help">No payment history found for this account.</p>
+    } @else {
+      <section class="saas-accounts__history-list">
+        @for (item of paymentHistoryItems(); track item._id) {
+          <article class="saas-accounts__history-item">
+            <div class="saas-accounts__history-item-head">
+              <h4>{{ item.paymentId }}</h4>
+              <span [class]="getPaymentHistoryRecordStatusChipClass(item.status)">{{ item.status }}</span>
+            </div>
+
+            <div class="saas-accounts__history-grid">
+              <p><strong>Requested At:</strong> {{ formatPaymentHistoryDate(item.requestedAt) }}</p>
+              <p><strong>Verified At:</strong> {{ formatPaymentHistoryDate(item.verifiedAt) }}</p>
+              <p><strong>Duration:</strong> {{ item.durationCode }}</p>
+              <p><strong>Payment Method:</strong> {{ item.paymentMethod }}</p>
+              @if (item.packageInfo) {
+                <p><strong>Package:</strong> {{ item.packageInfo.name || '-' }} @if (item.packageInfo.planId) {<span>({{ item.packageInfo.planId }})</span>}</p>
+              } @else {
+                <p><strong>Package:</strong> -</p>
+              }
+              <p><strong>Tier:</strong> {{ getPaymentHistoryTierLabel(item) }}</p>
+              <p><strong>Previous Tier:</strong> {{ getPaymentHistoryPreviousTierLabel(item) }}</p>
+              <p><strong>Expected:</strong> {{ item.currency }} {{ item.expectedAmountAtRequest | number:'1.2-2' }}</p>
+              <p><strong>Paid:</strong> {{ item.currency }} {{ item.paidAmountAtRequest | number:'1.2-2' }}</p>
+              <p><strong>Match:</strong> {{ item.amountMatchStatus }}</p>
+            </div>
+
+            <section class="saas-accounts__summary-card">
+              <h4>Account Timeline</h4>
+              <p>
+                <strong>Status:</strong>
+                <span [class]="getPaymentHistoryAccountStatusChipClass(item.timeline?.previousAccountStatus)">{{ item.timeline?.previousAccountStatus || '-' }}</span>
+                <span>→</span>
+                <span [class]="getPaymentHistoryAccountStatusChipClass(item.timeline?.nextAccountStatus)">{{ item.timeline?.nextAccountStatus || '-' }}</span>
+              </p>
+              <p><strong>Previous Subscription End:</strong> {{ formatPaymentHistoryDate(item.timeline?.previousSubscriptionEndAt) }}</p>
+              <p><strong>New Subscription Start:</strong> {{ formatPaymentHistoryDate(item.timeline?.nextSubscriptionStartAt) }}</p>
+              <p><strong>New Subscription End:</strong> {{ formatPaymentHistoryDate(item.timeline?.nextSubscriptionEndAt) }}</p>
+              <p><strong>Trial End At Payment:</strong> {{ formatPaymentHistoryDate(item.timeline?.trialEndAtAtPayment) }}</p>
+            </section>
+          </article>
+        }
+      </section>
+    }
+  </section>
+
+  <footer class="gom-modal__action-layout" gom-modal-actions>
+    <div class="gom-modal__action-layout-start"></div>
+    <div class="gom-modal__action-layout-end">
+      <gom-lib-button type="button" variant="secondary" (buttonClick)="closePaymentHistoryModal()">Close</gom-lib-button>
     </div>
   </footer>
 </gom-lib-modal>

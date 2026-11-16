@@ -21,6 +21,7 @@ import { CreateOrderComponent } from './features/order/create-order';
 import { NewCareOrderComponent } from './features/order/new-care-order';
 import { CreateOrderSettingsComponent } from './features/admin-app/create-order-settings/create-order-settings.component';
 import { BillingSettingsComponent } from './features/admin-app/billing-settings/billing-settings.component';
+import { SalesReportComponent } from './features/reports/sales-report';
 import { BusinessDetailsComponent } from './features/admin-app/business-details/business-details.component';
 import { PaymentOptionsComponent } from './features/admin-app/payment-options/payment-options.component';
 import { RidersComponent } from './features/delivery/riders';
@@ -50,6 +51,7 @@ import { BusinessTypesComponent } from './features/saas-platform/business-types/
 import { BusinessCategoriesComponent } from './features/saas-platform/business-categories/business-categories.component';
 import { BusinessTypeConfigureComponent } from './features/saas-platform/business-type-configure/business-type-configure.component';
 import { MediaLibraryComponent } from './shared/components/media-library/media-library.component';
+import { DemoRequestsComponent } from './features/settings/demo-requests/demo-requests.component';
 import { BrowseTemplatesComponent } from './features/templates/browse-templates.component';
 import { AccessDeniedComponent } from './features/auth/access-denied/access-denied.component';
 import { AuthLandingComponent } from './features/auth/auth-landing/auth-landing.component';
@@ -144,9 +146,9 @@ export const routes: Routes = [
 					actor: 'tenant',
 					capability: 'masters',
 					featureKeys: ['field.list', 'field.create', 'field.edit', 'field.delete'],
-					title: 'Fields',
+					title: 'Cast Fields',
 					description: 'Define atomic pricing fields like buy price, transport, and profit.',
-					ctaLabel: 'Add Field',
+					ctaLabel: 'Add Cast Field',
 				},
 			},
 			{
@@ -156,9 +158,9 @@ export const routes: Routes = [
 					actor: 'tenant',
 					capability: 'masters',
 					featureKeys: ['fieldGroup.list', 'fieldGroup.create', 'fieldGroup.edit', 'fieldGroup.delete'],
-					title: 'Field Groups',
+					title: 'Cost Field Groups',
 					description: 'Build reusable field templates to speed up group creation.',
-					ctaLabel: 'Create Field Group',
+					ctaLabel: 'Create Cost Field Group',
 				},
 			},
 			{
@@ -169,7 +171,7 @@ export const routes: Routes = [
 					capability: 'masters',
 					featureKeys: ['attribute.list', 'attribute.create', 'attribute.edit', 'attribute.delete'],
 					title: 'Attributes',
-					description: 'Create reusable product option definitions used by groups and variants.',
+					description: 'Create reusable product option definitions used by products and sellable items.',
 					ctaLabel: 'Add Attribute',
 				},
 			},
@@ -205,7 +207,7 @@ export const routes: Routes = [
 					capability: 'masters',
 					featureKeys: ['pricingTemplate.list', 'pricingTemplate.create', 'pricingTemplate.edit', 'pricingTemplate.delete'],
 					title: 'Pricing Templates',
-					description: 'Define reusable price rules for groups and variants.',
+					description: 'Define reusable price rules for products and sellable items.',
 					ctaLabel: 'Add Pricing Template',
 				},
 			},
@@ -252,7 +254,7 @@ export const routes: Routes = [
 				data: {
 					actor: 'tenant',
 					capability: 'product',
-					featureKeys: ['variant.list'],
+					featureKeys: ['product.pricing.view'],
 					title: 'Pricing',
 					description: 'Manage product prices, costs, and profit margins.',
 				},
@@ -263,7 +265,7 @@ export const routes: Routes = [
 				data: {
 					actor: 'tenant',
 					capability: 'product',
-					featureKeys: ['variant.list'],
+					featureKeys: ['product.pricing.view'],
 					title: 'Price History',
 					description: 'View product and group price history with trend analytics.',
 				},
@@ -319,11 +321,23 @@ export const routes: Routes = [
 				},
 			},
 			{
+				path: 'reports/sales',
+				component: SalesReportComponent,
+				data: {
+					actor: 'tenant',
+					capability: 'reports',
+					featureKeys: ['reports.sales.view'],
+					title: 'Sales Report',
+					description: 'Review sales performance and profitability.',
+				},
+			},
+			{
 				path: 'admin-app/create-order-settings',
 				component: CreateOrderSettingsComponent,
 				data: {
 					actor: 'tenant',
-					capability: 'orders',
+					capability: 'tenant-admin',
+					featureKeys: ['createordersettings.config'],
 					title: 'Create Order Settings',
 					description: 'Configure the create order experience.',
 				},
@@ -333,7 +347,8 @@ export const routes: Routes = [
 				component: BillingSettingsComponent,
 				data: {
 					actor: 'tenant',
-					capability: 'orders',
+					capability: 'tenant-admin',
+					featureKeys: ['billing.config'],
 					title: 'Billing',
 					description: 'Configure billing settings for order processing.',
 				},
@@ -344,7 +359,7 @@ export const routes: Routes = [
 				data: {
 					actor: 'tenant',
 					capability: 'tenant-admin',
-					featureKeys: ['roles.view', 'roles.edit'],
+					featureKeys: ['businessdetails.config'],
 					title: 'Business Details',
 					description: 'Configure tenant business information.',
 				},
@@ -354,7 +369,8 @@ export const routes: Routes = [
 				component: PaymentOptionsComponent,
 				data: {
 					actor: 'tenant',
-					capability: 'orders',
+					capability: 'tenant-admin',
+					featureKeys: ['paymentoptions.config'],
 					title: 'Payment Options',
 					description: 'Configure payment options for order processing.',
 				},
@@ -420,12 +436,12 @@ export const routes: Routes = [
 				path: 'settings/storefront',
 				redirectTo: 'settings/web-app/storefront',
 				pathMatch: 'full',
-			},
+			}, //its not part of settign this is part of web app 
 			{
 				path: 'settings/web-app',
 				redirectTo: 'settings/web-app/storefront',
 				pathMatch: 'full',
-			},
+			},//its not part of settign this is part of web app 
 			{
 				path: 'settings/web-app/storefront',
 				component: StorefrontConfigComponent,
@@ -437,55 +453,55 @@ export const routes: Routes = [
 					title: 'Storefront',
 					description: 'Configure storefront access, slug, display name, logo, and sharing.',
 				},
-			},
+			},//its not part of settign this is part of web app 
 			{
 				path: 'settings/web-app/branding',
 				component: StorefrontConfigComponent,
 				data: {
 					actor: 'tenant',
 					capability: 'tenant-admin',
-					featureKeys: ['storefront.config'],
+					featureKeys: ['branding.config'],
 					tab: 'branding',
 					title: 'Branding',
 					description: 'Configure branding colors, welcome copy, footer text, and social links.',
 				},
-			},
+			},//its not part of settign this is part of web app 
 			{
 				path: 'settings/web-app/home-page',
 				component: StorefrontConfigComponent,
 				data: {
 					actor: 'tenant',
 					capability: 'tenant-admin',
-					featureKeys: ['storefront.config'],
+					featureKeys: ['homepage.config'],
 					tab: 'catalog',
 					title: 'Home Page',
 					description: 'Configure the customer home page layout, banners, and product visibility.',
 				},
-			},
+			},//its not part of settign this is part of web app 
 			{
 				path: 'settings/web-app/catalog',
 				component: StorefrontConfigComponent,
 				data: {
 					actor: 'tenant',
 					capability: 'tenant-admin',
-					featureKeys: ['storefront.config'],
+					featureKeys: ['catalog.config'],
 					tab: 'productSet',
 					title: 'Catalog',
 					description: 'Configure product set visibility and customer catalog layout.',
 				},
-			},
+			},//its not part of settign this is part of web app 
 			{
 				path: 'settings/web-app/checkout-payments',
 				component: StorefrontConfigComponent,
 				data: {
 					actor: 'tenant',
 					capability: 'tenant-admin',
-					featureKeys: ['storefront.config'],
+					featureKeys: ['checkoutpayments.config'],
 					tab: 'payments',
 					title: 'Checkout & Payments',
 					description: 'Configure payment methods available at checkout.',
 				},
-			},
+			},//its not part of settign this is part of web app 
 			{
 				path: 'settings/delivery-management',
 				component: DeliveryManagementComponent,
@@ -529,17 +545,17 @@ export const routes: Routes = [
 					title: 'Notification Center',
 					description: 'Create and manage marketing notifications across push, email, and WhatsApp.',
 				},
-			},
+			},// this is part of push niotification module
 			{
 				path: 'settings/push-notifications/create',
 				component: PushNotificationsCreateComponent,
 				data: {
 					actor: 'tenant',
 					capability: 'tenant-admin',
-					featureKeys: ['notification.broadcast'],
+					featureKeys: ['notification.create'],
 					title: 'Create Notification',
 					description: 'Set up channels, content, audience, and schedule before sending.',
-				},
+				},// this is part of push niotification module
 			},
 			{
 				path: 'settings/notification-settings',
@@ -551,18 +567,18 @@ export const routes: Routes = [
 					title: 'Notification Settings',
 					description: 'Configure admin email notifications for order lifecycle updates.',
 				},
-			},
+			}, // this is part of push niotification module
 			{
 				path: 'settings/notification-ops',
 				component: NotificationOpsComponent,
 				data: {
 					actor: 'tenant',
 					capability: 'tenant-admin',
-					featureKeys: ['notification.manage'],
+					featureKeys: ['notification.operations'],
 					title: 'Notification Operations',
 					description: 'Monitor delivery status, SLA metrics, and manually retry failed notifications across channels.',
 				},
-			},
+			}, // this is part of push niotification module
 			{
 				path: 'settings/saas-accounts',
 				component: SaasAccountsComponent,
@@ -672,6 +688,16 @@ export const routes: Routes = [
 					title: 'Platform Media',
 					description: 'Manage shared platform images available to all tenants.',
 					mode: 'platform',
+				},
+			},
+			{
+				path: 'settings/demo-requests',
+				component: DemoRequestsComponent,
+				data: {
+					actor: 'platform',
+					capability: 'platform-admin',
+					title: 'Demo Requests',
+					description: 'Track, qualify, and update inbound demo requests from prospective customers.',
 				},
 			},
 			{

@@ -1,4 +1,4 @@
-﻿@use "theme" as theme;
+@use "theme" as theme;
 
 .master-page {
   display: grid;
@@ -648,60 +648,6 @@
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
-}
-
-.pricing-notification {
-  margin: theme.get-spacing(xs) 0;
-  border: theme.get-border-size(hairline) solid theme.get-border(info);
-  border-radius: theme.get-radius(md);
-  background: rgba(59, 130, 246, 0.05);
-
-  &::part(accordion-title) {
-    color: theme.get-text(info);
-    font-weight: 600;
-  }
-}
-
-.pricing-notification__body {
-  display: flex;
-  flex-direction: column;
-  gap: theme.get-gap(sm);
-  padding: theme.get-spacing(sm);
-}
-
-.pricing-notification__message {
-  display: flex;
-  align-items: center;
-  gap: theme.get-gap(xs);
-  margin: 0;
-  @include theme.typography-body;
-  color: theme.get-text(info);
-
-  i {
-    font-size: 1.25rem;
-    flex-shrink: 0;
-  }
-}
-
-.pricing-notification__warning {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.125rem 0.5rem;
-  border-radius: theme.get-radius(sm);
-  background: rgba(239, 68, 68, 0.1);
-  color: theme.get-text(danger);
-  font-weight: 600;
-
-  i {
-    font-size: 1rem;
-  }
-}
-
-.pricing-notification__actions {
-  display: flex;
-  gap: theme.get-gap(xs);
-  flex-wrap: wrap;
 }
 
 // ── Variant Form (Add/Edit Modal) ────────────────────────────────────────────

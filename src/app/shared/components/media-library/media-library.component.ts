@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, HostListener, computed, ElementRef, inject, OnInit, signal, viewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
 import {
   GomAlertToastService,
@@ -9,13 +9,22 @@ import {
   GomConfirmationModalComponent,
   GomInputComponent,
   GomModalComponent,
+  GomTabsComponent,
+  TabItem,
 } from '@gomlibs/ui';
 import { PageHeadingComponent } from '../page-heading/page-heading.component';
 import { AuthSessionService } from '../../../core/auth/auth-session.service';
 import { MediaAssetService } from '../../../features/saas-platform/media/media-asset.service';
 import { MediaAsset, MediaType, MediaUsageDetail, StorageSummary } from '../../../features/saas-platform/media/media-asset.model';
+import { AttachResult, AttachTarget } from '../media-attach/media-attach.models';
+import { MediaAttachService } from '../media-attach/media-attach.service';
+import { MediaAttachTargetComponent } from '../media-attach/media-attach-target.component';
+import { MediaPrepareComponent } from '../media-prepare/media-prepare.component';
+import { MediaPurpose } from '../media-prepare/media-purpose.config';
+import { MediaUploadService } from '../media-prepare/media-upload.service';
 
 export type MediaLibraryMode = 'platform' | 'tenant';
+export type MediaLibraryTab = MediaPurpose | 'VIDEO';
 
 export interface QueueItem {
   id: number;
@@ -36,7 +45,10 @@ export interface QueueItem {
     GomInputComponent,
     GomModalComponent,
     GomConfirmationModalComponent,
+    GomTabsComponent,
     PageHeadingComponent,
+    MediaPrepareComponent,
+    MediaAttachTargetComponent,
   ],
   templateUrl: './media-library.component.html',
   styleUrl: './media-library.component.scss',
@@ -47,6 +59,9 @@ export class MediaLibraryComponent implements OnInit {
   private readonly toast = inject(GomAlertToastService);
   private readonly route = inject(ActivatedRoute);
   private readonly authSession = inject(AuthSessionService);
+  private readonly translate = inject(TranslateService);
+  private readonly uploadService = inject(MediaUploadService);
+  private readonly attachService = inject(MediaAttachService);
 
   readonly mode = signal<MediaLibraryMode>('tenant');
   readonly isPlatform = computed(() => this.mode() === 'platform');
@@ -56,8 +71,20 @@ export class MediaLibraryComponent implements OnInit {
   readonly canUploadMedia = computed(() => this.authSession.hasFeature('media.upload'));
   readonly canDeleteMedia = computed(() => this.authSession.hasFeature('media.delete'));
 
+  readonly tabs: TabItem[] = [
+    { id: 'PRODUCT', label: 'media.tabs.products' },
+    { id: 'CATEGORY', label: 'media.tabs.categories' },
+    { id: 'PACK', label: 'media.tabs.packs' },
+    { id: 'VIDEO', label: 'media.tabs.videos' },
+  ];
+
   readonly loading = signal(false);
-  readonly activeMediaType = signal<MediaType>('IMAGE');
+  readonly activeTab = signal<MediaLibraryTab>('PRODUCT');
+  readonly activeMediaType = computed<MediaType>(() => (this.activeTab() === 'VIDEO' ? 'VIDEO' : 'IMAGE'));
+  readonly activePurpose = computed<MediaPurpose | null>(() => {
+    const tab = this.activeTab();
+    return tab === 'VIDEO' ? null : tab;
+  });
   readonly assets = signal<MediaAsset[]>([]);
   readonly page = signal(1);
   readonly limit = signal(20);
@@ -65,20 +92,23 @@ export class MediaLibraryComponent implements OnInit {
   readonly totalPages = signal(0);
   readonly search = signal('');
 
-  // Upload queue
+  // Upload queue (videos) and prepared uploads (images)
   readonly uploadModalOpen = signal(false);
   readonly uploadQueue = signal<QueueItem[]>([]);
   readonly uploadProgress = signal<{ current: number; total: number } | null>(null);
+  readonly preparedUploading = signal(false);
+  readonly attachTargets = signal<AttachTarget[]>([]);
   readonly dragging = signal(false);
   readonly viewportWidth = signal<number>(window.innerWidth);
   readonly isMobileHeader = computed<boolean>(() => this.viewportWidth() <= 768);
   private nextQueueId = 1;
 
   readonly pendingCount = computed(() => this.uploadQueue().filter((q) => q.status === 'pending').length);
-  readonly isUploading = computed(() => this.uploadProgress() !== null);
+  readonly isUploading = computed(() => this.uploadProgress() !== null || this.preparedUploading());
   readonly hasInvalidNames = computed(() => this.uploadQueue().some((q) => q.status === 'pending' && !q.name.trim()));
 
   readonly fileInput = viewChild<ElementRef<HTMLInputElement>>('queueFileInput');
+  readonly prepare = viewChild(MediaPrepareComponent);
 
   // Delete
   readonly deleteConfirmOpen = signal(false);
@@ -110,18 +140,12 @@ export class MediaLibraryComponent implements OnInit {
     this.viewportWidth.set(window.innerWidth);
   }
 
-  private readonly IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
   private readonly VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime'];
-  private readonly IMAGE_MAX_SIZE = 5 * 1024 * 1024;
   private readonly VIDEO_MAX_SIZE = 50 * 1024 * 1024;
 
-  readonly uploadAccept = computed(() => (
-    this.activeMediaType() === 'VIDEO'
-      ? this.VIDEO_TYPES.join(',')
-      : this.IMAGE_TYPES.join(',')
-  ));
+  readonly uploadAccept = this.VIDEO_TYPES.join(',');
 
-  readonly maxSizeMb = computed(() => (this.activeMediaType() === 'VIDEO' ? 50 : 5));
+  readonly maxSizeMb = 50;
 
   // Dynamic labels based on active media type
   readonly modalTitle = computed(() =>
@@ -177,9 +201,10 @@ export class MediaLibraryComponent implements OnInit {
 
   loadMedia(): void {
     this.loading.set(true);
+    const purpose = this.activePurpose() ?? undefined;
     const list$ = this.isPlatform()
-      ? this.mediaService.listPlatformMedia(this.page(), this.limit(), this.search(), this.activeMediaType())
-      : this.mediaService.listTenantMedia(this.page(), this.limit(), this.search(), this.activeMediaType());
+      ? this.mediaService.listPlatformMedia(this.page(), this.limit(), this.search(), this.activeMediaType(), purpose)
+      : this.mediaService.listTenantMedia(this.page(), this.limit(), this.search(), this.activeMediaType(), purpose);
 
     list$.subscribe({
       next: (result) => {
@@ -221,11 +246,12 @@ export class MediaLibraryComponent implements OnInit {
     this.loadMedia();
   }
 
-  onMediaTypeChange(mediaType: MediaType): void {
-    if (this.activeMediaType() === mediaType) {
+  onTabChange(tab: string | number): void {
+    const next = tab as MediaLibraryTab;
+    if (this.activeTab() === next) {
       return;
     }
-    this.activeMediaType.set(mediaType);
+    this.activeTab.set(next);
     this.page.set(1);
     this.search.set('');
     this.loadMedia();
@@ -236,6 +262,9 @@ export class MediaLibraryComponent implements OnInit {
   openUploadModal(): void {
     this.uploadQueue.set([]);
     this.uploadProgress.set(null);
+    this.preparedUploading.set(false);
+    this.attachTargets.set([]);
+    this.prepare()?.reset();
     this.nextQueueId = 1;
     this.uploadModalOpen.set(true);
   }
@@ -289,17 +318,14 @@ export class MediaLibraryComponent implements OnInit {
   private addFiles(files: File[]): void {
     let invalidType = 0;
     let tooLarge = 0;
-    const active = this.activeMediaType();
-    const allowedTypes = active === 'VIDEO' ? this.VIDEO_TYPES : this.IMAGE_TYPES;
-    const maxSize = active === 'VIDEO' ? this.VIDEO_MAX_SIZE : this.IMAGE_MAX_SIZE;
-    const maxSizeMb = Math.floor(maxSize / (1024 * 1024));
+    const maxSizeMb = Math.floor(this.VIDEO_MAX_SIZE / (1024 * 1024));
 
     for (const file of files) {
-      if (!allowedTypes.includes(file.type)) {
+      if (!this.VIDEO_TYPES.includes(file.type)) {
         invalidType++;
         continue;
       }
-      if (file.size > maxSize) {
+      if (file.size > this.VIDEO_MAX_SIZE) {
         tooLarge++;
         continue;
       }
@@ -313,7 +339,7 @@ export class MediaLibraryComponent implements OnInit {
           id,
           file,
           dataUrl: reader.result as string,
-          mediaType: active,
+          mediaType: 'VIDEO',
           name,
           status: 'pending',
         };
@@ -325,8 +351,7 @@ export class MediaLibraryComponent implements OnInit {
       this.toast.error(`${invalidType} file(s) skipped due to invalid format.`);
     }
     if (tooLarge > 0) {
-      const typeName = active === 'VIDEO' ? 'video' : 'image';
-      this.toast.error(`${tooLarge} ${typeName}(s) skipped. Max allowed size is ${maxSizeMb} MB.`);
+      this.toast.error(`${tooLarge} video(s) skipped. Max allowed size is ${maxSizeMb} MB.`);
     }
   }
 
@@ -388,6 +413,80 @@ export class MediaLibraryComponent implements OnInit {
     this.loadMedia();
     if (this.isPlatform()) {
       this.loadStorageSummary();
+    }
+  }
+
+  purposeLabel(purpose: MediaPurpose | null): string {
+    return purpose ? this.translate.instant(`media.purposes.${purpose}`) : '';
+  }
+
+  uploadModalTitle(): string {
+    const purpose = this.activePurpose();
+    return purpose
+      ? this.translate.instant('media.library.uploadTitle', { purpose: this.purposeLabel(purpose) })
+      : this.translate.instant(this.modalTitle());
+  }
+
+  emptyStateText(): string {
+    const purpose = this.activePurpose();
+    if (purpose) {
+      return this.translate.instant('media.library.emptyPurpose', { purpose: this.purposeLabel(purpose).toLowerCase() });
+    }
+    return this.translate.instant(this.isPlatform() ? 'media.empty' : 'tenantMedia.empty');
+  }
+
+  canUploadPrepared(): boolean {
+    const prepare = this.prepare();
+    return !!prepare && !prepare.isProcessing() && prepare.readyItems().length > 0 && !this.hasInvalidPreparedNames();
+  }
+
+  private hasInvalidPreparedNames(): boolean {
+    return (this.prepare()?.readyItems() ?? []).some((item) => !item.nameControl.value.trim());
+  }
+
+  async uploadPrepared(): Promise<void> {
+    const prepare = this.prepare();
+    const purpose = this.activePurpose();
+    if (!prepare || !purpose || this.isUploading()) return;
+    if (prepare.isProcessing()) {
+      this.toast.info(this.translate.instant('media.library.processingWait'));
+      return;
+    }
+
+    this.preparedUploading.set(true);
+    try {
+      const result = await this.uploadService.uploadReady(prepare, purpose, this.isPlatform());
+
+      if (result.uploaded.length > 0 && !this.isPlatform() && this.attachTargets().length > 0) {
+        await this.attachUploaded(result.uploaded.map((entry) => entry.asset));
+      }
+
+      if (result.failed === 0) {
+        this.toast.success(this.translate.instant('media.library.uploadSuccess', { count: result.uploaded.length }));
+        this.uploadModalOpen.set(false);
+      } else if (result.uploaded.length > 0) {
+        this.toast.warning(
+          this.translate.instant('media.library.uploadSummary', { uploaded: result.uploaded.length, failed: result.failed }),
+        );
+      }
+    } finally {
+      this.preparedUploading.set(false);
+    }
+
+    this.loadMedia();
+    if (this.isPlatform()) {
+      this.loadStorageSummary();
+    }
+  }
+
+  private async attachUploaded(assets: MediaAsset[]): Promise<void> {
+    const results: AttachResult[] = await firstValueFrom(this.attachService.attach(assets, this.attachTargets()));
+    for (const result of results) {
+      if (result.ok) {
+        this.toast.success(result.message);
+      } else {
+        this.toast.warning(result.message);
+      }
     }
   }
 

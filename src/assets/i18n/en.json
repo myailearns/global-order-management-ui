@@ -14,28 +14,34 @@
                                    "masterSetup":  "Master Setup",
                                    "productSetup":  "Product Setup",
                                    "categories":  "Categories",
-                                   "fields":  "Fields",
+                                   "fields":  "Pricing Fields",
                                    "attributes":  "Attributes",
                                    "attributeSets":  "Attribute Sets",
-                                   "pricingTemplates":  "Pricing Templates",
-                                   "fieldGroups":  "Field Groups",
+                                   "pricingTemplates":  "Pricing Formulas",
+                                   "fieldGroups":  "Pricing Field Groups",
                                    "units":  "Units",
                                    "taxProfiles":  "Tax Profiles",
-                                   "groupCreation":  "Group Creation",
+                                   "groupCreation":  "Products",
                                    "stock":  "Stock",
-                                   "variants":  "Variants",
-                                   "simplePricing":  "Simple Pricing",
+                                   "variants":  "Sellable Items",
+                                   "simplePricing":  "Pricing",
                                    "packs":  "Packs",
                                    "mediaLibrary":  "Media Library",
                                    "productCollections":  "Product Collections",
                                    "orders":  "Orders",
+                                   "createOrder":  "Create Order",
                                    "orderManagement":  "Order Management",
+                                   "customerManagement":  "Customers",
+                                   "deliveryPartners":  "Delivery Partners",
                                    "riders":  "Riders",
                                    "courierPartners":  "Courier Partners",
                                    "settings":  "Settings",
                                    "webApp":  "Web App",
                                    "notifications":  "Notifications",
-                                   "notificationsSetting":  "Notifications Setting",
+                                   "notificationsSetting":  "Notification Settings",
+                                   "notificationCenter":  "Notification Center",
+                                   "createNotification":  "Create Notification",
+                                   "notificationOperations":  "Notification Operations",
                                    "employeeCode":  "Employee Code",
                                    "serviceablePincodes":  "Serviceable Pincodes",
                                    "storefrontConfig":  "Customer Storefront",
@@ -46,9 +52,10 @@
                                    "checkoutPayments":  "Checkout & Payments",
                                    "deliveryManagement":  "Delivery Management",
                                    "returnPolicy":  "Return \u0026 Exchange Policy",
+                                   "pinSecurityPolicy":  "PIN Security Policy",
                                    "pushNotifications":  "Push Notifications",
                                    "tenantAdmin":  "Tenant Admin",
-                                   "tenantDashboard":  "Tenant Dashboard",
+                                   "tenantDashboard":  "Dashboard",
                                    "tenantUsers":  "Access Users",
                                    "tenantEmployees":  "Employees",
                                    "tenantRoles":  "Tenant Roles",
@@ -60,6 +67,7 @@
                                    "saasFeatures":  "SaaS Features",
                                    "platformTenantRoles":  "Platform Tenant Roles",
                                    "tenantEntitlements":  "Tenant Entitlements",
+                                   "demoRequests":  "Request Demos",
                                    "templates":  "Templates",
                                    "categoryTemplates":  "Category Templates",
                                    "marketplace":  "Marketplace",
@@ -73,7 +81,9 @@
                                    "createOrderSettings":  "Create Order Settings",
                                    "billing":  "Billing",
                                    "businessDetails":  "Business Details",
-                                   "paymentOptions":  "Payment Options"
+                                   "paymentOptions":  "Payment Options",
+                                   "reports":  "Reports",
+                                   "salesReport":  "Sales Report"
                                },
                 "actions":  {
                                 "notifications":  "Notifications",
@@ -273,6 +283,7 @@
                    "actions":  {
                                    "view":  "View",
                                    "edit":  "Edit",
+                                   "clone":  "Clone",
                                    "delete":  "Delete",
                                    "create":  "Create",
                                    "update":  "Update",
@@ -291,7 +302,7 @@
     "pricing":  {
                     "simple":  {
                                    "title":  "Simple Pricing",
-                                   "description":  "Update selling prices quickly for group-level and variant-level pricing.",
+                                   "description":  "Update selling prices quickly for product-level and sellable-item-level pricing.",
                                    "empty":  "No pricing rows found.",
                                    "filter":  {
                                                   "category":  "Category",
@@ -304,7 +315,8 @@
                                                "item":  "Item",
                                                "sellingPrice":  "Selling Price",
                                                "definedProfit":  "Defined Profit %",
-                                               "affectedProfit":  "Affected Profit %",
+                                               "currentProfit":  "Current Profit %",
+                                               "currentMargin":  "Current Margin %",
                                                "priceSummary":  "Price Summary"
                                            },
                                    "state":  {
@@ -321,7 +333,7 @@
                                                   "subtitle":  "{{count}} change(s) pending",
                                                   "empty":  "No changes remaining.",
                                                   "typeGroup":  "Group",
-                                                  "typeVariant":  "Variant",
+                                                  "typeVariant":  "Sellable Item",
                                                   "remove":  "Remove from save list",
                                                   "confirm":  "Confirm & Save ({{count}})"
                                               },
@@ -391,7 +403,10 @@
                                       "description":  "Description",
                                       "image":  "Category Image",
                                       "availableImages":  "Available Images",
-                                      "status":  "Status"
+                                      "status":  "Status",
+                                      "origin":  "Origin",
+                                      "originPlatform":  "Platform",
+                                      "originOwn":  "Own"
                                   },
                        "placeholders":  {
                                             "name":  "Enter category name",
@@ -444,17 +459,17 @@
                                                          "units":  "Units",
                                                          "groups":  "Groups"
                                                      },
-                                            "linkedFieldGroups":  "Linked Field Groups",
+                                            "linkedFieldGroups":  "Linked Cost Field Groups",
                                             "linkedUnits":  "Linked Units",
                                             "linkedGroups":  "Linked Groups",
                                             "addFieldGroup":  "Add",
                                             "addUnit":  "Add",
-                                            "availableFieldGroups":  "Available field groups to add:",
+                                            "availableFieldGroups":  "Available cost field groups to add:",
                                             "availableUnits":  "Available units to add:",
                                             "noFieldGroups":  "No field groups linked to this category.",
                                             "noUnits":  "No units linked to this category.",
                                             "noGroups":  "No product groups using this category.",
-                                            "noAvailableFieldGroups":  "All field groups are already linked.",
+                                            "noAvailableFieldGroups":  "All cost field groups are already linked.",
                                             "noAvailableUnits":  "All units are already linked.",
                                             "groupsHint":  "Groups are managed from the Product Groups page. This view is read-only.",
                                             "removeAria":  "Remove {{name}}",
@@ -464,10 +479,10 @@
                                         }
                    },
     "fields":  {
-                   "title":  "Fields",
-                   "add":  "Add Field",
-                   "search":  "Search fields",
-                   "empty":  "No fields found.",
+                   "title":  "Cast Fields",
+                   "add":  "Add Cast Field",
+                   "search":  "Search cast fields",
+                   "empty":  "No cast fields found.",
                    "labels":  {
                                   "name":  "Field Name",
                                   "nameRequired":  "Field Name *",
@@ -483,6 +498,9 @@
                                   "noFieldGroupsAvailable":  "No field groups available.",
                                   "usedInFieldGroups":  "Used In Field Groups",
                                   "notUsedInFieldGroups":  "Not used in any field group",
+                                  "origin":  "Origin",
+                                  "originPlatform":  "Platform",
+                                  "originOwn":  "Own",
                                   "deleteBlockedInUse":  "Cannot delete this field because it is used in: {{groups}}",
                                   "status":  "Status"
                               },
@@ -501,10 +519,8 @@
                                        "currency":  "Currency (₹)"
                                    },
                    "currencies":  {
-                                      "inr":  "INR - Indian Rupee"
-                                  },
-                   "hints":  {
-                                 "currencyCodeFixed":  "Currency is fixed to INR and cannot be changed."
+                                      "inr":  "INR - Indian Rupee",
+                                      "usd":  "USD - US Dollar"
                              },
                    "types":  {
                                  "number":  "Number",
@@ -517,14 +533,14 @@
                                     "optional":  "Optional"
                                 },
                    "details":  {
-                                   "titleFallback":  "Field Details",
+                                   "titleFallback":  "Cast Field Details",
                                    "closeAria":  "Close field details",
                                    "editAria":  "Edit field",
                                    "deleteAria":  "Delete field"
                                },
                    "form":  {
-                                "titleCreate":  "Add Field",
-                                "titleEdit":  "Edit Field",
+                                "titleCreate":  "Add Pricing Field",
+                                "titleEdit":  "Edit Cast Field",
                                 "cancelAria":  "Cancel field form",
                                 "createAria":  "Create field",
                                 "updateAria":  "Update field"
@@ -547,20 +563,23 @@
                                  "errorSaveMissingId":  "Unable to update field: missing id."
                              },
                    "deleteConfirm":  {
-                                         "title":  "Delete Field",
+                                         "title":  "Delete Cast Field",
                                          "message":  "Are you sure you want to delete field: {{name}}?"
                                      }
                },
     "fieldGroups":  {
-                        "title":  "Field Groups",
-                        "add":  "Add Field Group",
-                        "search":  "Search field groups",
-                        "empty":  "No field groups found.",
+                        "title":  "Cost Field Groups",
+                        "add":  "Add Cost Field Group",
+                        "search":  "Search cost field groups",
+                        "empty":  "No cost field groups found.",
                         "labels":  {
-                                       "name":  "Field Group Name",
-                                       "nameRequired":  "Field Group Name *",
+                                       "name":  "Cost Field Group Name",
+                                       "nameRequired":  "Cost Field Group Name *",
                                        "fields":  "Fields",
                                        "mappedCategories":  "Mapped Categories",
+                                       "origin":  "Origin",
+                                       "originPlatform":  "Platform",
+                                       "originOwn":  "Own",
                                        "version":  "Version",
                                        "status":  "Status",
                                        "addField":  "Add Field",
@@ -576,8 +595,8 @@
                                          "optional":  "Optional"
                                      },
                         "placeholders":  {
-                                             "name":  "Enter field group name",
-                                             "status":  "Select field group status",
+                                             "name":  "Enter cost field group name",
+                                             "status":  "Select cost field group status",
                                              "mappedCategories":  "Select mapped categories",
                                              "addField":  "Select a field to include",
                                              "defaultValue":  "Leave blank to use field master default"
@@ -590,26 +609,26 @@
                                      "defaultValueHint":  "Optional. Leave blank to inherit the field master default value."
                                  },
                         "form":  {
-                                     "titleCreate":  "Add Field Group",
-                                     "titleEdit":  "Edit Field Group"
+                                     "titleCreate":  "Add Cost Field Group",
+                                     "titleEdit":  "Edit Cost Field Group"
                                  },
                         "validation":  {
-                                           "nameRequired":  "Field group name is required",
-                                           "nameDuplicate":  "Field group name already exists. Please use a different name.",
-                                           "fieldsRequired":  "Add at least one pricing field to this field group.",
+                                           "nameRequired":  "Cost field group name is required",
+                                           "nameDuplicate":  "Cost field group name already exists. Please use a different name.",
+                                           "fieldsRequired":  "Add at least one pricing field to this cost field group.",
                                            "defaultValueInvalid":  "Template default values must be valid numbers."
                                        },
                         "toast":  {
-                                      "successCreate":  "Field group created successfully.",
-                                      "successUpdate":  "Field group updated successfully.",
-                                      "successDelete":  "Field group deleted successfully.",
-                                      "errorLoad":  "Failed to load field groups. Please try again.",
-                                      "errorSave":  "Failed to save field group. Please try again.",
-                                      "errorDelete":  "Failed to delete field group. Please try again."
+                                      "successCreate":  "Cost field group created successfully.",
+                                      "successUpdate":  "Cost field group updated successfully.",
+                                      "successDelete":  "Cost field group deleted successfully.",
+                                      "errorLoad":  "Failed to load cost field groups. Please try again.",
+                                      "errorSave":  "Failed to save cost field group. Please try again.",
+                                      "errorDelete":  "Failed to delete cost field group. Please try again."
                                   },
                         "deleteConfirm":  {
-                                              "title":  "Delete Field Group",
-                                              "message":  "Are you sure you want to delete field group: {{name}}?"
+                                              "title":  "Delete Cost Field Group",
+                                              "message":  "Are you sure you want to delete cost field group: {{name}}?"
                                           }
                     },
     "units":  {
@@ -627,6 +646,9 @@
                                  "conversionFactor":  "Conversion Factor",
                                  "status":  "Status",
                                  "noBaseUnit":  "No base unit",
+                                 "origin":  "Origin",
+                                 "originPlatform":  "Platform",
+                                 "originOwn":  "Own",
                                  "mappedCategories":  "Mapped Categories"
                              },
                   "placeholders":  {
@@ -691,7 +713,7 @@
                        "labels":  {
                                       "customerPhone":  "Customer Phone",
                                       "customerName":  "Customer Name",
-                                      "variant":  "Variant",
+                                      "variant":  "Sellable Item",
                                       "qty":  "Qty",
                                       "unitPrice":  "Unit Price",
                                       "tax":  "Tax",
@@ -720,7 +742,7 @@
                        "placeholders":  {
                                             "customerPhone":  "Enter 10-digit mobile",
                                             "customerName":  "Enter customer name",
-                                            "selectVariant":  "Select variant",
+                                            "selectVariant":  "Select sellable item",
                                             "qty":  "Qty",
                                             "orderIntakeChannel":  "Select intake channel",
                                             "deliveryType":  "Select delivery type",
@@ -919,7 +941,7 @@
                                              "err_role_required":  "Select at least one role."
                                          },
                                "dashboard":  {
-                                                 "title":  "Tenant Dashboard",
+                                                 "title":  "Dashboard",
                                                  "subtitle":  "Operational snapshot of tenant access administration.",
                                                  "lbl_purchased_package":  "Purchased Package",
                                                  "msg_no_package":  "No package is assigned yet.",
@@ -1030,6 +1052,7 @@
                                                    "btn_create":  "Create Package",
                                                    "btn_manage_tiers":  "Manage Tiers",
                                                    "title_create":  "Create Package",
+                                                  "title_clone":  "Clone Package",
                                                    "title_edit":  "Edit Package",
                                                    "col_tiers":  "Tiers",
                                                    "info_manage_tiers":  "After creating the package, use the Manage Tiers button to configure features and tiers for this package.",
@@ -1053,6 +1076,7 @@
                                                    "hint_feature_configs":  "These values override feature default configs for this package.",
                                                    "msg_no_feature_configs":  "Selected features do not have config keys. Add config keys in Feature Catalog first.",
                                                    "ph_feature_config":  "Enter override value",
+                                                  "msg_clone_plan_id":  "A new plan ID will be generated automatically from the package name.",
                                                    "btn_save":  "Save"
                                                },
                                   "entitlements":  {
@@ -1113,47 +1137,47 @@
                                                "category":  "Category",
                                                "categoryPlaceholder":  "Select category",
                                                "search":  "Search products by name",
-                                               "searchVariants":  "Search variants",
+                                               "searchVariants":  "Search sellable items",
                                                "groupSearch":  "Search groups",
                                                "tabsAria":  "Collection mapping tabs",
                                                "allTab":  "All",
-                                               "allVariantsTitle":  "All Variants",
-                                               "groupVariantsTitle":  "Group Variants",
+                                               "allVariantsTitle":  "All Sellable Items",
+                                               "groupVariantsTitle":  "Product Sellable Items",
                                                "groups":  "Groups",
                                                "groupsPlaceholder":  "Select one or more groups",
-                                               "variants":  "Variants",
-                                               "variantsPlaceholder":  "Select one or more variants",
+                                               "variants":  "Sellable Items",
+                                               "variantsPlaceholder":  "Select one or more sellable items",
                                                "selectAllGroups":  "Select all groups",
-                                               "selectAllVariants":  "Select all variants",
+                                               "selectAllVariants":  "Select all sellable items",
                                                "remove":  "Remove",
                                                "addGroup":  "Add Group",
                                                "removeGroup":  "Remove Group",
                                                "addAgain":  "Add",
                                                "selectGroupToManage":  "Select Add Group first to manage exclusions for this group.",
                                                "recentlyRemovedGroups":  "Recently Removed Groups",
-                                               "removedVariants":  "Removed Variants",
+                                               "removedVariants":  "Removed Sellable Items",
                                                "noRemovedGroups":  "No removed groups.",
-                                               "noRemovedVariants":  "No removed variants.",
-                                               "noVisibleVariants":  "No visible variants in this tab.",
+                                               "noRemovedVariants":  "No removed sellable items.",
+                                               "noVisibleVariants":  "No visible sellable items in this tab.",
                                                "selectedItems":  "Selected assignments",
-                                               "noSelections":  "No groups or variants selected yet."
+                                               "noSelections":  "No products or sellable items selected yet."
                                            },
                                "summary":  {
                                                "categories":  "Selected categories",
                                                "groups":  "Selected groups",
-                                               "variants":  "Selected variants",
-                                               "resolvedVariants":  "Resolved variants",
-                                               "totalVariantsAdded":  "Total variants added"
+                                               "variants":  "Selected sellable items",
+                                               "resolvedVariants":  "Resolved sellable items",
+                                               "totalVariantsAdded":  "Total sellable items added"
                                            },
                                "details":  {
                                                "title":  "Collection Details",
                                                "categories":  "Category context",
-                                               "totalResolved":  "Total resolved variants",
+                                               "totalResolved":  "Total resolved sellable items",
                                                "groups":  "Assigned groups",
-                                               "groupVariants":  "Resolved variants",
-                                               "directVariants":  "Direct variants",
+                                               "groupVariants":  "Resolved sellable items",
+                                               "directVariants":  "Direct sellable items",
                                                "noGroups":  "No groups assigned.",
-                                               "noVariants":  "No direct variants assigned."
+                                               "noVariants":  "No direct sellable items assigned."
                                            },
                                "delete":  {
                                               "title":  "Delete Collection",
@@ -1381,7 +1405,7 @@
                               "noBusinessTemplates":  "No business templates available yet.",
                               "businessHint":  "Pick a business type to subscribe to all its categories, fields, units, and tax profiles in one click.",
                               "categories":  "Categories",
-                              "fieldGroups":  "Field Groups",
+                              "fieldGroups":  "Cost Field Groups",
                               "units":  "Units",
                               "taxProfiles":  "Tax Profiles",
                               "includedCategories":  "Included Categories",
@@ -1392,10 +1416,10 @@
                                               "title":  "Template Preview",
                                               "loading":  "Loading template detailsï¿½",
                                               "fields":  "Fields",
-                                              "fieldGroups":  "Field Groups",
+                                              "fieldGroups":  "Cost Field Groups",
                                               "units":  "Units",
                                               "fieldsTitle":  "Fields",
-                                              "fieldGroupsTitle":  "Field Groups",
+                                              "fieldGroupsTitle":  "Cost Field Groups",
                                               "unitsTitle":  "Units",
                                               "fieldName":  "Name",
                                               "fieldKey":  "Key",
@@ -1443,11 +1467,11 @@
                                        },
                               "preview":  {
                                               "categories":  "Categories",
-                                              "fieldGroups":  "Field Groups",
+                                              "fieldGroups":  "Cost Field Groups",
                                               "units":  "Units",
                                               "taxProfiles":  "Tax Profiles",
                                               "categoriesTitle":  "Included Categories",
-                                              "fieldGroupsTitle":  "Field Groups",
+                                              "fieldGroupsTitle":  "Cost Field Groups",
                                               "unitsTitle":  "Units",
                                               "taxProfilesTitle":  "Tax Profiles"
                                           }
@@ -1575,6 +1599,82 @@
                                         },
     "media":  {
                   "title":  "Platform Media Library",
+                  "tabs":  {
+                               "products":  "Products",
+                               "categories":  "Categories",
+                               "packs":  "Packs",
+                               "videos":  "Videos"
+                           },
+                  "purposes":  {
+                                   "PRODUCT":  "Product",
+                                   "CATEGORY":  "Category",
+                                   "PACK":  "Pack"
+                               },
+                  "library":  {
+                                  "uploadTitle":  "Upload {{purpose}} Images",
+                                  "emptyPurpose":  "No {{purpose}} images yet. Upload one to get started.",
+                                  "limitStopped":  "Upload stopped because your plan's media limit was reached.",
+                                  "uploadSummary":  "{{uploaded}} uploaded, {{failed}} failed.",
+                                  "uploadSuccess":  "{{count}} image(s) uploaded.",
+                                  "attachedSummary":  "{{count}} attached to {{target}}.",
+                                  "processingWait":  "Please wait for image processing to finish."
+                              },
+                  "prepare":  {
+                                  "target":  "Target: {{ratio}} ratio, {{width}} × {{height}} px",
+                                  "dropzone":  "Drag & drop images here or click to browse",
+                                  "hint":  "JPEG, PNG or WebP, up to {{maxSize}} MB each. Images are cropped and compressed in your browser before upload.",
+                                  "bulkLabel":  "Images that do not match the ratio:",
+                                  "fitAll":  "Fit all (add padding)",
+                                  "fillAll":  "Fill all (center crop)",
+                                  "original":  "Original",
+                                  "final":  "Will upload",
+                                  "processing":  "Processing...",
+                                  "ratioMatch":  "Matches {{ratio}}",
+                                  "ratioMismatch":  "Not {{ratio}}",
+                                  "status":  {
+                                                 "uploading":  "Uploading",
+                                                 "done":  "Uploaded",
+                                                 "failed":  "Failed"
+                                             },
+                                  "lowResolution":  "This image is {{width}} × {{height}}. Recommended {{recommendedWidth}} × {{recommendedHeight}}. It may look blurry.",
+                                  "adjust":  "Adjust image",
+                                  "fit":  "Fit",
+                                  "fill":  "Fill",
+                                  "crop":  "Crop",
+                                  "cropHint":  "Drag to move the image. Use the zoom buttons to resize the crop.",
+                                  "zoomIn":  "Zoom in",
+                                  "zoomOut":  "Zoom out",
+                                  "applyCrop":  "Apply crop",
+                                  "errors":  {
+                                                 "invalidType":  "{{count}} file(s) skipped. Use JPEG, PNG or WebP.",
+                                                 "tooLarge":  "{{count}} file(s) skipped. Maximum source size is {{maxSize}} MB.",
+                                                 "decode":  "Could not read {{name}}.",
+                                                 "resultTooLarge":  "The processed image is still over 5 MB. Use a smaller image.",
+                                                 "tooManyPixels":  "This image is too large to process. Use a smaller image.",
+                                                 "processFailed":  "Could not process this image. Try another file.",
+                                                 "maxFiles":  "You can add up to {{max}} more image(s)."
+                                             }
+                              },
+                  "attach":  {
+                                 "title":  "Attach after upload (optional)",
+                                 "enable":  "Attach the uploaded images to an item",
+                                 "noPermission":  "You do not have permission to attach images to {{entity}}.",
+                                 "entities":  {
+                                                  "PRODUCT":  "product",
+                                                  "CATEGORY":  "category",
+                                                  "PACK":  "pack"
+                                              },
+                                 "searchPlaceholder":  "Search {{entity}}",
+                                 "select":  "Select {{entity}}",
+                                 "groupGallery":  "Product gallery (all variants)",
+                                 "variants":  "Variants",
+                                 "categoryReplace":  "This replaces the category's current image.",
+                                 "noResults":  "No results.",
+                                 "loadFailed":  "Could not load the options.",
+                                 "attached":  "Attached to {{target}}.",
+                                 "failed":  "Uploaded but not attached to {{target}}: {{reason}}",
+                                 "categorySingle":  "A category has one image; only the first image was attached."
+                             },
                   "description":  "Manage shared platform media available to all tenants.",
                   "loading":  "Loading media...",
                   "empty":  "No media found.",
@@ -1749,12 +1849,12 @@
                                           "draftSaveFailed":  "Draft save failed",
                                           "submitGroups":  "Submit {{count}} Group(s)",
                                           "addMoreDetails":  "Add more details",
-                                          "manageVariants":  "Manage variants",
+                                          "manageVariants":  "Manage sellable items",
                                           "fieldValues":  "Field Values",
                                           "addRow":  "+ Add Row",
                                           "clearAll":  "Clear All",
                                           "emptyRows":  "No rows yet. Click \u0027+ Add Row\u0027 to start.",
-                                          "variantsTitle":  "Variants",
+                                          "variantsTitle":  "Sellable Items",
                                           "closeModal":  "Close modal",
                                           "quickAdd":  "Quick Add:",
                                           "skuRequired":  "SKU *",
@@ -1770,9 +1870,9 @@
                                           "discountTypePercent":  "Percent",
                                           "discountTypeAmount":  "Amount",
                                           "discountValue":  "Discount Value",
-                                          "addVariant":  "Add Variant",
-                                          "noVariantsYet":  "No variants added yet.",
-                                          "removeVariantAria":  "Remove variant",
+                                          "addVariant":  "Add Sellable Item",
+                                          "noVariantsYet":  "No sellable items added yet.",
+                                          "removeVariantAria":  "Remove sellable item",
                                           "done":  "Done",
                                           "validationErrorsTitle":  "Validation Errors",
                                           "rowLabel":  "Row {{index}}:"
@@ -1894,8 +1994,8 @@
                                "next":  "Next"
                            },
                 "variantsWorkspace":  {
-                                          "title":  "One-Page Variant Workspace",
-                                          "subtitle":  "Create multiple variants in one place with row-level preview.",
+                                          "title":  "One-Page Sellable Item Workspace",
+                                          "subtitle":  "Create multiple sellable items in one place with row-level preview.",
                                           "actions":  {
                                                           "autoGenerate":  "Auto Generate",
                                                           "addRow":  "Add Row",
@@ -1946,14 +2046,14 @@
                                           "toast":  {
                                                         "selectGroupFirst":  "Please select a group first.",
                                                         "noCombinations":  "No new combinations available.",
-                                                        "autoGenerateFailed":  "Failed to generate variant combinations.",
+                                                        "autoGenerateFailed":  "Failed to generate sellable item combinations.",
                                                         "selectOneRow":  "Select at least one row to save.",
-                                                        "fixRowErrors":  "Please fix row errors before saving selected variants.",
+                                                        "fixRowErrors":  "Please fix row errors before saving selected sellable items.",
                                                         "invalidBulkAdditionalCharge":  "Enter a valid non-negative additional charge.",
                                                         "bulkApplySuccess":  "Additional charge applied to selected rows.",
                                                         "bulkOverridesApplySuccess":  "Field overrides applied to selected rows.",
-                                                        "saveFailed":  "Failed to create variants from rows.",
-                                                        "saveSuccess":  "{{count}} variant(s) created successfully."
+                                                        "saveFailed":  "Failed to create sellable items from rows.",
+                                                        "saveSuccess":  "{{count}} sellable item(s) created successfully."
                                                     },
                                           "errors":  {
                                                          "quantityPositive":  "Quantity must be greater than zero.",
@@ -1961,9 +2061,9 @@
                                                          "additionalChargeNonNegative":  "Additional charge must be zero or greater.",
                                                          "previewFailed":  "Unable to preview price for this row.",
                                                          "fieldOverridesInvalid":  "Field overrides must be a valid JSON object with numeric values.",
-                                                         "duplicateCombination":  "Duplicate variant combination found in selected rows."
+                                                         "duplicateCombination":  "Duplicate sellable item combination found in selected rows."
                                                      },
-                                          "empty":  "Add rows manually or use auto-generate to start creating variants."
+                                          "empty":  "Add rows manually or use auto-generate to start creating sellable items."
                                       },
                 "offers":  {
                                "title":  "Offers",

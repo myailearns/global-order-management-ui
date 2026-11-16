@@ -35,21 +35,11 @@
   }
 
   .error-banner__close {
-    background: none;
-    border: none;
-    color: theme.get-text(danger);
-    cursor: pointer;
-    padding: 4px 8px;
-    display: flex;
-    align-items: center;
     flex-shrink: 0;
 
     i {
       font-size: 1.125rem;
-    }
-
-    &:hover {
-      opacity: 0.8;
+      color: theme.get-text(danger);
     }
   }
 }
@@ -116,20 +106,11 @@
   }
 
   .job-notification-banner__close {
-    background: none;
-    border: none;
-    color: theme.get-text(primary);
-    cursor: pointer;
-    padding: 4px 8px;
-    display: flex;
-    align-items: center;
+    flex-shrink: 0;
 
     i {
       font-size: 1.125rem;
-    }
-
-    &:hover {
-      opacity: 0.8;
+      color: theme.get-text(primary);
     }
   }
 }

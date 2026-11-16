@@ -22,6 +22,7 @@ interface FieldTableRow extends GomTableRow {
   defaultValue: string;
   isRequired: string;
   usedInFieldGroups: string;
+  origin: string;
   status: string;
 }
 
@@ -66,11 +67,11 @@ export class FieldsListComponent implements OnChanges {
 
   readonly columns: GomTableColumn<FieldTableRow>[] = [
     { key: 'name', header: FIELD_UI_TEXT.nameLabel, sortable: true, filterable: true, width: '14rem' },
-    { key: 'key', header: FIELD_UI_TEXT.keyLabel, sortable: true, filterable: true, width: '14rem' },
     { key: 'type', header: FIELD_UI_TEXT.typeLabel, sortable: true, filterable: true, width: '11rem' },
     { key: 'defaultValue', header: FIELD_UI_TEXT.defaultValueLabel, sortable: true, width: '11rem' },
     { key: 'isRequired', header: FIELD_UI_TEXT.isRequiredLabel, sortable: true, filterable: true, width: '11rem' },
     { key: 'usedInFieldGroups', header: FIELD_UI_TEXT.usedInFieldGroupsLabel, sortable: true, filterable: true, width: '18rem', textMode: 'wrap' },
+    { key: 'origin', header: FIELD_UI_TEXT.originLabel, sortable: true, filterable: true, width: '9rem' },
     { key: 'status', header: FIELD_UI_TEXT.statusLabel, sortable: true, filterable: true, width: '11rem' },
     {
       key: 'actions',
@@ -110,6 +111,7 @@ export class FieldsListComponent implements OnChanges {
       defaultValue: String(field.defaultValue ?? 0),
       isRequired: field.isRequired ? 'true' : 'false',
       usedInFieldGroups: this.getUsageText(field._id),
+      origin: field.templateRef ? 'PLATFORM' : 'OWN',
       status: field.status || FIELD_DEFAULT_STATUS,
     }));
   }
@@ -149,7 +151,9 @@ export class FieldsListComponent implements OnChanges {
     const rowId = typeof row['_id'] === 'string' ? row['_id'] : undefined;
     const rowValueFormat = typeof row['valueFormat'] === 'string' ? row['valueFormat'].trim().toUpperCase() : '';
     const valueFormat = rowValueFormat === 'CURRENCY' ? 'CURRENCY' : 'NUMBER';
-    const currencyCode = valueFormat === 'CURRENCY' ? 'INR' : null;
+    const rowCurrencyCode = typeof row['currencyCode'] === 'string' ? row['currencyCode'].trim().toUpperCase() : '';
+    const resolvedCurrencyCode = rowCurrencyCode === 'USD' ? 'USD' : 'INR';
+    const currencyCode = valueFormat === 'CURRENCY' ? resolvedCurrencyCode : null;
     return {
       _id: rowId,
       name: typeof row['name'] === 'string' ? row['name'] : '',
@@ -166,16 +170,20 @@ export class FieldsListComponent implements OnChanges {
 
   private rebuildColumns(): void {
     this.columns[0].header = this.translate.instant(this.text.nameLabel);
-    this.columns[1].header = this.translate.instant(this.text.keyLabel);
-    this.columns[2].header = this.translate.instant(this.text.typeLabel);
-    this.columns[2].format = (value, row) => this.getTranslatedTypeLabel(value, row);
-    this.columns[3].header = this.translate.instant(this.text.defaultValueLabel);
-    this.columns[4].header = this.translate.instant(this.text.isRequiredLabel);
-    this.columns[4].format = (value) =>
+    this.columns[1].header = this.translate.instant(this.text.typeLabel);
+    this.columns[1].format = (value, row) => this.getTranslatedTypeLabel(value, row);
+    this.columns[2].header = this.translate.instant(this.text.defaultValueLabel);
+    this.columns[3].header = this.translate.instant(this.text.isRequiredLabel);
+    this.columns[3].format = (value) =>
       value === 'true'
         ? this.translate.instant(this.text.yes)
         : this.translate.instant(this.text.no);
-    this.columns[5].header = this.translate.instant(this.text.usedInFieldGroupsLabel);
+    this.columns[4].header = this.translate.instant(this.text.usedInFieldGroupsLabel);
+    this.columns[5].header = this.translate.instant(this.text.originLabel);
+    this.columns[5].format = (value) =>
+      value === 'PLATFORM'
+        ? this.translate.instant(this.text.originPlatform)
+        : this.translate.instant(this.text.originOwn);
     this.columns[6].header = this.translate.instant(this.text.statusLabel);
     this.columns[6].format = (value) =>
       value === 'INACTIVE'

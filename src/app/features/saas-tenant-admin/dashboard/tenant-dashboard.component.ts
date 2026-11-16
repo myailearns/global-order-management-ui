@@ -76,24 +76,48 @@ export class TenantDashboardComponent implements OnInit {
 
   readonly trialActivationAlert = computed(() => {
     const tenant = this.tenantAdminSummary()?.tenant;
-    if (!tenant || tenant.accountStatus !== 'TRIAL' || !tenant.trialEndAt) {
+    return this.buildTrialActivationAlert(tenant);
+  });
+
+  private buildTrialActivationAlert(tenant: TenantAdminSummary['tenant'] | undefined) {
+    if (!tenant?.trialEndAt) {
+      return null;
+    }
+
+    const accountStatus = String(tenant.accountStatus || '').toUpperCase();
+    const isTrialActive = accountStatus === 'TRIAL';
+    const isTrialEnded = accountStatus === 'TRIAL_ENDED';
+    if (!isTrialActive && !isTrialEnded) {
       return null;
     }
 
     const daysRemaining = this._daysUntil(tenant.trialEndAt);
-    if (daysRemaining < 0 || daysRemaining > 10) {
+    if (isTrialActive && daysRemaining > 10) {
       return null;
     }
 
+    const endedDaysAgo = Math.abs(daysRemaining);
+    let title = '';
+    if (isTrialEnded) {
+      title = endedDaysAgo <= 1 ? 'Your trial has ended' : `Your trial ended ${endedDaysAgo} days ago`;
+    } else if (daysRemaining === 0) {
+      title = 'Your trial ends today';
+    } else {
+      title = `Your trial ends in ${daysRemaining} day${daysRemaining === 1 ? '' : 's'}`;
+    }
+
     return {
-      daysRemaining,
+      daysRemaining: Math.max(0, daysRemaining),
       accountName: tenant.accountName,
-      urgency: daysRemaining <= 3 ? 'high' : 'normal',
-      title: daysRemaining === 0
-        ? 'Your trial ends today'
-        : `Your trial ends in ${daysRemaining} day${daysRemaining === 1 ? '' : 's'}`,
+      urgency: isTrialEnded || daysRemaining <= 3 ? 'high' : 'normal',
+      title,
+      message: isTrialEnded
+        ? 'Activate now to restore access and avoid service interruption.'
+        : 'Activate now to avoid service interruption.',
+      isEnded: isTrialEnded,
+      ctaLabel: isTrialEnded ? 'Activate Account' : 'Activate Now',
     };
-  });
+  }
 
   // Drill-down state signals
   readonly drillDownType = signal<DrillDownType>(null);
